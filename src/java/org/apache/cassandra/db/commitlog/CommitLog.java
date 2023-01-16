@@ -21,14 +21,22 @@ package org.apache.cassandra.db.commitlog;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.FileStore;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.zip.CRC32;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.cassandra.io.util.File;
 import com.google.common.base.Preconditions;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -36,13 +44,15 @@ import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.ParameterizedClass;
-import org.apache.cassandra.db.*;
+import org.apache.cassandra.db.Mutation;
+import org.apache.cassandra.db.SystemKeyspace;
 import org.apache.cassandra.exceptions.CDCWriteException;
 import org.apache.cassandra.io.FSWriteError;
 import org.apache.cassandra.io.compress.ICompressor;
 import org.apache.cassandra.io.util.BufferedDataOutputStreamPlus;
 import org.apache.cassandra.io.util.DataOutputBuffer;
 import org.apache.cassandra.io.util.DataOutputBufferFixed;
+import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.PathUtils;
 import org.apache.cassandra.metrics.CommitLogMetrics;
 import org.apache.cassandra.net.MessagingService;
@@ -356,31 +366,31 @@ public class CommitLog implements CommitLogMBean
     @Override
     public String getArchiveCommand()
     {
-        return archiver.archiveCommand;
+        return archiver.archiveCommand; // TODO add to CommitLog metrics class.
     }
 
     @Override
     public String getRestoreCommand()
     {
-        return archiver.restoreCommand;
+        return archiver.restoreCommand; // TODO add to CommitLog metrics class.
     }
 
     @Override
     public String getRestoreDirectories()
     {
-        return archiver.restoreDirectories;
+        return archiver.restoreDirectories; // TODO add to CommitLog metrics class.
     }
 
     @Override
     public long getRestorePointInTime()
     {
-        return archiver.restorePointInTime;
+        return archiver.restorePointInTime; // TODO add to CommitLog metrics class.
     }
 
     @Override
     public String getRestorePrecision()
     {
-        return archiver.precision.toString();
+        return archiver.precision.toString(); // TODO add to CommitLog metrics class.
     }
 
     public List<String> getActiveSegmentNames()
@@ -389,12 +399,12 @@ public class CommitLog implements CommitLogMBean
         List<String> segmentNames = new ArrayList<>(segments.size());
         for (CommitLogSegment seg : segments)
             segmentNames.add(seg.getName());
-        return segmentNames;
+        return segmentNames; // TODO add to CommitLog metrics class.
     }
 
     public List<String> getArchivingSegmentNames()
     {
-        return new ArrayList<>(archiver.archivePending.keySet());
+        return new ArrayList<>(archiver.archivePending.keySet()); // TODO add to CommitLog metrics class.
     }
 
     @Override
@@ -403,7 +413,7 @@ public class CommitLog implements CommitLogMBean
         long size = 0;
         for (CommitLogSegment seg : segmentManager.getActiveSegments())
             size += seg.contentSize();
-        return size;
+        return size; // TODO add to CommitLog metrics class.
     }
 
     @Override
@@ -418,7 +428,7 @@ public class CommitLog implements CommitLogMBean
         Map<String, Double> segmentRatios = new TreeMap<>();
         for (CommitLogSegment seg : segmentManager.getActiveSegments())
             segmentRatios.put(seg.getName(), 1.0 * seg.onDiskSize() / seg.contentSize());
-        return segmentRatios;
+        return segmentRatios; // TODO add to CommitLog metrics class.
     }
 
     @Override
@@ -439,7 +449,6 @@ public class CommitLog implements CommitLogMBean
         DatabaseDescriptor.setCDCBlockWrites(val);
         logger.info("Updated CDC block_writes from {} to {}", oldVal, val);
     }
-
 
     @Override
     public boolean isCDCOnRepairEnabled()

@@ -17,7 +17,11 @@
  */
 package org.apache.cassandra.db.virtual;
 
+import java.util.stream.Collectors;
+
 import com.google.common.collect.ImmutableList;
+
+import org.apache.cassandra.sysview.SystemViewRegistry;
 
 import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;
 
@@ -50,6 +54,10 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                     .add(new QueriesTable(VIRTUAL_VIEWS))
                     .add(new LogMessagesTable(VIRTUAL_VIEWS))
                     .addAll(LocalRepairTables.getAll(VIRTUAL_VIEWS))
+                    .addAll(SystemViewRegistry.instance.getAll()
+                                                       .stream()
+                                                       .map(v -> new VirtualTableAdapter<>(VIRTUAL_VIEWS, v))
+                                                       .collect(Collectors.toList()))
                     .build());
     }
 }

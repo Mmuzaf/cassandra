@@ -26,6 +26,8 @@ import org.apache.cassandra.distributed.api.ICluster;
 import org.apache.cassandra.distributed.api.IInvokableInstance;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 
+import static org.apache.cassandra.utils.Clock.Global.currentTimeMillis;
+
 public class MetricsTest extends TestBaseImpl
 {
     @Test
@@ -38,6 +40,16 @@ public class MetricsTest extends TestBaseImpl
                 CassandraMetricsRegistry.Metrics.counter("test_counter").inc(100);
                 CassandraMetricsRegistry.Metrics.counter("test_counter_2").inc(101);
             });
+
+            long ts = currentTimeMillis();
+            while (!Thread.interrupted())
+            {
+                if (ts + 5000 >= currentTimeMillis())
+                    continue;
+
+                ts = currentTimeMillis();
+                System.out.println(">>>>> Running: " + ts);
+            }
 
             Assert.assertEquals(100, cluster.get(1).metrics().getCounter("test_counter"));
             Assert.assertEquals(ImmutableMap.of("test_counter", 100L,

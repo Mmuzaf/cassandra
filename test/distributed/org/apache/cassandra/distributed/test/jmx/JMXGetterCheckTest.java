@@ -44,6 +44,7 @@ import org.apache.cassandra.utils.JMXServerUtils;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.IS_DISABLED_MBEAN_REGISTRATION;
 import static org.apache.cassandra.cql3.CQLTester.getAutomaticallyAllocatedPort;
+import static org.apache.cassandra.utils.Clock.Global.currentTimeMillis;
 
 public class JMXGetterCheckTest extends TestBaseImpl
 {
@@ -118,6 +119,16 @@ public class JMXGetterCheckTest extends TestBaseImpl
                 errors.forEach(root::addSuppressed);
                 throw root;
             }
+        }
+
+        long ts = currentTimeMillis();
+        while (!Thread.interrupted())
+        {
+            if (ts + 5000 >= currentTimeMillis())
+                continue;
+
+            ts = currentTimeMillis();
+            System.out.println(">>>> Running: " + ts);
         }
     }
 
