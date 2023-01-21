@@ -18,14 +18,14 @@
 
 package org.apache.cassandra.sysview.walker;
 
-import org.apache.cassandra.config.sysview.ConfigPropertyViewRow;
+import org.apache.cassandra.config.sysview.ConfigViewRow;
 import org.apache.cassandra.schema.ColumnMetadata;
 import org.apache.cassandra.sysview.SystemViewWalker;
 
 /**
- * This class is auto-generated based on the view row {@link ConfigPropertyViewRow}.
+ * This class is auto-generated based on the view row {@link ConfigViewRow}.
  */
-public class ConfigPropertySystemViewWalker implements SystemViewWalker<ConfigPropertyViewRow>
+public class ConfigViewWalker implements SystemViewWalker<ConfigViewRow>
 {
     @Override
     public int count()
@@ -44,7 +44,7 @@ public class ConfigPropertySystemViewWalker implements SystemViewWalker<ConfigPr
     }
 
     @Override
-    public void visitAll(ConfigPropertyViewRow row, AttributeWithValueVisitor v)
+    public void visitAll(ConfigViewRow row, AttributeWithValueVisitor v)
     {
         v.accept(ColumnMetadata.Kind.PARTITION_KEY, "param_name", String.class, row.paramName());
         v.accept(ColumnMetadata.Kind.REGULAR, "param_type", Class.class, row.paramType());

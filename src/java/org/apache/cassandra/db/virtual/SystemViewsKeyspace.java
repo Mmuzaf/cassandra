@@ -56,7 +56,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                     .addAll(LocalRepairTables.getAll(VIRTUAL_VIEWS))
                     .addAll(SystemViewRegistry.instance.getAll()
                                                        .stream()
-                                                       .map(v -> new VirtualTableAdapter<>(VIRTUAL_VIEWS, v))
+                                                       .map(v -> new VirtualTableAdapter(VIRTUAL_VIEWS, v))
                                                        .collect(Collectors.toList()))
                     .build());
     }

@@ -26,10 +26,10 @@ import com.google.common.collect.ImmutableMap;
 import org.yaml.snakeyaml.introspector.FieldProperty;
 import org.yaml.snakeyaml.introspector.Property;
 
-import org.apache.cassandra.config.sysview.ConfigPropertyViewRow;
+import org.apache.cassandra.config.sysview.ConfigViewRow;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.sysview.SystemViewRegistry;
-import org.apache.cassandra.sysview.walker.ConfigPropertySystemViewWalker;
+import org.apache.cassandra.sysview.walker.ConfigViewWalker;
 
 /**
  * This is a simple configuration proerty registry that stores all the {@link Config} properties.
@@ -52,8 +52,8 @@ public class ConfigPropertyRegistry
         this.config = DatabaseDescriptor.getRawConfig();
 
         SystemViewRegistry.instance.registerView(CONFIG_PROPERTY_VIEW_NAME, CONFIG_PROPERTY_VIEW_DESC,
-                                                 new ConfigPropertySystemViewWalker(), PROPERTIES.entrySet(),
-                                                 entry -> new ConfigPropertyViewRow(entry, instance::getValue));
+                                                 new ConfigViewWalker(), PROPERTIES.entrySet(),
+                                                 entry -> new ConfigViewRow(entry, instance::getValue));
     }
 
     public String getValue(String name)
@@ -78,7 +78,7 @@ public class ConfigPropertyRegistry
         }
     }
 
-    public void registerPropertySetter(String name) {
+    public void registerPropertyHandler(String name) {
 
     }
 

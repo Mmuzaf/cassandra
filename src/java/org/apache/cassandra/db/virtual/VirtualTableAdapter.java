@@ -62,7 +62,7 @@ public class VirtualTableAdapter<T extends ViewRow> extends AbstractMutableVirtu
         put(float.class, FloatType.instance);
         put(double.class, DoubleType.instance);
     }};
-    private final SystemView<T> systemView;
+    protected final SystemView<T> systemView;
 
     public VirtualTableAdapter(String keyspace, SystemView<T> systemView)
     {

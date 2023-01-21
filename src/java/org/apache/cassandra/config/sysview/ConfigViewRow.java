@@ -28,12 +28,12 @@ import org.apache.cassandra.sysview.ViewRow;
 /**
  * Representation system view of all available configuration properties.
  */
-public class ConfigPropertyViewRow implements ViewRow
+public class ConfigViewRow implements ViewRow
 {
     private final Map.Entry<String, Property> entry;
     private final Function<String, String> value;
 
-    public ConfigPropertyViewRow(Map.Entry<String, Property> entry, Function<String, String> value)
+    public ConfigViewRow(Map.Entry<String, Property> entry, Function<String, String> value)
     {
         this.entry = entry;
         this.value = value;

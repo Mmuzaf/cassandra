@@ -46,6 +46,7 @@ import org.apache.cassandra.sysview.ViewRow;
 
 /**
  * JMX bean to expose specific {@link org.apache.cassandra.sysview.SystemView} data.
+ * TODO MX4J is better to use AbstractDynamicMBean here, right (?)
  */
 public class SystemViewMBean<R extends ViewRow> implements DynamicMBean
 {
