@@ -20,8 +20,9 @@ package org.apache.cassandra.simulator.debug;
 
 import java.util.function.Supplier;
 
-import org.apache.cassandra.simulator.RandomSource;
 import org.hsqldb.lib.IntKeyLongValueHashMap;
+
+import org.apache.cassandra.simulator.RandomSource;
 
 import static org.apache.cassandra.simulator.SimulatorUtils.failWithOOM;
 

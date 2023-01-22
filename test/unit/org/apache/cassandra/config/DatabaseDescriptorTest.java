@@ -27,15 +27,15 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.function.Consumer;
 
-
 import com.google.common.base.Throwables;
+
+import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import org.apache.cassandra.db.Keyspace;
 import org.apache.cassandra.exceptions.ConfigurationException;
-import org.assertj.core.api.Assertions;
 
 import static org.apache.cassandra.config.DataStorageSpec.DataStorageUnit.KIBIBYTES;
 import static org.assertj.core.api.Assertions.assertThat;

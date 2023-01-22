@@ -18,10 +18,6 @@
  */
 package org.apache.cassandra.utils;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -33,6 +29,10 @@ import org.apache.cassandra.io.util.BytesReadTracker;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.TrackedDataInputPlus;
 import org.apache.cassandra.io.util.TrackedInputStream;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class BytesReadTrackerTest
 {

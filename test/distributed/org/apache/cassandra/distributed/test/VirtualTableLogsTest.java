@@ -23,7 +23,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import ch.qos.logback.classic.Level;
 import org.apache.cassandra.db.virtual.LogMessagesTable;
 import org.apache.cassandra.db.virtual.LogMessagesTable.LogMessage;
 import org.apache.cassandra.distributed.Cluster;
@@ -31,6 +30,8 @@ import org.apache.cassandra.distributed.api.Feature;
 import org.apache.cassandra.distributed.api.SimpleQueryResult;
 import org.apache.cassandra.schema.SchemaConstants;
 import org.apache.cassandra.utils.logging.VirtualTableAppender;
+
+import ch.qos.logback.classic.Level;
 
 import static java.lang.String.format;
 import static org.apache.cassandra.db.virtual.LogMessagesTable.LEVEL_COLUMN_NAME;

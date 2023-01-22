@@ -21,10 +21,10 @@ package org.apache.cassandra.cql3.validation.entities.udfverify;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import org.apache.cassandra.cql3.functions.types.TypeCodec;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.functions.JavaUDF;
 import org.apache.cassandra.cql3.functions.UDFContext;
+import org.apache.cassandra.cql3.functions.types.TypeCodec;
 import org.apache.cassandra.transport.ProtocolVersion;
 
 /**

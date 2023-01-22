@@ -25,16 +25,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.assertj.core.util.Files;
 import org.junit.Test;
+import org.quicktheories.core.Gen;
+import org.quicktheories.generators.Generate;
 
 import org.apache.cassandra.io.sstable.Descriptor;
 import org.apache.cassandra.io.sstable.SequenceBasedSSTableId;
 import org.apache.cassandra.io.sstable.format.SSTableFormat;
 import org.apache.cassandra.io.sstable.format.VersionAndType;
 import org.apache.cassandra.io.util.File;
-import org.assertj.core.util.Files;
-import org.quicktheories.core.Gen;
-import org.quicktheories.generators.Generate;
 
 import static org.junit.Assert.assertEquals;
 import static org.quicktheories.QuickTheory.qt;

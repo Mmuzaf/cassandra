@@ -27,12 +27,12 @@ import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import org.apache.cassandra.cql3.CQLTester;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.schema.SchemaTransformation.SchemaTransformationResult;
-import org.mockito.Mockito;
 
 import static org.apache.cassandra.cql3.QueryProcessor.executeInternal;
 import static org.assertj.core.api.Assertions.assertThat;

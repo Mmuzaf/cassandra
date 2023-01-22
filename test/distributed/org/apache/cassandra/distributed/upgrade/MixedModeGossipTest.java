@@ -28,13 +28,14 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.google.common.util.concurrent.Uninterruptibles;
+
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import org.apache.cassandra.distributed.UpgradeableCluster;
 import org.apache.cassandra.distributed.api.Feature;
 import org.apache.cassandra.distributed.api.IMessageFilters;
 import org.apache.cassandra.net.Verb;
-import org.assertj.core.api.Assertions;
 
 public class MixedModeGossipTest extends UpgradeTestBase
 {

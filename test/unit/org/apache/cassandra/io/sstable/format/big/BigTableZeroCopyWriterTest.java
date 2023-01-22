@@ -29,12 +29,10 @@ import java.util.Set;
 import java.util.function.Function;
 
 import com.google.common.collect.ImmutableSet;
-import org.apache.cassandra.io.util.File;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import io.netty.buffer.Unpooled;
-import io.netty.channel.embedded.EmbeddedChannel;
 import org.apache.cassandra.SchemaLoader;
 import org.apache.cassandra.Util;
 import org.apache.cassandra.db.ColumnFamilyStore;
@@ -51,6 +49,7 @@ import org.apache.cassandra.io.sstable.Descriptor;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.io.sstable.format.SSTableReadsListener;
 import org.apache.cassandra.io.util.DataInputPlus;
+import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileHandle;
 import org.apache.cassandra.net.AsyncStreamingInputPlus;
 import org.apache.cassandra.schema.CachingParams;
@@ -59,6 +58,9 @@ import org.apache.cassandra.schema.Schema;
 import org.apache.cassandra.schema.TableMetadataRef;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.Pair;
+
+import io.netty.buffer.Unpooled;
+import io.netty.channel.embedded.EmbeddedChannel;
 
 import static org.apache.cassandra.io.util.DataInputPlus.DataInputStreamPlus;
 import static org.junit.Assert.assertEquals;

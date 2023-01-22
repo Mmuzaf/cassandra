@@ -18,11 +18,12 @@
 
 package org.apache.cassandra.db.streaming;
 
-import org.apache.cassandra.io.sstable.Component;
-import org.apache.cassandra.serializers.SerializationUtils;
+import java.util.LinkedHashMap;
+
 import org.junit.Test;
 
-import java.util.LinkedHashMap;
+import org.apache.cassandra.io.sstable.Component;
+import org.apache.cassandra.serializers.SerializationUtils;
 
 public class ComponentManifestTest
 {

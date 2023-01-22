@@ -20,17 +20,15 @@ package org.apache.cassandra.cql3.statements;
 import java.util.Iterator;
 import java.util.Optional;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-
-import org.apache.commons.lang3.ArrayUtils;
-
-import org.junit.Test;
-
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+
+import org.apache.commons.lang3.ArrayUtils;
+import org.junit.Test;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.CQLTester;
@@ -43,7 +41,12 @@ import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.transport.ProtocolVersion;
 
 import static java.lang.String.format;
-import static org.apache.cassandra.schema.SchemaConstants.*;
+import static org.apache.cassandra.schema.SchemaConstants.AUTH_KEYSPACE_NAME;
+import static org.apache.cassandra.schema.SchemaConstants.DISTRIBUTED_KEYSPACE_NAME;
+import static org.apache.cassandra.schema.SchemaConstants.SCHEMA_KEYSPACE_NAME;
+import static org.apache.cassandra.schema.SchemaConstants.SYSTEM_KEYSPACE_NAME;
+import static org.apache.cassandra.schema.SchemaConstants.TRACE_KEYSPACE_NAME;
+import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_SCHEMA;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;

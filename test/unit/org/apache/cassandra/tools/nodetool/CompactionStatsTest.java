@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.assertj.core.api.Assertions;
+import org.awaitility.Awaitility;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -35,8 +37,6 @@ import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.schema.MockSchema;
 import org.apache.cassandra.tools.ToolRunner;
 import org.apache.cassandra.utils.TimeUUID;
-import org.assertj.core.api.Assertions;
-import org.awaitility.Awaitility;
 
 import static org.apache.cassandra.utils.TimeUUID.Generator.nextTimeUUID;
 import static org.assertj.core.api.Assertions.assertThat;

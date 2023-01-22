@@ -21,19 +21,20 @@ package org.apache.cassandra.tools;
 import java.util.Arrays;
 import java.util.List;
 
+import com.datastax.driver.core.SimpleStatement;
 import com.google.common.collect.Lists;
+
+import org.assertj.core.api.Assertions;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import com.datastax.driver.core.SimpleStatement;
 import org.apache.cassandra.cql3.CQLTester;
 import org.apache.cassandra.service.CassandraDaemon;
 import org.apache.cassandra.service.GCInspector;
 import org.apache.cassandra.tools.ToolRunner.ToolResult;
 import org.apache.cassandra.transport.ProtocolVersion;
-import org.assertj.core.api.Assertions;
 
 /**
  * This class is to monitor the JMX compatability cross different versions, and relies on a gold set of metrics which

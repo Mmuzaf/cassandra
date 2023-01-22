@@ -19,15 +19,15 @@
  */
 package org.apache.cassandra.io.util;
 
-import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.utils.ByteBufferUtil;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.utils.ByteBufferUtil;
 
 import static org.apache.cassandra.Util.expectEOF;
 import static org.apache.cassandra.Util.expectException;

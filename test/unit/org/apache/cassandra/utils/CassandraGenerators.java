@@ -29,8 +29,14 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
+
 import org.apache.commons.lang3.builder.MultilineRecursiveToStringStyle;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+import org.quicktheories.core.Gen;
+import org.quicktheories.core.RandomnessSource;
+import org.quicktheories.generators.Generate;
+import org.quicktheories.generators.SourceDSL;
+import org.quicktheories.impl.Constraint;
 
 import org.apache.cassandra.cql3.ColumnIdentifier;
 import org.apache.cassandra.cql3.FieldIdentifier;
@@ -60,11 +66,6 @@ import org.apache.cassandra.schema.ColumnMetadata;
 import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.TableParams;
-import org.quicktheories.core.Gen;
-import org.quicktheories.core.RandomnessSource;
-import org.quicktheories.generators.Generate;
-import org.quicktheories.generators.SourceDSL;
-import org.quicktheories.impl.Constraint;
 
 import static org.apache.cassandra.utils.AbstractTypeGenerators.allowReversed;
 import static org.apache.cassandra.utils.AbstractTypeGenerators.getTypeSupport;

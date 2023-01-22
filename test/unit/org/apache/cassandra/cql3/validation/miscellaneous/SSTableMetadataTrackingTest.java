@@ -24,6 +24,7 @@ import org.apache.cassandra.cql3.CQLTester;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.Keyspace;
 import org.apache.cassandra.io.sstable.metadata.StatsMetadata;
+
 import static org.junit.Assert.assertEquals;
 
 public class SSTableMetadataTrackingTest extends CQLTester

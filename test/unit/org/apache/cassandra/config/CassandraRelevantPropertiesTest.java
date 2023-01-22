@@ -18,10 +18,10 @@
 
 package org.apache.cassandra.config;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
-import org.assertj.core.api.Assertions;
 
 public class CassandraRelevantPropertiesTest
 {

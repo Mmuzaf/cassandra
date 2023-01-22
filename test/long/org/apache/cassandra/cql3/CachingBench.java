@@ -29,14 +29,15 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
 import com.google.common.collect.Iterables;
+
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import org.junit.Assert;
+import org.apache.cassandra.cache.ChunkCache;
 import org.apache.cassandra.config.Config.CommitLogSync;
 import org.apache.cassandra.config.Config.DiskAccessMode;
-import org.apache.cassandra.cache.ChunkCache;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.compaction.CompactionManager;

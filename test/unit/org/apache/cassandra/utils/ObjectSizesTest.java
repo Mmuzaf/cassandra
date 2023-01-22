@@ -20,10 +20,9 @@ package org.apache.cassandra.utils;
 
 import java.nio.ByteBuffer;
 
-import org.junit.Test;
-
 import org.github.jamm.MemoryLayoutSpecification;
 import org.github.jamm.MemoryMeter;
+import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

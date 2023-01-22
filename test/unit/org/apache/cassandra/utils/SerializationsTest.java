@@ -21,7 +21,6 @@ package org.apache.cassandra.utils;
 import java.io.DataInputStream;
 import java.io.IOException;
 
-import org.apache.cassandra.io.util.FileInputStreamPlus;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,12 +30,12 @@ import org.apache.cassandra.Util;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.marshal.Int32Type;
+import org.apache.cassandra.dht.Murmur3Partitioner;
 import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.io.util.DataOutputStreamPlus;
-import org.apache.cassandra.dht.Murmur3Partitioner;
-import org.apache.cassandra.utils.obs.OffHeapBitSet;
-
 import org.apache.cassandra.io.util.File;
+import org.apache.cassandra.io.util.FileInputStreamPlus;
+import org.apache.cassandra.utils.obs.OffHeapBitSet;
 
 public class SerializationsTest extends AbstractSerializationsTester
 {

@@ -25,11 +25,12 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.junit.Test;
-
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.TupleType;
 import com.datastax.driver.core.TupleValue;
+
+import org.junit.Test;
+
 import org.apache.cassandra.cql3.CQLTester;
 import org.apache.cassandra.transport.ProtocolVersion;
 

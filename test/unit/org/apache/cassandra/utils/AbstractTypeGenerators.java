@@ -31,6 +31,10 @@ import java.util.stream.Stream;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import org.quicktheories.core.Gen;
+import org.quicktheories.core.RandomnessSource;
+import org.quicktheories.generators.SourceDSL;
+
 import org.apache.cassandra.cql3.FieldIdentifier;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.AsciiType;
@@ -53,9 +57,6 @@ import org.apache.cassandra.db.marshal.TupleType;
 import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.db.marshal.UUIDType;
 import org.apache.cassandra.db.marshal.UserType;
-import org.quicktheories.core.Gen;
-import org.quicktheories.core.RandomnessSource;
-import org.quicktheories.generators.SourceDSL;
 
 import static org.apache.cassandra.utils.Generators.IDENTIFIER_GEN;
 

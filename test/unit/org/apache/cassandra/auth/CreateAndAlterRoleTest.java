@@ -18,10 +18,11 @@
 
 package org.apache.cassandra.auth;
 
+import com.datastax.driver.core.exceptions.AuthenticationException;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.datastax.driver.core.exceptions.AuthenticationException;
 import org.apache.cassandra.Util;
 import org.apache.cassandra.cql3.CQLTester;
 

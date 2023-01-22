@@ -46,13 +46,13 @@ import org.apache.cassandra.io.sstable.format.SSTableReadsListener;
 import org.apache.cassandra.schema.ColumnMetadata;
 import org.apache.cassandra.schema.SchemaConstants;
 import org.apache.cassandra.schema.TableMetadata;
-import org.apache.cassandra.simulator.systems.NonInterceptible;
-import org.apache.cassandra.simulator.systems.NonInterceptible.Permit;
-import org.apache.cassandra.utils.TimeUUID;
 import org.apache.cassandra.service.paxos.Commit;
 import org.apache.cassandra.service.paxos.PaxosState;
+import org.apache.cassandra.simulator.systems.NonInterceptible;
+import org.apache.cassandra.simulator.systems.NonInterceptible.Permit;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.Shared;
+import org.apache.cassandra.utils.TimeUUID;
 
 import static java.lang.Long.max;
 import static java.util.Arrays.stream;

@@ -23,9 +23,9 @@ import java.nio.ByteBuffer;
 import java.util.Random;
 
 import com.google.common.primitives.Ints;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,13 +37,12 @@ import org.apache.cassandra.io.compress.CompressionMetadata;
 import org.apache.cassandra.io.sstable.metadata.MetadataCollector;
 import org.apache.cassandra.schema.CompressionParams;
 
-import static org.junit.Assert.assertNull;
+import static org.apache.cassandra.utils.Clock.Global.nanoTime;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
-import static org.apache.cassandra.utils.Clock.Global.nanoTime;
 
 public class MmappedRegionsTest
 {

@@ -18,18 +18,19 @@
 
 package org.apache.cassandra.distributed.test;
 
-import org.apache.cassandra.db.ColumnFamilyStore;
-import org.apache.cassandra.distributed.Cluster;
-import org.apache.cassandra.distributed.api.Feature;
-import org.apache.cassandra.io.sstable.Descriptor;
-import org.apache.cassandra.io.sstable.SequenceBasedSSTableId;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.junit.Test;
+
+import org.apache.cassandra.db.ColumnFamilyStore;
+import org.apache.cassandra.distributed.Cluster;
+import org.apache.cassandra.distributed.api.Feature;
+import org.apache.cassandra.io.sstable.Descriptor;
+import org.apache.cassandra.io.sstable.SequenceBasedSSTableId;
 
 import static org.apache.cassandra.Util.getBackups;
 import static org.apache.cassandra.distributed.Cluster.build;

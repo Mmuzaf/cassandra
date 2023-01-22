@@ -24,7 +24,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.cassandra.io.util.File;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.util.Lists;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -35,10 +36,9 @@ import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.exceptions.StartupException;
 import org.apache.cassandra.io.sstable.LegacySSTableTest;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
+import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.tools.ToolRunner.ToolResult;
-import org.assertj.core.api.Assertions;
-import org.assertj.core.util.Lists;
 
 import static org.junit.Assert.assertEquals;
 

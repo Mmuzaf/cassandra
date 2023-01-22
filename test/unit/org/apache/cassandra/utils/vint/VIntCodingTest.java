@@ -18,19 +18,21 @@
 */
 package org.apache.cassandra.utils.vint;
 
-import com.google.common.primitives.UnsignedInteger;
-import org.apache.cassandra.io.util.DataInputBuffer;
-import org.apache.cassandra.io.util.DataInputPlus;
-import org.apache.cassandra.io.util.DataOutputBuffer;
-import org.apache.cassandra.io.util.WrappedDataOutputStreamPlus;
-import org.junit.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+
+import com.google.common.primitives.UnsignedInteger;
+
+import org.junit.Test;
+
+import org.apache.cassandra.io.util.DataInputBuffer;
+import org.apache.cassandra.io.util.DataInputPlus;
+import org.apache.cassandra.io.util.DataOutputBuffer;
+import org.apache.cassandra.io.util.WrappedDataOutputStreamPlus;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;

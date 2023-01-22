@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
+
+import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -47,7 +49,6 @@ import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.transport.SimpleClient;
 import org.apache.cassandra.transport.messages.ResultMessage;
 import org.apache.cassandra.utils.MD5Digest;
-import org.assertj.core.api.Assertions;
 
 /**
  * This class is rather impelemntation specific.  It is possible that changes made will cause this tests to fail,

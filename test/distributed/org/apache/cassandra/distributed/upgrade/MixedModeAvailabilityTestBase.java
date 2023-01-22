@@ -21,9 +21,11 @@ package org.apache.cassandra.distributed.upgrade;
 import java.util.UUID;
 import java.util.concurrent.RejectedExecutionException;
 
+import com.vdurmont.semver4j.Semver;
+
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-import com.vdurmont.semver4j.Semver;
 import org.apache.cassandra.distributed.api.ConsistencyLevel;
 import org.apache.cassandra.distributed.api.ICoordinator;
 import org.apache.cassandra.exceptions.ReadFailureException;
@@ -31,7 +33,6 @@ import org.apache.cassandra.exceptions.ReadTimeoutException;
 import org.apache.cassandra.exceptions.WriteFailureException;
 import org.apache.cassandra.exceptions.WriteTimeoutException;
 import org.apache.cassandra.net.Verb;
-import org.assertj.core.api.Assertions;
 
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.SECONDS;

@@ -25,12 +25,12 @@ import java.util.Map;
 import java.util.stream.IntStream;
 
 import org.junit.Test;
+import org.psjava.util.AssertStatus;
+import org.quicktheories.core.Gen;
 
 import org.apache.cassandra.db.rows.Cell;
 import org.apache.cassandra.io.util.DataInputBuffer;
 import org.apache.cassandra.io.util.DataOutputBuffer;
-import org.psjava.util.AssertStatus;
-import org.quicktheories.core.Gen;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
