@@ -57,6 +57,15 @@
       <property name="classes" value=""/>
     </module>
 
+    <module name="AvoidStarImport"/>
+    <module name="ImportOrder">
+      <property name="groups" value="java,javax,/^com\./,/^net\./,/^org\./,/^org\.apache\.cassandra\./"/>
+      <property name="ordered" value="true"/>
+      <property name="separated" value="true"/>
+      <property name="option" value="bottom"/>
+      <property name="sortStaticImportsAlphabetically" value="true"/>
+    </module>
+
     <module name="RedundantImport"/>
     <module name="UnusedImports"/>
   </module>
