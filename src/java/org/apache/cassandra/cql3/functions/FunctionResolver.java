@@ -28,9 +28,9 @@ import org.apache.cassandra.cql3.AbstractMarker;
 import org.apache.cassandra.cql3.AssignmentTestable;
 import org.apache.cassandra.cql3.ColumnIdentifier;
 import org.apache.cassandra.cql3.ColumnSpecification;
-import org.apache.cassandra.schema.Schema;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.exceptions.InvalidRequestException;
+import org.apache.cassandra.schema.Schema;
 
 import static java.util.stream.Collectors.joining;
 import static org.apache.cassandra.cql3.statements.RequestValidations.invalidRequest;

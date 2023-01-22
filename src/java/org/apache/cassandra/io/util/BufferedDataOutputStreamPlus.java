@@ -26,6 +26,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 import net.nicoulaj.compilecommand.annotations.DontInline;
+
 import org.apache.cassandra.config.Config;
 import org.apache.cassandra.utils.FastByteOperations;
 

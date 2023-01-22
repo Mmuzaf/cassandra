@@ -19,10 +19,11 @@ package org.apache.cassandra.hadoop.cql3;
 * under the License.
 *
 */
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.io.InputStream;
-import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -36,23 +37,24 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 
-import com.google.common.base.Optional;
-import org.apache.commons.lang3.StringUtils;
-
 import com.datastax.driver.core.AuthProvider;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.HostDistance;
 import com.datastax.driver.core.JdkSSLOptions;
 import com.datastax.driver.core.PlainTextAuthProvider;
-import com.datastax.driver.core.ProtocolVersion;
-import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.ProtocolOptions;
+import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.QueryOptions;
 import com.datastax.driver.core.SSLOptions;
 import com.datastax.driver.core.SocketOptions;
-import org.apache.cassandra.hadoop.ConfigHelper;
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
+import com.google.common.base.Optional;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+
+import org.apache.cassandra.hadoop.ConfigHelper;
 
 
 public class CqlConfigHelper

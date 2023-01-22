@@ -26,9 +26,8 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import org.apache.cassandra.utils.ByteBufferUtil;
 
-import static org.apache.cassandra.utils.TimeUUID.Generator.nextTimeUUID;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.cassandra.utils.TimeUUID.Generator.nextTimeUUID;
 
 /**
  * The unique identifier of a table.

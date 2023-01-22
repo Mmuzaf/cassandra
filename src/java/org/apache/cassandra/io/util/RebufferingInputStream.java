@@ -17,13 +17,18 @@
  */
 package org.apache.cassandra.io.util;
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import com.google.common.base.Preconditions;
 
 import net.nicoulaj.compilecommand.annotations.DontInline;
+
 import org.apache.cassandra.utils.FastByteOperations;
 import org.apache.cassandra.utils.vint.VIntCoding;
 

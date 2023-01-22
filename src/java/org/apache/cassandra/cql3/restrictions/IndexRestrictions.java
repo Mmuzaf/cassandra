@@ -21,11 +21,12 @@ package org.apache.cassandra.cql3.restrictions;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.cassandra.cql3.QualifiedName;
-import org.apache.cassandra.schema.TableMetadata;
-import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+
+import org.apache.cassandra.cql3.QualifiedName;
+import org.apache.cassandra.exceptions.InvalidRequestException;
+import org.apache.cassandra.schema.TableMetadata;
 
 public class IndexRestrictions
 {

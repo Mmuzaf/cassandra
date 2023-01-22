@@ -21,12 +21,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import org.apache.cassandra.db.DeletionTime;
 import org.apache.cassandra.db.partitions.UnfilteredPartitionIterator;
 import org.apache.cassandra.utils.AbstractIterator;
 import org.apache.cassandra.utils.CloseableIterator;
-
-import com.google.common.annotations.VisibleForTesting;
 
 /**
  * A utility class to split the given {@link#UnfilteredRowIterator} into smaller chunks each

@@ -18,7 +18,6 @@
 */
 package org.apache.cassandra.utils;
 
-import org.apache.cassandra.io.util.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
@@ -31,6 +30,7 @@ import java.util.stream.Stream;
 
 import org.apache.cassandra.io.FSReadError;
 import org.apache.cassandra.io.FSWriteError;
+import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.utils.concurrent.UncheckedInterruptedException;
 
 public final class Throwables

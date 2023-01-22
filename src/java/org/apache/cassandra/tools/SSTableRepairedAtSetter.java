@@ -29,18 +29,6 @@ import java.util.List;
 
 import org.apache.cassandra.io.sstable.Component;
 import org.apache.cassandra.io.sstable.Descriptor;
-
-/**
- * Set repairedAt status on a given set of sstables.
- *
- * If you pass --is-repaired, it will set the repairedAt time to the last modified time.
- *
- * If you know you ran repair 2 weeks ago, you can do something like
- *
- * {@code
- * sstablerepairset --is-repaired -f <(find /var/lib/cassandra/data/.../ -iname "*Data.db*" -mtime +14)
- * }
- */
 import org.apache.cassandra.io.util.File;
 
 public class SSTableRepairedAtSetter

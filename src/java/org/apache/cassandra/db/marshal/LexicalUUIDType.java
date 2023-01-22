@@ -22,8 +22,8 @@ import java.util.UUID;
 
 import org.apache.cassandra.cql3.Constants;
 import org.apache.cassandra.cql3.Term;
-import org.apache.cassandra.serializers.TypeSerializer;
 import org.apache.cassandra.serializers.MarshalException;
+import org.apache.cassandra.serializers.TypeSerializer;
 import org.apache.cassandra.serializers.UUIDSerializer;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.bytecomparable.ByteComparable;

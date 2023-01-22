@@ -30,11 +30,11 @@ import org.apache.cassandra.dht.Token.KeyBound;
 import org.apache.cassandra.schema.ColumnMetadata;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.utils.ByteBufferUtil;
+import org.apache.cassandra.utils.IFilter.FilterKey;
+import org.apache.cassandra.utils.MurmurHash;
 import org.apache.cassandra.utils.bytecomparable.ByteComparable;
 import org.apache.cassandra.utils.bytecomparable.ByteSource;
 import org.apache.cassandra.utils.bytecomparable.ByteSourceInverse;
-import org.apache.cassandra.utils.IFilter.FilterKey;
-import org.apache.cassandra.utils.MurmurHash;
 
 /**
  * Represents a decorated key, handy for certain operations

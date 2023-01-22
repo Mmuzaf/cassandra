@@ -21,6 +21,7 @@ package org.apache.cassandra.security;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
@@ -29,13 +30,14 @@ import javax.net.ssl.TrustManagerFactory;
 
 import com.google.common.collect.ImmutableList;
 
+import org.apache.cassandra.config.Config;
+
 import io.netty.handler.ssl.CipherSuiteFilter;
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
-import org.apache.cassandra.config.Config;
 
 /**
  * Abstract class implementing {@code ISslContextFacotry} to provide most of the functionality that any

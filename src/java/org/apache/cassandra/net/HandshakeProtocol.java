@@ -24,8 +24,6 @@ import java.util.Objects;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.io.compress.BufferType;
 import org.apache.cassandra.io.util.DataInputBuffer;
@@ -34,13 +32,17 @@ import org.apache.cassandra.io.util.DataOutputBufferFixed;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.utils.memory.BufferPools;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.cassandra.locator.InetAddressAndPort.Serializer.inetAddressAndPortSerializer;
+import static org.apache.cassandra.net.Crc.InvalidCrc;
+import static org.apache.cassandra.net.Crc.computeCrc32;
+import static org.apache.cassandra.net.Message.validateLegacyProtocolMagic;
 import static org.apache.cassandra.net.MessagingService.VERSION_30;
 import static org.apache.cassandra.net.MessagingService.VERSION_40;
-import static org.apache.cassandra.net.Message.validateLegacyProtocolMagic;
-import static org.apache.cassandra.net.Crc.*;
-import static org.apache.cassandra.net.OutboundConnectionSettings.*;
+import static org.apache.cassandra.net.OutboundConnectionSettings.Framing;
 
 /**
  * Messages for the handshake phase of the internode protocol.

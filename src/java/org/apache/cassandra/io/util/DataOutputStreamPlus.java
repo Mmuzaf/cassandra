@@ -22,9 +22,10 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 
-import io.netty.util.concurrent.FastThreadLocal;
 import org.apache.cassandra.config.Config;
 import org.apache.cassandra.utils.ByteBufferUtil;
+
+import io.netty.util.concurrent.FastThreadLocal;
 
 /**
  * Abstract base class for DataOutputStreams that accept writes from ByteBuffer or Memory and also provide

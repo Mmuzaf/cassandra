@@ -31,8 +31,8 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import org.slf4j.Logger;
@@ -56,7 +56,6 @@ import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.TimeUUID;
 
 import static java.lang.String.format;
-
 import static org.apache.cassandra.utils.ByteBufferUtil.bytes;
 
 public final class SystemDistributedKeyspace

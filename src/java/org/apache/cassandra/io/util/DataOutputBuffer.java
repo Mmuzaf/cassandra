@@ -25,8 +25,9 @@ import java.nio.channels.WritableByteChannel;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
-import io.netty.util.concurrent.FastThreadLocal;
 import org.apache.cassandra.config.Config;
+
+import io.netty.util.concurrent.FastThreadLocal;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.DATA_OUTPUT_BUFFER_ALLOCATE_TYPE;
 

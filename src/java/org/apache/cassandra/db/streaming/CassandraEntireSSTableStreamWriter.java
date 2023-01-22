@@ -27,9 +27,9 @@ import org.slf4j.LoggerFactory;
 import org.apache.cassandra.io.sstable.Component;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.streaming.ProgressInfo;
-import org.apache.cassandra.streaming.StreamingDataOutputPlus;
 import org.apache.cassandra.streaming.StreamManager;
 import org.apache.cassandra.streaming.StreamSession;
+import org.apache.cassandra.streaming.StreamingDataOutputPlus;
 
 import static org.apache.cassandra.streaming.StreamManager.StreamRateLimiter;
 import static org.apache.cassandra.utils.FBUtilities.prettyPrintMemory;

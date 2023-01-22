@@ -23,20 +23,33 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelPipeline;
-import io.netty.handler.codec.compression.Lz4FrameDecoder;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4SafeDecompressor;
 import net.jpountz.xxhash.XXHash32;
 import net.jpountz.xxhash.XXHashFactory;
+
 import org.apache.cassandra.utils.memory.BufferPool;
 import org.apache.cassandra.utils.memory.BufferPools;
 
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.compression.Lz4FrameDecoder;
+
 import static java.lang.Integer.reverseBytes;
 import static java.lang.String.format;
-import static org.apache.cassandra.net.LegacyLZ4Constants.*;
+import static org.apache.cassandra.net.LegacyLZ4Constants.BLOCK_TYPE_COMPRESSED;
+import static org.apache.cassandra.net.LegacyLZ4Constants.BLOCK_TYPE_NON_COMPRESSED;
+import static org.apache.cassandra.net.LegacyLZ4Constants.CHECKSUM_OFFSET;
+import static org.apache.cassandra.net.LegacyLZ4Constants.COMPRESSED_LENGTH_OFFSET;
+import static org.apache.cassandra.net.LegacyLZ4Constants.HEADER_LENGTH;
+import static org.apache.cassandra.net.LegacyLZ4Constants.MAGIC_NUMBER;
+import static org.apache.cassandra.net.LegacyLZ4Constants.MAGIC_NUMBER_OFFSET;
+import static org.apache.cassandra.net.LegacyLZ4Constants.MAX_BLOCK_LENGTH;
+import static org.apache.cassandra.net.LegacyLZ4Constants.TOKEN_OFFSET;
+import static org.apache.cassandra.net.LegacyLZ4Constants.UNCOMPRESSED_LENGTH_OFFSET;
+import static org.apache.cassandra.net.LegacyLZ4Constants.XXHASH_MASK;
+import static org.apache.cassandra.net.LegacyLZ4Constants.XXHASH_SEED;
 import static org.apache.cassandra.utils.ByteBufferUtil.copyBytes;
 
 /**

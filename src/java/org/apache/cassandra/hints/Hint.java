@@ -21,10 +21,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
+import javax.annotation.Nullable;
+
 import com.google.common.base.Throwables;
 import com.google.common.primitives.Ints;
 
-import javax.annotation.Nullable;
+import org.assertj.core.util.VisibleForTesting;
+
 import org.apache.cassandra.db.Mutation;
 import org.apache.cassandra.db.SystemKeyspace;
 import org.apache.cassandra.io.IVersionedSerializer;
@@ -35,7 +38,6 @@ import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.utils.concurrent.Future;
 import org.apache.cassandra.utils.concurrent.ImmediateFuture;
 import org.apache.cassandra.utils.vint.VIntCoding;
-import org.assertj.core.util.VisibleForTesting;
 
 import static org.apache.cassandra.db.TypeSizes.sizeof;
 import static org.apache.cassandra.db.TypeSizes.sizeofUnsignedVInt;

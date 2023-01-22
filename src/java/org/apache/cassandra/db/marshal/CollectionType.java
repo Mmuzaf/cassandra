@@ -17,11 +17,11 @@
  */
 package org.apache.cassandra.db.marshal;
 
-import java.nio.ByteBuffer;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 import java.util.function.Consumer;
 
 import org.apache.cassandra.cql3.CQL3Type;

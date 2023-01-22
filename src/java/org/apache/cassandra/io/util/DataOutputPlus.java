@@ -17,12 +17,12 @@
  */
 package org.apache.cassandra.io.util;
 
-import org.apache.cassandra.utils.Shared;
-import org.apache.cassandra.utils.vint.VIntCoding;
-
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+
+import org.apache.cassandra.utils.Shared;
+import org.apache.cassandra.utils.vint.VIntCoding;
 
 import static org.apache.cassandra.utils.Shared.Scope.SIMULATION;
 

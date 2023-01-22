@@ -19,18 +19,29 @@ package org.apache.cassandra.net;
 
 import java.nio.ByteBuffer;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandler;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.xxhash.XXHash32;
 import net.jpountz.xxhash.XXHashFactory;
+
 import org.apache.cassandra.io.compress.BufferType;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandler;
+
 import static java.lang.Integer.reverseBytes;
 import static java.lang.Math.min;
-import static org.apache.cassandra.net.LegacyLZ4Constants.*;
+import static org.apache.cassandra.net.LegacyLZ4Constants.CHECKSUM_OFFSET;
+import static org.apache.cassandra.net.LegacyLZ4Constants.COMPRESSED_LENGTH_OFFSET;
+import static org.apache.cassandra.net.LegacyLZ4Constants.DEFAULT_BLOCK_LENGTH;
+import static org.apache.cassandra.net.LegacyLZ4Constants.HEADER_LENGTH;
+import static org.apache.cassandra.net.LegacyLZ4Constants.MAGIC_NUMBER;
+import static org.apache.cassandra.net.LegacyLZ4Constants.MAGIC_NUMBER_OFFSET;
+import static org.apache.cassandra.net.LegacyLZ4Constants.TOKEN_OFFSET;
+import static org.apache.cassandra.net.LegacyLZ4Constants.UNCOMPRESSED_LENGTH_OFFSET;
+import static org.apache.cassandra.net.LegacyLZ4Constants.XXHASH_MASK;
+import static org.apache.cassandra.net.LegacyLZ4Constants.XXHASH_SEED;
 
 /**
  * LZ4 {@link FrameEncoder} implementation for compressed legacy (3.0, 3.11) connections.

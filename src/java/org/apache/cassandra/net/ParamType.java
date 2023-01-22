@@ -19,6 +19,7 @@ package org.apache.cassandra.net;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.annotation.Nullable;
 
 import org.apache.cassandra.exceptions.RequestFailureReason;
@@ -29,7 +30,6 @@ import org.apache.cassandra.utils.Int64Serializer;
 import org.apache.cassandra.utils.TimeUUID;
 
 import static java.lang.Math.max;
-
 import static org.apache.cassandra.locator.InetAddressAndPort.FwdFrmSerializer.fwdFrmSerializer;
 
 /**

@@ -19,10 +19,10 @@ package org.apache.cassandra.io.sstable.format;
 
 import com.google.common.base.CharMatcher;
 
-import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.db.RowIndexEntry;
 import org.apache.cassandra.db.SerializationHeader;
 import org.apache.cassandra.io.sstable.format.big.BigFormat;
+import org.apache.cassandra.schema.TableMetadata;
 
 /**
  * Provides the accessors to data on disk.

@@ -18,21 +18,22 @@
 
 package org.apache.cassandra.tools;
 
-import static java.lang.String.format;
-
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.TreeMap;
-import java.util.Map.Entry;
 import java.util.function.LongFunction;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.ColumnIdentifier;
@@ -48,8 +49,7 @@ import org.apache.cassandra.utils.EstimatedHistogram;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.streamhist.TombstoneHistogram;
 
-import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
+import static java.lang.String.format;
 
 @SuppressWarnings("serial")
 public final class Util

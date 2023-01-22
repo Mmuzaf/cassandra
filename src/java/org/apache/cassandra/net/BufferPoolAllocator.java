@@ -19,14 +19,16 @@ package org.apache.cassandra.net;
 
 import java.nio.ByteBuffer;
 
+import org.assertj.core.util.VisibleForTesting;
+
+import org.apache.cassandra.io.compress.BufferType;
+import org.apache.cassandra.utils.memory.BufferPool;
+import org.apache.cassandra.utils.memory.BufferPools;
+
 import io.netty.buffer.AbstractByteBufAllocator;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.buffer.UnpooledUnsafeDirectByteBuf;
-import org.apache.cassandra.io.compress.BufferType;
-import org.apache.cassandra.utils.memory.BufferPool;
-import org.apache.cassandra.utils.memory.BufferPools;
-import org.assertj.core.util.VisibleForTesting;
 
 import static java.lang.Integer.max;
 
