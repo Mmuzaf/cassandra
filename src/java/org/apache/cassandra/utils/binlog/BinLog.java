@@ -60,7 +60,7 @@ import static java.lang.String.format;
  * Performance safety is accomplished by feeding items to the binary log using a weighted queue and dropping records if the binary log falls
  * sufficiently far behind.
  *
- * Simplicity and good enough perforamance is achieved by using a single log writing thread as well as Chronicle Queue
+ * Simplicity and good enough performance is achieved by using a single log writing thread as well as Chronicle Queue
  * to handle writing the log, making it available for readers, as well as log rolling.
  *
  */

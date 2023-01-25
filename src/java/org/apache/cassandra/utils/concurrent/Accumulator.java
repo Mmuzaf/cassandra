@@ -158,7 +158,7 @@ public class Accumulator<E>
     }
 
     /**
-     * Removes element at the speficied index from this accumulator.
+     * Removes element at the specified index from this accumulator.
      *
      * This method is not thread-safe when used concurrently with {@link #add(Object)}.
      */

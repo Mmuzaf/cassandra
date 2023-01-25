@@ -117,7 +117,7 @@ public class AbstractPaxosRepairTest
     @Test
     public void stateUpdate()
     {
-        // listeners shoulnd't be called on state updates
+        // listeners shouldn't be called on state updates
         PaxosTestRepair repair = new PaxosTestRepair();
         Listener listener = new Listener();
         repair.addListener(listener);

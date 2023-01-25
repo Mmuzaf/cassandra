@@ -27,7 +27,7 @@ import java.nio.ByteBuffer;
 /**
  * Indicates to the client that authentication has succeeded.
  *
- * Optionally ships some final informations from the server (as mandated by
+ * Optionally ships some final information from the server (as mandated by
  * SASL).
  */
 public class AuthSuccess extends Message.Response

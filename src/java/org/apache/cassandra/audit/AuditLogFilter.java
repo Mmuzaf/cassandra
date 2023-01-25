@@ -146,7 +146,7 @@ final class AuditLogFilter
      * If includeSet does not contain any items, by default everything is included
      * If an input is part of both includeSet and excludeSet, excludeSet takes the priority over includeSet
      *
-     * @param input      Input to be checked for filtereing based on includeSet and excludeSet
+     * @param input      Input to be checked for filtering based on includeSet and excludeSet
      * @param includeSet Include filtering set
      * @param excludeSet Exclude filtering set
      * @return true if the input is filtered, false when the input is not filtered

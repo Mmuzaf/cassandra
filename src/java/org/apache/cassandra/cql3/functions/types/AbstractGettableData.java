@@ -48,7 +48,7 @@ implements GettableData
      * Returns the index corresponding to a given name.
      *
      * @param name the name for which to return the index of.
-     * @return the index for the value coressponding to {@code name}.
+     * @return the index for the value corresponding to {@code name}.
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
      */
     protected abstract int getIndexOf(String name);

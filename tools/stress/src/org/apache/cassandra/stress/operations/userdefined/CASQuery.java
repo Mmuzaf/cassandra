@@ -167,7 +167,7 @@ public class CASQuery extends SchemaStatement
             keys[i] = row.get(keysIndex.get(i));
         }
 
-        //get current db values for all the coluns which are part of dynamic conditions
+        //get current db values for all the columns which are part of dynamic conditions
         ResultSet rs = client.getSession().execute(casReadConditionStatement.bind(keys));
         final Object casDbValues[] = new Object[casConditionArgFreqMap.size()];
 

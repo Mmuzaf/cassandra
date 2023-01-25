@@ -339,7 +339,7 @@ public class BigTableScanner implements ISSTableScanner
 
                 /*
                  * For a given partition key, we want to avoid hitting the data
-                 * file unless we're explicitely asked to. This is important
+                 * file unless we're explicitly asked to. This is important
                  * for PartitionRangeReadCommand#checkCacheFilter.
                  */
                 return new LazilyInitializedUnfilteredRowIterator(currentKey)

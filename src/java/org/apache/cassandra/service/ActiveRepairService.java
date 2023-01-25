@@ -135,7 +135,7 @@ import static org.apache.cassandra.utils.concurrent.CountDownLatch.newCountDownL
  * one for each token range to repair. On repair session might repair multiple
  * column families. For each of those column families, the repair session will
  * request merkle trees for each replica of the range being repaired, diff those
- * trees upon receiving them, schedule the streaming ofthe parts to repair (based on
+ * trees upon receiving them, schedule the streaming of the parts to repair (based on
  * the tree diffs) and wait for all those operation. See RepairSession for more
  * details.
  *

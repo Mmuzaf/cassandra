@@ -60,9 +60,9 @@ public class BufferPoolMetricsTest
 
         // the idea is to test changes in the sizeOfBufferPool metric which starts at zero. it will bump up
         // after the first request for a ByteBuffer and the idea from there will be to keep requesting them
-        // until it bumps a second time at which point there should be some confidence that thie metric is
+        // until it bumps a second time at which point there should be some confidence that the metric is
         // behaving as expected. these assertions should occur well within the value of the MEMORY_USAGE_THRESHOLD
-        // given the maxBufferSize (just covering the case of the weirdest random seed in the multiverse i guess - a
+        // given the maxBufferSize (just covering the case of the weirdest random seed in the multiverse I guess - a
         // while loop might have sufficed as well but a definitive termination seemed nicer)
         final long seed = System.currentTimeMillis();
         final Random rand = new Random(seed);

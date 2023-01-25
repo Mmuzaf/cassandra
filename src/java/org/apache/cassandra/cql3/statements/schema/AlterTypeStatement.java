@@ -200,7 +200,7 @@ public abstract class AlterTypeStatement extends AlterSchemaStatement
                 if (idx < 0)
                 {
                     if (!ifFieldExists)
-                        throw ire("Unkown field %s in user type %s", oldName, userType.getCqlTypeName());
+                        throw ire("Unknown field %s in user type %s", oldName, userType.getCqlTypeName());
                     return;
                 }
                 fieldNames.set(idx, newName);

@@ -48,7 +48,7 @@ import org.apache.cassandra.service.StorageService;
  * TODO: I think we can get rid of that class. For addition/removal of view by names, we could move it Keyspace. And we
  * not sure it's even worth keeping viewsByName as none of the related operation are performance sensitive so we could
  * find the view by iterating over the CFStore.viewManager directly.
- * For the lock, it could move to Keyspace too, but I don't remmenber why it has to be at the keyspace level and if it
+ * For the lock, it could move to Keyspace too, but I don't remember why it has to be at the keyspace level and if it
  * can be at the table level, maybe that's where it should be.
  */
 public class ViewManager

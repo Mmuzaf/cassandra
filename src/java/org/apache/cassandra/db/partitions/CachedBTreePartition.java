@@ -166,7 +166,7 @@ public class CachedBTreePartition extends ImmutableBTreePartition implements Cac
 
             // Note that it would be slightly simpler to just do
             //   ArrayBackedCachedPiartition.create(UnfilteredRowIteratorSerializer.serializer.deserialize(...));
-            // However deserializing the header separatly is not a lot harder and allows us to:
+            // However deserializing the header separately is not a lot harder and allows us to:
             //   1) get the capacity of the partition so we can size it properly directly
             //   2) saves the creation of a temporary iterator: rows are directly written to the partition, which
             //      is slightly faster.

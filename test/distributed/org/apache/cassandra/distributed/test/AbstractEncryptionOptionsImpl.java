@@ -336,7 +336,7 @@ public class AbstractEncryptionOptionsImpl extends TestBaseImpl
         }
     }
 
-    /* Provde the cluster cannot start with the configured options */
+    /* Provide the cluster cannot start with the configured options */
     void assertCannotStartDueToConfigurationException(Cluster cluster)
     {
         Throwable tr = null;

@@ -208,7 +208,7 @@ public class MessagingServiceTest
 
         long count = updater.dcLatency.getCount();
         updater.accept(now - sentAt, MILLISECONDS);
-        // negative value shoudln't be recorded
+        // negative value shouldn't be recorded
         assertEquals(count, updater.dcLatency.getCount());
     }
 

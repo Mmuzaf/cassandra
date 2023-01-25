@@ -38,7 +38,7 @@ import io.netty.handler.ssl.SslProvider;
 import org.apache.cassandra.config.Config;
 
 /**
- * Abstract class implementing {@code ISslContextFacotry} to provide most of the functionality that any
+ * Abstract class implementing {@code ISslContextFactory} to provide most of the functionality that any
  * implementation might need. This does not assume any file-based credentials for keys/certs hence provide a good base
  * for any implementation that only need to customize the loading of keys/certs in a custom way.
  * <p>

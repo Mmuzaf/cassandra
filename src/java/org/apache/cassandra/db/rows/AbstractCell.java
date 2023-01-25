@@ -148,7 +148,7 @@ public abstract class AbstractCell<V> extends Cell<V>
         if (localDeletionTime() < 0)
             throw new MarshalException("A local deletion time should not be negative");
         if (isExpiring() && localDeletionTime() == NO_DELETION_TIME)
-            throw new MarshalException("Shoud not have a TTL without an associated local deletion time");
+            throw new MarshalException("Should not have a TTL without an associated local deletion time");
 
         // non-frozen UDTs require both the cell path & value to validate,
         // so that logic is pushed down into ColumnMetadata. Tombstone

@@ -167,7 +167,7 @@ public class CassandraOutgoingFile implements OutgoingStream
         }
         else
         {
-            // legacy streaming is not affected by stats metadata mutation and index sumary redistribution
+            // legacy streaming is not affected by stats metadata mutation and index summary redistribution
             CassandraStreamHeader.serializer.serialize(header, out, version);
             out.flush();
 

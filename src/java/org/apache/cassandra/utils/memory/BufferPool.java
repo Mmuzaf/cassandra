@@ -99,7 +99,7 @@ import static org.apache.cassandra.utils.memory.MemoryUtil.isExactlyDirect;
  *       <ul>
  *         <li>used to serve allocation size that is less than NORMAL_ALLOCATION_UNIT</li>
  *         <li>when there is insufficient space in the local queue, it will request parent normal pool for more tiny chunks</li>
- *         <li>when tiny chunk is fully freed, it will be passed to paretn normal pool and corresponding buffer in the parent normal chunk is freed</li>
+ *         <li>when tiny chunk is fully freed, it will be passed to parent normal pool and corresponding buffer in the parent normal chunk is freed</li>
  *       </ul>
  *     </li>
  * </ul>

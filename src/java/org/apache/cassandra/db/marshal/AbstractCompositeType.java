@@ -98,7 +98,7 @@ public abstract class AbstractCompositeType extends AbstractType<ByteBuffer>
     protected abstract int startingOffset(boolean isStatic);
 
     /**
-     * Split a composite column names into it's components.
+     * Split a composite column names into its components.
      */
     public ByteBuffer[] split(ByteBuffer bb)
     {
@@ -139,7 +139,7 @@ public abstract class AbstractCompositeType extends AbstractType<ByteBuffer>
     }
 
     /*
-     * Reverses the effect of espace().
+     * Reverses the effect of escape().
      * Replaces all occurences of "\:" by ":" and remove last character if it is '!'.
      */
     static String unescape(String input)

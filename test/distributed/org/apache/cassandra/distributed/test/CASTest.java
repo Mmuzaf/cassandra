@@ -334,7 +334,7 @@ public class CASTest extends CASCommonTestCases
         consistencyAfterWriteTimeoutTest(operation1, operation2, true, THREE_NODES);
     }
 
-    // TODO: this shoud probably be moved into the dtest API.
+    // TODO: this should probably be moved into the dtest API.
     private void assertCasNotApplied(Object[][] resultSet)
     {
         assertFalse("Expected a CAS resultSet (with at least application result) but got an empty one.",

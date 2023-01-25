@@ -404,7 +404,7 @@ public abstract class AbstractTokenTreeBuilder implements TokenTreeBuilder
 
             public short offsetExtra()
             {
-                // exta offset is supposed to be an unsigned 16-bit integer
+                // extra offset is supposed to be an unsigned 16-bit integer
                 return (short) offset;
             }
         }

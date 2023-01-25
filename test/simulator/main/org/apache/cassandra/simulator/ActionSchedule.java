@@ -140,7 +140,7 @@ public class ActionSchedule implements CloseableIterator<Object>, LongConsumer
     final PriorityQueue<Action> scheduled = new DefaultPriorityQueue<>(Action::compareByDeadline, 128);
     // queue of items that are runnable (i.e. within scheduler jitter of min deadline) sorted by their execution order (i.e. priority)
     final PriorityQueue<Action> runnable = new DefaultPriorityQueue<>(Action::compareByPriority, 128);
-    // auxillary queue of items that are runnable so that we may track the time span covered by runnable items we are randomising execution of
+    // auxiliary queue of items that are runnable so that we may track the time span covered by runnable items we are randomising execution of
     final PriorityQueue<Action> runnableByDeadline = new DefaultPriorityQueue<>(Action::compareByDeadline, 128);
 
     private Mode mode;

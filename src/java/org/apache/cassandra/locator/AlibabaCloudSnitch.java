@@ -87,7 +87,7 @@ public class AlibabaCloudSnitch extends AbstractNetworkTopologySnitch
             
             int code = conn.getResponseCode();
             if (code != HttpURLConnection.HTTP_OK)
-                throw new ConfigurationException("AlibabaSnitch was unable to execute the API call. Not an ecs node? and the returun code is " + code);
+                throw new ConfigurationException("AlibabaSnitch was unable to execute the API call. Not an ecs node? and the return code is " + code);
 
             // Read the information. I wish I could say (String) conn.getContent() here...
             int cl = conn.getContentLength();

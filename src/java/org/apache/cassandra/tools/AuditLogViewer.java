@@ -43,7 +43,7 @@ import org.apache.cassandra.audit.BinAuditLogger;
 import org.apache.cassandra.utils.binlog.BinLog;
 
 /**
- * Tool to view the contenst of AuditLog files in human readable format. Default implementation for AuditLog files
+ * Tool to view the contents of AuditLog files in human readable format. Default implementation for AuditLog files
  * logs audit messages in {@link org.apache.cassandra.utils.binlog.BinLog} format, this tool prints the contens of
  * binary audit log files in text format.
  */

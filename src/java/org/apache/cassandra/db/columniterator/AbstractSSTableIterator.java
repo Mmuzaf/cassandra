@@ -270,7 +270,7 @@ public abstract class AbstractSSTableIterator implements UnfilteredRowIterator
     private void closeInternal() throws IOException
     {
         // It's important to make closing idempotent since it would bad to double-close 'file' as its a RandomAccessReader
-        // and its close is not idemptotent in the case where we recycle it.
+        // and its close is not idempotent in the case where we recycle it.
         if (isClosed)
             return;
 

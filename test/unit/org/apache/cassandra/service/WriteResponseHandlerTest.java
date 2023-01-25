@@ -170,7 +170,7 @@ public class WriteResponseHandlerTest
      * @throws Throwable
      */
     @Test
-    public void idealCLWriteResponeHandlerWorks() throws Throwable
+    public void idealCLWriteResponseHandlerWorks() throws Throwable
     {
         long startingCount = ks.metric.idealCLWriteLatency.latency.getCount();
         AbstractWriteResponseHandler awr = createWriteResponseHandler(ConsistencyLevel.LOCAL_QUORUM, ConsistencyLevel.ALL);
@@ -193,7 +193,7 @@ public class WriteResponseHandlerTest
      * @throws Throwable
      */
     @Test
-    public void idealCLDatacenterWriteResponeHandlerWorks() throws Throwable
+    public void idealCLDatacenterWriteResponseHandlerWorks() throws Throwable
     {
         long startingCount = ks.metric.idealCLWriteLatency.latency.getCount();
         AbstractWriteResponseHandler awr = createWriteResponseHandler(ConsistencyLevel.ONE, ConsistencyLevel.LOCAL_QUORUM);

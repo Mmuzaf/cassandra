@@ -253,7 +253,7 @@ public final class AggregationQueryPager implements QueryPager
         /**
          * Updates the pager with the new limits if needed.
          *
-         * @param pager the pager previoulsy used
+         * @param pager the pager previously used
          * @param limits the DataLimits
          * @param lastPartitionKey the partition key of the last row returned
          * @param lastClustering the clustering of the last row returned

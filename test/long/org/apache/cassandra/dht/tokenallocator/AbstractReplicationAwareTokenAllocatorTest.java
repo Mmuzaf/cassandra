@@ -35,7 +35,7 @@ import static org.apache.cassandra.utils.Clock.Global.currentTimeMillis;
 
 /**
  * Base class for {@link Murmur3ReplicationAwareTokenAllocatorTest} and {@link RandomReplicationAwareTokenAllocatorTest},
- * we need to separate classes to avoid timeous in case flaky tests need to be repeated, see CASSANDRA-12784.
+ * we need to separate classes to avoid timeouts in case flaky tests need to be repeated, see CASSANDRA-12784.
  */
 @Ignore
 abstract class AbstractReplicationAwareTokenAllocatorTest extends TokenAllocatorTestBase

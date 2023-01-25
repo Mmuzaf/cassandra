@@ -363,7 +363,7 @@ public class BinLogTest
                 assertTrue(binLog.offer(record(testString)));
             }
 
-            //it shoudl reject this record since it is full
+            //it should reject this record since it is full
             assertFalse(binLog.offer(record(testString)));
         }
         finally

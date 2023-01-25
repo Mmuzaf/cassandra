@@ -90,7 +90,7 @@ abstract public class AlterSchemaStatement implements CQLStatement.SingleKeyspac
     }
 
     /**
-     * Schema alteration might produce a client warning (e.g. a warning to run full repair when increading RF of a keyspace).
+     * Schema alteration might produce a client warning (e.g. a warning to run full repair when increasing RF of a keyspace).
      * This method should be used to generate them instead of calling warn() in transformation code.
      *
      * Only called if the transformation resulted in a non-empty diff.

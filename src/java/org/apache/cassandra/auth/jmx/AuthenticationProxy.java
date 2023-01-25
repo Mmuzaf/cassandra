@@ -58,7 +58,7 @@ public final class AuthenticationProxy implements JMXAuthenticator
      * Creates an instance of <code>JMXPluggableAuthenticator</code>
      * and initializes it with a {@link LoginContext}.
      *
-     * @param loginConfigName name of the specifig JAAS login configuration to
+     * @param loginConfigName name of the specific JAAS login configuration to
      *                        use when authenticating JMX connections
      * @throws SecurityException if the authentication mechanism cannot be
      *         initialized.

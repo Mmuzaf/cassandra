@@ -291,8 +291,8 @@ public class AuditLoggerTest extends CQLTester
         AuditLogEntry logEntry = ((InMemoryAuditLogger) AuditLogManager.instance.getLogger()).inMemQueue.poll();
         assertLogEntry(cqlInsert, AuditLogEntryType.PREPARE_STATEMENT, logEntry, false);
 
-        batchStatement.add(prep.bind(1, "Apapche", "Cassandra"));
-        batchStatement.add(prep.bind(2, "Apapche1", "Cassandra1"));
+        batchStatement.add(prep.bind(1, "Apache", "Cassandra"));
+        batchStatement.add(prep.bind(2, "Apache1", "Cassandra1"));
 
         String cqlUpdate = "UPDATE " + KEYSPACE + "." + currentTable() + " SET v1 = ? WHERE id = ?";
         prep = session.prepare(cqlUpdate);
@@ -349,7 +349,7 @@ public class AuditLoggerTest extends CQLTester
         AuditLogEntry logEntry = ((InMemoryAuditLogger) AuditLogManager.instance.getLogger()).inMemQueue.poll();
         assertLogEntry(cqlInsert1, AuditLogEntryType.PREPARE_STATEMENT, logEntry, false);
 
-        batchStatement.add(prep.bind(1, "Apapche", "Cassandra"));
+        batchStatement.add(prep.bind(1, "Apache", "Cassandra"));
 
         createTable("CREATE TABLE %s (id int primary key, v1 text, v2 text)");
         String table2 = currentTable();
@@ -359,7 +359,7 @@ public class AuditLoggerTest extends CQLTester
         logEntry = ((InMemoryAuditLogger) AuditLogManager.instance.getLogger()).inMemQueue.poll();
         assertLogEntry(cqlInsert2, AuditLogEntryType.PREPARE_STATEMENT, logEntry, false);
 
-        batchStatement.add(prep.bind(1, "Apapche", "Cassandra"));
+        batchStatement.add(prep.bind(1, "Apache", "Cassandra"));
 
         createKeyspace("CREATE KEYSPACE %s WITH replication={ 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
         String ks2 = currentKeyspace();
@@ -372,7 +372,7 @@ public class AuditLoggerTest extends CQLTester
         logEntry = ((InMemoryAuditLogger) AuditLogManager.instance.getLogger()).inMemQueue.poll();
         assertLogEntry(cqlInsert3, AuditLogEntryType.PREPARE_STATEMENT, logEntry, false, ks2);
 
-        batchStatement.add(prep.bind(1, "Apapche", "Cassandra"));
+        batchStatement.add(prep.bind(1, "Apache", "Cassandra"));
 
         ResultSet rs = session.execute(batchStatement);
 

@@ -303,7 +303,7 @@ public final class AbstractTypeGenerators
             TypeSupport<T> support = (TypeSupport<T>) TypeSupport.of(mapType, rnd -> {
                 int size = sizeGen.generate(rnd);
                 Map<Object, Object> map = Maps.newHashMapWithExpectedSize(size);
-                // if there is conflict thats fine
+                // if there is conflict that's fine
                 for (int i = 0; i < size; i++)
                     map.put(keySupport.valueGen.generate(rnd), valueSupport.valueGen.generate(rnd));
                 return map;
