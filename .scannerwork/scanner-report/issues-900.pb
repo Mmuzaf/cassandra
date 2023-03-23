@@ -1,0 +1,2 @@
+t
+javaS1210YOverride "equals(Object obj)" to comply with the contract of the "compareTo(T o)" method. 2 

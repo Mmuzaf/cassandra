@@ -483,6 +483,7 @@
         The build target builds all the .class files
     -->
     <target name="build" depends="resolver-retrieve-build,build-project,checkstyle" description="Compile Cassandra classes"/>
+    <target name="sonar" depends="build,run-sonar" description="Sonar for Cassandra"/>
     <target name="_build_unsafe" depends="resolver-retrieve-build,build-project" description="Compile Cassandra classes without checks"/>
     <target name="codecoverage" depends="jacoco-run,jacoco-report" description="Create code coverage report"/>
 
@@ -2031,4 +2032,5 @@
   <import file="${basedir}/.build/build-rat.xml"/>
   <import file="${basedir}/.build/build-owasp.xml"/>
   <import file="${basedir}/.build/build-git.xml"/>
+  <import file="${basedir}/.build/build-sonar.xml"/>
 </project>

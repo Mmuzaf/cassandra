@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<project basedir="." name="apache-cassandra--sonar-tasks" xmlns:sonar="antlib:org.sonar.ant">
+
+    <property name="sonar.host.url" value="http://localhost:9000" />
+    <property name="sonar.projectKey" value="org.sonarqube:sonarqube-scanner-ant" />
+    <property name="sonar.projectName" value="SonarScanner for Ant Usage" />
+    <property name="sonar.projectVersion" value="1.0" />
+    <property name="sonar.sources" value="src" />
+    <property name="sonar.java.binaries" value="build" />
+    <property name="sonar.java.libraries" value="lib/*.jar" />
+
+    <condition property="no-sonar">
+        <or>
+            <isset property="no-sonar"/>
+        </or>
+    </condition>
+
+    <target name="_init-sonar" depends="resolver-retrieve-build,build" unless="no-sonar">
+        <path id="sonar.lib.path">
+            <!-- Make sure to exclude loggers as we use DEBUG logging causing the output to be very dense... -->
+            <path refid="cassandra.classpath.test.nologgers" />
+        </path>
+<!--        <taskdef resource="edu/umd/cs/findbugs/anttask/tasks.properties" classpathref="spotbugs.lib.path" />-->
+    </target>
+
+<!--    <sourcePath path="${build.src.java}" />-->
+<!--    <sourcePath path="${build.src.gen-java}" />-->
+<!--    <class location="${build.dir}/${final.name}.jar" />-->
+<!--    <sourcePath path="${test.dir}/burn" />-->
+<!--    <sourcePath path="${test.dir}/distributed" />-->
+<!--    <sourcePath path="${test.dir}/long" />-->
+<!--    <sourcePath path="${test.dir}/memory" />-->
+<!--    <sourcePath path="${test.dir}/microbench" />-->
+<!--    <sourcePath path="${test.dir}/simulator/main" />-->
+<!--    <sourcePath path="${test.dir}/simulator/test" />-->
+<!--    <sourcePath path="${test.dir}/unit" />-->
+<!--    <class location="${test.classes}" />-->
+<!--    sonar.login="sqa_f857855c7f486ae0adb71860a54798fb5f0eac38"-->
+
+    <target name="run-sonar" depends="_init-sonar">
+        <taskdef uri="antlib:org.sonar.ant" resource="org/sonar/ant/antlib.xml" classpathref="sonar.classpath"/>
+
+        <!-- Execute SonarQube Scanner for Ant Analysis -->
+        <sonar:sonar xmlns:sonar="antlib:org.sonar.ant"/>
+    </target>
+</project>
+x§
