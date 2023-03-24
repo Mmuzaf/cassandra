@@ -51,7 +51,7 @@ jobs:
          if [ "${{ github.event_name }}" == "pull_request" ]; then
            SONAR_OPTS="-Dsonar.pullrequest.branch=${{ github.head_ref }} -Dsonar.pullrequest.base=${{ github.base_ref }} -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}"
          else
-           branch="-Dsonar.branch.name=${{ github.ref_name }}""
+           SONAR_OPTS="-Dsonar.branch.name=${{ github.ref_name }}"
          fi
          echo "SONAR_OPTS:     ${SONAR_OPTS}"
          echo "SONAR_OPTS=${SONAR_OPTS}" >> $GITHUB_ENV
@@ -65,6 +65,6 @@ jobs:
        run: >
          ant sonar 
          ${{ env.SONAR_OPTS }}
-         -Dsonar.login=$SONARCLOUD_TOKEN
+         -Dsonar.login=${SONARCLOUD_TOKEN}
        env:
          SONARCLOUD_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
