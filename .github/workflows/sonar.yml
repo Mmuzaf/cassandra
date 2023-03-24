@@ -45,6 +45,19 @@ jobs:
        with:
          java-version: '11'
          distribution: temurin
+     - name: Setup Ant
+       shell: bash
+       run: |
+          ANT_VERSION=1.10.13
+          wget --no-check-certificate --no-cookies http://archive.apache.org/dist/ant/binaries/apache-ant-${ANT_VERSION}-bin.tar.gz \
+          && wget --no-check-certificate --no-cookies http://archive.apache.org/dist/ant/binaries/apache-ant-${ANT_VERSION}-bin.tar.gz.sha512 \
+          && echo "$(cat apache-ant-${ANT_VERSION}-bin.tar.gz.sha512) apache-ant-${ANT_VERSION}-bin.tar.gz" | sha512sum -c \
+          && tar -zvxf apache-ant-${ANT_VERSION}-bin.tar.gz -C /opt/ \
+          && ln -s /opt/apache-ant-${ANT_VERSION} /opt/ant \
+          && rm -f apache-ant-${ANT_VERSION}-bin.tar.gz \
+          && rm -f apache-ant-${ANT_VERSION}-bin.tar.gz.sha512
+          update-alternatives --install "/usr/bin/ant" "ant" "/opt/ant/bin/ant" 1 && \
+          update-alternatives --set "ant" "/opt/ant/bin/ant"
      - name: Setup Inputs
        shell: bash
        run: |
