@@ -58,7 +58,7 @@ jobs:
      - name: Fetch Cassandra Sources
        # https://community.sonarsource.com/t/sonarcloud-now-not-updating-github-pr-and-checks/6595/17
        run: |
-         git fetch --no-tags https://$GITHUB_TOKEN@github.com/apache/cassandra.git +refs/heads/master:refs/remotes/origin/trunk
+         git fetch --no-tags https://$GITHUB_TOKEN@github.com/apache/cassandra.git +refs/heads/trunk:refs/remotes/origin/trunk
        env:
          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
      - name: Build Cassandra Artifacts
