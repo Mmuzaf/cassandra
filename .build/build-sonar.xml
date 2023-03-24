@@ -17,21 +17,12 @@
   limitations under the License.
 -->
 <project basedir="." name="apache-cassandra--sonar-tasks" xmlns:sonar="antlib:org.sonar.ant">
-    <!--    Run with the following command: -->
-    <!--    ant -v  sonar -Dsonar.login=sqa_f857855c7f486ae0adb71860a54798fb5f0eac38 -Dsonar.java.jdkHome=/opt/homebrew/opt/openjdk@11/-->
-
-    <property name="sonar.host.url" value="http://localhost:9000" />
-    <property name="sonar.projectKey" value="org.sonarqube:sonarqube-scanner-ant" />
-    <property name="sonar.projectName" value="Apache Cassandra" />
     <property name="sonar.projectVersion" value="${base.version}" />
-    <property name="sonar.java.source" value="${ant.java.version}" />
-    <property name="sonar.java.target" value="${ant.java.version}" />
-    <property name="sonar.java.binaries" value="${build.classes.main}"/>
-    <property name="sonar.java.libraries" value="${build.dir.lib}/**/*.jar"/>
-    <property name="sonar.java.test.binaries"
-              value="${test.dir}/burn,${test.dir}/distributed,${test.dir}/long,${test.dir}/memory,${test.dir}/microbench,${test.dir}/simulator/main,${test.dir}/simulator/test,${test.dir}/unit,${test.classes}"/>
-    <property name="sonar.java.test.libraries"
-              value="${build.dir}/${final.name}.jar,${build.dir.lib}/**/*.jar,${build.dir.lib}/**/*.jar"/>
+    <property name="sonar.sources" value="${build.src.java}" />
+    <property name="sonar.tests"
+              value="${test.dir}/burn,${test.dir}/distributed,${test.dir}/long,${test.dir}/memory,${test.dir}/microbench,${test.dir}/simulator,${test.dir}/unit" />
+    <property name="sonar.java.binaries" value="${build.classes}"/>
+    <property name="sonar.java.test.binaries" value="${test.classes}"/>
 
     <condition property="no-sonar">
         <or>
@@ -39,10 +30,10 @@
         </or>
     </condition>
 
-    <target name="run-sonar" depends="build,build-test" unless="no-sonar">
-        <taskdef uri="antlib:org.sonar.ant" resource="org/sonar/ant/antlib.xml" classpathref="sonar.classpath"/>
+    <target name="sonar-run" depends="build,build-test" unless="no-sonar">
+        <taskdef uri="antlib:org.sonar.ant" resource="org/sonar/ant/antlib.xml" classpathref="sonar.classpath" />
 
         <!-- Execute SonarQube Scanner for Ant Analysis -->
-        <sonar:sonar xmlns:sonar="antlib:org.sonar.ant"/>
+        <sonar:sonar />
     </target>
 </project>
