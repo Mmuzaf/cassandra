@@ -5,4 +5,4 @@ github:
     rebase:  true
 
 notifications:
-  jira_options: link label worklog
+  jira_options: link worklog
