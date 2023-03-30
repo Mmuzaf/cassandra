@@ -44,6 +44,7 @@ import org.apache.cassandra.schema.KeyspaceParams;
 import org.apache.cassandra.schema.MockSchema;
 import org.apache.cassandra.utils.Pair;
 
+import static org.apache.cassandra.config.CassandraRelevantProperties.ALLOW_UNSAFE_AGGRESSIVE_SSTABLE_EXPIRATION;
 import static org.apache.cassandra.db.compaction.TimeWindowCompactionStrategy.getWindowBoundsInMillis;
 import static org.apache.cassandra.db.compaction.TimeWindowCompactionStrategy.newestBucket;
 import static org.apache.cassandra.db.compaction.TimeWindowCompactionStrategy.validateOptions;
@@ -66,7 +67,8 @@ public class TimeWindowCompactionStrategyTest extends SchemaLoader
     {
         // Disable tombstone histogram rounding for tests
         CassandraRelevantProperties.TOMBSTONE_HISTOGRAM_TTL_ROUND_SECONDS.setInt(1);
-        System.setProperty(TimeWindowCompactionStrategyOptions.UNSAFE_AGGRESSIVE_SSTABLE_EXPIRATION_PROPERTY, "true");
+        ALLOW_UNSAFE_AGGRESSIVE_SSTABLE_EXPIRATION.setBoolean(true);
+
 
         SchemaLoader.prepareServer();
 

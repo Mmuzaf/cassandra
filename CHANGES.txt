@@ -5,6 +5,7 @@
  * Add system_views.snapshots virtual table (CASSANDRA-18102)
  * Update OpenHFT dependencies (chronicle-queue, chronicle-core, chronicle-bytes, chronicle-wire, chronicle-threads) (CASSANDRA-18049)
  * Remove org.apache.cassandra.hadoop code (CASSANDRA-18323)
+ * Move cassandra related system properties and envs to an appropriate enum (CASSANDRA-17797)
  * Remove deprecated CQL functions dateOf and unixTimestampOf (CASSANDRA-18328)
  * Remove DateTieredCompactionStrategy (CASSANDRA-18043)
  * Add system_views.max_sstable_size and system_views.max_sstable_duration tables (CASSANDRA-18333)
