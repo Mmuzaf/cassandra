@@ -213,15 +213,15 @@ public enum CassandraRelevantProperties
      */
     LOG_DIR_AUDIT("cassandra.logdir.audit"),
 
-    CONSISTENT_DIRECTORY_LISTINGS("cassandra.consistent_directory_listings", "false"),
-    CLOCK_GLOBAL("cassandra.clock", null),
-    CLOCK_MONOTONIC_APPROX("cassandra.monotonic_clock.approx", null),
-    CLOCK_MONOTONIC_PRECISE("cassandra.monotonic_clock.precise", null),
+    CONSISTENT_DIRECTORY_LISTINGS("cassandra.consistent_directory_listings"),
+    CLOCK_GLOBAL("cassandra.clock"),
+    CLOCK_MONOTONIC_APPROX("cassandra.monotonic_clock.approx"),
+    CLOCK_MONOTONIC_PRECISE("cassandra.monotonic_clock.precise"),
 
     /*
      * Whether {@link org.apache.cassandra.db.ConsistencyLevel#NODE_LOCAL} should be allowed.
      */
-    ENABLE_NODELOCAL_QUERIES("cassandra.enable_nodelocal_queries", "false"),
+    ENABLE_NODELOCAL_QUERIES("cassandra.enable_nodelocal_queries"),
 
     //cassandra properties (without the "cassandra." prefix)
 
@@ -270,7 +270,7 @@ public enum CassandraRelevantProperties
     /** If we should allow having duplicate keys in the config file, default to true for legacy reasons */
     ALLOW_DUPLICATE_CONFIG_KEYS("cassandra.allow_duplicate_config_keys", "true"),
     /** If we should allow having both new (post CASSANDRA-15234) and old config keys for the same config item in the yaml */
-    ALLOW_NEW_OLD_CONFIG_KEYS("cassandra.allow_new_old_config_keys", "false"),
+    ALLOW_NEW_OLD_CONFIG_KEYS("cassandra.allow_new_old_config_keys"),
 
     // startup checks properties
     LIBJEMALLOC("cassandra.libjemalloc"),
@@ -289,27 +289,27 @@ public enum CassandraRelevantProperties
 
     // defaults to false for 4.1 but plan to switch to true in a later release
     // the thinking is that environments may not work right off the bat so safer to add this feature disabled by default
-    CONFIG_ALLOW_SYSTEM_PROPERTIES("cassandra.config.allow_system_properties", "false"),
+    CONFIG_ALLOW_SYSTEM_PROPERTIES("cassandra.config.allow_system_properties"),
 
     // properties for debugging simulator ASM output
     TEST_SIMULATOR_PRINT_ASM("cassandra.test.simulator.print_asm", "none"),
     TEST_SIMULATOR_PRINT_ASM_TYPES("cassandra.test.simulator.print_asm_types", ""),
     TEST_SIMULATOR_LIVENESS_CHECK("cassandra.test.simulator.livenesscheck", "true"),
-    TEST_SIMULATOR_DEBUG("cassandra.test.simulator.debug", "false"),
+    TEST_SIMULATOR_DEBUG("cassandra.test.simulator.debug"),
     TEST_SIMULATOR_DETERMINISM_CHECK("cassandra.test.simulator.determinismcheck", "none"),
-    TEST_JVM_DTEST_DISABLE_SSL("cassandra.test.disable_ssl", "false"),
+    TEST_JVM_DTEST_DISABLE_SSL("cassandra.test.disable_ssl"),
 
     // determinism properties for testing
     DETERMINISM_SSTABLE_COMPRESSION_DEFAULT("cassandra.sstable_compression_default", "true"),
-    DETERMINISM_CONSISTENT_DIRECTORY_LISTINGS("cassandra.consistent_directory_listings", "false"),
-    DETERMINISM_UNSAFE_UUID_NODE("cassandra.unsafe.deterministicuuidnode", "false"),
+    DETERMINISM_CONSISTENT_DIRECTORY_LISTINGS("cassandra.consistent_directory_listings"),
+    DETERMINISM_UNSAFE_UUID_NODE("cassandra.unsafe.deterministicuuidnode"),
     FAILURE_LOGGING_INTERVAL_SECONDS("cassandra.request_failure_log_interval_seconds", "60"),
 
     // properties to disable certain behaviours for testing
     DISABLE_GOSSIP_ENDPOINT_REMOVAL("cassandra.gossip.disable_endpoint_removal"),
-    IGNORE_MISSING_NATIVE_FILE_HINTS("cassandra.require_native_file_hints", "false"),
+    IGNORE_MISSING_NATIVE_FILE_HINTS("cassandra.require_native_file_hints"),
     DISABLE_SSTABLE_ACTIVITY_TRACKING("cassandra.sstable_activity_tracking", "true"),
-    TEST_IGNORE_SIGAR("cassandra.test.ignore_sigar", "false"),
+    TEST_IGNORE_SIGAR("cassandra.test.ignore_sigar"),
     PAXOS_USE_SELF_EXECUTION("cassandra.paxos.use_self_execution", "true"),
 
     /** property for the rate of the scheduled task that monitors disk usage */
@@ -388,7 +388,7 @@ public enum CassandraRelevantProperties
      *
      * If only keyspaces are specified, mutations for all tables in such keyspace will be replayed
      * */
-    COMMIT_LOG_REPLAY_LIST("cassandra.replayList", null),
+    COMMIT_LOG_REPLAY_LIST("cassandra.replayList"),
 
     /**
      * The maximum number of seeds returned by a seed provider before emmitting a warning.
@@ -417,7 +417,7 @@ public enum CassandraRelevantProperties
     COMMITLOG_STOP_ON_ERRORS("cassandra.commitlog.stop_on_errors"),
     CONFIG_LOADER("cassandra.config.loader"),
     CONSISTENT_RANGE_MOVEMENT("cassandra.consistent.rangemovement", "true"),
-    CONSISTENT_SIMULTANEOUS_MOVES_ALLOW("cassandra.consistent.simultaneousmoves.allow", "false"),
+    CONSISTENT_SIMULTANEOUS_MOVES_ALLOW("cassandra.consistent.simultaneousmoves.allow"),
     CUSTOM_GUARDRAILS_CONFIG_PROVIDER_CLASS("cassandra.custom_guardrails_config_provider_class"),
     CUSTOM_QUERY_HANDLER_CLASS("cassandra.custom_query_handler_class"),
     CUSTOM_TRACING_CLASS("cassandra.custom_tracing_class"),
@@ -442,8 +442,8 @@ public enum CassandraRelevantProperties
     FORCE_DEFAULT_INDEXING_PAGE_SIZE("cassandra.force_default_indexing_page_size"),
     FORCE_PAXOS_STATE_REBUILD("cassandra.force_paxos_state_rebuild"),
     GIT_SHA("cassandra.gitSHA"),
-    GOSSIP_DISABLE_THREAD_VALIDATION("cassandra.gossip.disable_thread_validation", "false"),
-    IGNORE_CORRUPTED_SCHEMA_TABLES("cassandra.ignore_corrupted_schema_tables", "false"),
+    GOSSIP_DISABLE_THREAD_VALIDATION("cassandra.gossip.disable_thread_validation"),
+    IGNORE_CORRUPTED_SCHEMA_TABLES("cassandra.ignore_corrupted_schema_tables"),
     IGNORE_DYNAMIC_SNITCH_SEVERITY("cassandra.ignore_dynamic_snitch_severity"),
     INDEX_SUMMARY_EXPECTED_KEY_SIZE("cassandra.index_summary_expected_key_size", "64"),
     INITIAL_TOKEN("cassandra.initial_token"),
@@ -480,7 +480,7 @@ public enum CassandraRelevantProperties
     PAXOS_DISABLE_COORDINATOR_LOCKING("cassandra.paxos.disable_coordinator_locking"),
     PAXOS_LOG_TTL_LINEARIZABILITY_VIOLATIONS("cassandra.paxos.log_ttl_linearizability_violations", "true"),
     PAXOS_MODERN_RELEASE("cassandra.paxos.modern_release", "4.1"),
-    PAXOS_REPAIR_ALLOW_MULTIPLE_PENDING_UNSAFE("cassandra.paxos_repair_allow_multiple_pending_unsafe", "false"),
+    PAXOS_REPAIR_ALLOW_MULTIPLE_PENDING_UNSAFE("cassandra.paxos_repair_allow_multiple_pending_unsafe"),
     PAXOS_REPAIR_ON_TOPOLOGY_CHANGE_RETRIES("cassandra.paxos_repair_on_topology_change_retries", "10"),
     PAXOS_REPAIR_ON_TOPOLOGY_CHANGE_RETRY_DELAY_SECONDS("cassandra.paxos_repair_on_topology_change_retry_delay_seconds", "10"),
     PRINT_HEAP_HISTOGRAM_ON_OUT_OF_MEMORY_ERROR("cassandra.printHeapHistogramOnOutOfMemoryError"),
@@ -524,9 +524,9 @@ public enum CassandraRelevantProperties
     TEST_CASSANDRA_SKIP_SYNC("cassandra.skip_sync"),
     TEST_CASSANDRA_SUITENAME("suitename", "suitename_IS_UNDEFINED"),
     TEST_CASSANDRA_TESTTAG("cassandra.testtag", "cassandra.testtag_IS_UNDEFINED"),
-    TEST_COMPRESSION("cassandra.test.compression", "false"),
+    TEST_COMPRESSION("cassandra.test.compression"),
     TEST_COMPRESSION_ALGO("cassandra.test.compression.algo", "lz4"),
-    TEST_DEBUG_REF_COUNT("cassandra.debugrefcount", "false"),
+    TEST_DEBUG_REF_COUNT("cassandra.debugrefcount"),
     TEST_DRIVER_CONNECTION_TIMEOUT_MS("cassandra.test.driver.connection_timeout_ms", "5000"),
     TEST_DRIVER_READ_TIMEOUT_MS("cassandra.test.driver.read_timeout_ms", "12000"),
     TEST_FAIL_MV_LOCKS_COUNT("cassandra.test.fail_mv_locks_count", "0"),
