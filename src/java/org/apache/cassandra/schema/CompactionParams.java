@@ -30,7 +30,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.cassandra.config.CassandraRelevantProperties;
 import org.apache.cassandra.db.compaction.AbstractCompactionStrategy;
 import org.apache.cassandra.db.compaction.LeveledCompactionStrategy;
 import org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy;
@@ -79,7 +78,7 @@ public final class CompactionParams
 
     public static final boolean DEFAULT_ENABLED = true;
     public static final TombstoneOption DEFAULT_PROVIDE_OVERLAPPING_TOMBSTONES_PROP =
-            TombstoneOption.valueOf(DEFAULT_PROVIDE_OVERLAPPING_TOMBSTONES.getString(TombstoneOption.NONE.toString()).toUpperCase());
+        DEFAULT_PROVIDE_OVERLAPPING_TOMBSTONES.getEnum(TombstoneOption.NONE);
 
     public static final Map<String, String> DEFAULT_THRESHOLDS =
         ImmutableMap.of(Option.MIN_THRESHOLD.toString(), Integer.toString(DEFAULT_MIN_THRESHOLD),
