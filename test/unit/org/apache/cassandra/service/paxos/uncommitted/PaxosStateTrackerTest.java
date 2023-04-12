@@ -42,6 +42,7 @@ import org.apache.cassandra.db.rows.Row;
 import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.dht.Range;
 import org.apache.cassandra.dht.Token;
+import org.apache.cassandra.distributed.shared.WithProperties;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileUtils;
 import org.apache.cassandra.schema.ColumnMetadata;
@@ -175,8 +176,7 @@ public class PaxosStateTrackerTest
         SystemKeyspace.savePaxosWritePromise(dk(0), cfm1, ballots[2]);
         SystemKeyspace.savePaxosProposal(commit(cfm1, 2, ballots[3]));
 
-        Boolean prev = FORCE_PAXOS_STATE_REBUILD.setBoolean(true);
-        try
+        try (WithProperties with = new WithProperties(FORCE_PAXOS_STATE_REBUILD.getKey(), "true"))
         {
             PaxosStateTracker tracker = PaxosStateTracker.create(directories);
             Assert.assertTrue(tracker.isRebuildNeeded());
@@ -188,13 +188,6 @@ public class PaxosStateTrackerTest
                                                                         uncommitted(2, ballots[3])));
             Assert.assertEquals(ballots[1], tracker.ballots().getLowBound());
             Assert.assertEquals(ballots[3], tracker.ballots().getHighBound());
-        }
-        finally
-        {
-            if (prev == null)
-                FORCE_PAXOS_STATE_REBUILD.clearValue();
-            else
-                FORCE_PAXOS_STATE_REBUILD.setBoolean(prev);
         }
     }
 
