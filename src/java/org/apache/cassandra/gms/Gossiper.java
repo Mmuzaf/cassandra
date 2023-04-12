@@ -108,14 +108,6 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean
 {
     public static final String MBEAN_NAME = "org.apache.cassandra.net:type=Gossiper";
 
-    /** @deprecated Use CassandraRelevantProperties.GOSSIP_DISABLE_THREAD_VALIDATION instead. */
-    @Deprecated
-    public static class Props
-    {
-        @Deprecated
-        public static final String DISABLE_THREAD_VALIDATION = GOSSIP_DISABLE_THREAD_VALIDATION.getKey();
-    }
-
     private static final ScheduledExecutorPlus executor = executorFactory().scheduled("GossipTasks");
 
     static final ApplicationState[] STATES = ApplicationState.values();

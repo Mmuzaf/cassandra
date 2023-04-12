@@ -35,7 +35,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static org.apache.cassandra.config.CassandraRelevantProperties.PAXOS_EXECUTE_ON_SELF;
+import static org.apache.cassandra.config.CassandraRelevantProperties.PAXOS_USE_SELF_EXECUTION;
 import static org.apache.cassandra.distributed.api.ConsistencyLevel.QUORUM;
 import static org.apache.cassandra.net.Verb.PAXOS2_PREPARE_REQ;
 
@@ -46,7 +46,7 @@ public class CASContentionTest extends CASTestBase
     @BeforeClass
     public static void beforeClass() throws Throwable
     {
-        PAXOS_EXECUTE_ON_SELF.setBoolean(false);
+        PAXOS_USE_SELF_EXECUTION.setBoolean(false);
         TestBaseImpl.beforeClass();
         Consumer<IInstanceConfig> conf = config -> config
                 .set("paxos_variant", "v2")

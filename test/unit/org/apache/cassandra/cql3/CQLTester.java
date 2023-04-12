@@ -579,8 +579,8 @@ public abstract class CQLTester
     private static Cluster initClientCluster(User user, ProtocolVersion version)
     {
         SocketOptions socketOptions =
-                new SocketOptions().setConnectTimeoutMillis(TEST_DRIVER_CONNECTION_TIMEOUT_MS.getInt(DEFAULT_CONNECT_TIMEOUT_MILLIS)) // default is 5000
-                                   .setReadTimeoutMillis(TEST_DRIVER_READ_TIMEOUT_MS.getInt(DEFAULT_READ_TIMEOUT_MILLIS)); // default is 12000
+                new SocketOptions().setConnectTimeoutMillis(TEST_DRIVER_CONNECTION_TIMEOUT_MS.getInt()) // default is 5000
+                                   .setReadTimeoutMillis(TEST_DRIVER_READ_TIMEOUT_MS.getInt()); // default is 12000
 
         logger.info("Timeouts: {} / {}", socketOptions.getConnectTimeoutMillis(), socketOptions.getReadTimeoutMillis());
 

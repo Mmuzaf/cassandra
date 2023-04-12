@@ -50,9 +50,6 @@ import static org.apache.cassandra.utils.FBUtilities.updateChecksumInt;
  */
 public class CommitLogSegmentReader implements Iterable<CommitLogSegmentReader.SyncSegment>
 {
-    /** @deprecated Use {@link org.apache.cassandra.config.CassandraRelevantProperties#COMMITLOG_ALLOW_IGNORE_SYNC_CRC}. */
-    @Deprecated
-    public static final String ALLOW_IGNORE_SYNC_CRC = COMMITLOG_ALLOW_IGNORE_SYNC_CRC.getKey();
     private static volatile boolean allowSkipSyncMarkerCrc = COMMITLOG_ALLOW_IGNORE_SYNC_CRC.getBoolean();
 
     private static final Logger logger = LoggerFactory.getLogger(CommitLogSegmentReader.class);

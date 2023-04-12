@@ -51,14 +51,13 @@ public class ExpirationDateOverflowHandling
     public static ExpirationDateOverflowPolicy policy;
 
     static {
-        String policyAsString = EXPIRATION_DATE_OVERFLOW_POLICY.getString(ExpirationDateOverflowPolicy.REJECT.name());
         try
         {
-            policy = ExpirationDateOverflowPolicy.valueOf(policyAsString.toUpperCase());
+            policy = EXPIRATION_DATE_OVERFLOW_POLICY.getEnum(ExpirationDateOverflowPolicy.REJECT);
         }
         catch (RuntimeException e)
         {
-            logger.warn("Invalid expiration date overflow policy: {}. Using default: {}", policyAsString, ExpirationDateOverflowPolicy.REJECT.name());
+            logger.warn("Invalid expiration date overflow policy. Using default: {}", ExpirationDateOverflowPolicy.REJECT.name());
             policy = ExpirationDateOverflowPolicy.REJECT;
         }
     }

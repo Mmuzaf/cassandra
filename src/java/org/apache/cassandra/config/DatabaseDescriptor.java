@@ -1063,7 +1063,7 @@ public class DatabaseDescriptor
     {
         String storagedir = STORAGE_DIR.getString();
         if (storagedir == null)
-            throw new ConfigurationException(errMsgType + " is missing and -D" + STORAGE_DIR.getKey() + " is not set", false);
+            throw new ConfigurationException(errMsgType + " is missing and " + STORAGE_DIR.getKey() + " system property is not set", false);
         return storagedir;
     }
 
@@ -2706,7 +2706,7 @@ public class DatabaseDescriptor
      */
     public static int getNativeTransportPort()
     {
-        return NATIVE_TRANSPORT_PORT.getInt(Integer.parseInt(Integer.toString(conf.native_transport_port)));
+        return NATIVE_TRANSPORT_PORT.getInt(conf.native_transport_port);
     }
 
     @VisibleForTesting

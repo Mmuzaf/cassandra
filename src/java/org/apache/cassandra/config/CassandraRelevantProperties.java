@@ -233,10 +233,9 @@ public enum CassandraRelevantProperties
     CASSANDRA_FOREGROUND ("cassandra-foreground"),
 
     DEFAULT_PROVIDE_OVERLAPPING_TOMBSTONES ("default.provide.overlapping.tombstones"),
-    ORG_APACHE_CASSANDRA_DISABLE_MBEAN_REGISTRATION ("org.apache.cassandra.disable_mbean_registration"),
 
     /** This property indicates whether disable_mbean_registration is true */
-    IS_DISABLED_MBEAN_REGISTRATION("org.apache.cassandra.disable_mbean_registration"),
+    ORG_APACHE_CASSANDRA_DISABLE_MBEAN_REGISTRATION("org.apache.cassandra.disable_mbean_registration"),
 
     /** snapshots ttl cleanup period in seconds */
     SNAPSHOT_CLEANUP_PERIOD_SECONDS("cassandra.snapshot.ttl_cleanup_period_seconds", "60"),
@@ -311,7 +310,7 @@ public enum CassandraRelevantProperties
     IGNORE_MISSING_NATIVE_FILE_HINTS("cassandra.require_native_file_hints", "false"),
     DISABLE_SSTABLE_ACTIVITY_TRACKING("cassandra.sstable_activity_tracking", "true"),
     TEST_IGNORE_SIGAR("cassandra.test.ignore_sigar", "false"),
-    PAXOS_EXECUTE_ON_SELF("cassandra.paxos.use_self_execution", "true"),
+    PAXOS_USE_SELF_EXECUTION("cassandra.paxos.use_self_execution", "true"),
 
     /** property for the rate of the scheduled task that monitors disk usage */
     DISK_USAGE_MONITOR_INTERVAL_MS("cassandra.disk_usage.monitor_interval_ms", Long.toString(TimeUnit.SECONDS.toMillis(30))),
@@ -528,8 +527,8 @@ public enum CassandraRelevantProperties
     TEST_COMPRESSION("cassandra.test.compression", "false"),
     TEST_COMPRESSION_ALGO("cassandra.test.compression.algo", "lz4"),
     TEST_DEBUG_REF_COUNT("cassandra.debugrefcount", "false"),
-    TEST_DRIVER_CONNECTION_TIMEOUT_MS("cassandra.test.driver.connection_timeout_ms"),
-    TEST_DRIVER_READ_TIMEOUT_MS("cassandra.test.driver.read_timeout_ms"),
+    TEST_DRIVER_CONNECTION_TIMEOUT_MS("cassandra.test.driver.connection_timeout_ms", "5000"),
+    TEST_DRIVER_READ_TIMEOUT_MS("cassandra.test.driver.read_timeout_ms", "12000"),
     TEST_FAIL_MV_LOCKS_COUNT("cassandra.test.fail_mv_locks_count", "0"),
     TEST_FAIL_WRITES_KS("cassandra.test.fail_writes_ks", ""),
 
@@ -559,7 +558,7 @@ public enum CassandraRelevantProperties
     TEST_USE_PREPARED("cassandra.test.use_prepared", "true"),
     TEST_UTIL_ALLOW_TOOL_REINIT_FOR_TEST("org.apache.cassandra.tools.UtilALLOW_TOOL_REINIT_FOR_TEST"),
     /** Activate write survey mode. The node not becoming an active ring member, and you must use JMX StorageService->joinRing() to finalize the ring joining. */
-    TEST_WRITE_SURVEY("write_survey"),
+    TEST_WRITE_SURVEY("cassandra.write_survey"),
     TOLERATE_SSTABLE_SIZE("cassandra.tolerate_sstable_size"),
     TOMBSTONE_HISTOGRAM_TTL_ROUND_SECONDS("cassandra.streaminghistogram.roundseconds", "60"),
     TRIGGERS_DIR("cassandra.triggers_dir"),
@@ -569,7 +568,8 @@ public enum CassandraRelevantProperties
     UNSAFE_SYSTEM("cassandra.unsafesystem"),
     /** Gossiper compute expiration timeout. Default value 3 days. */
     VERY_LONG_TIME_MS("cassandra.very_long_time_ms", "259200000"),
-    WAIT_FOR_TRACING_EVENTS_TIMEOUT_SECS("cassandra.wait_for_tracing_events_timeout_secs", "0")
+    WAIT_FOR_TRACING_EVENTS_TIMEOUT_SECS("cassandra.wait_for_tracing_events_timeout_secs", "0"),
+    RELOCATED_SHADED_IO_NETTY_TRANSPORT_NONATIVE("relocated.shaded.io.netty.transport.noNative")
     ;
 
     CassandraRelevantProperties(String key, String defaultVal)

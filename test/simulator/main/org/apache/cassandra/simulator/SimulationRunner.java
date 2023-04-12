@@ -67,7 +67,7 @@ import static org.apache.cassandra.config.CassandraRelevantProperties.DETERMINIS
 import static org.apache.cassandra.config.CassandraRelevantProperties.DTEST_API_LOG_TOPOLOGY;
 import static org.apache.cassandra.config.CassandraRelevantProperties.GOSSIPER_SKIP_WAITING_TO_SETTLE;
 import static org.apache.cassandra.config.CassandraRelevantProperties.IGNORE_MISSING_NATIVE_FILE_HINTS;
-import static org.apache.cassandra.config.CassandraRelevantProperties.IS_DISABLED_MBEAN_REGISTRATION;
+import static org.apache.cassandra.config.CassandraRelevantProperties.ORG_APACHE_CASSANDRA_DISABLE_MBEAN_REGISTRATION;
 import static org.apache.cassandra.config.CassandraRelevantProperties.LIBJEMALLOC;
 import static org.apache.cassandra.config.CassandraRelevantProperties.MEMTABLE_OVERHEAD_SIZE;
 import static org.apache.cassandra.config.CassandraRelevantProperties.MIGRATION_DELAY;
@@ -128,7 +128,7 @@ public class SimulationRunner
         DISABLE_GOSSIP_ENDPOINT_REMOVAL.setBoolean(true);
         MEMTABLE_OVERHEAD_SIZE.setInt(100);
         IGNORE_MISSING_NATIVE_FILE_HINTS.setBoolean(true);
-        IS_DISABLED_MBEAN_REGISTRATION.setBoolean(true);
+        ORG_APACHE_CASSANDRA_DISABLE_MBEAN_REGISTRATION.setBoolean(true);
         TEST_JVM_DTEST_DISABLE_SSL.setBoolean(true); // to support easily running without netty from dtest-jar
 
         if (Thread.currentThread() instanceof InterceptibleThread); // load InterceptibleThread class to avoid infinite loop in InterceptorOfGlobalMethods
