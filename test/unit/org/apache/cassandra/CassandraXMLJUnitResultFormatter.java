@@ -52,7 +52,7 @@ import org.w3c.dom.Text;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_CASSANDRA_SUITENAME;
 import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_CASSANDRA_TESTTAG;
-import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_SUN_JAVA_COMMAND;
+import static org.apache.cassandra.config.CassandraRelevantProperties.SUN_JAVA_COMMAND;
 import static org.apache.cassandra.utils.Clock.Global.currentTimeMillis;
 
 /**
@@ -84,7 +84,7 @@ public class CassandraXMLJUnitResultFormatter implements JUnitResultFormatter, X
      */
     static
     {
-        String command = TEST_SUN_JAVA_COMMAND.getString();
+        String command = SUN_JAVA_COMMAND.getString();
         String args[] = command.split(" ");
         TEST_CASSANDRA_SUITENAME.setString(args[1]);
     }

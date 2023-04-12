@@ -74,7 +74,7 @@ public enum CassandraRelevantProperties
     SSL_ENABLE("ssl.enable"),
 
     /** Platform word size sun.arch.data.model. Examples: "32", "64", "unknown"*/
-    SUN_ARCH_DATA_MODEL ("sun.arch.data.model"),
+    SUN_ARCH_DATA_MODEL("sun.arch.data.model"),
     LOG4J_SHUTDOWN_HOOK_ENABLED("log4j.shutdownHookEnabled"),
     LOG4J2_DISABLE_JMX("log4j2.disableJmx"),
     LOG4J2_DISABLE_JMX_LEGACY("log4j2.disable.jmx"),
@@ -552,9 +552,9 @@ public enum CassandraRelevantProperties
     TEST_STRICT_RUNTIME_CHECKS("cassandra.strict.runtime.checks"),
     /** Not to be used in production, this causes a Netty logging handler to be added to the pipeline, which will throttle a system under any normal load. */
     TEST_UNSAFE_VERBOSE_DEBUG_CLIENT_PROTOCOL("cassandra.unsafe_verbose_debug_client_protocol"),
-    TEST_SUN_JAVA_COMMAND("sun.java.command", ""),
-    TEST_SUN_STDERR_ENCODING("sun.stderr.encoding"),
-    TEST_SUN_STDOUT_ENCODING("sun.stdout.encoding"),
+    SUN_JAVA_COMMAND("sun.java.command", ""),
+    SUN_STDERR_ENCODING("sun.stderr.encoding"),
+    SUN_STDOUT_ENCODING("sun.stdout.encoding"),
     TEST_USE_PREPARED("cassandra.test.use_prepared", "true"),
     TEST_UTIL_ALLOW_TOOL_REINIT_FOR_TEST("org.apache.cassandra.tools.UtilALLOW_TOOL_REINIT_FOR_TEST"),
     /** Activate write survey mode. The node not becoming an active ring member, and you must use JMX StorageService->joinRing() to finalize the ring joining. */
