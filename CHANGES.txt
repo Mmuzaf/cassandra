@@ -1,4 +1,6 @@
 5.0
+ * Node Draining Should Abort All Current SSTables Imports (CASSANDRA-18373)
+ * Use snake case for the names of CQL native functions (CASSANDRA-18037)
  * Use jdk-dependent checkstyle version to check the source code (CASSANDRA-18262)
  * Provide summary of failed SessionInfo's in StreamResultFuture (CASSANDRA-17199)
  * CEP-20: Dynamic Data Masking (CASSANDRA-17940)
@@ -132,6 +134,13 @@
  * Do not submit hints when hinted_handoff_enabled=false (CASSANDRA-18304)
  * Fix COPY ... TO STDOUT behavior in cqlsh (CASSANDRA-18353)
  * Remove six and Py2SaferScanner merge cruft (CASSANDRA-18354)
+Merged from 4.0:
+ * Update zstd-jni library to version 1.5.5 (CASSANDRA-18429)
+Merged from 3.11:
+ * Suppress CVE-2022-45688 (CASSANDRA-18389)
+ * Fix Splitter sometimes creating more splits than requested (CASSANDRA-18013)
+Merged from 3.0:
+ * Save host id to system.local and flush immediately after startup (CASSANDRA-18153)
  
 4.1.1
  * Deprecate org.apache.cassandra.hadoop code (CASSANDRA-16984)
@@ -193,6 +202,8 @@ Merged from 3.0:
  * Add --resolve-ip option to nodetool gossipinfo (CASSANDRA-17934)
  * Allow pre-V5 global limit on bytes in flight to revert to zero asynchronously in RateLimitingTest (CASSANDRA-17927)
 Merged from 4.0:
+ * Backport CASSANDRA-17205 to 4.0 branch - Remove self-reference in SSTableTidier (CASSANDRA-18332)
+ * Avoid loading the preferred IP for BulkLoader streaming (CASSANDRA-18370)
  * Harden parsing of boolean values in CQL in PropertyDefinitions (CASSANDRA-17878)
  * Fix error message about type hints (CASSANDRA-17915)
  * Fix possible race condition on repair snapshots (CASSANDRA-17955)
