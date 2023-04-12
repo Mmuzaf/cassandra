@@ -1010,7 +1010,7 @@ public final class SchemaKeyspace
                 }
                 else
                 {
-                    logger.error(errorMsg, "restart cassandra with -D" + IGNORE_CORRUPTED_SCHEMA_TABLES.getKey() + "=true and ");
+                    logger.error(errorMsg, "restart cassandra with -D{}=true and ", IGNORE_CORRUPTED_SCHEMA_TABLES.getKey());
                     throw exc;
                 }
             }

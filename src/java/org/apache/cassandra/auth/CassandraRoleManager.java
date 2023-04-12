@@ -119,7 +119,7 @@ public class CassandraRoleManager implements IRoleManager
     {
         int rounds = AUTH_BCRYPT_GENSALT_LOG2_ROUNDS.getInt(10);
         if (rounds < 4 || rounds > 30)
-            throw new ConfigurationException(String.format("Bad value for system property -D%s." +
+            throw new ConfigurationException(String.format("Bad value for system property %s." +
                                                            "Please use a value between 4 and 30 inclusively", AUTH_BCRYPT_GENSALT_LOG2_ROUNDS.getKey()));
         return rounds;
     }

@@ -814,7 +814,7 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         if (!Gossiper.instance.isSafeForStartup(FBUtilities.getBroadcastAddressAndPort(), localHostId, shouldBootstrap(), epStates))
         {
             throw new RuntimeException(String.format("A node with address %s already exists, cancelling join. " +
-                                                     "Use -D%s property if you want to replace this node.",
+                                                     "Use %s property if you want to replace this node.",
                                                      FBUtilities.getBroadcastAddressAndPort(), REPLACE_ADDRESS.getKey()));
         }
 

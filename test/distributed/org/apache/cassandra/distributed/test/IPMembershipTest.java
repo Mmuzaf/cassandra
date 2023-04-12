@@ -70,7 +70,7 @@ public class IPMembershipTest extends TestBaseImpl
                 ((InstanceConfig) nodeToReplace.config()).setHostId(UUID.randomUUID());
 
                 Assertions.assertThatThrownBy(() -> nodeToReplace.startup())
-                          .hasMessage("A node with address /127.0.0.3:7012 already exists, cancelling join. Use -D" +
+                          .hasMessage("A node with address /127.0.0.3:7012 already exists, cancelling join. Use " +
                                       REPLACE_ADDRESS.getKey() + " property if you want to replace this node.");
             }
         }

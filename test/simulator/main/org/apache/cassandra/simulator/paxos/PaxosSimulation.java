@@ -55,6 +55,7 @@ import org.apache.cassandra.utils.CloseableIterator;
 import org.apache.cassandra.utils.concurrent.Threads;
 import org.apache.cassandra.utils.concurrent.UncheckedInterruptedException;
 
+import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_SIMULATOR_LIVENESS_CHECK;
 import static org.apache.cassandra.simulator.Action.Modifiers.NONE;
 import static org.apache.cassandra.simulator.Action.Modifiers.DISPLAY_ORIGIN;
 import static org.apache.cassandra.simulator.SimulatorUtils.failWithOOM;
@@ -133,7 +134,7 @@ public abstract class PaxosSimulation implements Simulation, ClusterActionListen
         AtomicLong counter = new AtomicLong();
         ScheduledExecutorPlus livenessChecker = null;
         ScheduledFuture<?> liveness = null;
-        if (CassandraRelevantProperties.TEST_SIMULATOR_LIVENESS_CHECK.getBoolean())
+        if (TEST_SIMULATOR_LIVENESS_CHECK.getBoolean())
         {
             livenessChecker = ExecutorFactory.Global.executorFactory().scheduled("SimulationLiveness");
             liveness = livenessChecker.scheduleWithFixedDelay(new Runnable()
@@ -170,7 +171,7 @@ public abstract class PaxosSimulation implements Simulation, ClusterActionListen
                         long cur = counter.get();
                         if (cur == prev)
                         {
-                            logger.error("Simulation appears to have stalled; terminating. To disable set -Dcassandra.test.simulator.livenesscheck=false");
+                            logger.error("Simulation appears to have stalled; terminating. To disable set -D{}=false", TEST_SIMULATOR_LIVENESS_CHECK.getKey());
                             shutdown.set(1);
                             throw failWithOOM();
                         }

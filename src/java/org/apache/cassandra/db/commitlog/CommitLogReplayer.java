@@ -531,8 +531,8 @@ public class CommitLogReplayer implements CommitLogReadHandler
         else if (!CommitLog.handleCommitError("Failed commit log replay", exception))
         {
             logger.error("Replay stopped. If you wish to override this error and continue starting the node ignoring " +
-                         "commit log replay problems, specify -D" + COMMITLOG_IGNORE_REPLAY_ERRORS.getKey() + "=true " +
-                         "on the command line");
+                         "commit log replay problems, specify -D{}=true on the command line",
+                         COMMITLOG_IGNORE_REPLAY_ERRORS.getKey());
             throw new CommitLogReplayException(exception.getMessage(), exception);
         }
         return false;

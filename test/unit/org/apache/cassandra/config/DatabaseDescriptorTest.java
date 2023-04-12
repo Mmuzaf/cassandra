@@ -39,6 +39,7 @@ import org.assertj.core.api.Assertions;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.ALLOW_UNLIMITED_CONCURRENT_VALIDATIONS;
 import static org.apache.cassandra.config.CassandraRelevantProperties.CONFIG_LOADER;
+import static org.apache.cassandra.config.CassandraRelevantProperties.PARTITIONER;
 import static org.apache.cassandra.config.DataStorageSpec.DataStorageUnit.KIBIBYTES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -235,7 +236,7 @@ public class DatabaseDescriptorTest
     @Test
     public void testInvalidPartitionPropertyOverride() throws Exception
     {
-        String previous = CassandraRelevantProperties.PARTITIONER.setString("ThisDoesNotExist");
+        String previous = PARTITIONER.setString("ThisDoesNotExist");
         try
         {
             Config testConfig = DatabaseDescriptor.loadConfig();
@@ -259,9 +260,9 @@ public class DatabaseDescriptorTest
         finally
         {
             if (previous == null)
-                CassandraRelevantProperties.PARTITIONER.clearValue();
+                PARTITIONER.clearValue();
             else
-                CassandraRelevantProperties.PARTITIONER.setString(previous);
+                PARTITIONER.setString(previous);
         }
     }
 

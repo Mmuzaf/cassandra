@@ -163,7 +163,7 @@ public class PaxosStateTracker
     @SuppressWarnings("resource")
     private void rebuildUncommittedData() throws IOException
     {
-        logger.info("Beginning uncommitted paxos data rebuild. Set -Dcassandra.skip_paxos_state_rebuild=true and restart to skip");
+        logger.info("Beginning uncommitted paxos data rebuild. Set -D{}=true and restart to skip", SKIP_PAXOS_STATE_REBUILD.getKey());
 
         String queryStr = "SELECT * FROM " + SYSTEM_KEYSPACE_NAME + '.' + SystemKeyspace.PAXOS;
         SelectStatement stmt = (SelectStatement) QueryProcessor.parseStatement(queryStr).prepare(ClientState.forInternalCalls());

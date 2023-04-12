@@ -1071,8 +1071,8 @@ public class ActiveRepairService implements IEndpointStateChangeSubscriber, IFai
                 if (pending.size() > 1 && !PAXOS_REPAIR_ALLOW_MULTIPLE_PENDING_UNSAFE.getBoolean())
                 {
                     throw new RuntimeException(String.format("Cannot begin paxos auto repair for %s in %s.%s, multiple pending endpoints exist for range (%s). " +
-                                                             "Set -D" + PAXOS_REPAIR_ALLOW_MULTIPLE_PENDING_UNSAFE.getKey() + "=true to skip this check",
-                                                             range, table.keyspace, table.name, pending));
+                                                             "Set -D%s=true to skip this check",
+                                                             range, table.keyspace, table.name, pending, PAXOS_REPAIR_ALLOW_MULTIPLE_PENDING_UNSAFE.getKey()));
 
                 }
                 Future<Void> future = PaxosCleanup.cleanup(endpoints, table, Collections.singleton(range), false, repairCommandExecutor());

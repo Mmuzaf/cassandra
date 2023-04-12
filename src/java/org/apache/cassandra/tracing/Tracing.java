@@ -117,7 +117,7 @@ public abstract class Tracing extends ExecutorLocals.Impl
             try
             {
                 tracing = FBUtilities.construct(customTracingClass, "Tracing");
-                logger.info("Using class {} as tracing queries (as requested with the -D{} system property)",
+                logger.info("Using class {} as tracing queries (as requested with the {} system property)",
                             customTracingClass, CUSTOM_TRACING_CLASS.getKey());
             }
             catch (Exception e)
