@@ -60,7 +60,7 @@ import static org.apache.cassandra.config.CassandraRelevantProperties.CASSANDRA_
 import static org.apache.cassandra.config.CassandraRelevantProperties.CLOCK_GLOBAL;
 import static org.apache.cassandra.config.CassandraRelevantProperties.CLOCK_MONOTONIC_APPROX;
 import static org.apache.cassandra.config.CassandraRelevantProperties.CLOCK_MONOTONIC_PRECISE;
-import static org.apache.cassandra.config.CassandraRelevantProperties.DETERMINISM_CONSISTENT_DIRECTORY_LISTINGS;
+import static org.apache.cassandra.config.CassandraRelevantProperties.CONSISTENT_DIRECTORY_LISTINGS;
 import static org.apache.cassandra.config.CassandraRelevantProperties.DETERMINISM_UNSAFE_UUID_NODE;
 import static org.apache.cassandra.config.CassandraRelevantProperties.DISABLE_SSTABLE_ACTIVITY_TRACKING;
 import static org.apache.cassandra.config.CassandraRelevantProperties.DETERMINISM_SSTABLE_COMPRESSION_DEFAULT;
@@ -121,7 +121,7 @@ public class SimulationRunner
         BATCH_COMMIT_LOG_SYNC_INTERVAL.setInt(-1);
         DISABLE_SSTABLE_ACTIVITY_TRACKING.setBoolean(false);
         DETERMINISM_SSTABLE_COMPRESSION_DEFAULT.setBoolean(false); // compression causes variation in file size for e.g. UUIDs, IP addresses, random file paths
-        DETERMINISM_CONSISTENT_DIRECTORY_LISTINGS.setBoolean(true);
+        CONSISTENT_DIRECTORY_LISTINGS.setBoolean(true);
         TEST_IGNORE_SIGAR.setBoolean(true);
         SYSTEM_AUTH_DEFAULT_RF.setInt(3);
         MIGRATION_DELAY.setInt(Integer.MAX_VALUE);
