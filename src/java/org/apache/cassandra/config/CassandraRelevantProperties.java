@@ -334,7 +334,6 @@ public enum CassandraRelevantProperties
      * when the JVM terminates. Therefore, we can use such optimization and not wait unnecessarily. */
     NON_GRACEFUL_SHUTDOWN("cassandra.test.messagingService.nonGracefulShutdown"),
     /** for specific tests */
-    TEST_CASSANDRA_RELEVANT_PROPERTIES("org.apache.cassandra.conf.CassandraRelevantPropertiesTest"),
     /** This property indicates whether disable_mbean_registration is true */
     ORG_APACHE_CASSANDRA_DISABLE_MBEAN_REGISTRATION("org.apache.cassandra.disable_mbean_registration"),
     /** Operating system architecture. */
@@ -430,6 +429,7 @@ public enum CassandraRelevantProperties
     TEST_BLOB_SHARED_SEED("cassandra.test.blob.shared.seed"),
     TEST_BYTEMAN_TRANSFORMATIONS_DEBUG("cassandra.test.byteman.transformations.debug"),
     TEST_CASSANDRA_KEEPBRIEFBRIEF("cassandra.keepBriefBrief"),
+    TEST_CASSANDRA_RELEVANT_PROPERTIES("org.apache.cassandra.conf.CassandraRelevantPropertiesTest"),
     /** A property for various mechanisms for syncing files that makes it possible it intercept and skip syncing. */
     TEST_CASSANDRA_SKIP_SYNC("cassandra.skip_sync"),
     TEST_CASSANDRA_SUITENAME("suitename", "suitename_IS_UNDEFINED"),
@@ -632,23 +632,25 @@ public enum CassandraRelevantProperties
 
     /**
      * Gets the value of a system property as a int.
-     * @return system property int value if it exists, defaultValue otherwise.
+     * @return System property value if it exists, defaultValue otherwise. Throws an exception if no default value is set.
      */
-    public Integer getInt()
+    public int getInt()
     {
         String value = System.getProperty(key);
-
+        if (value == null && defaultVal == null)
+            throw new ConfigurationException("Missing property value or default value is not set: " + key);
         return INTEGER_CONVERTER.convert(value == null ? defaultVal : value);
     }
 
     /**
      * Gets the value of a system property as a long.
-     * @return system property long value if it exists, defaultValue otherwise.
+     * @return System property value if it exists, defaultValue otherwise. Throws an exception if no default value is set.
      */
-    public Long getLong()
+    public long getLong()
     {
         String value = System.getProperty(key);
-
+        if (value == null && defaultVal == null)
+            throw new ConfigurationException("Missing property value or default value is not set: " + key);
         return LONG_CONVERTER.convert(value == null ? defaultVal : value);
     }
 
@@ -656,7 +658,7 @@ public enum CassandraRelevantProperties
      * Gets the value of a system property as a long.
      * @return system property long value if it exists, defaultValue otherwise.
      */
-    public Long getLong(long overrideDefaultValue)
+    public long getLong(long overrideDefaultValue)
     {
         String value = System.getProperty(key);
         if (value == null)
@@ -669,7 +671,7 @@ public enum CassandraRelevantProperties
      * Gets the value of a system property as an int.
      * @return system property int value if it exists, overrideDefaultValue otherwise.
      */
-    public Integer getInt(int overrideDefaultValue)
+    public int getInt(int overrideDefaultValue)
     {
         String value = System.getProperty(key);
         if (value == null)
@@ -780,7 +782,7 @@ public enum CassandraRelevantProperties
     {
         try
         {
-            return value == null ? null : Integer.decode(value);
+            return Integer.decode(value);
         }
         catch (NumberFormatException e)
         {
@@ -793,12 +795,12 @@ public enum CassandraRelevantProperties
     {
         try
         {
-            return value == null ? null : Long.decode(value);
+            return Long.decode(value);
         }
         catch (NumberFormatException e)
         {
             throw new ConfigurationException(String.format("Invalid value for system property: " +
-                                                           "expected integer value but got '%s'", value));
+                                                           "expected long value but got '%s'", value));
         }
     };
 

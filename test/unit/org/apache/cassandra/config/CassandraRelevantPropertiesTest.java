@@ -18,15 +18,23 @@
 
 package org.apache.cassandra.config;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.assertj.core.api.Assertions;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_CASSANDRA_RELEVANT_PROPERTIES;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class CassandraRelevantPropertiesTest
 {
+    @Before
+    public void setup()
+    {
+        System.clearProperty(TEST_CASSANDRA_RELEVANT_PROPERTIES.getKey());
+    }
 
     @Test
     public void testSystemPropertyisSet() {
@@ -144,7 +152,7 @@ public class CassandraRelevantPropertiesTest
         }
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = ConfigurationException.class)
     public void testInteger_null()
     {
         try
@@ -155,5 +163,14 @@ public class CassandraRelevantPropertiesTest
         {
             System.clearProperty(TEST_CASSANDRA_RELEVANT_PROPERTIES.getKey());
         }
+    }
+
+    @Test
+    public void testClearProperty()
+    {
+        TEST_CASSANDRA_RELEVANT_PROPERTIES.setString("test");
+        assertEquals("test", TEST_CASSANDRA_RELEVANT_PROPERTIES.getString());
+        TEST_CASSANDRA_RELEVANT_PROPERTIES.clearValue();
+        assertNull(TEST_CASSANDRA_RELEVANT_PROPERTIES.getString());
     }
 }
