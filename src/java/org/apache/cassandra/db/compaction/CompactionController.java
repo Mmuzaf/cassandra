@@ -55,7 +55,7 @@ import static org.apache.cassandra.db.lifecycle.SSTableIntervalTree.buildInterva
 public class CompactionController extends AbstractCompactionController
 {
     private static final Logger logger = LoggerFactory.getLogger(CompactionController.class);
-    static final boolean NEVER_PURGE_TOMBSTONES_PROP = NEVER_PURGE_TOMBSTONES.getBoolean();
+    static final boolean NEVER_PURGE_TOMBSTONES_PROPERTY_VALUE = NEVER_PURGE_TOMBSTONES.getBoolean();
 
     private final boolean compactingRepaired;
     // note that overlapIterator and overlappingSSTables will be null if NEVER_PURGE_TOMBSTONES is set - this is a
@@ -89,13 +89,13 @@ public class CompactionController extends AbstractCompactionController
                           ? compacting.stream().mapToLong(SSTableReader::getMinTimestamp).min().getAsLong()
                           : 0;
         refreshOverlaps();
-        if (NEVER_PURGE_TOMBSTONES_PROP)
+        if (NEVER_PURGE_TOMBSTONES_PROPERTY_VALUE)
             logger.warn("You are running with -D{}=true, this is dangerous!", NEVER_PURGE_TOMBSTONES.getKey());
     }
 
     public void maybeRefreshOverlaps()
     {
-        if (NEVER_PURGE_TOMBSTONES_PROP)
+        if (NEVER_PURGE_TOMBSTONES_PROPERTY_VALUE)
         {
             logger.debug("not refreshing overlaps - running with -D{}=true", NEVER_PURGE_TOMBSTONES.getKey());
             return;
@@ -119,7 +119,7 @@ public class CompactionController extends AbstractCompactionController
 
     private void refreshOverlaps()
     {
-        if (NEVER_PURGE_TOMBSTONES_PROP || cfs.getNeverPurgeTombstones())
+        if (NEVER_PURGE_TOMBSTONES_PROPERTY_VALUE || cfs.getNeverPurgeTombstones())
             return;
 
         if (this.overlappingSSTables != null)
@@ -162,7 +162,7 @@ public class CompactionController extends AbstractCompactionController
     {
         logger.trace("Checking droppable sstables in {}", cfStore);
 
-        if (NEVER_PURGE_TOMBSTONES_PROP || compacting == null || cfStore.getNeverPurgeTombstones() || overlapping == null)
+        if (NEVER_PURGE_TOMBSTONES_PROPERTY_VALUE || compacting == null || cfStore.getNeverPurgeTombstones() || overlapping == null)
             return Collections.emptySet();
 
         if (cfStore.getCompactionStrategyManager().onlyPurgeRepairedTombstones() && !Iterables.all(compacting, SSTableReader::isRepaired))
@@ -248,7 +248,7 @@ public class CompactionController extends AbstractCompactionController
     @Override
     public LongPredicate getPurgeEvaluator(DecoratedKey key)
     {
-        if (NEVER_PURGE_TOMBSTONES_PROP || !compactingRepaired() || cfs.getNeverPurgeTombstones() || overlapIterator == null)
+        if (NEVER_PURGE_TOMBSTONES_PROPERTY_VALUE || !compactingRepaired() || cfs.getNeverPurgeTombstones() || overlapIterator == null)
             return time -> false;
 
         overlapIterator.update(key);
@@ -309,7 +309,7 @@ public class CompactionController extends AbstractCompactionController
     // caller must close iterators
     public Iterable<UnfilteredRowIterator> shadowSources(DecoratedKey key, boolean tombstoneOnly)
     {
-        if (!provideTombstoneSources() || !compactingRepaired() || NEVER_PURGE_TOMBSTONES_PROP || cfs.getNeverPurgeTombstones())
+        if (!provideTombstoneSources() || !compactingRepaired() || NEVER_PURGE_TOMBSTONES_PROPERTY_VALUE || cfs.getNeverPurgeTombstones())
             return null;
         overlapIterator.update(key);
         return Iterables.filter(Iterables.transform(overlapIterator.overlaps(),

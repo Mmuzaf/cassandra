@@ -80,7 +80,7 @@ public final class SchemaKeyspace
     private static final Logger logger = LoggerFactory.getLogger(SchemaKeyspace.class);
 
     private static final boolean FLUSH_SCHEMA_TABLES = TEST_FLUSH_LOCAL_SCHEMA_CHANGES.getBoolean();
-    private static final boolean IGNORE_CORRUPTED_SCHEMA_TABLES_PROP = IGNORE_CORRUPTED_SCHEMA_TABLES.getBoolean();
+    private static final boolean IGNORE_CORRUPTED_SCHEMA_TABLES_PROPERTY_VALUE = IGNORE_CORRUPTED_SCHEMA_TABLES.getBoolean();
 
     /**
      * The tables to which we added the cdc column. This is used in {@link #makeUpdateForSchema} below to make sure we skip that
@@ -1004,7 +1004,7 @@ public final class SchemaKeyspace
                                                 SchemaConstants.SCHEMA_KEYSPACE_NAME, COLUMNS, keyspaceName, tableName,
                                                 SchemaConstants.SCHEMA_KEYSPACE_NAME, COLUMNS);
 
-                if (IGNORE_CORRUPTED_SCHEMA_TABLES_PROP)
+                if (IGNORE_CORRUPTED_SCHEMA_TABLES_PROPERTY_VALUE)
                 {
                     logger.error(errorMsg, "", exc);
                 }

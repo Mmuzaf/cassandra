@@ -103,7 +103,7 @@ import static org.apache.cassandra.SchemaLoader.createKeyspace;
 import static org.apache.cassandra.SchemaLoader.getCompressionParameters;
 import static org.apache.cassandra.SchemaLoader.loadSchema;
 import static org.apache.cassandra.SchemaLoader.standardCFMD;
-import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_INVALID_LEGACY_SSTABLE_ROOT_PROP;
+import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_INVALID_LEGACY_SSTABLE_ROOT;
 import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_UTIL_ALLOW_TOOL_REINIT_FOR_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -860,7 +860,7 @@ public class ScrubTest
 
             ColumnFamilyStore cfs = keyspace.getColumnFamilyStore("cf_with_duplicates_3_0");
 
-            Path legacySSTableRoot = Paths.get(TEST_INVALID_LEGACY_SSTABLE_ROOT_PROP.getString(),
+            Path legacySSTableRoot = Paths.get(TEST_INVALID_LEGACY_SSTABLE_ROOT.getString(),
                                                "Keyspace1",
                                                "cf_with_duplicates_3_0");
 

@@ -334,8 +334,7 @@ public enum CassandraRelevantProperties
      * when the JVM terminates. Therefore, we can use such optimization and not wait unnecessarily. */
     NON_GRACEFUL_SHUTDOWN("cassandra.test.messagingService.nonGracefulShutdown"),
     /** for specific tests */
-    ORG_APACHE_CASSANDRA_CONF_CASSANDRA_RELEVANT_PROPERTIES_TEST("org.apache.cassandra.conf.CassandraRelevantPropertiesTest"),
-    ORG_APACHE_CASSANDRA_DB_VIRTUAL_SYSTEM_PROPERTIES_TABLE_TEST("org.apache.cassandra.db.virtual.SystemPropertiesTableTest"),
+    TEST_CASSANDRA_RELEVANT_PROPERTIES("org.apache.cassandra.conf.CassandraRelevantPropertiesTest"),
     /** This property indicates whether disable_mbean_registration is true */
     ORG_APACHE_CASSANDRA_DISABLE_MBEAN_REGISTRATION("org.apache.cassandra.disable_mbean_registration"),
     /** Operating system architecture. */
@@ -448,9 +447,9 @@ public enum CassandraRelevantProperties
      * can be also done manually for that particular case: {@code flush(SchemaConstants.SCHEMA_KEYSPACE_NAME);}. */
     TEST_FLUSH_LOCAL_SCHEMA_CHANGES("cassandra.test.flush_local_schema_changes", "true"),
     TEST_IGNORE_SIGAR("cassandra.test.ignore_sigar"),
-    TEST_INVALID_LEGACY_SSTABLE_ROOT_PROP("invalid-legacy-sstable-root"),
+    TEST_INVALID_LEGACY_SSTABLE_ROOT("invalid-legacy-sstable-root"),
     TEST_JVM_DTEST_DISABLE_SSL("cassandra.test.disable_ssl"),
-    TEST_LEGACY_SSTABLE_ROOT_PROP("legacy-sstable-root"),
+    TEST_LEGACY_SSTABLE_ROOT("legacy-sstable-root"),
     TEST_ORG_CAFFINITAS_OHC_SEGMENTCOUNT("org.caffinitas.ohc.segmentCount"),
     TEST_READ_ITERATION_DELAY_MS("cassandra.test.read_iteration_delay_ms", "0"),
     TEST_REUSE_PREPARED("cassandra.test.reuse_prepared", "true"),
