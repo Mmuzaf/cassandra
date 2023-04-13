@@ -108,7 +108,7 @@ public class ClientState
             try
             {
                 handler = FBUtilities.construct(customHandlerClass, "QueryHandler");
-                logger.info("Using {} as query handler for native protocol queries (as requested with {} system property)",
+                logger.info("Using {} as a query handler for native protocol queries (as requested by the {} system property)",
                             customHandlerClass, CUSTOM_QUERY_HANDLER_CLASS.getKey());
             }
             catch (Exception e)
