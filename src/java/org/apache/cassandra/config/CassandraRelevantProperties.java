@@ -486,7 +486,8 @@ public enum CassandraRelevantProperties
     USE_NIX_RECURSIVE_DELETE("cassandra.use_nix_recursive_delete"),
     /** Gossiper compute expiration timeout. Default value 3 days. */
     VERY_LONG_TIME_MS("cassandra.very_long_time_ms", "259200000"),
-    WAIT_FOR_TRACING_EVENTS_TIMEOUT_SECS("cassandra.wait_for_tracing_events_timeout_secs", "0");
+    WAIT_FOR_TRACING_EVENTS_TIMEOUT_SECS("cassandra.wait_for_tracing_events_timeout_secs", "0")
+    ;
 
     static
     {
@@ -504,6 +505,14 @@ public enum CassandraRelevantProperties
         }
     }
 
+    /**
+     * @return a string that is guaranteed to not be a valid value for any system property.
+     */
+    private static String defaultValueNotSet()
+    {
+        return CassandraRelevantPropertiesConstants.DEFAULT_VALUE_NOT_SET;
+    }
+
     CassandraRelevantProperties(String key, String defaultVal)
     {
         this.key = key;
@@ -513,7 +522,7 @@ public enum CassandraRelevantProperties
     CassandraRelevantProperties(String key)
     {
         this.key = key;
-        this.defaultVal = null;
+        this.defaultVal = defaultValueNotSet();
     }
 
     private final String key;
@@ -532,7 +541,7 @@ public enum CassandraRelevantProperties
     {
         String value = System.getProperty(key);
 
-        return value == null ? defaultVal : STRING_CONVERTER.convert(value);
+        return value == null ? getDefaultValue() : STRING_CONVERTER.convert(value);
     }
 
     /**
@@ -542,6 +551,8 @@ public enum CassandraRelevantProperties
      */
     public String getDefaultValue()
     {
+        if (defaultValueNotSet().equals(defaultVal))
+            throw new ConfigurationException("No default value for property: " + key);
         return defaultVal;
     }
 
@@ -550,8 +561,8 @@ public enum CassandraRelevantProperties
      */
     public void reset()
     {
-        if (defaultVal != null)
-            System.setProperty(key, defaultVal);
+        if (defaultValueNotSet().equals(defaultVal))
+            System.setProperty(key, getDefaultValue());
         else
             System.getProperties().remove(key);
     }
@@ -573,7 +584,7 @@ public enum CassandraRelevantProperties
     {
         String value = System.getProperty(key);
         if (value == null)
-            value = defaultVal;
+            value = getDefaultValue();
 
         return converter.convert(value);
     }
@@ -595,7 +606,7 @@ public enum CassandraRelevantProperties
     {
         String value = System.getProperty(key);
 
-        return BOOLEAN_CONVERTER.convert(value == null ? defaultVal : value);
+        return BOOLEAN_CONVERTER.convert(value == null ? getDefaultValue() : value);
     }
 
     /**
@@ -637,9 +648,7 @@ public enum CassandraRelevantProperties
     public int getInt()
     {
         String value = System.getProperty(key);
-        if (value == null && defaultVal == null)
-            throw new ConfigurationException("Missing property value or default value is not set: " + key);
-        return INTEGER_CONVERTER.convert(value == null ? defaultVal : value);
+        return INTEGER_CONVERTER.convert(value == null ? getDefaultValue() : value);
     }
 
     /**
@@ -649,9 +658,8 @@ public enum CassandraRelevantProperties
     public long getLong()
     {
         String value = System.getProperty(key);
-        if (value == null && defaultVal == null)
-            throw new ConfigurationException("Missing property value or default value is not set: " + key);
-        return LONG_CONVERTER.convert(value == null ? defaultVal : value);
+        System.out.println(">>>>> key " + key + " value " + value + " default " + getDefaultValue());
+        return LONG_CONVERTER.convert(value == null ? getDefaultValue() : value);
     }
 
     /**
@@ -741,7 +749,7 @@ public enum CassandraRelevantProperties
      */
     public <T extends Enum<T>> T getEnum(boolean toUppercase, Class<T> enumClass)
     {
-        String value = System.getProperty(key, defaultVal);
+        String value = System.getProperty(key, getDefaultValue());
         return Enum.valueOf(enumClass, toUppercase ? value.toUpperCase() : value);
     }
 
@@ -810,5 +818,11 @@ public enum CassandraRelevantProperties
     public boolean isPresent()
     {
         return System.getProperties().containsKey(key);
+    }
+
+    /** The default value for a particular property. */
+    interface CassandraRelevantPropertiesConstants
+    {
+        String DEFAULT_VALUE_NOT_SET = new Object().toString();
     }
 }

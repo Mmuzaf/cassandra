@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 import com.google.common.base.Joiner;
 
@@ -38,21 +39,21 @@ public final class WithProperties implements AutoCloseable
 
     public WithProperties(String... kvs)
     {
-        set(kvs);
+        with(kvs);
     }
 
-    public void set(String... kvs)
+    public void with(String... kvs)
     {
         assert kvs.length % 2 == 0 : "Input must have an even amount of inputs but given " + kvs.length;
         for (int i = 0; i <= kvs.length - 2; i = i + 2)
         {
-            set(CassandraRelevantProperties.getProperty(kvs[i]), kvs[i + 1]);
+            with(kvs[i], kvs[i + 1]);
         }
     }
 
     public void set(CassandraRelevantProperties prop, String value)
     {
-        properties.add(new Property(prop, prop.setString(value)));
+        with(prop, () -> prop.setString(value));
     }
 
     public void set(CassandraRelevantProperties prop, String... values)
@@ -67,12 +68,38 @@ public final class WithProperties implements AutoCloseable
 
     public void set(CassandraRelevantProperties prop, boolean value)
     {
-        set(prop, Boolean.toString(value));
+        with(prop, () -> prop.setBoolean(value));
     }
 
     public void set(CassandraRelevantProperties prop, long value)
     {
-        set(prop, Long.toString(value));
+        with(prop, () -> prop.setLong(value));
+    }
+
+    public void with(String key, String value)
+    {
+        String previous = System.setProperty(key, value);
+        properties.add(new Property(key, previous));
+    }
+
+    private static String convert(Object value)
+    {
+        if (value == null)
+            return null;
+        if (value instanceof String)
+            return (String) value;
+        if (value instanceof Boolean)
+            return Boolean.toString((Boolean) value);
+        if (value instanceof Long)
+            return Long.toString((Long) value);
+        if (value instanceof Integer)
+            return Integer.toString((Integer) value);
+        throw new IllegalArgumentException("Unknown type " + value.getClass());
+    }
+
+    private void with(CassandraRelevantProperties prop, Supplier<Object> prev)
+    {
+        properties.add(new Property(prop.getKey(), convert(prev.get())));
     }
 
     @Override
@@ -80,23 +107,23 @@ public final class WithProperties implements AutoCloseable
     {
         Collections.reverse(properties);
         properties.forEach(s -> {
-            if (s.prevValue == null)
-                s.prop.clearValue();
+            if (s.value == null)
+                System.getProperties().remove(s.key); // checkstyle: suppress nearby 'blockSystemPropertyUsage'
             else
-                s.prop.setString(s.prevValue);
+                System.setProperty(s.key, s.value); // checkstyle: suppress nearby 'blockSystemPropertyUsage'
         });
         properties.clear();
     }
 
     private static final class Property
     {
-        private final CassandraRelevantProperties prop;
-        private final String prevValue;
+        private final String key;
+        private final String value;
 
-        private Property(CassandraRelevantProperties prop, String prevValue)
+        private Property(String key, String value)
         {
-            this.prop = prop;
-            this.prevValue = prevValue;
+            this.key = key;
+            this.value = value;
         }
     }
 }

@@ -90,7 +90,7 @@ public class LogbackStatusListener implements StatusListener, LoggerContextListe
 
     private static PrintStream wrapLogger(Logger logger, PrintStream original, CassandraRelevantProperties encodingProperty, boolean error) throws Exception
     {
-        final String encoding = encodingProperty.getString();
+        final String encoding = encodingProperty.getString(null);
         OutputStream os = new ToLoggerOutputStream(logger, encoding, error);
         return encoding != null ? new WrappedPrintStream(os, true, encoding, original)
                                 : new WrappedPrintStream(os, true, original);
