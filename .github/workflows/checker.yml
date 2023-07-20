@@ -1,0 +1,109 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+name: "Release Candidate Checker"
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-version:
+        description: 'The Release Candidate version'
+        required: true
+
+env:
+  SERVER_URL: 'https://dist.apache.org/repos/dist/dev/cassandra/'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    name: Release Candidate '${{ github.event.inputs.release-version }}'
+    steps:
+      - name: Setup Inputs
+        id: vars
+        shell: bash
+        # see https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
+        run: |
+          ver=${{ github.event.inputs.release-version }}
+          echo "Release Version:      $mod_ver"
+          echo "RELEASE_VERSION=${ver}" >> $GITHUB_ENV
+
+      - name: Checkout Release Branch
+        uses: actions/checkout@v3
+        with:
+          repository: apache/cassandra
+          ref: '${{ github.event.inputs.release-version }}-tentative'
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: 11
+          distribution: 'adopt'
+
+      - name: Setup Ant
+        shell: bash
+        run: |
+          ANT_VERSION=1.10.13
+          wget --no-check-certificate --no-cookies http://archive.apache.org/dist/ant/binaries/apache-ant-${ANT_VERSION}-bin.tar.gz \
+          && wget --no-check-certificate --no-cookies http://archive.apache.org/dist/ant/binaries/apache-ant-${ANT_VERSION}-bin.tar.gz.sha512 \
+          && echo "$(cat apache-ant-${ANT_VERSION}-bin.tar.gz.sha512) apache-ant-${ANT_VERSION}-bin.tar.gz" | sha512sum -c \
+          && tar -zvxf apache-ant-${ANT_VERSION}-bin.tar.gz -C /opt/ \
+          && ln -s /opt/apache-ant-${ANT_VERSION} /opt/ant \
+          && rm -f apache-ant-${ANT_VERSION}-bin.tar.gz \
+          && rm -f apache-ant-${ANT_VERSION}-bin.tar.gz.sha512
+          update-alternatives --install "/usr/bin/ant" "ant" "/opt/ant/bin/ant" 1 && \
+          update-alternatives --set "ant" "/opt/ant/bin/ant"
+
+      - name: Build
+        run: |
+          ant realclean jar -Duse.jdk11=true
+
+      - name: Extract Branch Version and Compare
+        shell: bash
+        run: |
+          ant_ver=$(grep 'property\s*name="base.version"' build.xml | sed -ne 's/.*value="\([^"]*\)".*/\1/p')
+          missmatch='true'
+          [ "$ant_ver" == "${{ env.RELEASE_VERSION }}" ] && missmatch='false'
+          echo "build.xml version: ${ant_ver}"
+          echo "VERSIONS_MISMATCH=${missmatch}" >> $GITHUB_ENV
+          echo "RELEASE_VERSION_ANT=${ant_ver}" >> $GITHUB_ENV
+
+      - name: Compare Release Candidate input with the version in 'build.xml'
+        if: ${{ env.VERSIONS_MISMATCH == 'true' }}
+        uses: actions/github-script@v3
+        with:
+          script: |
+            core.setFailed('Versions missmatch [branch=${{ env.RELEASE_VERSION }}, pom=${{ env.RELEASE_VERSION_ANT }}]')
+
+      - name: Download Binary and Sources
+        run: |
+          wget --recursive --no-parent --no-directories --tries=3 --retry-on-http-error=429,503,504 --accept '.gz,.asc,.sha512' \
+            --execute robots=off "${{ env.SERVER_URL }}${{ env.RELEASE_VERSION_ANT }}/" -P ${{ env.RELEASE_VERSION_ANT }}
+          ls ${{ env.RELEASE_VERSION_ANT }}
+
+      - name: Validate Binary and Sources Checksums
+        run: |
+          cd ${{ env.RELEASE_VERSION_ANT }}
+          for rc in $(find . -name "apache-cassandra-${{ env.RELEASE_VERSION_ANT }}-*.gz" -type f); do echo "$(cat $rc.sha512) $rc" | sha512sum -c; done
+
+      - name: Validate PGP Signatures
+        run: |
+          cd ${{ env.RELEASE_VERSION_ANT }}
+          wget https://dist.apache.org/repos/dist/release/cassandra/KEYS
+          gpg --import KEYS
+          for asc in $(find . -name "*.asc" -type f); do gpg --verify $asc; done
