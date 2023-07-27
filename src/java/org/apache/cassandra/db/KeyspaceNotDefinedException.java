@@ -19,10 +19,20 @@ package org.apache.cassandra.db;
 
 import org.apache.cassandra.exceptions.InvalidRequestException;
 
+import java.util.function.Function;
+
 public class KeyspaceNotDefinedException extends InvalidRequestException
 {
-    public KeyspaceNotDefinedException(String why)
+    private final String name;
+
+    public KeyspaceNotDefinedException(String name, Function<String, String> messageProvider)
     {
-        super(why);
+        super(messageProvider.apply(name));
+        this.name = name;
+    }
+
+    public String getName()
+    {
+        return name;
     }
 }

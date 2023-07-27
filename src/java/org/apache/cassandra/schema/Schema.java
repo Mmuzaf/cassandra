@@ -457,7 +457,7 @@ public class Schema implements SchemaProvider
 
         KeyspaceMetadata keyspace = getKeyspaceMetadata(keyspaceName);
         if (keyspace == null)
-            throw new KeyspaceNotDefinedException(format("keyspace %s does not exist", keyspaceName));
+            throw new KeyspaceNotDefinedException(keyspaceName, name -> format("keyspace %s does not exist", name));
 
         TableMetadata metadata = keyspace.getTableOrViewNullable(tableName);
         if (metadata == null)

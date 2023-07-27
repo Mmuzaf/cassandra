@@ -1922,6 +1922,10 @@ public final class SystemKeyspace
         }
         catch (Exception e)
         {
+            if (e instanceof KeyspaceNotDefinedException &&
+                    SchemaConstants.SYSTEM_KEYSPACE_NAME.equals(((KeyspaceNotDefinedException) e).getName()))
+                throw e;
+
             logger.warn("Could not load stored top {} partitions for {}.{}", topType, metadata.keyspace, metadata.name, e);
             return TopPartitionTracker.StoredTopPartitions.EMPTY;
         }
