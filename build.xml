@@ -1979,6 +1979,7 @@
   <classpathentry kind="src" output="${test.classes}" path="test/microbench"/>
   <classpathentry kind="src" output="${test.classes}" path="test/memory"/>
   <classpathentry kind="src" output="${test.classes}" path="test/burn"/>
+  <classpathentry kind="src" output="${test.classes}" path="test/anttasks"/>
   <classpathentry kind="src" output="${test.classes}" path="test/distributed"/>
   <classpathentry kind="src" output="${test.classes}" path="test/simulator/asm"/>
   <classpathentry kind="src" output="${test.classes}" path="test/simulator/main"/>
