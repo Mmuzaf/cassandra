@@ -386,11 +386,22 @@ public interface StorageServiceMBean extends NotificationEmitter
      * Scrubbed CFs will be snapshotted first, if disableSnapshot is false
      */
     @Deprecated
-    public int scrub(boolean disableSnapshot, boolean skipCorrupted, String keyspaceName, String... tableNames) throws IOException, ExecutionException, InterruptedException;
+    default int scrub(boolean disableSnapshot, boolean skipCorrupted, String keyspaceName, String... tableNames) throws IOException, ExecutionException, InterruptedException
+    {
+        return scrub(disableSnapshot, skipCorrupted, true, keyspaceName, tableNames);
+    }
+
     @Deprecated
-    public int scrub(boolean disableSnapshot, boolean skipCorrupted, boolean checkData, String keyspaceName, String... tableNames) throws IOException, ExecutionException, InterruptedException;
+    default int scrub(boolean disableSnapshot, boolean skipCorrupted, boolean checkData, String keyspaceName, String... tableNames) throws IOException, ExecutionException, InterruptedException
+    {
+        return scrub(disableSnapshot, skipCorrupted, checkData, 0, keyspaceName, tableNames);
+    }
+
     @Deprecated
-    public int scrub(boolean disableSnapshot, boolean skipCorrupted, boolean checkData, int jobs, String keyspaceName, String... columnFamilies) throws IOException, ExecutionException, InterruptedException;
+    default int scrub(boolean disableSnapshot, boolean skipCorrupted, boolean checkData, int jobs, String keyspaceName, String... columnFamilies) throws IOException, ExecutionException, InterruptedException
+    {
+        return scrub(disableSnapshot, skipCorrupted, checkData, false, jobs, keyspaceName, columnFamilies);
+    }
 
     public int scrub(boolean disableSnapshot, boolean skipCorrupted, boolean checkData, boolean reinsertOverflowedTTL, int jobs, String keyspaceName, String... columnFamilies) throws IOException, ExecutionException, InterruptedException;
 
@@ -478,6 +489,23 @@ public interface StorageServiceMBean extends NotificationEmitter
      * @param force Decommission even if this will reduce N to be less than RF.
      */
     public void decommission(boolean force) throws InterruptedException;
+
+    /**
+     * Returns whether a node has failed to decommission.
+     *
+     * The fact that this method returns false does not mean that there was an attempt to
+     * decommission this node which was successful.
+     *
+     * @return true if decommission of this node has failed, false otherwise
+     */
+    public boolean isDecommissionFailed();
+
+    /**
+     * Returns whether a node is being decommissioned or not.
+     *
+     * @return true if this node is decommissioning, false otherwise
+     */
+    public boolean isDecommissioning();
 
     /**
      * @param newToken token to move this node to.
@@ -920,10 +948,16 @@ public interface StorageServiceMBean extends NotificationEmitter
     /** Sets the number of rows cached at the coordinator before filtering/index queries fail outright. */
     public void setCachedReplicaRowsFailThreshold(int threshold);
 
-    /** Returns the granularity of the collation index of rows within a partition **/
+    /**
+     * Returns the granularity of the collation index of rows within a partition.
+     * -1 stands for the SSTable format's default.
+     **/
     public int getColumnIndexSizeInKiB();
 
-    /** Sets the granularity of the collation index of rows within a partition **/
+    /**
+     * Sets the granularity of the collation index of rows within a partition.
+     * Use -1 to select the SSTable format's default.
+     **/
     public void setColumnIndexSizeInKiB(int columnIndexSizeInKiB);
 
     /**
@@ -989,6 +1023,8 @@ public interface StorageServiceMBean extends NotificationEmitter
      * @return true if the node successfully starts resuming. (this does not mean bootstrap streaming was success.)
      */
     public boolean resumeBootstrap();
+
+    public String getBootstrapState();
 
     /** Gets the concurrency settings for processing stages*/
     static class StageConcurrency implements Serializable
@@ -1099,8 +1135,10 @@ public interface StorageServiceMBean extends NotificationEmitter
     @Deprecated
     void setKeyspaceCountWarnThreshold(int value);
 
-    public void setCompactionTombstoneWarningThreshold(int count);
-    public int getCompactionTombstoneWarningThreshold();
+    @Deprecated
+    void setCompactionTombstoneWarningThreshold(int count);
+    @Deprecated
+    int getCompactionTombstoneWarningThreshold();
 
     public boolean getReadThresholdsEnabled();
     public void setReadThresholdsEnabled(boolean value);

@@ -30,15 +30,14 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter.Indenter;
 import com.fasterxml.jackson.core.util.MinimalPrettyPrinter;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.apache.cassandra.db.ClusteringBound;
 import org.apache.cassandra.db.ClusteringPrefix;
 import org.apache.cassandra.db.DecoratedKey;
@@ -208,7 +207,8 @@ public final class JsonTransformer
         try
         {
             json.writeStartObject();
-
+            json.writeObjectField("table kind", metadata.kind.name());
+            
             json.writeFieldName("partition");
             json.writeStartObject();
             json.writeFieldName("key");
@@ -374,7 +374,8 @@ public final class JsonTransformer
                 }
                 else
                 {
-                    json.writeRawValue(column.cellValueType().toJSONString(clustering.get(i), clustering.accessor(), ProtocolVersion.CURRENT));
+                    AbstractType<?> type = column.cellValueType();
+                    json.writeRawValue(type.toJSONString(clustering.get(i), clustering.accessor(), ProtocolVersion.CURRENT));
                 }
             }
             json.writeEndArray();

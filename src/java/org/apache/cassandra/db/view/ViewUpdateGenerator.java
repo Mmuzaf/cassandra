@@ -55,7 +55,7 @@ import org.apache.cassandra.schema.TableMetadata;
 public class ViewUpdateGenerator
 {
     private final View view;
-    private final int nowInSec;
+    private final long nowInSec;
 
     private final TableMetadata baseMetadata;
     private final DecoratedKey baseDecoratedKey;
@@ -93,7 +93,7 @@ public class ViewUpdateGenerator
      * @param nowInSec the current time in seconds. Used to decide if data are live or not
      * and as base reference for new deletions.
      */
-    public ViewUpdateGenerator(View view, DecoratedKey basePartitionKey, int nowInSec)
+    public ViewUpdateGenerator(View view, DecoratedKey basePartitionKey, long nowInSec)
     {
         this.view = view;
         this.nowInSec = nowInSec;

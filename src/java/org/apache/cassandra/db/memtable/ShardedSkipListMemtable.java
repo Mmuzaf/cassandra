@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -54,7 +53,7 @@ import org.apache.cassandra.dht.Bounds;
 import org.apache.cassandra.dht.IncludingExcludingBounds;
 import org.apache.cassandra.dht.Range;
 import org.apache.cassandra.index.transactions.UpdateTransaction;
-import org.apache.cassandra.io.sstable.format.SSTableReadsListener;
+import org.apache.cassandra.io.sstable.SSTableReadsListener;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.TableMetadataRef;
 import org.apache.cassandra.utils.concurrent.OpOrder;
@@ -175,11 +174,11 @@ public class ShardedSkipListMemtable extends AbstractShardedMemtable
     }
 
     @Override
-    public int getMinLocalDeletionTime()
+    public long getMinLocalDeletionTime()
     {
-        int min = Integer.MAX_VALUE;
+        long min = Long.MAX_VALUE;
         for (MemtableShard shard : shards)
-            min = Integer.min(min, shard.minLocalDeletionTime());
+            min = Long.min(min, shard.minLocalDeletionTime());
         return min;
     }
 
@@ -319,7 +318,7 @@ public class ShardedSkipListMemtable extends AbstractShardedMemtable
 
         // The smallest timestamp for all partitions stored in this shard
         private final AtomicLong minTimestamp = new AtomicLong(Long.MAX_VALUE);
-        private final AtomicInteger minLocalDeletionTime = new AtomicInteger(Integer.MAX_VALUE);
+        private final AtomicLong minLocalDeletionTime = new AtomicLong(Long.MAX_VALUE);
 
         private final AtomicLong liveDataSize = new AtomicLong(0);
 
@@ -432,7 +431,7 @@ public class ShardedSkipListMemtable extends AbstractShardedMemtable
             return currentOperations.get();
         }
 
-        public int minLocalDeletionTime()
+        public long minLocalDeletionTime()
         {
             return minLocalDeletionTime.get();
         }

@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.base.Function;
-
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import org.apache.cassandra.db.DecoratedKey;
@@ -176,7 +175,7 @@ public class SSTableIndex
         {
             try
             {
-                return sstable.keyAt(offset);
+                return sstable.keyAtPositionFromSecondaryIndex(offset);
             }
             catch (IOException e)
             {

@@ -17,15 +17,7 @@
  */
 package org.apache.cassandra.utils.btree;
 
-import java.util.Comparator;
-import java.util.Random;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
-import com.google.common.collect.Iterables;
-
-import org.junit.Test;
-
+import static org.apache.cassandra.config.CassandraRelevantProperties.BTREE_BRANCH_SHIFT;
 import static org.apache.cassandra.utils.btree.BTreeRemoval.remove;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -33,11 +25,20 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Comparator;
+import java.util.Random;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+import org.junit.Test;
+
+import com.google.common.collect.Iterables;
+
 public class BTreeRemovalTest
 {
     static
     {
-        System.setProperty("cassandra.btree.branchshift", "3");
+        BTREE_BRANCH_SHIFT.setInt(3);
     }
 
     private static final Comparator<Integer> CMP = new Comparator<Integer>()

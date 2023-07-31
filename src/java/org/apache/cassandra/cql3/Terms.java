@@ -18,19 +18,13 @@
 package org.apache.cassandra.cql3;
 
 import java.nio.ByteBuffer;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import org.apache.cassandra.cql3.Term.MultiItemTerminal;
 import org.apache.cassandra.cql3.Term.Terminal;
 import org.apache.cassandra.cql3.functions.Function;
-import org.apache.cassandra.db.marshal.AbstractType;
-import org.apache.cassandra.db.marshal.CollectionType;
-import org.apache.cassandra.db.marshal.ListType;
-import org.apache.cassandra.db.marshal.MapType;
-import org.apache.cassandra.db.marshal.SetType;
+import org.apache.cassandra.db.marshal.*;
+import org.apache.cassandra.schema.SchemaConstants;
 import org.apache.cassandra.transport.ProtocolVersion;
 
 /**
@@ -270,7 +264,7 @@ public interface Terms
 
     public static ByteBuffer asBytes(String keyspace, String term, AbstractType type)
     {
-        ColumnSpecification receiver = new ColumnSpecification(keyspace, "--dummy--", new ColumnIdentifier("(dummy)", true), type);
+        ColumnSpecification receiver = new ColumnSpecification(keyspace, SchemaConstants.DUMMY_KEYSPACE_OR_TABLE_NAME, new ColumnIdentifier("(dummy)", true), type);
         Term.Raw rawTerm = CQLFragmentParser.parseAny(CqlParser::term, term, "CQL term");
         return rawTerm.prepare(keyspace, receiver).bindAndGet(QueryOptions.DEFAULT);
     }

@@ -34,10 +34,15 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Uninterruptibles;
 
+import org.apache.cassandra.concurrent.FutureTask;
+import org.apache.cassandra.config.CassandraRelevantProperties;
+import org.apache.cassandra.utils.TimeUUID;
+import org.apache.cassandra.utils.concurrent.Future;
+import org.apache.cassandra.utils.concurrent.FutureCombiner;
+import org.apache.cassandra.utils.concurrent.ImmediateFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.cassandra.concurrent.FutureTask;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.compaction.CompactionInfo;
 import org.apache.cassandra.db.compaction.CompactionManager;
@@ -49,10 +54,6 @@ import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.io.sstable.metadata.StatsMetadata;
 import org.apache.cassandra.locator.RangesAtEndpoint;
 import org.apache.cassandra.service.ActiveRepairService;
-import org.apache.cassandra.utils.TimeUUID;
-import org.apache.cassandra.utils.concurrent.Future;
-import org.apache.cassandra.utils.concurrent.FutureCombiner;
-import org.apache.cassandra.utils.concurrent.ImmediateFuture;
 import org.apache.cassandra.utils.concurrent.Refs;
 
 import static org.apache.cassandra.service.ActiveRepairService.NO_PENDING_REPAIR;
@@ -67,8 +68,8 @@ import static org.apache.cassandra.utils.Clock.Global.currentTimeMillis;
 public class PendingAntiCompaction
 {
     private static final Logger logger = LoggerFactory.getLogger(PendingAntiCompaction.class);
-    private static final int ACQUIRE_SLEEP_MS = Integer.getInteger("cassandra.acquire_sleep_ms", 1000);
-    private static final int ACQUIRE_RETRY_SECONDS = Integer.getInteger("cassandra.acquire_retry_seconds", 60);
+    private static final int ACQUIRE_SLEEP_MS = CassandraRelevantProperties.ACQUIRE_SLEEP_MS.getInt();
+    private static final int ACQUIRE_RETRY_SECONDS = CassandraRelevantProperties.ACQUIRE_RETRY_SECONDS.getInt();
 
     public static class AcquireResult
     {

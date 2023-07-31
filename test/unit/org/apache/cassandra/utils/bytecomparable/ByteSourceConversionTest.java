@@ -20,16 +20,7 @@ package org.apache.cassandra.utils.bytecomparable;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -102,7 +93,7 @@ import static org.junit.Assert.assertEquals;
 public class ByteSourceConversionTest extends ByteSourceTestBase
 {
     private final static Logger logger = LoggerFactory.getLogger(ByteSourceConversionTest.class);
-    public static final Version VERSION = Version.OSS42;
+    public static final Version VERSION = Version.OSS50;
 
     @Rule
     public final ExpectedException expectedException = ExpectedException.none();
@@ -371,7 +362,8 @@ public class ByteSourceConversionTest extends ByteSourceTestBase
     {
         ValueAccessor<ByteBuffer> accessor = ByteBufferAccessor.instance;
         ClusteringComparator comp = new ClusteringComparator();
-        for (ClusteringPrefix.Kind kind : ClusteringPrefix.Kind.values())
+        EnumSet<ClusteringPrefix.Kind> skippedKinds = EnumSet.of(ClusteringPrefix.Kind.SSTABLE_LOWER_BOUND, ClusteringPrefix.Kind.SSTABLE_UPPER_BOUND);
+        for (ClusteringPrefix.Kind kind : EnumSet.complementOf(skippedKinds))
         {
             if (kind.isBoundary())
                 continue;
@@ -394,7 +386,8 @@ public class ByteSourceConversionTest extends ByteSourceTestBase
                                               BiFunction<AbstractType, Object, ByteBuffer> decompose)
     {
         boolean checkEquals = t1 != DecimalType.instance && t2 != DecimalType.instance;
-        for (ClusteringPrefix.Kind k1 : ClusteringPrefix.Kind.values())
+        EnumSet<ClusteringPrefix.Kind> skippedKinds = EnumSet.of(ClusteringPrefix.Kind.SSTABLE_LOWER_BOUND, ClusteringPrefix.Kind.SSTABLE_UPPER_BOUND);
+        for (ClusteringPrefix.Kind k1 : EnumSet.complementOf(skippedKinds))
             {
                 ClusteringComparator comp = new ClusteringComparator(t1, t2);
                 V[] b = accessor.createArray(2);

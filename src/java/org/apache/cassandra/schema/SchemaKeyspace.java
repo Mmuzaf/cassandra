@@ -19,89 +19,48 @@ package org.apache.cassandra.schema;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.MapDifference;
+import com.google.common.collect.*;
 import com.google.common.collect.Maps;
-
-import org.antlr.runtime.RecognitionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.cql3.CQL3Type;
-import org.apache.cassandra.cql3.ColumnIdentifier;
-import org.apache.cassandra.cql3.FieldIdentifier;
-import org.apache.cassandra.cql3.Terms;
-import org.apache.cassandra.cql3.UntypedResultSet;
-import org.apache.cassandra.cql3.WhereClause;
-import org.apache.cassandra.cql3.functions.FunctionName;
-import org.apache.cassandra.cql3.functions.UDAggregate;
-import org.apache.cassandra.cql3.functions.UDFunction;
-import org.apache.cassandra.cql3.functions.UserFunction;
+import org.antlr.runtime.RecognitionException;
+import org.apache.cassandra.config.*;
+import org.apache.cassandra.cql3.*;
+import org.apache.cassandra.cql3.functions.*;
+import org.apache.cassandra.cql3.functions.masking.ColumnMask;
 import org.apache.cassandra.cql3.statements.schema.CreateTableStatement;
-import org.apache.cassandra.db.ColumnFamilyStore;
-import org.apache.cassandra.db.DecoratedKey;
-import org.apache.cassandra.db.Digest;
-import org.apache.cassandra.db.Keyspace;
-import org.apache.cassandra.db.Mutation;
-import org.apache.cassandra.db.PartitionRangeReadCommand;
-import org.apache.cassandra.db.ReadCommand;
-import org.apache.cassandra.db.ReadExecutionController;
+import org.apache.cassandra.db.*;
 import org.apache.cassandra.db.filter.ColumnFilter;
-import org.apache.cassandra.db.marshal.AbstractType;
-import org.apache.cassandra.db.marshal.BytesType;
-import org.apache.cassandra.db.marshal.ReversedType;
-import org.apache.cassandra.db.marshal.UTF8Type;
-import org.apache.cassandra.db.marshal.UserType;
-import org.apache.cassandra.db.partitions.PartitionIterator;
-import org.apache.cassandra.db.partitions.PartitionUpdate;
-import org.apache.cassandra.db.partitions.UnfilteredPartitionIterator;
-import org.apache.cassandra.db.rows.Row;
-import org.apache.cassandra.db.rows.RowIterator;
-import org.apache.cassandra.db.rows.RowIterators;
-import org.apache.cassandra.db.rows.UnfilteredRowIterator;
+import org.apache.cassandra.db.marshal.*;
+import org.apache.cassandra.db.partitions.*;
+import org.apache.cassandra.db.rows.*;
 import org.apache.cassandra.exceptions.InvalidRequestException;
+import org.apache.cassandra.service.reads.SpeculativeRetryPolicy;
 import org.apache.cassandra.schema.ColumnMetadata.ClusteringOrder;
 import org.apache.cassandra.schema.Keyspaces.KeyspacesDiff;
-import org.apache.cassandra.service.reads.SpeculativeRetryPolicy;
 import org.apache.cassandra.service.reads.repair.ReadRepairStrategy;
-import org.apache.cassandra.transport.ProtocolVersion;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.Simulate;
 
 import static java.lang.String.format;
+
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+
+import static org.apache.cassandra.config.CassandraRelevantProperties.IGNORE_CORRUPTED_SCHEMA_TABLES;
+import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_FLUSH_LOCAL_SCHEMA_CHANGES;
 import static org.apache.cassandra.cql3.QueryProcessor.executeInternal;
 import static org.apache.cassandra.cql3.QueryProcessor.executeOnceInternal;
-import static org.apache.cassandra.schema.SchemaKeyspaceTables.AGGREGATES;
-import static org.apache.cassandra.schema.SchemaKeyspaceTables.ALL;
-import static org.apache.cassandra.schema.SchemaKeyspaceTables.COLUMNS;
-import static org.apache.cassandra.schema.SchemaKeyspaceTables.DROPPED_COLUMNS;
-import static org.apache.cassandra.schema.SchemaKeyspaceTables.FUNCTIONS;
-import static org.apache.cassandra.schema.SchemaKeyspaceTables.INDEXES;
-import static org.apache.cassandra.schema.SchemaKeyspaceTables.KEYSPACES;
-import static org.apache.cassandra.schema.SchemaKeyspaceTables.TABLES;
-import static org.apache.cassandra.schema.SchemaKeyspaceTables.TRIGGERS;
-import static org.apache.cassandra.schema.SchemaKeyspaceTables.TYPES;
-import static org.apache.cassandra.schema.SchemaKeyspaceTables.VIEWS;
+import static org.apache.cassandra.schema.SchemaKeyspaceTables.*;
 import static org.apache.cassandra.utils.Simulate.With.GLOBAL_CLOCK;
 
 /**
@@ -119,8 +78,8 @@ public final class SchemaKeyspace
 
     private static final Logger logger = LoggerFactory.getLogger(SchemaKeyspace.class);
 
-    private static final boolean FLUSH_SCHEMA_TABLES = Boolean.parseBoolean(System.getProperty("cassandra.test.flush_local_schema_changes", "true"));
-    private static final boolean IGNORE_CORRUPTED_SCHEMA_TABLES = Boolean.parseBoolean(System.getProperty("cassandra.ignore_corrupted_schema_tables", "false"));
+    private static final boolean FLUSH_SCHEMA_TABLES = TEST_FLUSH_LOCAL_SCHEMA_CHANGES.getBoolean();
+    private static final boolean IGNORE_CORRUPTED_SCHEMA_TABLES_PROPERTY_VALUE = IGNORE_CORRUPTED_SCHEMA_TABLES.getBoolean();
 
     /**
      * The tables to which we added the cdc column. This is used in {@link #makeUpdateForSchema} below to make sure we skip that
@@ -156,7 +115,7 @@ public final class SchemaKeyspace
               + "extensions frozen<map<text, blob>>,"
               + "flags frozen<set<text>>," // SUPER, COUNTER, DENSE, COMPOUND
               + "gc_grace_seconds int,"
-              + "incremental_backups boolean,"        
+              + "incremental_backups boolean,"
               + "id uuid,"
               + "max_index_interval int,"
               + "memtable_flush_period_in_ms int,"
@@ -181,6 +140,20 @@ public final class SchemaKeyspace
               + "position int,"
               + "type text,"
               + "PRIMARY KEY ((keyspace_name), table_name, column_name))");
+
+    private static final TableMetadata ColumnMasks =
+    parse(COLUMN_MASKS,
+          "column dynamic data masks",
+          "CREATE TABLE %s ("
+          + "keyspace_name text,"
+          + "table_name text,"
+          + "column_name text,"
+          + "function_keyspace text,"
+          + "function_name text,"
+          + "function_argument_types frozen<list<text>>,"
+          + "function_argument_values frozen<list<text>>,"
+          + "function_argument_nulls frozen<list<boolean>>," // arguments that are null
+          + "PRIMARY KEY ((keyspace_name), table_name, column_name))");
 
     private static final TableMetadata DroppedColumns =
         parse(DROPPED_COLUMNS,
@@ -225,7 +198,7 @@ public final class SchemaKeyspace
               + "default_time_to_live int,"
               + "extensions frozen<map<text, blob>>,"
               + "gc_grace_seconds int,"
-              + "incremental_backups boolean,"        
+              + "incremental_backups boolean,"
               + "id uuid,"
               + "include_all_columns boolean,"
               + "max_index_interval int,"
@@ -287,8 +260,17 @@ public final class SchemaKeyspace
               + "state_type text,"
               + "PRIMARY KEY ((keyspace_name), aggregate_name, argument_types))");
 
-    private static final List<TableMetadata> ALL_TABLE_METADATA =
-        ImmutableList.of(Keyspaces, Tables, Columns, Triggers, DroppedColumns, Views, Types, Functions, Aggregates, Indexes);
+    private static final List<TableMetadata> ALL_TABLE_METADATA = ImmutableList.of(Keyspaces,
+                                                                                   Tables,
+                                                                                   Columns,
+                                                                                   ColumnMasks,
+                                                                                   Triggers,
+                                                                                   DroppedColumns,
+                                                                                   Views,
+                                                                                   Types,
+                                                                                   Functions,
+                                                                                   Aggregates,
+                                                                                   Indexes);
 
     private static TableMetadata parse(String name, String description, String cql)
     {
@@ -731,7 +713,7 @@ public final class SchemaKeyspace
     {
         AbstractType<?> type = column.type;
         if (type instanceof ReversedType)
-            type = ((ReversedType) type).baseType;
+            type = ((ReversedType<?>) type).baseType;
 
         builder.update(Columns)
                .row(table.name, column.name.toString())
@@ -740,6 +722,52 @@ public final class SchemaKeyspace
                .add("position", column.position())
                .add("clustering_order", column.clusteringOrder().toString().toLowerCase())
                .add("type", type.asCQL3Type().toString());
+
+        ColumnMask mask = column.getMask();
+        if (SchemaConstants.isReplicatedSystemKeyspace(table.keyspace))
+        {
+            // The propagation of system distributed keyspaces at startup can be problematic for old nodes without DDM,
+            // since those won't know what to do with the mask mutations. Thus, we don't support DDM on those keyspaces.
+            assert mask == null : "Dynamic data masking shouldn't be used on system distributed keyspaces";
+        }
+        else
+        {
+            Row.SimpleBuilder maskBuilder = builder.update(ColumnMasks).row(table.name, column.name.toString());
+
+            if (mask == null)
+            {
+                maskBuilder.delete();
+            }
+            else
+            {
+                FunctionName maskFunctionName = mask.function.name();
+
+                // Some arguments of the masking function can be null, but the CQL's list type that stores them doesn't
+                // accept nulls, so we use a parallel list of booleans to store what arguments are null.
+                List<AbstractType<?>> partialTypes = mask.partialArgumentTypes();
+                List<ByteBuffer> partialValues = mask.partialArgumentValues();
+                int numArgs = partialTypes.size();
+                List<String> types = new ArrayList<>(numArgs);
+                List<String> values = new ArrayList<>(numArgs);
+                List<Boolean> nulls = new ArrayList<>(numArgs);
+                for (int i = 0; i < numArgs; i++)
+                {
+                    AbstractType<?> argType = partialTypes.get(i);
+                    types.add(argType.asCQL3Type().toString());
+
+                    ByteBuffer argValue = partialValues.get(i);
+                    boolean isNull = argValue == null;
+                    nulls.add(isNull);
+                    values.add(isNull ? "" : argType.getString(argValue));
+                }
+
+                maskBuilder.add("function_keyspace", maskFunctionName.keyspace)
+                           .add("function_name", maskFunctionName.name)
+                           .add("function_argument_types", types)
+                           .add("function_argument_values", values)
+                           .add("function_argument_nulls", nulls);
+            }
+        }
     }
 
     private static void dropColumnFromSchemaMutation(TableMetadata table, ColumnMetadata column, Mutation.SimpleBuilder builder)
@@ -884,7 +912,7 @@ public final class SchemaKeyspace
                .add("final_func", aggregate.finalFunction() != null ? aggregate.finalFunction().name().name : null)
                .add("initcond", aggregate.initialCondition() != null
                                 // must use the frozen state type here, as 'null' for unfrozen collections may mean 'empty'
-                                ? aggregate.stateType().freeze().asCQL3Type().toCQLLiteral(aggregate.initialCondition(), ProtocolVersion.CURRENT)
+                                ? aggregate.stateType().freeze().asCQL3Type().toCQLLiteral(aggregate.initialCondition())
                                 : null);
     }
 
@@ -919,9 +947,9 @@ public final class SchemaKeyspace
     {
         KeyspaceParams params = fetchKeyspaceParams(keyspaceName);
         Types types = fetchTypes(keyspaceName);
-        Tables tables = fetchTables(keyspaceName, types);
-        Views views = fetchViews(keyspaceName, types);
         UserFunctions functions = fetchFunctions(keyspaceName, types);
+        Tables tables = fetchTables(keyspaceName, types, functions);
+        Views views = fetchViews(keyspaceName, types, functions);
         return KeyspaceMetadata.create(keyspaceName, params, tables, views, types, functions);
     }
 
@@ -950,7 +978,7 @@ public final class SchemaKeyspace
         return types.build();
     }
 
-    private static Tables fetchTables(String keyspaceName, Types types)
+    private static Tables fetchTables(String keyspaceName, Types types, UserFunctions functions)
     {
         String query = format("SELECT table_name FROM %s.%s WHERE keyspace_name = ?", SchemaConstants.SCHEMA_KEYSPACE_NAME, TABLES);
 
@@ -960,7 +988,7 @@ public final class SchemaKeyspace
             String tableName = row.getString("table_name");
             try
             {
-                tables.add(fetchTable(keyspaceName, tableName, types));
+                tables.add(fetchTable(keyspaceName, tableName, types, functions));
             }
             catch (MissingColumns exc)
             {
@@ -975,13 +1003,13 @@ public final class SchemaKeyspace
                                                 SchemaConstants.SCHEMA_KEYSPACE_NAME, COLUMNS, keyspaceName, tableName,
                                                 SchemaConstants.SCHEMA_KEYSPACE_NAME, COLUMNS);
 
-                if (IGNORE_CORRUPTED_SCHEMA_TABLES)
+                if (IGNORE_CORRUPTED_SCHEMA_TABLES_PROPERTY_VALUE)
                 {
                     logger.error(errorMsg, "", exc);
                 }
                 else
                 {
-                    logger.error(errorMsg, "restart cassandra with -Dcassandra.ignore_corrupted_schema_tables=true and ");
+                    logger.error(errorMsg, "restart cassandra with -D{}=true and ", IGNORE_CORRUPTED_SCHEMA_TABLES.getKey());
                     throw exc;
                 }
             }
@@ -989,7 +1017,7 @@ public final class SchemaKeyspace
         return tables.build();
     }
 
-    private static TableMetadata fetchTable(String keyspaceName, String tableName, Types types)
+    private static TableMetadata fetchTable(String keyspaceName, String tableName, Types types, UserFunctions functions)
     {
         String query = String.format("SELECT * FROM %s.%s WHERE keyspace_name = ? AND table_name = ?", SchemaConstants.SCHEMA_KEYSPACE_NAME, TABLES);
         UntypedResultSet rows = query(query, keyspaceName, tableName);
@@ -1001,7 +1029,7 @@ public final class SchemaKeyspace
         return TableMetadata.builder(keyspaceName, tableName, TableId.fromUUID(row.getUUID("id")))
                             .flags(flags)
                             .params(createTableParamsFromRow(row))
-                            .addColumns(fetchColumns(keyspaceName, tableName, types))
+                            .addColumns(fetchColumns(keyspaceName, tableName, types, functions))
                             .droppedColumns(fetchDroppedColumns(keyspaceName, tableName))
                             .indexes(fetchIndexes(keyspaceName, tableName))
                             .triggers(fetchTriggers(keyspaceName, tableName))
@@ -1045,7 +1073,7 @@ public final class SchemaKeyspace
         return builder.build();
     }
 
-    private static List<ColumnMetadata> fetchColumns(String keyspace, String table, Types types)
+    private static List<ColumnMetadata> fetchColumns(String keyspace, String table, Types types, UserFunctions functions)
     {
         String query = format("SELECT * FROM %s.%s WHERE keyspace_name = ? AND table_name = ?", SchemaConstants.SCHEMA_KEYSPACE_NAME, COLUMNS);
         UntypedResultSet columnRows = query(query, keyspace, table);
@@ -1053,7 +1081,7 @@ public final class SchemaKeyspace
             throw new MissingColumns("Columns not found in schema table for " + keyspace + '.' + table);
 
         List<ColumnMetadata> columns = new ArrayList<>();
-        columnRows.forEach(row -> columns.add(createColumnFromRow(row, types)));
+        columnRows.forEach(row -> columns.add(createColumnFromRow(row, types, functions)));
 
         if (columns.stream().noneMatch(ColumnMetadata::isPartitionKey))
             throw new MissingColumns("No partition key columns found in schema table for " + keyspace + "." + table);
@@ -1062,7 +1090,7 @@ public final class SchemaKeyspace
     }
 
     @VisibleForTesting
-    static ColumnMetadata createColumnFromRow(UntypedResultSet.Row row, Types types)
+    public static ColumnMetadata createColumnFromRow(UntypedResultSet.Row row, Types types, UserFunctions functions)
     {
         String keyspace = row.getString("keyspace_name");
         String table = row.getString("table_name");
@@ -1078,7 +1106,53 @@ public final class SchemaKeyspace
 
         ColumnIdentifier name = new ColumnIdentifier(row.getBytes("column_name_bytes"), row.getString("column_name"));
 
-        return new ColumnMetadata(keyspace, table, name, type, position, kind);
+        ColumnMask mask = null;
+        String query = format("SELECT * FROM %s.%s WHERE keyspace_name = ? AND table_name = ? AND column_name = ?",
+                              SchemaConstants.SCHEMA_KEYSPACE_NAME, COLUMN_MASKS);
+        UntypedResultSet columnMasks = query(query, keyspace, table, name.toString());
+        if (!columnMasks.isEmpty())
+        {
+            UntypedResultSet.Row maskRow = columnMasks.one();
+            FunctionName functionName = new FunctionName(maskRow.getString("function_keyspace"), maskRow.getString("function_name"));
+
+            List<String> partialArgumentTypes = maskRow.getFrozenList("function_argument_types", UTF8Type.instance);
+            List<AbstractType<?>> argumentTypes = new ArrayList<>(1 + partialArgumentTypes.size());
+            argumentTypes.add(type);
+            for (String argumentType : partialArgumentTypes)
+            {
+                argumentTypes.add(CQLTypeParser.parse(keyspace, argumentType, types));
+            }
+
+            Function function = FunctionResolver.get(keyspace, functionName, argumentTypes, null, null, null, functions);
+            if (function == null)
+            {
+                throw new AssertionError(format("Unable to find masking function %s(%s) for column %s.%s.%s",
+                                                functionName, argumentTypes, keyspace, table, name));
+            }
+            else if (!(function instanceof ScalarFunction))
+            {
+                throw new AssertionError(format("Column %s.%s.%s is unexpectedly masked with function %s " +
+                                                "which is not a scalar masking function",
+                                                keyspace, table, name, function));
+            }
+
+            // Some arguments of the masking function can be null, but the CQL's list type that stores them doesn't
+            // accept nulls, so we use a parallel list of booleans to store what arguments are null.
+            List<Boolean> nulls = maskRow.getFrozenList("function_argument_nulls", BooleanType.instance);
+            List<String> valuesAsCQL = maskRow.getFrozenList("function_argument_values", UTF8Type.instance);
+            ByteBuffer[] values = new ByteBuffer[valuesAsCQL.size()];
+            for (int i = 0; i < valuesAsCQL.size(); i++)
+            {
+                if (nulls.get(i))
+                    values[i] = null;
+                else
+                    values[i] = argumentTypes.get(i + 1).fromString(valuesAsCQL.get(i));
+            }
+
+            mask = new ColumnMask((ScalarFunction) function, values);
+        }
+
+        return new ColumnMetadata(keyspace, table, name, type, position, kind, mask);
     }
 
     private static Map<ByteBuffer, DroppedColumn> fetchDroppedColumns(String keyspace, String table)
@@ -1110,7 +1184,7 @@ public final class SchemaKeyspace
         assert kind == ColumnMetadata.Kind.REGULAR || kind == ColumnMetadata.Kind.STATIC
             : "Unexpected dropped column kind: " + kind;
 
-        ColumnMetadata column = new ColumnMetadata(keyspace, table, ColumnIdentifier.getInterned(name, true), type, ColumnMetadata.NO_POSITION, kind);
+        ColumnMetadata column = new ColumnMetadata(keyspace, table, ColumnIdentifier.getInterned(name, true), type, ColumnMetadata.NO_POSITION, kind, null);
         long droppedTime = TimeUnit.MILLISECONDS.toMicros(row.getLong("dropped_time"));
         return new DroppedColumn(column, droppedTime);
     }
@@ -1146,17 +1220,17 @@ public final class SchemaKeyspace
         return new TriggerMetadata(name, classOption);
     }
 
-    private static Views fetchViews(String keyspaceName, Types types)
+    private static Views fetchViews(String keyspaceName, Types types, UserFunctions functions)
     {
         String query = format("SELECT view_name FROM %s.%s WHERE keyspace_name = ?", SchemaConstants.SCHEMA_KEYSPACE_NAME, VIEWS);
 
         Views.Builder views = org.apache.cassandra.schema.Views.builder();
         for (UntypedResultSet.Row row : query(query, keyspaceName))
-            views.put(fetchView(keyspaceName, row.getString("view_name"), types));
+            views.put(fetchView(keyspaceName, row.getString("view_name"), types, functions));
         return views.build();
     }
 
-    private static ViewMetadata fetchView(String keyspaceName, String viewName, Types types)
+    private static ViewMetadata fetchView(String keyspaceName, String viewName, Types types, UserFunctions functions)
     {
         String query = String.format("SELECT * FROM %s.%s WHERE keyspace_name = ? AND view_name = ?", SchemaConstants.SCHEMA_KEYSPACE_NAME, VIEWS);
         UntypedResultSet rows = query(query, keyspaceName, viewName);
@@ -1169,7 +1243,7 @@ public final class SchemaKeyspace
         boolean includeAll = row.getBoolean("include_all_columns");
         String whereClauseString = row.getString("where_clause");
 
-        List<ColumnMetadata> columns = fetchColumns(keyspaceName, viewName, types);
+        List<ColumnMetadata> columns = fetchColumns(keyspaceName, viewName, types, functions);
 
         TableMetadata metadata =
             TableMetadata.builder(keyspaceName, viewName, TableId.fromUUID(row.getUUID("id")))

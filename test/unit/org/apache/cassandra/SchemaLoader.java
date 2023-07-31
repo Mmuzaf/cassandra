@@ -25,58 +25,35 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.After;
-import org.junit.BeforeClass;
-
 import org.apache.cassandra.auth.AuthKeyspace;
 import org.apache.cassandra.auth.AuthSchemaChangeListener;
 import org.apache.cassandra.auth.IAuthenticator;
 import org.apache.cassandra.auth.IAuthorizer;
+import org.apache.cassandra.auth.ICIDRAuthorizer;
 import org.apache.cassandra.auth.INetworkAuthorizer;
 import org.apache.cassandra.auth.IRoleManager;
-import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.config.*;
 import org.apache.cassandra.cql3.ColumnIdentifier;
 import org.apache.cassandra.cql3.statements.schema.CreateTableStatement;
 import org.apache.cassandra.cql3.statements.schema.IndexTarget;
 import org.apache.cassandra.db.RowUpdateBuilder;
-import org.apache.cassandra.db.marshal.AbstractType;
-import org.apache.cassandra.db.marshal.AsciiType;
-import org.apache.cassandra.db.marshal.BytesType;
-import org.apache.cassandra.db.marshal.CompositeType;
-import org.apache.cassandra.db.marshal.CounterColumnType;
-import org.apache.cassandra.db.marshal.DoubleType;
-import org.apache.cassandra.db.marshal.DynamicCompositeType;
-import org.apache.cassandra.db.marshal.Int32Type;
-import org.apache.cassandra.db.marshal.IntegerType;
-import org.apache.cassandra.db.marshal.LongType;
-import org.apache.cassandra.db.marshal.ReversedType;
-import org.apache.cassandra.db.marshal.TimeUUIDType;
-import org.apache.cassandra.db.marshal.UTF8Type;
-import org.apache.cassandra.db.marshal.UUIDType;
+import org.apache.cassandra.db.marshal.*;
 import org.apache.cassandra.dht.Murmur3Partitioner;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.index.StubIndex;
 import org.apache.cassandra.index.sasi.SASIIndex;
 import org.apache.cassandra.index.sasi.disk.OnDiskIndexBuilder;
-import org.apache.cassandra.schema.CachingParams;
-import org.apache.cassandra.schema.ColumnMetadata;
-import org.apache.cassandra.schema.CompactionParams;
-import org.apache.cassandra.schema.CompressionParams;
-import org.apache.cassandra.schema.IndexMetadata;
-import org.apache.cassandra.schema.Indexes;
-import org.apache.cassandra.schema.KeyspaceMetadata;
-import org.apache.cassandra.schema.KeyspaceParams;
-import org.apache.cassandra.schema.Schema;
-import org.apache.cassandra.schema.SchemaTestUtil;
-import org.apache.cassandra.schema.TableMetadata;
-import org.apache.cassandra.schema.Tables;
-import org.apache.cassandra.schema.Types;
-import org.apache.cassandra.schema.UserFunctions;
-import org.apache.cassandra.schema.Views;
+import org.apache.cassandra.schema.*;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.FBUtilities;
 
+import org.junit.After;
+import org.junit.BeforeClass;
+
+import static org.apache.cassandra.config.CassandraRelevantProperties.ALLOW_UNSAFE_JOIN;
+import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_COMPRESSION;
+import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_COMPRESSION_ALGO;
 import static org.apache.cassandra.utils.Clock.Global.currentTimeMillis;
 
 public class SchemaLoader
@@ -109,7 +86,7 @@ public class SchemaLoader
     public static void startGossiper()
     {
         // skip shadow round and endpoint collision check in tests
-        System.setProperty("cassandra.allow_unsafe_join", "true");
+        ALLOW_UNSAFE_JOIN.setBoolean(true);
         if (!Gossiper.instance.isEnabled())
             Gossiper.instance.start((int) (currentTimeMillis() / 1000));
     }
@@ -276,7 +253,7 @@ public class SchemaLoader
         for (KeyspaceMetadata ksm : schema)
             SchemaTestUtil.announceNewKeyspace(ksm);
 
-        if (Boolean.parseBoolean(System.getProperty("cassandra.test.compression", "false")))
+        if (TEST_COMPRESSION.getBoolean())
             useCompression(schema, compressionParams(CompressionParams.DEFAULT_CHUNK_LENGTH));
     }
 
@@ -304,18 +281,21 @@ public class SchemaLoader
         SchemaTestUtil.announceNewKeyspace(KeyspaceMetadata.create(name, params, tables, Views.none(), types, UserFunctions.none()));
     }
 
-    public static void setupAuth(IRoleManager roleManager, IAuthenticator authenticator, IAuthorizer authorizer, INetworkAuthorizer networkAuthorizer)
+    public static void setupAuth(IRoleManager roleManager, IAuthenticator authenticator, IAuthorizer authorizer, INetworkAuthorizer networkAuthorizer,
+                                 ICIDRAuthorizer cidrAuthorizer)
     {
         DatabaseDescriptor.setRoleManager(roleManager);
         DatabaseDescriptor.setAuthenticator(authenticator);
         DatabaseDescriptor.setAuthorizer(authorizer);
         DatabaseDescriptor.setNetworkAuthorizer(networkAuthorizer);
+        DatabaseDescriptor.setCIDRAuthorizer(cidrAuthorizer);
         SchemaTestUtil.announceNewKeyspace(AuthKeyspace.metadata());
         DatabaseDescriptor.getRoleManager().setup();
         DatabaseDescriptor.getAuthenticator().setup();
         DatabaseDescriptor.getInternodeAuthenticator().setupInternode();
         DatabaseDescriptor.getAuthorizer().setup();
         DatabaseDescriptor.getNetworkAuthorizer().setup();
+        DatabaseDescriptor.getCIDRAuthorizer().setup();
         Schema.instance.registerListener(new AuthSchemaChangeListener());
     }
 
@@ -326,7 +306,8 @@ public class SchemaLoader
                                   ColumnIdentifier.getInterned(IntegerType.instance.fromString("42"), IntegerType.instance),
                                   UTF8Type.instance,
                                   ColumnMetadata.NO_POSITION,
-                                  ColumnMetadata.Kind.REGULAR);
+                                  ColumnMetadata.Kind.REGULAR,
+                                  null);
     }
 
     public static ColumnMetadata utf8Column(String ksName, String cfName)
@@ -336,7 +317,8 @@ public class SchemaLoader
                                   ColumnIdentifier.getInterned("fortytwo", true),
                                   UTF8Type.instance,
                                   ColumnMetadata.NO_POSITION,
-                                  ColumnMetadata.Kind.REGULAR);
+                                  ColumnMetadata.Kind.REGULAR,
+                                  null);
     }
 
     public static TableMetadata perRowIndexedCFMD(String ksName, String cfName)
@@ -750,7 +732,7 @@ public static TableMetadata.Builder clusteringSASICFMD(String ksName, String cfN
 
     public static CompressionParams getCompressionParameters(Integer chunkSize)
     {
-        if (Boolean.parseBoolean(System.getProperty("cassandra.test.compression", "false")))
+        if (TEST_COMPRESSION.getBoolean())
             return chunkSize != null ? compressionParams(chunkSize) : compressionParams(CompressionParams.DEFAULT_CHUNK_LENGTH);
 
         return CompressionParams.noCompression();
@@ -784,7 +766,7 @@ public static TableMetadata.Builder clusteringSASICFMD(String ksName, String cfN
 
     private static CompressionParams compressionParams(int chunkLength)
     {
-        String algo = System.getProperty("cassandra.test.compression.algo", "lz4").toLowerCase();
+        String algo = TEST_COMPRESSION_ALGO.getString().toLowerCase();
         switch (algo)
         {
             case "deflate":

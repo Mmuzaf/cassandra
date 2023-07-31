@@ -84,7 +84,7 @@ public class RandomPartitioner implements IPartitioner
     private static final int HEAP_SIZE = (int) ObjectSizes.measureDeep(new BigIntegerToken(hashToBigInteger(ByteBuffer.allocate(1))));
 
     public static final RandomPartitioner instance = new RandomPartitioner();
-    public static final AbstractType<?> partitionOrdering = new PartitionerDefinedOrder(instance);
+    public static final PartitionerDefinedOrder partitionOrdering = new PartitionerDefinedOrder(instance);
 
     private final Splitter splitter = new Splitter(this)
     {
@@ -276,7 +276,7 @@ public class RandomPartitioner implements IPartitioner
             return HEAP_SIZE;
         }
 
-        public Token increaseSlightly()
+        public Token nextValidToken()
         {
             return new BigIntegerToken(token.add(BigInteger.ONE));
         }
@@ -313,7 +313,7 @@ public class RandomPartitioner implements IPartitioner
         // 1-case
         if (sortedTokens.size() == 1)
         {
-            ownerships.put(i.next(), new Float(1.0));
+            ownerships.put(i.next(), 1.0F);
         }
         // n-case
         else
@@ -350,6 +350,11 @@ public class RandomPartitioner implements IPartitioner
     public AbstractType<?> partitionOrdering()
     {
         return partitionOrdering;
+    }
+
+    public AbstractType<?> partitionOrdering(AbstractType<?> partitionKeyType)
+    {
+        return partitionOrdering.withPartitionKeyType(partitionKeyType);
     }
 
     public Optional<Splitter> splitter()

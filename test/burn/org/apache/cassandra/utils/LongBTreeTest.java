@@ -22,20 +22,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.NavigableSet;
-import java.util.Objects;
-import java.util.Random;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -46,30 +33,28 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Snapshot;
-import com.codahale.metrics.Timer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
-
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Snapshot;
+import com.codahale.metrics.Timer;
 import org.apache.cassandra.concurrent.NamedThreadFactory;
-import org.apache.cassandra.utils.btree.BTree;
-import org.apache.cassandra.utils.btree.BTreeSet;
-import org.apache.cassandra.utils.btree.UpdateFunction;
+import org.apache.cassandra.utils.btree.*;
 
 import static com.google.common.base.Predicates.notNull;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
 import static java.util.Comparator.naturalOrder;
 import static java.util.Comparator.reverseOrder;
-import static org.apache.cassandra.utils.Clock.Global.currentTimeMillis;
+import static org.apache.cassandra.config.CassandraRelevantProperties.BTREE_FAN_FACTOR;
 import static org.apache.cassandra.utils.btree.BTree.iterable;
+import static org.apache.cassandra.utils.Clock.Global.currentTimeMillis;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -82,7 +67,7 @@ import static org.junit.Assert.assertTrue;
 public class LongBTreeTest
 {
     private static final boolean DEBUG = false;
-    private static int perThreadTrees = 10000;
+    private static int perThreadTrees = 10;
     private static int minTreeSize = 4;
     private static int maxTreeSize = 10000; // TODO randomise this for each test
     private static int threads = DEBUG ? 1 : Runtime.getRuntime().availableProcessors() * 8;
@@ -206,7 +191,7 @@ public class LongBTreeTest
                             {
                                 Map<Integer, Integer> update = new LinkedHashMap<>();
                                 for (Integer i : selection.testKeys)
-                                    update.put(i, new Integer(i));
+                                    update.put(i, Integer.valueOf(i));
 
                                 CountingFunction function = new CountingFunction((x) -> x);
                                 Object[] original = selection.testAsSet.tree();
@@ -226,7 +211,7 @@ public class LongBTreeTest
                             {
                                 Map<Integer, Integer> update = new LinkedHashMap<>();
                                 for (Integer i : selection.testKeys)
-                                    update.put(i, new Integer(i));
+                                    update.put(i, Integer.valueOf(i));
 
                                 CountingFunction function = new CountingFunction((x) -> update.getOrDefault(x, x));
                                 Object[] original = selection.testAsSet.tree();
@@ -246,7 +231,7 @@ public class LongBTreeTest
                             {
                                 Map<Integer, Integer> update = new LinkedHashMap<>();
                                 for (Integer i : selection.testKeys)
-                                    update.put(i, new Integer(i));
+                                    update.put(i, Integer.valueOf(i));
 
                                 CountingFunction function = new CountingFunction(update::get);
                                 Object[] original = selection.testAsSet.tree();
@@ -265,7 +250,7 @@ public class LongBTreeTest
                             {
                                 Map<Integer, Integer> update = new LinkedHashMap<>();
                                 for (Integer i : selection.testKeys)
-                                    update.put(i, new Integer(i));
+                                    update.put(i, Integer.valueOf(i));
 
                                 CountingFunction function = new CountingFunction((x) -> update.containsKey(x) ? null : x);
                                 Object[] original = selection.testAsSet.tree();
@@ -355,7 +340,6 @@ public class LongBTreeTest
     private void testRandomSelection(long seed, int perThreadTrees, int perTreeSelections, boolean narrow, boolean mixInNotPresentItems, boolean permitReversal, Consumer<RandomSelection> testRun) throws InterruptedException
     {
         final Random outerSeedGenerator = new Random(seed);
-        int threads = Runtime.getRuntime().availableProcessors();
         final CountDownLatch latch = new CountDownLatch(threads);
         final AtomicLong errors = new AtomicLong();
         final AtomicLong count = new AtomicLong();
@@ -801,7 +785,7 @@ public class LongBTreeTest
     @Test
     public void testIndividualInsertsMediumSparseRange() throws ExecutionException, InterruptedException
     {
-        testInsertions(randomSeed(), perThreadTrees / 10, 500, 10, 1, true);
+        testInsertions(randomSeed(), 500, 10, 1, true);
     }
 
     @Test
@@ -813,17 +797,17 @@ public class LongBTreeTest
     @Test
     public void testLargeBatchesLargeRange() throws ExecutionException, InterruptedException
     {
-        testInsertions(randomSeed(), perThreadTrees / 10, Math.max(maxTreeSize, 5000), 3, 100, true);
+        testInsertions(randomSeed(), Math.max(maxTreeSize, 5000), 3, 100, true);
     }
 
     @Test
     public void testRandomRangeAndBatches() throws ExecutionException, InterruptedException
     {
         Random seedGenerator = new Random(randomSeed());
-        for (int i = 0 ; i < perThreadTrees / 10 ; i++)
+        for (int i = 0 ; i < 10 ; i++)
         {
             int treeSize = nextInt(seedGenerator, maxTreeSize / 10, maxTreeSize * 10);
-            testInsertions(seedGenerator.nextLong(), threads * 10, treeSize, nextInt(seedGenerator, 1, 100) / 10f, treeSize / 100, true);
+            testInsertions(seedGenerator.nextLong(), treeSize, nextInt(seedGenerator, 1, 100) / 10f, treeSize / 100, true);
         }
     }
 
@@ -1152,7 +1136,7 @@ public class LongBTreeTest
         for (String arg : args)
         {
             if (arg.startsWith("fan="))
-                System.setProperty("cassandra.btree.fanfactor", arg.substring(4));
+                BTREE_FAN_FACTOR.setString(arg.substring(4));
             else if (arg.startsWith("min="))
                 minTreeSize = Integer.parseInt(arg.substring(4));
             else if (arg.startsWith("max="))

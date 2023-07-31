@@ -34,6 +34,7 @@ import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.tools.ToolRunner.ToolResult;
 
+import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_UTIL_ALLOW_TOOL_REINIT_FOR_TEST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -123,6 +124,6 @@ public class StandaloneSplitterWithCQLTesterTest extends CQLTester
         assertTrue("Generated sstable must be at least 1MiB", (new File(sstableFileName)).length() > 1024*1024);
         sstablesDir = new File(sstableFileName).parent();
         origSstables = Arrays.asList(sstablesDir.tryList());
-        System.setProperty(Util.ALLOW_TOOL_REINIT_FOR_TEST, "true"); // Necessary for testing
+        TEST_UTIL_ALLOW_TOOL_REINIT_FOR_TEST.setBoolean(true);
     }
 }

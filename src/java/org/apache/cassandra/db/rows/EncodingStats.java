@@ -81,11 +81,11 @@ public class EncodingStats implements IMeasurableMemory
     public static final Serializer serializer = new Serializer();
 
     public final long minTimestamp;
-    public final int minLocalDeletionTime;
+    public final long minLocalDeletionTime;
     public final int minTTL;
 
     public EncodingStats(long minTimestamp,
-                         int minLocalDeletionTime,
+                         long minLocalDeletionTime,
                          int minTTL)
     {
         // Note that the exact value of those don't impact correctness, just the efficiency of the encoding. So when we
@@ -110,7 +110,7 @@ public class EncodingStats implements IMeasurableMemory
                             ? that.minTimestamp
                             : (that.minTimestamp == TIMESTAMP_EPOCH ? this.minTimestamp : Math.min(this.minTimestamp, that.minTimestamp));
 
-        int minDelTime = this.minLocalDeletionTime == DELETION_TIME_EPOCH
+        long minDelTime = this.minLocalDeletionTime == DELETION_TIME_EPOCH
                          ? that.minLocalDeletionTime
                          : (that.minLocalDeletionTime == DELETION_TIME_EPOCH ? this.minLocalDeletionTime : Math.min(this.minLocalDeletionTime, that.minLocalDeletionTime));
 
@@ -182,7 +182,7 @@ public class EncodingStats implements IMeasurableMemory
         private long minTimestamp = Long.MAX_VALUE;
 
         private boolean isDelTimeSet;
-        private int minDeletionTime = Integer.MAX_VALUE;
+        private long minDeletionTime = Long.MAX_VALUE;
 
         private boolean isTTLSet;
         private int minTTL = Integer.MAX_VALUE;
@@ -224,13 +224,19 @@ public class EncodingStats implements IMeasurableMemory
             updateLocalDeletionTime(deletionTime.localDeletionTime());
         }
 
+        @Override
+        public void updatePartitionDeletion(DeletionTime dt)
+        {
+            update(dt);
+        }
+
         public void updateTimestamp(long timestamp)
         {
             isTimestampSet = true;
             minTimestamp = Math.min(minTimestamp, timestamp);
         }
 
-        public void updateLocalDeletionTime(int deletionTime)
+        public void updateLocalDeletionTime(long deletionTime)
         {
             isDelTimeSet = true;
             minDeletionTime = Math.min(minDeletionTime, deletionTime);
@@ -275,7 +281,7 @@ public class EncodingStats implements IMeasurableMemory
         public void serialize(EncodingStats stats, DataOutputPlus out) throws IOException
         {
             out.writeUnsignedVInt(stats.minTimestamp - TIMESTAMP_EPOCH);
-            out.writeUnsignedVInt32(stats.minLocalDeletionTime - DELETION_TIME_EPOCH);
+            out.writeUnsignedVInt32((int)(stats.minLocalDeletionTime - DELETION_TIME_EPOCH));
             out.writeUnsignedVInt32(stats.minTTL - TTL_EPOCH);
         }
 
@@ -289,8 +295,8 @@ public class EncodingStats implements IMeasurableMemory
         public EncodingStats deserialize(DataInputPlus in) throws IOException
         {
             long minTimestamp = in.readUnsignedVInt() + TIMESTAMP_EPOCH;
-            int minLocalDeletionTime = in.readUnsignedVInt32() + DELETION_TIME_EPOCH;
-            int minTTL = in.readUnsignedVInt32() + TTL_EPOCH;
+            long minLocalDeletionTime = in.readUnsignedVInt32() + DELETION_TIME_EPOCH;
+            int minTTL = (int)in.readUnsignedVInt32() + TTL_EPOCH;
             return new EncodingStats(minTimestamp, minLocalDeletionTime, minTTL);
         }
     }

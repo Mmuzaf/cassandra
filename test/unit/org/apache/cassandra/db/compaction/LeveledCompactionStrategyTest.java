@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import org.apache.cassandra.SchemaLoader;
 import org.apache.cassandra.UpdateBuilder;
 import org.apache.cassandra.Util;
+import org.apache.cassandra.config.CassandraRelevantProperties;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.Keyspace;
@@ -93,7 +94,7 @@ public class LeveledCompactionStrategyTest
     public static void defineSchema() throws ConfigurationException
     {
         // Disable tombstone histogram rounding for tests
-        System.setProperty("cassandra.streaminghistogram.roundseconds", "1");
+        CassandraRelevantProperties.STREAMING_HISTOGRAM_ROUND_SECONDS.setInt(1);
 
         SchemaLoader.prepareServer();
 
@@ -206,7 +207,7 @@ public class LeveledCompactionStrategyTest
         assertTrue(strategyManager.getSSTableCountPerLevel()[2] > 0);
 
         Range<Token> range = new Range<>(Util.token(""), Util.token(""));
-        int gcBefore = keyspace.getColumnFamilyStore(CF_STANDARDDLEVELED).gcBefore(FBUtilities.nowInSeconds());
+        long gcBefore = keyspace.getColumnFamilyStore(CF_STANDARDDLEVELED).gcBefore(FBUtilities.nowInSeconds());
         TimeUUID parentRepSession = nextTimeUUID();
         ActiveRepairService.instance.registerParentRepairSession(parentRepSession,
                                                                  FBUtilities.getBroadcastAddressAndPort(),
@@ -733,14 +734,14 @@ public class LeveledCompactionStrategyTest
             assertTrue(level.stream().allMatch(s -> s.getSSTableLevel() == lvl));
             if (i > 0)
             {
-                level.sort(SSTableReader.sstableComparator);
+                level.sort(SSTableReader.firstKeyComparator);
                 SSTableReader prev = null;
                 for (SSTableReader sstable : level)
                 {
-                    if (prev != null && sstable.first.compareTo(prev.last) <= 0)
+                    if (prev != null && sstable.getFirst().compareTo(prev.getLast()) <= 0)
                     {
-                        String levelStr = level.stream().map(s -> String.format("[%s, %s]", s.first, s.last)).collect(Collectors.joining(", "));
-                        String overlap = String.format("sstable [%s, %s] overlaps with [%s, %s] in level %d (%s) ", sstable.first, sstable.last, prev.first, prev.last, i, levelStr);
+                        String levelStr = level.stream().map(s -> String.format("[%s, %s]", s.getFirst(), s.getLast())).collect(Collectors.joining(", "));
+                        String overlap = String.format("sstable [%s, %s] overlaps with [%s, %s] in level %d (%s) ", sstable.getFirst(), sstable.getLast(), prev.getFirst(), prev.getLast(), i, levelStr);
                         Assert.fail("[seed = "+seed+"] overlap in level "+lvl+": " + overlap);
                     }
                     prev = sstable;
@@ -843,13 +844,13 @@ public class LeveledCompactionStrategyTest
             for (SSTableReader sstable : lvlGroup.getValue())
             {
                 newLevel.add(sstable);
-                newLevel.sort(SSTableReader.sstableComparator);
+                newLevel.sort(SSTableReader.firstKeyComparator);
 
                 SSTableReader prev = null;
                 boolean kept = true;
                 for (SSTableReader sst : newLevel)
                 {
-                    if (prev != null && prev.last.compareTo(sst.first) >= 0)
+                    if (prev != null && prev.getLast().compareTo(sst.getFirst()) >= 0)
                     {
                         newLevel.remove(sstable);
                         kept = false;

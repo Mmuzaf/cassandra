@@ -20,40 +20,33 @@ package org.apache.cassandra.db.marshal;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 import com.google.common.collect.Lists;
-
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static org.apache.cassandra.utils.TimeUUID.Generator.nextTimeUUID;
+import static org.junit.Assert.fail;
+import static org.junit.Assert.assertEquals;
+import static org.quicktheories.QuickTheory.qt;
+
 import org.apache.cassandra.SchemaLoader;
 import org.apache.cassandra.Util;
-import org.apache.cassandra.db.ColumnFamilyStore;
-import org.apache.cassandra.db.Keyspace;
-import org.apache.cassandra.db.RowUpdateBuilder;
-import org.apache.cassandra.db.partitions.ImmutableBTreePartition;
+import org.apache.cassandra.schema.ColumnMetadata;
+import org.apache.cassandra.db.*;
 import org.apache.cassandra.db.rows.Cell;
 import org.apache.cassandra.db.rows.Row;
+import org.apache.cassandra.db.partitions.ImmutableBTreePartition;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.exceptions.SyntaxException;
-import org.apache.cassandra.schema.ColumnMetadata;
 import org.apache.cassandra.schema.KeyspaceParams;
 import org.apache.cassandra.serializers.MarshalException;
 import org.apache.cassandra.serializers.UUIDSerializer;
-import org.apache.cassandra.utils.ByteBufferUtil;
-import org.apache.cassandra.utils.FBUtilities;
-import org.apache.cassandra.utils.TimeUUID;
-
-import static org.apache.cassandra.utils.TimeUUID.Generator.nextTimeUUID;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import org.apache.cassandra.utils.*;
+import org.assertj.core.api.Assertions;
+import org.quicktheories.generators.SourceDSL;
 
 public class CompositeTypeTest
 {
@@ -360,5 +353,20 @@ public class CompositeTypeTest
         ByteBuffer serialized = CompositeType.build(ByteBufferAccessor.instance, expected);
         for (ValueAccessor<?> accessor : ValueAccessors.ACCESSORS)
             testToFromString(serialized, accessor, type);
+    }
+
+    @Test
+    public void testSizeHeader()
+    {
+        ByteBuffer bb = ByteBuffer.allocate(2);
+        qt().forAll(SourceDSL.integers().between(0, FBUtilities.MAX_UNSIGNED_SHORT)).checkAssert(size -> {
+            bb.clear();
+
+            ByteBufferUtil.writeShortLength(bb, size);
+            bb.flip();
+            Assertions.assertThat(ByteBufferAccessor.instance.getUnsignedShort(bb, 0))
+                      .isEqualTo(ByteBufferUtil.readShortLength(bb))
+                      .isEqualTo(size);
+        });
     }
 }

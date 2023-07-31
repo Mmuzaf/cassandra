@@ -25,6 +25,7 @@ import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.security.Permission;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,7 +46,7 @@ import javax.management.Notification;
 import javax.management.NotificationListener;
 
 import com.google.common.annotations.VisibleForTesting;
-
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,8 +97,8 @@ import org.apache.cassandra.hints.DTestSerializer;
 import org.apache.cassandra.hints.HintsService;
 import org.apache.cassandra.index.SecondaryIndexManager;
 import org.apache.cassandra.io.IVersionedAsymmetricSerializer;
-import org.apache.cassandra.io.sstable.IndexSummaryManager;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
+import org.apache.cassandra.io.sstable.indexsummary.IndexSummaryManager;
 import org.apache.cassandra.io.util.DataInputBuffer;
 import org.apache.cassandra.io.util.DataOutputBuffer;
 import org.apache.cassandra.io.util.DataOutputPlus;
@@ -154,8 +155,14 @@ import io.netty.util.concurrent.GlobalEventExecutor;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.apache.cassandra.concurrent.ExecutorFactory.Global.executorFactory;
+import static org.apache.cassandra.config.CassandraRelevantProperties.CONSISTENT_RANGE_MOVEMENT;
+import static org.apache.cassandra.config.CassandraRelevantProperties.CONSISTENT_SIMULTANEOUS_MOVES_ALLOW;
+import static org.apache.cassandra.config.CassandraRelevantProperties.RING_DELAY;
+import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_CASSANDRA_SUITENAME;
+import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_CASSANDRA_TESTTAG;
 import static org.apache.cassandra.distributed.api.Feature.BLANK_GOSSIP;
 import static org.apache.cassandra.distributed.api.Feature.GOSSIP;
+import static org.apache.cassandra.distributed.api.Feature.JMX;
 import static org.apache.cassandra.distributed.api.Feature.NATIVE_PROTOCOL;
 import static org.apache.cassandra.distributed.api.Feature.NETWORK;
 import static org.apache.cassandra.distributed.impl.DistributedTestSnitch.fromCassandraInetAddressAndPort;
@@ -173,6 +180,7 @@ public class Instance extends IsolatedExecutor implements IInvokableInstance
     private volatile boolean initialized = false;
     private volatile boolean internodeMessagingStarted = false;
     private final AtomicLong startedAt = new AtomicLong();
+    private IsolatedJmx isolatedJmx;
 
     @Deprecated
     Instance(IInstanceConfig config, ClassLoader classLoader)
@@ -219,16 +227,16 @@ public class Instance extends IsolatedExecutor implements IInvokableInstance
     {
         // the path used is defined by test/conf/logback-dtest.xml and looks like the following
         // ./build/test/logs/${cassandra.testtag}/${suitename}/${cluster_id}/${instance_id}/system.log
-        String tag = System.getProperty("cassandra.testtag", "cassandra.testtag_IS_UNDEFINED");
-        String suite = System.getProperty("suitename", "suitename_IS_UNDEFINED");
+        String tag = TEST_CASSANDRA_TESTTAG.getString();
+        String suite = TEST_CASSANDRA_SUITENAME.getString();
         String clusterId = ClusterIDDefiner.getId();
         String instanceId = InstanceIDDefiner.getInstanceId();
-        File f = new File(String.format("build/test/logs/%s/%s/%s/%s/system.log", tag, suite, clusterId, instanceId));
+        File f = new File(FileSystems.getDefault(), String.format("build/test/logs/%s/%s/%s/%s/system.log", tag, suite, clusterId, instanceId));
         // when creating a cluster globally in a test class we get the logs without the suite, try finding those logs:
         if (!f.exists())
-            f = new File(String.format("build/test/logs/%s/%s/%s/system.log", tag, clusterId, instanceId));
+            f = new File(FileSystems.getDefault(), String.format("build/test/logs/%s/%s/%s/system.log", tag, clusterId, instanceId));
         if (!f.exists())
-            throw new AssertionError("Unable to locate system.log under " + new File("build/test/logs").absolutePath() + "; make sure ICluster.setup() is called or extend TestBaseImpl and do not define a static beforeClass function with @BeforeClass");
+            throw new AssertionError("Unable to locate system.log under " + f.absolutePath() + "; make sure ICluster.setup() is called or extend TestBaseImpl and do not define a static beforeClass function with @BeforeClass");
         return new FileLogAction(f);
     }
 
@@ -511,7 +519,14 @@ public class Instance extends IsolatedExecutor implements IInvokableInstance
             }
             else
             {
-                header.verb.stage.executor().execute(ExecutorLocals.create(state), () -> MessagingService.instance().inboundSink.accept(messageIn));
+                ExecutorPlus executor = header.verb.stage.executor();
+                if (executor.isShutdown())
+                {
+                    MessagingService.instance().metrics.recordDroppedMessage(messageIn, messageIn.elapsedSinceCreated(TimeUnit.NANOSECONDS), TimeUnit.NANOSECONDS);
+                    inInstancelogger.warn("Dropping message {} due to stage {} being shutdown", messageIn, header.verb.stage);
+                    return;
+                }
+                executor.execute(ExecutorLocals.create(state), () -> MessagingService.instance().inboundSink.accept(messageIn));
             }
         };
     }
@@ -581,9 +596,9 @@ public class Instance extends IsolatedExecutor implements IInvokableInstance
                 if (config.has(GOSSIP))
                 {
                     // TODO: hacky
-                    System.setProperty("cassandra.ring_delay_ms", "15000");
-                    System.setProperty("cassandra.consistent.rangemovement", "false");
-                    System.setProperty("cassandra.consistent.simultaneousmoves.allow", "true");
+                    RING_DELAY.setLong(15000);
+                    CONSISTENT_RANGE_MOVEMENT.setBoolean(false);
+                    CONSISTENT_SIMULTANEOUS_MOVES_ALLOW.setBoolean(true);
                 }
 
                 mkdirs();
@@ -591,6 +606,9 @@ public class Instance extends IsolatedExecutor implements IInvokableInstance
                 assert config.networkTopology().contains(config.broadcastAddress()) : String.format("Network topology %s doesn't contain the address %s",
                                                                                                     config.networkTopology(), config.broadcastAddress());
                 DistributedTestSnitch.assign(config.networkTopology());
+
+                if (config.has(JMX))
+                    startJmx();
 
                 DatabaseDescriptor.daemonInitialization();
                 LoggingSupportFactory.getLoggingSupport().onStartup();
@@ -605,7 +623,7 @@ public class Instance extends IsolatedExecutor implements IInvokableInstance
 
                 // We need to persist this as soon as possible after startup checks.
                 // This should be the first write to SystemKeyspace (CASSANDRA-11742)
-                SystemKeyspace.persistLocalMetadata();
+                SystemKeyspace.persistLocalMetadata(config::hostId);
                 SystemKeyspaceMigrator41.migrate();
 
                 // Same order to populate tokenMetadata for the first time,
@@ -711,6 +729,8 @@ public class Instance extends IsolatedExecutor implements IInvokableInstance
                     StorageService.instance.setUpDistributedSystemKeyspaces();
                     StorageService.instance.setNormalModeUnsafe();
                     Gossiper.instance.register(StorageService.instance);
+                    StorageService.instance.startSnapshotManager();
+                    StorageService.instance.completeInitialization();
                 }
 
                 // Populate tokenMetadata for the second time,
@@ -745,6 +765,20 @@ public class Instance extends IsolatedExecutor implements IInvokableInstance
         }).run();
 
         initialized = true;
+    }
+
+    private void startJmx()
+    {
+        this.isolatedJmx = new IsolatedJmx(this, inInstancelogger);
+        isolatedJmx.startJmx();
+    }
+
+    private void stopJmx() throws IllegalAccessException, NoSuchFieldException, InterruptedException
+    {
+        if (config.has(JMX))
+        {
+            isolatedJmx.stopJmx();
+        }
     }
 
     // Update the messaging versions for all instances
@@ -806,6 +840,7 @@ public class Instance extends IsolatedExecutor implements IInvokableInstance
     @Override
     public Future<Void> shutdown(boolean graceful)
     {
+        inInstancelogger.info("Shutting down instance {} / {}", config.num(), config.broadcastAddress().getHostString());
         Future<?> future = async((ExecutorService executor) -> {
             Throwable error = null;
 
@@ -819,6 +854,11 @@ public class Instance extends IsolatedExecutor implements IInvokableInstance
             }
 
             error = parallelRun(error, executor, StorageService.instance::disableAutoCompaction);
+            while (CompactionManager.instance.hasOngoingOrPendingTasks() && !Thread.currentThread().isInterrupted())
+            {
+                inInstancelogger.info("Waiting for compactions to finish");
+                Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
+            }
 
             // trigger init early or else it could try to init and touch a thread pool that got shutdown
             HintsService hints = HintsService.instance;
@@ -882,6 +922,10 @@ public class Instance extends IsolatedExecutor implements IInvokableInstance
 
             // ScheduledExecutors shuts down after MessagingService, as MessagingService may issue tasks to it.
             error = parallelRun(error, executor, () -> ScheduledExecutors.shutdownNowAndWait(1L, MINUTES));
+            
+            error = parallelRun(error, executor, this::stopJmx);
+
+            error = parallelRun(error, executor, () -> DatabaseDescriptor.getCryptoProvider().uninstall());
 
             // Make sure any shutdown hooks registered for DeleteOnExit are released to prevent
             // references to the instance class loaders from being held

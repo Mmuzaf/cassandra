@@ -25,6 +25,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import org.apache.cassandra.ServerTestUtils;
 import org.apache.cassandra.auth.AuthTestUtils;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.DCPermissions;
@@ -47,6 +48,8 @@ public class NetworkPermissionsCacheKeysTableTest extends CQLTester
     @BeforeClass
     public static void setUpClass()
     {
+        ServerTestUtils.daemonInitialization();
+
         // high value is used for convenient debugging
         DatabaseDescriptor.setPermissionsValidity(20_000);
 

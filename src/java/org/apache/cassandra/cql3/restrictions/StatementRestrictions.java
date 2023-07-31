@@ -18,42 +18,21 @@
 package org.apache.cassandra.cql3.restrictions;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.NavigableSet;
-import java.util.Set;
+import java.util.*;
 
 import com.google.common.base.Joiner;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-
-import org.apache.cassandra.cql3.ColumnIdentifier;
-import org.apache.cassandra.cql3.Operator;
-import org.apache.cassandra.cql3.QualifiedName;
-import org.apache.cassandra.cql3.QueryOptions;
-import org.apache.cassandra.cql3.Relation;
-import org.apache.cassandra.cql3.VariableSpecifications;
-import org.apache.cassandra.cql3.WhereClause;
+import org.apache.cassandra.cql3.*;
 import org.apache.cassandra.cql3.functions.Function;
 import org.apache.cassandra.cql3.statements.Bound;
 import org.apache.cassandra.cql3.statements.StatementType;
-import org.apache.cassandra.db.Clustering;
-import org.apache.cassandra.db.ClusteringBound;
-import org.apache.cassandra.db.PartitionPosition;
+import org.apache.cassandra.db.*;
 import org.apache.cassandra.db.filter.RowFilter;
 import org.apache.cassandra.db.guardrails.Guardrails;
 import org.apache.cassandra.db.marshal.AbstractType;
-import org.apache.cassandra.dht.AbstractBounds;
-import org.apache.cassandra.dht.Bounds;
-import org.apache.cassandra.dht.ExcludingBounds;
-import org.apache.cassandra.dht.IPartitioner;
-import org.apache.cassandra.dht.IncludingExcludingBounds;
-import org.apache.cassandra.dht.Range;
-import org.apache.cassandra.dht.Token;
+import org.apache.cassandra.db.virtual.VirtualKeyspaceRegistry;
+import org.apache.cassandra.db.virtual.VirtualTable;
+import org.apache.cassandra.dht.*;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.index.Index;
 import org.apache.cassandra.index.IndexRegistry;
@@ -61,6 +40,9 @@ import org.apache.cassandra.schema.ColumnMetadata;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.utils.btree.BTreeSet;
+
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 import static org.apache.cassandra.cql3.statements.RequestValidations.checkFalse;
 import static org.apache.cassandra.cql3.statements.RequestValidations.checkNotNull;
@@ -214,13 +196,13 @@ public final class StatementRestrictions
                 if (!type.allowUseOfSecondaryIndices() || !restriction.hasSupportingIndex(indexRegistry))
                     throw new InvalidRequestException(String.format("LIKE restriction is only supported on properly " +
                                                                     "indexed columns. %s is not valid.",
-                                                                    relation.toString()));
+                                                                    relation));
 
-                addRestriction(restriction);
+                addRestriction(restriction, indexRegistry);
             }
             else
             {
-                addRestriction(relation.toRestriction(table, boundNames));
+                addRestriction(relation.toRestriction(table, boundNames), indexRegistry);
             }
         }
 
@@ -294,7 +276,7 @@ public final class StatementRestrictions
             }
             if (hasQueriableIndex)
                 usesSecondaryIndexing = true;
-            else if (!allowFiltering)
+            else if (!allowFiltering && requiresAllowFilteringIfNotSpecified())
                 throw invalidRequest(allowFilteringMessage(state));
 
             filterRestrictions.add(nonPrimaryKeyRestrictions);
@@ -304,13 +286,23 @@ public final class StatementRestrictions
             validateSecondaryIndexSelections();
     }
 
-    private void addRestriction(Restriction restriction)
+    public boolean requiresAllowFilteringIfNotSpecified()
+    {
+        if (!table.isVirtual())
+            return true;
+
+        VirtualTable tableNullable = VirtualKeyspaceRegistry.instance.getTableNullable(table.id);
+        assert tableNullable != null;
+        return !tableNullable.allowFilteringImplicitly();
+    }
+
+    private void addRestriction(Restriction restriction, IndexRegistry indexRegistry)
     {
         ColumnMetadata def = restriction.getFirstColumn();
         if (def.isPartitionKey())
             partitionKeyRestrictions = partitionKeyRestrictions.mergeWith(restriction);
         else if (def.isClusteringColumn())
-            clusteringColumnsRestrictions = clusteringColumnsRestrictions.mergeWith(restriction);
+            clusteringColumnsRestrictions = clusteringColumnsRestrictions.mergeWith(restriction, indexRegistry);
         else
             nonPrimaryKeyRestrictions = nonPrimaryKeyRestrictions.addRestriction((SingleRestriction) restriction);
     }
@@ -411,6 +403,54 @@ public final class StatementRestrictions
     }
 
     /**
+     * This method determines whether a specified column is restricted on equality or something equivalent, like IN.
+     * It can be used in conjunction with the columns selected by a query to determine which of those columns is 
+     * already bound by the client (and from its perspective, not retrieved by the database).
+     *
+     * @param column a column from the same table these restrictions are against
+     *
+     * @return <code>true</code> if the given column is restricted on equality
+     */
+    public boolean isEqualityRestricted(ColumnMetadata column)
+    {
+        if (column.kind == ColumnMetadata.Kind.PARTITION_KEY)
+        {
+            if (partitionKeyRestrictions.hasOnlyEqualityRestrictions())
+                for (ColumnMetadata restricted : partitionKeyRestrictions.getColumnDefinitions())
+                    if (restricted.name.equals(column.name))
+                        return true;
+        }
+        else if (column.kind == ColumnMetadata.Kind.CLUSTERING)
+        {
+            if (hasClusteringColumnsRestrictions())
+            {
+                for (SingleRestriction restriction : clusteringColumnsRestrictions.getRestrictionSet())
+                {
+                    if (restriction.isEqualityBased())
+                    {
+                        if (restriction.isMultiColumn())
+                        {
+                            for (ColumnMetadata restricted : restriction.getColumnDefs())
+                                if (restricted.name.equals(column.name))
+                                    return true;
+                        }
+                        else if (restriction.getFirstColumn().name.equals(column.name))
+                            return true;
+                    }
+                }
+            }
+        }
+        else if (hasNonPrimaryKeyRestrictions())
+        {
+            for (SingleRestriction restriction : nonPrimaryKeyRestrictions)
+                if (restriction.getFirstColumn().name.equals(column.name) && restriction.isEqualityBased())
+                    return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Returns the <code>Restrictions</code> for the specified type of columns.
      *
      * @param kind the column type
@@ -472,7 +512,7 @@ public final class StatementRestrictions
             // components must have a EQ. Only the last partition key component can be in IN relation.
             if (partitionKeyRestrictions.needFiltering(table))
             {
-                if (!allowFiltering && !forView && !hasQueriableIndex)
+                if (!allowFiltering && !forView && !hasQueriableIndex && requiresAllowFilteringIfNotSpecified())
                     throw new InvalidRequestException(allowFilteringMessage(state));
 
                 isKeyRange = true;
@@ -638,11 +678,11 @@ public final class StatementRestrictions
     public RowFilter getRowFilter(IndexRegistry indexRegistry, QueryOptions options)
     {
         if (filterRestrictions.isEmpty())
-            return RowFilter.NONE;
+            return RowFilter.none();
 
         RowFilter filter = RowFilter.create();
         for (Restrictions restrictions : filterRestrictions.getRestrictions())
-            restrictions.addRowFilterTo(filter, indexRegistry, options);
+            restrictions.addToRowFilter(filter, indexRegistry, options);
 
         for (CustomIndexExpression expression : filterRestrictions.getCustomIndexExpressions())
             expression.addToRowFilter(filter, table, options);
@@ -828,16 +868,17 @@ public final class StatementRestrictions
      * Checks if the query need to use filtering.
      * @return <code>true</code> if the query need to use filtering, <code>false</code> otherwise.
      */
-    public boolean needFiltering()
+    public boolean needFiltering(TableMetadata table)
     {
+        IndexRegistry indexRegistry = IndexRegistry.obtain(table);
+        if (filterRestrictions.needsFiltering(indexRegistry))
+            return true;
+
         int numberOfRestrictions = filterRestrictions.getCustomIndexExpressions().size();
         for (Restrictions restrictions : filterRestrictions.getRestrictions())
             numberOfRestrictions += restrictions.size();
 
-        return numberOfRestrictions > 1
-                || (numberOfRestrictions == 0 && !clusteringColumnsRestrictions.isEmpty())
-                || (numberOfRestrictions != 0
-                        && nonPrimaryKeyRestrictions.hasMultipleContains());
+        return numberOfRestrictions == 0 && !clusteringColumnsRestrictions.isEmpty();
     }
 
     private void validateSecondaryIndexSelections()

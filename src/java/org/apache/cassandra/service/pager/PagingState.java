@@ -411,9 +411,9 @@ public class PagingState
             }
             else
             {
-                // We froze the serialization version to 3.0 as we need to make this this doesn't change (that is, it has to be
-                // fix for a given version of the protocol).
-                mark = Clustering.serializer.serialize(row.clustering(), MessagingService.VERSION_30, makeClusteringTypes(metadata));
+                // We froze the serialization version to 3.0 as we need to make sure this this doesn't change
+                //  It got bumped to 4.0 when 3.0 got dropped, knowing it didn't change
+                mark = Clustering.serializer.serialize(row.clustering(), MessagingService.VERSION_40, makeClusteringTypes(metadata));
             }
             return new RowMark(mark, protocolVersion);
         }
@@ -425,12 +425,16 @@ public class PagingState
 
             return protocolVersion.isSmallerOrEqualTo(ProtocolVersion.V3)
                  ? decodeClustering(metadata, mark)
-                 : Clustering.serializer.deserialize(mark, MessagingService.VERSION_30, makeClusteringTypes(metadata));
+                 : Clustering.serializer.deserialize(mark, MessagingService.VERSION_40, makeClusteringTypes(metadata));
         }
 
         // Old (pre-3.0) encoding of cells. We need that for the protocol v3 as that is how things where encoded
         private static ByteBuffer encodeCellName(TableMetadata metadata, Clustering<?> clustering, ByteBuffer columnName, ByteBuffer collectionElement)
         {
+            // v30 and v3X don't use composites for single-element clusterings in compact tables
+            if (metadata.isCompactTable() && metadata.comparator.size() == 1)
+                return clustering.bufferAt(0);
+
             boolean isStatic = clustering == Clustering.STATIC_CLUSTERING;
 
             // We use comparator.size() rather than clustering.size() because of static clusterings
@@ -466,6 +470,10 @@ public class PagingState
             int csize = metadata.comparator.size();
             if (csize == 0)
                 return Clustering.EMPTY;
+
+            // v30 and v3X don't use composites for single-element clusterings in compact tables
+            if (metadata.isCompactTable() && metadata.comparator.size() == 1)
+                return Clustering.make(value);
 
             if (CompositeType.isStaticName(value, ByteBufferAccessor.instance))
                 return Clustering.STATIC_CLUSTERING;

@@ -24,35 +24,30 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import com.carrotsearch.hppc.ObjectObjectHashMap;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 
+import org.apache.cassandra.utils.concurrent.FutureCombiner;
+import org.apache.cassandra.utils.concurrent.Condition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.carrotsearch.hppc.ObjectObjectHashMap;
+import io.netty.util.concurrent.Future; //checkstyle: permit this import
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.metrics.InternodeOutboundMetrics;
 import org.apache.cassandra.utils.NoSpamLogger;
-import org.apache.cassandra.utils.concurrent.Condition;
-import org.apache.cassandra.utils.concurrent.FutureCombiner;
 import org.apache.cassandra.utils.concurrent.UncheckedInterruptedException;
 
-import io.netty.util.concurrent.Future; // checkstyle: permit this import
-
-import static java.lang.Integer.getInteger;
 import static java.lang.Math.max;
-import static org.apache.cassandra.config.Config.PROPERTY_PREFIX;
+import static org.apache.cassandra.config.CassandraRelevantProperties.OTCP_LARGE_MESSAGE_THRESHOLD;
 import static org.apache.cassandra.gms.Gossiper.instance;
+import static org.apache.cassandra.net.FrameEncoderCrc.HEADER_AND_TRAILER_LENGTH;
+import static org.apache.cassandra.net.MessagingService.current_version;
+import static org.apache.cassandra.net.ConnectionType.URGENT_MESSAGES;
 import static org.apache.cassandra.net.ConnectionType.LARGE_MESSAGES;
 import static org.apache.cassandra.net.ConnectionType.SMALL_MESSAGES;
-import static org.apache.cassandra.net.ConnectionType.URGENT_MESSAGES;
-import static org.apache.cassandra.net.FrameEncoderCrc.HEADER_AND_TRAILER_LENGTH;
-import static org.apache.cassandra.net.LegacyLZ4Constants.HEADER_LENGTH;
-import static org.apache.cassandra.net.MessagingService.current_version;
-import static org.apache.cassandra.net.ResourceLimits.Concurrent;
-import static org.apache.cassandra.net.ResourceLimits.EndpointAndGlobal;
-import static org.apache.cassandra.net.ResourceLimits.Limit;
+import static org.apache.cassandra.net.ResourceLimits.*;
 import static org.apache.cassandra.utils.concurrent.Condition.newOneTimeCondition;
 
 /**
@@ -64,8 +59,14 @@ public class OutboundConnections
 {
     private static final Logger logger = LoggerFactory.getLogger(OutboundConnections.class);
 
+    private static final int HEADER_LENGTH = 8  // magic number
+                                            + 1  // token
+                                            + 4  // compressed length
+                                            + 4  // uncompressed length
+                                            + 4; // checksum
+
     @VisibleForTesting
-    public static final int LARGE_MESSAGE_THRESHOLD = getInteger(PROPERTY_PREFIX + "otcp_large_message_threshold", 1024 * 64)
+    public static final int LARGE_MESSAGE_THRESHOLD = OTCP_LARGE_MESSAGE_THRESHOLD.getInt()
     - max(max(HEADER_LENGTH, HEADER_AND_TRAILER_LENGTH), FrameEncoderLZ4.HEADER_AND_TRAILER_LENGTH);
 
     private final Condition metricsReady = newOneTimeCondition();

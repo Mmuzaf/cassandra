@@ -63,7 +63,7 @@ import org.apache.cassandra.utils.bytecomparable.ByteSource;
 public class AbstractTypeByteSourceDecodingBench
 {
 
-    private static final ByteComparable.Version LATEST = ByteComparable.Version.OSS42;
+    private static final ByteComparable.Version LATEST = ByteComparable.Version.OSS50;
 
     private static final Map<AbstractType, BiFunction<Random, Integer, ByteSource.Peekable>> PEEKABLE_GENERATOR_BY_TYPE = new HashMap<>();
     static
@@ -137,6 +137,6 @@ public class AbstractTypeByteSourceDecodingBench
     public ByteBuffer fromComparableBytes()
     {
         ByteSource.Peekable peekableBytes = randomPeekableBytes();
-        return abstractType.fromComparableBytes(peekableBytes, ByteComparable.Version.OSS42);
+        return abstractType.fromComparableBytes(peekableBytes, ByteComparable.Version.OSS50);
     }
 }

@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +43,7 @@ import org.apache.cassandra.index.sasi.utils.CombinedTermIterator;
 import org.apache.cassandra.index.sasi.utils.TypeUtil;
 import org.apache.cassandra.io.FSError;
 import org.apache.cassandra.io.sstable.Descriptor;
-import org.apache.cassandra.io.sstable.format.SSTableFlushObserver;
+import org.apache.cassandra.io.sstable.SSTableFlushObserver;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileUtils;
 import org.apache.cassandra.schema.ColumnMetadata;
@@ -74,7 +73,7 @@ public class PerSSTableIndexWriter implements SSTableFlushObserver
                                                   .pooled("SASI-Memtable", POOL_SIZE);
     }
 
-    private final int nowInSec = FBUtilities.nowInSeconds();
+    private final long nowInSec = FBUtilities.nowInSeconds();
 
     private final Descriptor descriptor;
     private final OperationType source;
@@ -101,15 +100,24 @@ public class PerSSTableIndexWriter implements SSTableFlushObserver
             indexes.put(entry.getKey(), newIndex(entry.getValue()));
     }
 
+    @Override
     public void begin()
     {}
 
-    public void startPartition(DecoratedKey key, long curPosition)
+    @Override
+    public void startPartition(DecoratedKey key, long keyPosition, long KeyPositionForSASI)
     {
         currentKey = key;
-        currentKeyPosition = curPosition;
+        currentKeyPosition = KeyPositionForSASI;
     }
 
+    @Override
+    public void staticRow(Row staticRow)
+    {
+        nextUnfilteredCluster(staticRow);
+    }
+
+    @Override
     public void nextUnfilteredCluster(Unfiltered unfiltered)
     {
         if (!unfiltered.isRow())
@@ -129,6 +137,7 @@ public class PerSSTableIndexWriter implements SSTableFlushObserver
         });
     }
 
+    @Override
     public void complete()
     {
         if (isComplete)
@@ -171,7 +180,7 @@ public class PerSSTableIndexWriter implements SSTableFlushObserver
     protected class Index
     {
         @VisibleForTesting
-        protected final String outputFile;
+        protected final File outputFile;
 
         private final ColumnIndex columnIndex;
         private final AbstractAnalyzer analyzer;
@@ -186,7 +195,7 @@ public class PerSSTableIndexWriter implements SSTableFlushObserver
         public Index(ColumnIndex columnIndex)
         {
             this.columnIndex = columnIndex;
-            this.outputFile = descriptor.filenameFor(columnIndex.getComponent());
+            this.outputFile = descriptor.fileFor(columnIndex.getComponent());
             this.analyzer = columnIndex.getAnalyzer();
             this.segments = new HashSet<>();
             this.maxMemorySize = maxMemorySize(columnIndex);
@@ -247,15 +256,14 @@ public class PerSSTableIndexWriter implements SSTableFlushObserver
             final OnDiskIndexBuilder builder = currentBuilder;
             currentBuilder = newIndexBuilder();
 
-            final String segmentFile = filename(isFinal);
+            final File segmentFile = file(isFinal);
 
             return () -> {
                 long start = nanoTime();
 
                 try
                 {
-                    File index = new File(segmentFile);
-                    return builder.finish(index) ? new OnDiskIndex(index, columnIndex.getValidator(), null) : null;
+                    return builder.finish(segmentFile) ? new OnDiskIndex(segmentFile, columnIndex.getValidator(), null) : null;
                 }
                 catch (Exception | FSError e)
                 {
@@ -274,7 +282,7 @@ public class PerSSTableIndexWriter implements SSTableFlushObserver
         {
             logger.info("Scheduling index flush to {}", outputFile);
 
-            getExecutor().submit((Runnable) () -> {
+            getExecutor().submit(() -> {
                 long start1 = nanoTime();
 
                 OnDiskIndex[] parts = new OnDiskIndex[segments.size() + 1];
@@ -291,7 +299,7 @@ public class PerSSTableIndexWriter implements SSTableFlushObserver
                     // parts are present but there is something still in memory, let's flush that inline
                     if (!currentBuilder.isEmpty())
                     {
-                        @SuppressWarnings("resource")
+                        @SuppressWarnings({ "resource", "RedundantSuppression" })
                         OnDiskIndex last = scheduleSegmentFlush(false).call();
                         segments.add(ImmediateFuture.success(last));
                     }
@@ -301,7 +309,7 @@ public class PerSSTableIndexWriter implements SSTableFlushObserver
 
                     for (Future<OnDiskIndex> f : segments)
                     {
-                        @SuppressWarnings("resource")
+                        @SuppressWarnings({ "resource", "RedundantSuppression" })
                         OnDiskIndex part = f.get();
                         if (part == null)
                             continue;
@@ -313,13 +321,13 @@ public class PerSSTableIndexWriter implements SSTableFlushObserver
 
                     OnDiskIndexBuilder builder = newIndexBuilder();
                     builder.finish(Pair.create(combinedMin, combinedMax),
-                                   new File(outputFile),
+                                   outputFile,
                                    new CombinedTermIterator(parts));
                 }
                 catch (Exception | FSError e)
                 {
                     logger.error("Failed to flush index {}.", outputFile, e);
-                    FileUtils.delete(outputFile);
+                    outputFile.tryDelete();
                 }
                 finally
                 {
@@ -327,13 +335,13 @@ public class PerSSTableIndexWriter implements SSTableFlushObserver
 
                     for (int segment = 0; segment < segmentNumber; segment++)
                     {
-                        @SuppressWarnings("resource")
+                        @SuppressWarnings({ "resource", "RedundantSuppression" })
                         OnDiskIndex part = parts[segment];
 
                         if (part != null)
                             FileUtils.closeQuietly(part);
 
-                        FileUtils.delete(outputFile + "_" + segment);
+                        outputFile.withSuffix("_" + segment).tryDelete();
                     }
 
                     latch.decrement();
@@ -351,9 +359,9 @@ public class PerSSTableIndexWriter implements SSTableFlushObserver
             return new OnDiskIndexBuilder(keyValidator, columnIndex.getValidator(), columnIndex.getMode().mode);
         }
 
-        public String filename(boolean isFinal)
+        public File file(boolean isFinal)
         {
-            return outputFile + (isFinal ? "" : "_" + segmentNumber++);
+            return isFinal ? outputFile : outputFile.withSuffix("_" + segmentNumber++);
         }
     }
 
@@ -370,6 +378,6 @@ public class PerSSTableIndexWriter implements SSTableFlushObserver
 
     public boolean equals(Object o)
     {
-        return !(o == null || !(o instanceof PerSSTableIndexWriter)) && descriptor.equals(((PerSSTableIndexWriter) o).descriptor);
+        return o instanceof PerSSTableIndexWriter && descriptor.equals(((PerSSTableIndexWriter) o).descriptor);
     }
 }

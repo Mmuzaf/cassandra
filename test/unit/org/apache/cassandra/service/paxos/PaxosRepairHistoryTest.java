@@ -55,6 +55,7 @@ import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.Pair;
 
+import static org.apache.cassandra.config.CassandraRelevantProperties.PARTITIONER;
 import static org.apache.cassandra.dht.Range.deoverlap;
 import static org.apache.cassandra.service.paxos.Ballot.Flag.NONE;
 import static org.apache.cassandra.service.paxos.Ballot.none;
@@ -69,7 +70,7 @@ public class PaxosRepairHistoryTest
     private static final AtomicInteger tableNum = new AtomicInteger();
     static
     {
-        System.setProperty("cassandra.partitioner", Murmur3Partitioner.class.getName());
+        PARTITIONER.setString(Murmur3Partitioner.class.getName());
         DatabaseDescriptor.daemonInitialization();
         assert DatabaseDescriptor.getPartitioner() instanceof Murmur3Partitioner;
     }
@@ -334,10 +335,10 @@ public class PaxosRepairHistoryTest
                     if (!range.left.isMinimum())
                         Assert.assertEquals(none(), trimmed.ballotForToken(range.left));
                     if (!prev.right.isMinimum())
-                        Assert.assertEquals(none(), trimmed.ballotForToken(prev.right.increaseSlightly()));
+                        Assert.assertEquals(none(), trimmed.ballotForToken(prev.right.nextValidToken()));
                 }
-                Assert.assertEquals(history.ballotForToken(range.left.increaseSlightly()), trimmed.ballotForToken(range.left.increaseSlightly()));
-                if (!range.left.increaseSlightly().equals(range.right))
+                Assert.assertEquals(history.ballotForToken(range.left.nextValidToken()), trimmed.ballotForToken(range.left.nextValidToken()));
+                if (!range.left.nextValidToken().equals(range.right))
                     Assert.assertEquals(history.ballotForToken(((LongToken)range.right).decreaseSlightly()), trimmed.ballotForToken(((LongToken)range.right).decreaseSlightly()));
 
                 if (range.right.isMinimum())
@@ -407,7 +408,7 @@ public class PaxosRepairHistoryTest
             LongToken tk = (LongToken) token;
             Assert.assertEquals(id, check.ballotForToken(tk.decreaseSlightly()), check.test.ballotForToken(tk.decreaseSlightly()));
             Assert.assertEquals(id, check.ballotForToken(tk), check.test.ballotForToken(token));
-            Assert.assertEquals(id, check.ballotForToken(tk.increaseSlightly()), check.test.ballotForToken(token.increaseSlightly()));
+            Assert.assertEquals(id, check.ballotForToken(tk.nextValidToken()), check.test.ballotForToken(token.nextValidToken()));
         }
 
         // check some random

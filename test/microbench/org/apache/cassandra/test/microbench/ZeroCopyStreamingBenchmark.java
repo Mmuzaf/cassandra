@@ -123,7 +123,7 @@ public class ZeroCopyStreamingBenchmark
 
             sstable = store.getLiveSSTables().iterator().next();
             session = setupStreamingSessionForTest();
-            context = ComponentContext.create(sstable.descriptor);
+            context = ComponentContext.create(sstable);
             blockStreamWriter = new CassandraEntireSSTableStreamWriter(sstable, session, context);
 
             CapturingNettyChannel blockStreamCaptureChannel = new CapturingNettyChannel(STREAM_SIZE);
@@ -136,7 +136,6 @@ public class ZeroCopyStreamingBenchmark
 
             CassandraStreamHeader entireSSTableStreamHeader =
                 CassandraStreamHeader.builder()
-                                     .withSSTableFormat(sstable.descriptor.formatType)
                                      .withSSTableVersion(sstable.descriptor.version)
                                      .withSSTableLevel(0)
                                      .withEstimatedKeys(sstable.estimatedKeys())
@@ -144,7 +143,7 @@ public class ZeroCopyStreamingBenchmark
                                      .withSerializationHeader(sstable.header.toComponent())
                                      .withComponentManifest(context.manifest())
                                      .isEntireSSTable(true)
-                                     .withFirstKey(sstable.first)
+                                     .withFirstKey(sstable.getFirst())
                                      .withTableId(sstable.metadata().id)
                                      .build();
 
@@ -153,10 +152,9 @@ public class ZeroCopyStreamingBenchmark
                                                                                                0, 0, 0,
                                                                                                null), entireSSTableStreamHeader, session);
 
-            List<Range<Token>> requestedRanges = Arrays.asList(new Range<>(sstable.first.minValue().getToken(), sstable.last.getToken()));
+            List<Range<Token>> requestedRanges = Arrays.asList(new Range<>(sstable.getFirst().minValue().getToken(), sstable.getLast().getToken()));
             CassandraStreamHeader partialSSTableStreamHeader =
             CassandraStreamHeader.builder()
-                                 .withSSTableFormat(sstable.descriptor.formatType)
                                  .withSSTableVersion(sstable.descriptor.version)
                                  .withSSTableLevel(0)
                                  .withEstimatedKeys(sstable.estimatedKeys())
@@ -223,7 +221,7 @@ public class ZeroCopyStreamingBenchmark
             StreamResultFuture future = StreamResultFuture.createInitiator(nextTimeUUID(), StreamOperation.BOOTSTRAP, Collections.<StreamEventHandler>emptyList(), streamCoordinator);
 
             InetAddressAndPort peer = FBUtilities.getBroadcastAddressAndPort();
-            streamCoordinator.addSessionInfo(new SessionInfo(peer, 0, peer, Collections.emptyList(), Collections.emptyList(), StreamSession.State.INITIALIZED));
+            streamCoordinator.addSessionInfo(new SessionInfo(peer, 0, peer, Collections.emptyList(), Collections.emptyList(), StreamSession.State.INITIALIZED, null));
 
             StreamSession session = streamCoordinator.getOrCreateOutboundSession(peer);
             session.init(future);

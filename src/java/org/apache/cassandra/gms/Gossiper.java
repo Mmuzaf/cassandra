@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -44,7 +45,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -55,16 +55,17 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Uninterruptibles;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.concurrent.FutureTask;
 import org.apache.cassandra.concurrent.ScheduledExecutorPlus;
 import org.apache.cassandra.concurrent.Stage;
+import org.apache.cassandra.config.CassandraRelevantProperties;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.SystemKeyspace;
 import org.apache.cassandra.dht.Token;
+import org.apache.cassandra.exceptions.RequestFailureReason;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.net.Message;
 import org.apache.cassandra.net.MessagingService;
@@ -88,7 +89,9 @@ import static org.apache.cassandra.concurrent.ExecutorFactory.Global.executorFac
 import static org.apache.cassandra.config.CassandraRelevantProperties.DISABLE_GOSSIP_ENDPOINT_REMOVAL;
 import static org.apache.cassandra.config.CassandraRelevantProperties.GOSSIPER_QUARANTINE_DELAY;
 import static org.apache.cassandra.config.CassandraRelevantProperties.GOSSIPER_SKIP_WAITING_TO_SETTLE;
+import static org.apache.cassandra.config.CassandraRelevantProperties.GOSSIP_DISABLE_THREAD_VALIDATION;
 import static org.apache.cassandra.config.CassandraRelevantProperties.SHUTDOWN_ANNOUNCE_DELAY_IN_MS;
+import static org.apache.cassandra.config.CassandraRelevantProperties.VERY_LONG_TIME_MS;
 import static org.apache.cassandra.config.DatabaseDescriptor.getClusterName;
 import static org.apache.cassandra.config.DatabaseDescriptor.getPartitionerName;
 import static org.apache.cassandra.gms.VersionedValue.BOOTSTRAPPING_STATUS;
@@ -117,11 +120,6 @@ import static org.apache.cassandra.utils.FBUtilities.getBroadcastAddressAndPort;
 public class Gossiper implements IFailureDetectionEventListener, GossiperMBean
 {
     public static final String MBEAN_NAME = "org.apache.cassandra.net:type=Gossiper";
-
-    public static class Props
-    {
-        public static final String DISABLE_THREAD_VALIDATION = "cassandra.gossip.disable_thread_validation";
-    }
 
     private static final ScheduledExecutorPlus executor = executorFactory().scheduled("GossipTasks");
 
@@ -163,6 +161,9 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean
     /* live member set */
     @VisibleForTesting
     final Set<InetAddressAndPort> liveEndpoints = new ConcurrentSkipListSet<>();
+
+    /* Inflight echo requests. */
+    private final Set<InetAddressAndPort> inflightEcho = new ConcurrentSkipListSet<>();
 
     /* unreachable member set */
     private final Map<InetAddressAndPort, Long> unreachableEndpoints = new ConcurrentHashMap<>();
@@ -269,18 +270,18 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean
         ((ExpiringMemoizingSupplier<CassandraVersion>) upgradeFromVersionMemoized).expire();
     }
 
-    private static final boolean disableThreadValidation = Boolean.getBoolean(Props.DISABLE_THREAD_VALIDATION);
+    private static final boolean disableThreadValidation = GOSSIP_DISABLE_THREAD_VALIDATION.getBoolean();
     private static volatile boolean disableEndpointRemoval = DISABLE_GOSSIP_ENDPOINT_REMOVAL.getBoolean();
 
     private static long getVeryLongTime()
     {
-        String newVLT =  System.getProperty("cassandra.very_long_time_ms");
-        if (newVLT != null)
-        {
-            logger.info("Overriding aVeryLongTime to {}ms", newVLT);
-            return Long.parseLong(newVLT);
-        }
-        return 259200 * 1000; // 3 days
+        long time = VERY_LONG_TIME_MS.getLong();
+        String defaultValue = VERY_LONG_TIME_MS.getDefaultValue();
+
+        if (!String.valueOf(time).equals(defaultValue))
+            logger.info("Overriding {} from {} to {}ms", VERY_LONG_TIME_MS.getKey(), defaultValue, time);
+
+        return time;
     }
 
     private static boolean isInGossipStage()
@@ -321,7 +322,7 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean
                     logger.trace("My heartbeat is now {}", endpointStateMap.get(FBUtilities.getBroadcastAddressAndPort()).getHeartBeatState().getHeartBeatVersion());
                 final List<GossipDigest> gDigests = new ArrayList<>();
 
-                Gossiper.instance.makeRandomGossipDigest(gDigests);
+                Gossiper.instance.makeGossipDigest(gDigests);
 
                 if (gDigests.size() > 0)
                 {
@@ -675,6 +676,7 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean
             return;
 
         liveEndpoints.remove(endpoint);
+        inflightEcho.remove(endpoint);
         unreachableEndpoints.remove(endpoint);
         MessagingService.instance().versions.reset(endpoint);
         quarantineEndpoint(endpoint);
@@ -745,29 +747,29 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean
     }
 
     /**
-     * The gossip digest is built based on randomization
-     * rather than just looping through the collection of live endpoints.
-     *
-     * @param gDigests list of Gossip Digests.
+     * @param gDigests list of Gossip Digests to be filled
      */
-    private void makeRandomGossipDigest(List<GossipDigest> gDigests)
+    private void makeGossipDigest(List<GossipDigest> gDigests)
     {
         EndpointState epState;
-        int generation = 0;
-        int maxVersion = 0;
+        int generation;
+        int maxVersion;
 
         // local epstate will be part of endpointStateMap
-        List<InetAddressAndPort> endpoints = new ArrayList<>(endpointStateMap.keySet());
-        Collections.shuffle(endpoints, random);
-        for (InetAddressAndPort endpoint : endpoints)
+        for (Entry<InetAddressAndPort, EndpointState> entry : endpointStateMap.entrySet())
         {
-            epState = endpointStateMap.get(endpoint);
+            epState = entry.getValue();
             if (epState != null)
             {
                 generation = epState.getHeartBeatState().getGeneration();
                 maxVersion = getMaxEndpointStateVersion(epState);
             }
-            gDigests.add(new GossipDigest(endpoint, generation, maxVersion));
+            else
+            {
+                generation = 0;
+                maxVersion = 0;
+            }
+            gDigests.add(new GossipDigest(entry.getKey(), generation, maxVersion));
         }
 
         if (logger.isTraceEnabled())
@@ -1348,14 +1350,45 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean
 
     private void markAlive(final InetAddressAndPort addr, final EndpointState localState)
     {
+        if (inflightEcho.contains(addr))
+        {
+            return;
+        }
+        inflightEcho.add(addr);
+
         localState.markDead();
 
         Message<NoPayload> echoMessage = Message.out(ECHO_REQ, noPayload);
         logger.trace("Sending ECHO_REQ to {}", addr);
-        RequestCallback echoHandler = msg ->
+        RequestCallback echoHandler = new RequestCallback()
         {
-            // force processing of the echo response onto the gossip stage, as it comes in on the REQUEST_RESPONSE stage
-            runInGossipStageBlocking(() -> realMarkAlive(addr, localState));
+            @Override
+            public void onResponse(Message msg)
+            {
+                // force processing of the echo response onto the gossip stage, as it comes in on the REQUEST_RESPONSE stage
+                runInGossipStageBlocking(() -> {
+                    try
+                    {
+                        realMarkAlive(addr, localState);
+                    }
+                    finally
+                    {
+                        inflightEcho.remove(addr);
+                    }
+                });
+            }
+
+            @Override
+            public boolean invokeOnFailure()
+            {
+                return true;
+            }
+
+            @Override
+            public void onFailure(InetAddressAndPort from, RequestFailureReason failureReason)
+            {
+                inflightEcho.remove(addr);
+            }
         };
 
         MessagingService.instance().sendWithCallback(echoMessage, addr, echoHandler);
@@ -1411,6 +1444,7 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean
         if (!disableEndpointRemoval)
         {
             liveEndpoints.remove(addr);
+            inflightEcho.remove(addr);
             unreachableEndpoints.put(addr, nanoTime());
         }
     }
@@ -1501,7 +1535,7 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean
         return isAdministrativelyInactiveState(epState);
     }
 
-    private static String getGossipStatus(EndpointState epState)
+    public static String getGossipStatus(EndpointState epState)
     {
         if (epState == null)
         {
@@ -1548,7 +1582,8 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean
      * In that case above, the {@link Map#entrySet()} ordering can be random, causing h4 to apply before h2, which will
      * be rejected by subscripers (only after updating gossip causing zero retries).
      */
-    private static Comparator<Entry<InetAddressAndPort, EndpointState>> stateOrderMap()
+    @VisibleForTesting
+    static Comparator<Entry<InetAddressAndPort, EndpointState>> stateOrderMap()
     {
         // There apears to be some edge cases where the state we are ordering get added to the global state causing
         // ordering to change... to avoid that rely on a cache
@@ -1565,10 +1600,16 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean
         }
         Cache cache = new Cache();
         return ((Comparator<Entry<InetAddressAndPort, EndpointState>>) (e1, e2) -> {
+            String e1status = getGossipStatus(cache.get(e1));
+            String e2status = getGossipStatus(cache.get(e2));
+
+            if (Objects.equals(e1status, e2status) || (BOOTSTRAPPING_STATUS.contains(e1status) && BOOTSTRAPPING_STATUS.contains(e2status)))
+                return 0;
+
             // check status first, make sure bootstrap status happens-after all others
-            if (BOOTSTRAPPING_STATUS.contains(getGossipStatus(cache.get(e1))))
+            if (BOOTSTRAPPING_STATUS.contains(e1status))
                 return 1;
-            if (BOOTSTRAPPING_STATUS.contains(getGossipStatus(cache.get(e2))))
+            if (BOOTSTRAPPING_STATUS.contains(e2status))
                 return -1;
             return 0;
         })
@@ -2358,21 +2399,23 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean
         {
             return;
         }
-        final int GOSSIP_SETTLE_MIN_WAIT_MS = 5000;
-        final int GOSSIP_SETTLE_POLL_INTERVAL_MS = 1000;
-        final int GOSSIP_SETTLE_POLL_SUCCESSES_REQUIRED = 3;
+        final int GOSSIP_SETTLE_MIN_WAIT_MS = CassandraRelevantProperties.GOSSIP_SETTLE_MIN_WAIT_MS.getInt();
+        final int GOSSIP_SETTLE_POLL_INTERVAL_MS = CassandraRelevantProperties.GOSSIP_SETTLE_POLL_INTERVAL_MS.getInt();
+        final int GOSSIP_SETTLE_POLL_SUCCESSES_REQUIRED = CassandraRelevantProperties.GOSSIP_SETTLE_POLL_SUCCESSES_REQUIRED.getInt();
 
         logger.info("Waiting for gossip to settle...");
         Uninterruptibles.sleepUninterruptibly(GOSSIP_SETTLE_MIN_WAIT_MS, TimeUnit.MILLISECONDS);
         int totalPolls = 0;
         int numOkay = 0;
         int epSize = Gossiper.instance.getEndpointCount();
+        int liveSize = Gossiper.instance.getLiveMembers().size();
         while (numOkay < GOSSIP_SETTLE_POLL_SUCCESSES_REQUIRED)
         {
             Uninterruptibles.sleepUninterruptibly(GOSSIP_SETTLE_POLL_INTERVAL_MS, TimeUnit.MILLISECONDS);
             int currentSize = Gossiper.instance.getEndpointCount();
+            int currentLive = Gossiper.instance.getLiveMembers().size();
             totalPolls++;
-            if (currentSize == epSize)
+            if (currentSize == epSize && currentLive == liveSize)
             {
                 logger.debug("Gossip looks settled.");
                 numOkay++;
@@ -2383,6 +2426,7 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean
                 numOkay = 0;
             }
             epSize = currentSize;
+            liveSize = currentLive;
             if (forceAfter > 0 && totalPolls > forceAfter)
             {
                 logger.warn("Gossip not settled but startup forced by cassandra.skip_wait_for_gossip_to_settle. Gossip total polls: {}",
@@ -2601,7 +2645,7 @@ public class Gossiper implements IFailureDetectionEventListener, GossiperMBean
         }
 
         final List<GossipDigest> gDigests = new ArrayList<GossipDigest>();
-        Gossiper.instance.makeRandomGossipDigest(gDigests);
+        Gossiper.instance.makeGossipDigest(gDigests);
 
         GossipDigestSyn digestSynMessage = new GossipDigestSyn(getClusterName(),
                 getPartitionerName(),

@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
 
+import org.apache.cassandra.config.DataStorageSpec;
 import org.apache.cassandra.db.marshal.BytesType;
 import org.apache.cassandra.db.marshal.ListType;
 import org.apache.cassandra.db.marshal.MapType;
@@ -36,6 +37,7 @@ import org.apache.cassandra.db.marshal.SetType;
 
 import static java.lang.String.format;
 import static java.nio.ByteBuffer.allocate;
+import static org.apache.cassandra.config.DataStorageSpec.DataStorageUnit.BYTES;
 
 /**
  * Tests the guardrail for the size of column values, {@link Guardrails#columnValueSize}.
@@ -52,7 +54,9 @@ public class GuardrailColumnValueSizeTest extends ThresholdTester
               Guardrails.columnValueSize,
               Guardrails::setColumnValueSizeThreshold,
               Guardrails::getColumnValueSizeWarnThreshold,
-              Guardrails::getColumnValueSizeFailThreshold);
+              Guardrails::getColumnValueSizeFailThreshold,
+              bytes -> new DataStorageSpec.LongBytesBound(bytes, BYTES).toString(),
+              size -> new DataStorageSpec.LongBytesBound(size).toBytes());
     }
 
     @Test

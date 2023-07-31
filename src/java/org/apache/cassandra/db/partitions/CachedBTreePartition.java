@@ -35,11 +35,12 @@ import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.schema.Schema;
 import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
+import org.apache.cassandra.utils.CassandraUInt;
 import org.apache.cassandra.utils.btree.BTree;
 
 public class CachedBTreePartition extends ImmutableBTreePartition implements CachedPartition
 {
-    private final int createdAtInSec;
+    private final long createdAtInSec;
 
     private final int cachedLiveRows;
     private final int rowsWithNonExpiringCells;
@@ -47,7 +48,7 @@ public class CachedBTreePartition extends ImmutableBTreePartition implements Cac
     private CachedBTreePartition(TableMetadata metadata,
                                  DecoratedKey partitionKey,
                                  BTreePartitionData holder,
-                                 int createdAtInSec,
+                                 long createdAtInSec,
                                  int cachedLiveRows,
                                  int rowsWithNonExpiringCells)
     {
@@ -67,7 +68,7 @@ public class CachedBTreePartition extends ImmutableBTreePartition implements Cac
      * @param nowInSec the time of the creation in seconds. This is the time at which {@link #cachedLiveRows} applies.
      * @return the created partition.
      */
-    public static CachedBTreePartition create(UnfilteredRowIterator iterator, int nowInSec)
+    public static CachedBTreePartition create(UnfilteredRowIterator iterator, long nowInSec)
     {
         return create(iterator, 16, nowInSec);
     }
@@ -84,7 +85,7 @@ public class CachedBTreePartition extends ImmutableBTreePartition implements Cac
      * @param nowInSec the time of the creation in seconds. This is the time at which {@link #cachedLiveRows} applies.
      * @return the created partition.
      */
-    public static CachedBTreePartition create(UnfilteredRowIterator iterator, int initialRowCapacity, int nowInSec)
+    public static CachedBTreePartition create(UnfilteredRowIterator iterator, int initialRowCapacity, long nowInSec)
     {
         BTreePartitionData holder = ImmutableBTreePartition.build(iterator, initialRowCapacity);
 
@@ -156,7 +157,7 @@ public class CachedBTreePartition extends ImmutableBTreePartition implements Cac
             assert partition instanceof CachedBTreePartition;
             CachedBTreePartition p = (CachedBTreePartition)partition;
 
-            out.writeInt(p.createdAtInSec);
+            out.writeInt(CassandraUInt.fromLong(p.createdAtInSec));
             out.writeInt(p.cachedLiveRows);
             out.writeInt(p.rowsWithNonExpiringCells);
             partition.metadata().id.serialize(out);
@@ -177,7 +178,7 @@ public class CachedBTreePartition extends ImmutableBTreePartition implements Cac
             //   2) saves the creation of a temporary iterator: rows are directly written to the partition, which
             //      is slightly faster.
 
-            int createdAtInSec = in.readInt();
+            long createdAtInSec = CassandraUInt.toLong(in.readInt());
             int cachedLiveRows = in.readInt();
             int rowsWithNonExpiringCells = in.readInt();
 
@@ -210,7 +211,7 @@ public class CachedBTreePartition extends ImmutableBTreePartition implements Cac
 
             try (UnfilteredRowIterator iter = p.unfilteredIterator())
             {
-                return TypeSizes.sizeof(p.createdAtInSec)
+                return TypeSizes.INT_SIZE //createdAtInSec
                      + TypeSizes.sizeof(p.cachedLiveRows)
                      + TypeSizes.sizeof(p.rowsWithNonExpiringCells)
                      + partition.metadata().id.serializedSize()

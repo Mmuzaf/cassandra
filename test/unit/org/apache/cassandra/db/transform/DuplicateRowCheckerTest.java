@@ -56,6 +56,7 @@ import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.utils.DiagnosticSnapshotService;
 import org.apache.cassandra.utils.FBUtilities;
 
+import static org.apache.cassandra.config.CassandraRelevantProperties.DIAGNOSTIC_SNAPSHOT_INTERVAL_NANOS;
 import static org.apache.cassandra.utils.ByteBufferUtil.bytes;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -77,7 +78,7 @@ public class DuplicateRowCheckerTest extends CQLTester
     public void setup() throws Throwable
     {
         DatabaseDescriptor.setSnapshotOnDuplicateRowDetection(true);
-        System.setProperty("cassandra.diagnostic_snapshot_interval_nanos", "0");
+        DIAGNOSTIC_SNAPSHOT_INTERVAL_NANOS.setLong(0);
         // Create a table and insert some data. The actual rows read in the test will be synthetic
         // but this creates an sstable on disk to be snapshotted.
         createTable("CREATE TABLE %s (pk text, ck1 int, ck2 int, v int, PRIMARY KEY (pk, ck1, ck2))");
@@ -214,10 +215,10 @@ public class DuplicateRowCheckerTest extends CQLTester
         return BTreeRow.noCellLiveRow(Clustering.make(clusteringByteBuffers), LivenessInfo.create(0, 0));
     }
 
-    public static UnfilteredRowIterator rows(TableMetadata metadata,
-                                             DecoratedKey key,
-                                             boolean isReversedOrder,
-                                             Unfiltered... unfiltereds)
+    public static UnfilteredRowIterator partition(TableMetadata metadata,
+                                                  DecoratedKey key,
+                                                  boolean isReversedOrder,
+                                                  Unfiltered... unfiltereds)
     {
         Iterator<Unfiltered> iterator = Iterators.forArray(unfiltereds);
         return new AbstractUnfilteredRowIterator(metadata,
@@ -237,7 +238,7 @@ public class DuplicateRowCheckerTest extends CQLTester
 
     private static PartitionIterator applyChecker(UnfilteredPartitionIterator unfiltered)
     {
-        int nowInSecs = 0;
+        long nowInSecs = 0;
         return DuplicateRowChecker.duringRead(FilteredPartitions.filter(unfiltered, nowInSecs),
                                               Collections.singletonList(FBUtilities.getBroadcastAddressAndPort()));
     }
@@ -245,7 +246,7 @@ public class DuplicateRowCheckerTest extends CQLTester
     public static UnfilteredPartitionIterator iter(TableMetadata metadata, boolean isReversedOrder, Unfiltered... unfiltereds)
     {
         DecoratedKey key = metadata.partitioner.decorateKey(bytes("key"));
-        UnfilteredRowIterator rowIter = rows(metadata, key, isReversedOrder, unfiltereds);
+        UnfilteredRowIterator rowIter = partition(metadata, key, isReversedOrder, unfiltereds);
         return new SingletonUnfilteredPartitionIterator(rowIter);
     }
 }

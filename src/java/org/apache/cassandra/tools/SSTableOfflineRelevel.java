@@ -40,6 +40,7 @@ import org.apache.cassandra.db.Keyspace;
 import org.apache.cassandra.db.lifecycle.LifecycleTransaction;
 import org.apache.cassandra.io.sstable.Component;
 import org.apache.cassandra.io.sstable.Descriptor;
+import org.apache.cassandra.io.sstable.format.SSTableFormat.Components;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.schema.Schema;
@@ -116,12 +117,12 @@ public class SSTableOfflineRelevel
             {
                 try
                 {
-                    SSTableReader reader = SSTableReader.open(sstable.getKey());
+                    SSTableReader reader = SSTableReader.open(cfs, sstable.getKey());
                     sstableMultimap.put(reader.descriptor.directory, reader);
                 }
                 catch (Throwable t)
                 {
-                    out.println("Couldn't open sstable: "+sstable.getKey().filenameFor(Component.DATA));
+                    out.println("Couldn't open sstable: "+sstable.getKey().fileFor(Components.DATA));
                     Throwables.throwIfUnchecked(t);
                     throw new RuntimeException(t);
                 }
@@ -178,7 +179,7 @@ public class SSTableOfflineRelevel
                 @Override
                 public int compare(SSTableReader o1, SSTableReader o2)
                 {
-                    return o1.last.compareTo(o2.last);
+                    return o1.getLast().compareTo(o2.getLast());
                 }
             });
 
@@ -192,10 +193,10 @@ public class SSTableOfflineRelevel
                 while (it.hasNext())
                 {
                     SSTableReader sstable = it.next();
-                    if (lastLast == null || lastLast.compareTo(sstable.first) < 0)
+                    if (lastLast == null || lastLast.compareTo(sstable.getFirst()) < 0)
                     {
                         level.add(sstable);
-                        lastLast = sstable.last;
+                        lastLast = sstable.getLast();
                         it.remove();
                     }
                 }

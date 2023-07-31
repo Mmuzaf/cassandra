@@ -69,7 +69,8 @@ public class BulkLoaderTest extends OfflineToolUtils
                                                         "Shutdown-checker",
                                                         "cluster[0-9]-connection-reaper-[0-9]",
                                                         "Attach Listener",
-                                                        "process reaper"},
+                                                        "process reaper",
+                                                        "JNA Cleaner"},
                                          false);
         assertSchemaNotLoaded();
         assertCLSMNotLoaded();
@@ -100,7 +101,8 @@ public class BulkLoaderTest extends OfflineToolUtils
                                                         "Shutdown-checker",
                                                         "cluster[0-9]-connection-reaper-[0-9]",
                                                         "Attach Listener",
-                                                        "process reaper"},
+                                                        "process reaper",
+                                                        "JNA Cleaner"},
                                          false);
     assertSchemaNotLoaded();
     assertCLSMNotLoaded();
@@ -131,7 +133,8 @@ public class BulkLoaderTest extends OfflineToolUtils
                                                         "Shutdown-checker",
                                                         "cluster[0-9]-connection-reaper-[0-9]",
                                                         "Attach Listener",
-                                                        "process reaper"},
+                                                        "process reaper",
+                                                        "JNA Cleaner"},
                                          false);
     assertSchemaNotLoaded();
     assertCLSMNotLoaded();

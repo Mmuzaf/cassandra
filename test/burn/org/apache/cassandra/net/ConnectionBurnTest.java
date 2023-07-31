@@ -165,7 +165,7 @@ public class ConnectionBurnTest
 
             public long serializedSize(byte[] payload, int version)
             {
-                return MessageGenerator.serializedSize(payload, version);
+                return MessageGenerator.serializedSize(payload);
             }
         };
 

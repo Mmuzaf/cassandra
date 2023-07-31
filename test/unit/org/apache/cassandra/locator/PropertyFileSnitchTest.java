@@ -34,10 +34,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.dht.RandomPartitioner;
@@ -49,7 +45,12 @@ import org.apache.cassandra.gms.VersionedValue;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.utils.FBUtilities;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import static org.apache.cassandra.config.CassandraRelevantProperties.GOSSIP_DISABLE_THREAD_VALIDATION;
+import static org.junit.Assert.*;
 
 /**
  * Unit tests for {@link PropertyFileSnitch}.
@@ -71,7 +72,7 @@ public class PropertyFileSnitchTest
     @Before
     public void setup() throws ConfigurationException, IOException
     {
-        System.setProperty(Gossiper.Props.DISABLE_THREAD_VALIDATION, "true");
+        GOSSIP_DISABLE_THREAD_VALIDATION.setBoolean(true);
         String confFile = FBUtilities.resourceToFile(PropertyFileSnitch.SNITCH_PROPERTIES_FILENAME);
         effectiveFile = Paths.get(confFile);
         backupFile = Paths.get(confFile + ".bak");

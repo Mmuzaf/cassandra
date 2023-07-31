@@ -20,10 +20,8 @@ package org.apache.cassandra.distributed.test;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
@@ -31,15 +29,13 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import com.google.common.util.concurrent.Uninterruptibles;
+import org.junit.Assert;
+import org.junit.Test;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import org.apache.cassandra.concurrent.SEPExecutor;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.Keyspace;
@@ -54,8 +50,7 @@ import org.apache.cassandra.distributed.api.IInvokableInstance;
 import org.apache.cassandra.distributed.api.IIsolatedExecutor;
 import org.apache.cassandra.io.sstable.Descriptor;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
-import org.apache.cassandra.io.sstable.metadata.MetadataComponent;
-import org.apache.cassandra.io.sstable.metadata.MetadataType;
+import org.apache.cassandra.io.sstable.format.StatsComponent;
 import org.apache.cassandra.io.sstable.metadata.StatsMetadata;
 import org.apache.cassandra.locator.AbstractReplicationStrategy;
 import org.apache.cassandra.locator.EndpointsForToken;
@@ -522,10 +517,7 @@ public class RepairDigestTrackingTest extends TestBaseImpl
                 {
                     SSTableReader sstable = sstables.next();
                     Descriptor descriptor = sstable.descriptor;
-                    Map<MetadataType, MetadataComponent> metadata = descriptor.getMetadataSerializer()
-                                                                              .deserialize(descriptor, EnumSet.of(MetadataType.STATS));
-
-                    StatsMetadata stats = (StatsMetadata) metadata.get(MetadataType.STATS);
+                    StatsMetadata stats = StatsComponent.load(descriptor).statsMetadata();
                     Assert.assertEquals("repaired at is set for sstable: " + descriptor,
                                         stats.repairedAt,
                                         ActiveRepairService.UNREPAIRED_SSTABLE);
@@ -574,10 +566,7 @@ public class RepairDigestTrackingTest extends TestBaseImpl
                 {
                     SSTableReader sstable = sstables.next();
                     Descriptor descriptor = sstable.descriptor;
-                    Map<MetadataType, MetadataComponent> metadata = descriptor.getMetadataSerializer()
-                                                                              .deserialize(descriptor, EnumSet.of(MetadataType.STATS));
-
-                    StatsMetadata stats = (StatsMetadata) metadata.get(MetadataType.STATS);
+                    StatsMetadata stats = StatsComponent.load(descriptor).statsMetadata();
                     Assert.assertTrue("repaired at is not set for sstable: " + descriptor, stats.repairedAt > 0);
                 }
             }

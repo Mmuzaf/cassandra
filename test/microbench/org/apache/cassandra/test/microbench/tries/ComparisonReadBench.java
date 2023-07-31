@@ -35,6 +35,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 
 import org.github.jamm.MemoryMeter;
+import org.github.jamm.MemoryMeter.Guess;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -67,10 +68,11 @@ import org.apache.cassandra.utils.bytecomparable.ByteSourceInverse;
 @State(Scope.Benchmark)
 public class ComparisonReadBench
 {
-    // Note: To see a printout of the usage for each object, add .enableDebug() here (most useful with smaller number of
+    // Note: To see a printout of the usage for each object, add .printVisitedTree() here (most useful with smaller number of
     // partitions).
-    static MemoryMeter meter = new MemoryMeter().ignoreKnownSingletons()
-                                                .withGuessing(MemoryMeter.Guess.FALLBACK_UNSAFE);
+    static MemoryMeter meter = MemoryMeter.builder()
+                                          .withGuessing(Guess.INSTRUMENTATION_AND_SPECIFICATION, Guess.UNSAFE)
+                                          .build();
 
     @Param({"ON_HEAP"})
     BufferType bufferType = BufferType.OFF_HEAP;
@@ -154,7 +156,7 @@ public class ComparisonReadBench
 
         public Long fromByteComparable(ByteComparable bc)
         {
-            return ByteSourceInverse.getSignedLong(bc.asComparableBytes(ByteComparable.Version.OSS42));
+            return ByteSourceInverse.getSignedLong(bc.asComparableBytes(ByteComparable.Version.OSS50));
         }
 
         public ByteComparable longToByteComparable(long l)
@@ -177,8 +179,8 @@ public class ComparisonReadBench
 
         public BigInteger fromByteComparable(ByteComparable bc)
         {
-            return IntegerType.instance.compose(IntegerType.instance.fromComparableBytes(ByteSource.peekable(bc.asComparableBytes(ByteComparable.Version.OSS42)),
-                                                                                         ByteComparable.Version.OSS42));
+            return IntegerType.instance.compose(IntegerType.instance.fromComparableBytes(ByteSource.peekable(bc.asComparableBytes(ByteComparable.Version.OSS50)),
+                                                                                         ByteComparable.Version.OSS50));
         }
 
         public ByteComparable longToByteComparable(long l)
@@ -201,8 +203,8 @@ public class ComparisonReadBench
 
         public BigDecimal fromByteComparable(ByteComparable bc)
         {
-            return DecimalType.instance.compose(DecimalType.instance.fromComparableBytes(ByteSource.peekable(bc.asComparableBytes(ByteComparable.Version.OSS42)),
-                                                                                         ByteComparable.Version.OSS42));
+            return DecimalType.instance.compose(DecimalType.instance.fromComparableBytes(ByteSource.peekable(bc.asComparableBytes(ByteComparable.Version.OSS50)),
+                                                                                         ByteComparable.Version.OSS50));
         }
 
         public ByteComparable longToByteComparable(long l)
@@ -232,7 +234,7 @@ public class ComparisonReadBench
 
         public String fromByteComparable(ByteComparable bc)
         {
-            return new String(ByteSourceInverse.readBytes(bc.asComparableBytes(ByteComparable.Version.OSS42)), StandardCharsets.UTF_8);
+            return new String(ByteSourceInverse.readBytes(bc.asComparableBytes(ByteComparable.Version.OSS50)), StandardCharsets.UTF_8);
         }
 
         public ByteComparable longToByteComparable(long l)
@@ -268,7 +270,7 @@ public class ComparisonReadBench
 
         public byte[] fromByteComparable(ByteComparable bc)
         {
-            return ByteSourceInverse.readBytes(bc.asComparableBytes(ByteComparable.Version.OSS42));
+            return ByteSourceInverse.readBytes(bc.asComparableBytes(ByteComparable.Version.OSS50));
         }
 
         public ByteComparable longToByteComparable(long l)

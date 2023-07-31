@@ -20,20 +20,21 @@ package org.apache.cassandra.db;
 
 import org.junit.Test;
 
+import org.apache.cassandra.cql3.CQLTester;
 import org.apache.cassandra.utils.FBUtilities;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class LivenessInfoTest
+public class LivenessInfoTest extends CQLTester
 {
     @Test
     public void testSupersedes()
     {
         LivenessInfo first;
         LivenessInfo second;
-        int nowInSeconds = FBUtilities.nowInSeconds();
+        long nowInSeconds = FBUtilities.nowInSeconds();
 
         // timestamp supersedes for normal liveness info
         first = LivenessInfo.create(100, 0, nowInSeconds);
@@ -83,7 +84,7 @@ public class LivenessInfoTest
     @Test
     public void testIsLive()
     {
-        int nowInSeconds = FBUtilities.nowInSeconds();
+        long nowInSeconds = FBUtilities.nowInSeconds();
 
         assertIsLive(LivenessInfo.create(100, 0, nowInSeconds), nowInSeconds - 3, true);
         assertIsLive(LivenessInfo.create(100, 0, nowInSeconds), nowInSeconds, true);
@@ -107,7 +108,7 @@ public class LivenessInfoTest
         assertFalse(right.supersedes(left));
     }
 
-    private static void assertIsLive(LivenessInfo info, int nowInSec, boolean alive)
+    private static void assertIsLive(LivenessInfo info, long nowInSec, boolean alive)
     {
         assertEquals(info.isLive(nowInSec), alive);
     }

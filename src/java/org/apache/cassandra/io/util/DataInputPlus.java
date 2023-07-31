@@ -18,7 +18,6 @@
 package org.apache.cassandra.io.util;
 
 import java.io.DataInput;
-import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -101,14 +100,8 @@ public interface DataInputPlus extends DataInput
 
     /**
      * Wrapper around an InputStream that provides no buffering but can decode varints
-     *
-     * TODO: probably shouldn't use DataInputStream as a parent
      */
-    public class DataInputStreamPlus extends DataInputStream implements DataInputPlus
+    abstract class DataInputStreamPlus extends InputStream implements DataInputPlus
     {
-        public DataInputStreamPlus(InputStream is)
-        {
-            super(is);
-        }
     }
 }

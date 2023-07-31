@@ -54,14 +54,14 @@ import io.netty.channel.ChannelFuture;
 import io.netty.util.concurrent.Future; // checkstyle: permit this import
 
 import static com.google.common.base.Throwables.getRootCause;
-import static java.lang.Integer.parseInt;
+
 import static java.lang.String.format;
-import static java.lang.System.getProperty;
 import static java.lang.Thread.currentThread;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.cassandra.concurrent.ExecutorFactory.Global.executorFactory;
-import static org.apache.cassandra.config.Config.PROPERTY_PREFIX;
+import static org.apache.cassandra.config.CassandraRelevantProperties.STREAMING_SESSION_PARALLELTRANSFERS;
+import static org.apache.cassandra.net.MessagingService.VERSION_40;
 import static org.apache.cassandra.streaming.StreamSession.createLogTag;
 import static org.apache.cassandra.streaming.messages.StreamMessage.serialize;
 import static org.apache.cassandra.streaming.messages.StreamMessage.serializedSize;
@@ -92,7 +92,7 @@ public class StreamingMultiplexedChannel
     private static final Logger logger = LoggerFactory.getLogger(StreamingMultiplexedChannel.class);
 
     private static final int DEFAULT_MAX_PARALLEL_TRANSFERS = getAvailableProcessors();
-    private static final int MAX_PARALLEL_TRANSFERS = parseInt(getProperty(PROPERTY_PREFIX + "streaming.session.parallelTransfers", Integer.toString(DEFAULT_MAX_PARALLEL_TRANSFERS)));
+    private static final int MAX_PARALLEL_TRANSFERS = STREAMING_SESSION_PARALLELTRANSFERS.getInt(DEFAULT_MAX_PARALLEL_TRANSFERS);
 
     // a simple mechansim for allowing a degree of fairness across multiple sessions
     private static final Semaphore fileTransferSemaphore = newFairSemaphore(DEFAULT_MAX_PARALLEL_TRANSFERS);
@@ -125,6 +125,7 @@ public class StreamingMultiplexedChannel
         this.session = session;
         this.factory = factory;
         this.to = to;
+        assert messagingVersion >= VERSION_40;
         this.messagingVersion = messagingVersion;
         this.controlChannel = controlChannel;
 

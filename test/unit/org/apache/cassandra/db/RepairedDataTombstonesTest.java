@@ -263,6 +263,10 @@ public class RepairedDataTombstonesTest extends CQLTester
                             }
                         }
                     }
+                    else
+                    {
+                        while (rowIter.hasNext()) rowIter.next();
+                    }
                 }
             }
         }

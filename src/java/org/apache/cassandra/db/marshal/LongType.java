@@ -20,12 +20,15 @@ package org.apache.cassandra.db.marshal;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
+import org.apache.commons.lang3.mutable.MutableLong;
+
 import org.apache.cassandra.cql3.CQL3Type;
 import org.apache.cassandra.cql3.Constants;
 import org.apache.cassandra.cql3.Term;
+import org.apache.cassandra.cql3.functions.ArgumentDeserializer;
+import org.apache.cassandra.serializers.TypeSerializer;
 import org.apache.cassandra.serializers.LongSerializer;
 import org.apache.cassandra.serializers.MarshalException;
-import org.apache.cassandra.serializers.TypeSerializer;
 import org.apache.cassandra.transport.ProtocolVersion;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.bytecomparable.ByteComparable;
@@ -35,6 +38,8 @@ import org.apache.cassandra.utils.bytecomparable.ByteSourceInverse;
 public class LongType extends NumberType<Long>
 {
     public static final LongType instance = new LongType();
+
+    private static final ByteBuffer MASKED_VALUE = instance.decompose(0L);
 
     LongType() {super(ComparisonType.CUSTOM);} // singleton
 
@@ -146,86 +151,93 @@ public class LongType extends NumberType<Long>
     }
 
     @Override
+    public ArgumentDeserializer getArgumentDeserializer()
+    {
+        return new NumberArgumentDeserializer<MutableLong>(new MutableLong())
+        {
+            @Override
+            protected void setMutableValue(MutableLong mutable, ByteBuffer buffer)
+            {
+                mutable.setValue(ByteBufferUtil.toLong(buffer));
+            }
+        };
+    }
+
+    @Override
     public int valueLengthIfFixed()
     {
         return 8;
     }
 
     @Override
-    protected int toInt(ByteBuffer value)
+    public ByteBuffer add(Number left, Number right)
     {
-        throw new UnsupportedOperationException();
+        return ByteBufferUtil.bytes(left.longValue() + right.longValue());
     }
 
     @Override
-    protected float toFloat(ByteBuffer value)
+    public ByteBuffer substract(Number left, Number right)
     {
-        throw new UnsupportedOperationException();
+        return ByteBufferUtil.bytes(left.longValue() - right.longValue());
     }
 
     @Override
-    protected long toLong(ByteBuffer value)
+    public ByteBuffer multiply(Number left, Number right)
     {
-        return ByteBufferUtil.toLong(value);
-    }
-
-    public ByteBuffer add(NumberType<?> leftType, ByteBuffer left, NumberType<?> rightType, ByteBuffer right)
-    {
-        return ByteBufferUtil.bytes(leftType.toLong(left) + rightType.toLong(right));
-    }
-
-    public ByteBuffer substract(NumberType<?> leftType, ByteBuffer left, NumberType<?> rightType, ByteBuffer right)
-    {
-        return ByteBufferUtil.bytes(leftType.toLong(left) - rightType.toLong(right));
-    }
-
-    public ByteBuffer multiply(NumberType<?> leftType, ByteBuffer left, NumberType<?> rightType, ByteBuffer right)
-    {
-        return ByteBufferUtil.bytes(leftType.toLong(left) * rightType.toLong(right));
-    }
-
-    public ByteBuffer divide(NumberType<?> leftType, ByteBuffer left, NumberType<?> rightType, ByteBuffer right)
-    {
-        return ByteBufferUtil.bytes(leftType.toLong(left) / rightType.toLong(right));
-    }
-
-    public ByteBuffer mod(NumberType<?> leftType, ByteBuffer left, NumberType<?> rightType, ByteBuffer right)
-    {
-        return ByteBufferUtil.bytes(leftType.toLong(left) % rightType.toLong(right));
-    }
-
-    public ByteBuffer negate(ByteBuffer input)
-    {
-        return ByteBufferUtil.bytes(-toLong(input));
+        return ByteBufferUtil.bytes(left.longValue() * right.longValue());
     }
 
     @Override
-    public ByteBuffer abs(ByteBuffer input)
+    public ByteBuffer divide(Number left, Number right)
     {
-        return ByteBufferUtil.bytes(Math.abs(toLong(input)));
+        return ByteBufferUtil.bytes(left.longValue() / right.longValue());
     }
 
     @Override
-    public ByteBuffer exp(ByteBuffer input)
+    public ByteBuffer mod(Number left, Number right)
     {
-        return ByteBufferUtil.bytes((long) Math.exp(toLong(input)));
+        return ByteBufferUtil.bytes(left.longValue() % right.longValue());
     }
 
     @Override
-    public ByteBuffer log(ByteBuffer input)
+    public ByteBuffer negate(Number input)
     {
-        return ByteBufferUtil.bytes((long) Math.log(toLong(input)));
+        return ByteBufferUtil.bytes(-input.longValue());
     }
 
     @Override
-    public ByteBuffer log10(ByteBuffer input)
+    public ByteBuffer abs(Number input)
     {
-        return ByteBufferUtil.bytes((long) Math.log10(toLong(input)));
+        return ByteBufferUtil.bytes(Math.abs(input.longValue()));
     }
 
     @Override
-    public ByteBuffer round(ByteBuffer input)
+    public ByteBuffer exp(Number input)
     {
-        return ByteBufferUtil.clone(input);
+        return ByteBufferUtil.bytes((long) Math.exp(input.longValue()));
+    }
+
+    @Override
+    public ByteBuffer log(Number input)
+    {
+        return ByteBufferUtil.bytes((long) Math.log(input.longValue()));
+    }
+
+    @Override
+    public ByteBuffer log10(Number input)
+    {
+        return ByteBufferUtil.bytes((long) Math.log10(input.longValue()));
+    }
+
+    @Override
+    public ByteBuffer round(Number input)
+    {
+        return decompose(input.longValue());
+    }
+
+    @Override
+    public ByteBuffer getMaskedValue()
+    {
+        return MASKED_VALUE;
     }
 }

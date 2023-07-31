@@ -21,12 +21,7 @@ package org.apache.cassandra.service;
 import java.io.BufferedReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -34,7 +29,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -144,7 +138,7 @@ public class FileSystemOwnershipCheck implements StartupCheck
         {
             logger.info("Checking for fs ownership details in file hierarchy for {}", dataDir);
             int foundFiles = 0;
-            Path dir = Paths.get(dataDir).normalize();
+            Path dir = File.getPath(dataDir).normalize();
             do
             {
                 File tokenFile = resolve(dir, tokenFilename);

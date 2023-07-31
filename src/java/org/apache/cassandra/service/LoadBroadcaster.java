@@ -35,9 +35,11 @@ import org.apache.cassandra.gms.VersionedValue;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.metrics.StorageMetrics;
 
+import static org.apache.cassandra.config.CassandraRelevantProperties.BROADCAST_INTERVAL_MS;
+
 public class LoadBroadcaster implements IEndpointStateChangeSubscriber
 {
-    static final int BROADCAST_INTERVAL = Integer.getInteger("cassandra.broadcast_interval_ms", 60 * 1000);
+    static final int BROADCAST_INTERVAL = BROADCAST_INTERVAL_MS.getInt();
 
     public static final LoadBroadcaster instance = new LoadBroadcaster();
 

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -29,7 +30,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import com.google.common.annotations.VisibleForTesting;
-
+import com.google.common.collect.Lists;
+import io.netty.util.concurrent.Future; //checkstyle: permit this import
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,11 +49,11 @@ import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.concurrent.AsyncPromise;
 import org.apache.cassandra.utils.concurrent.FutureCombiner;
 
-import io.netty.util.concurrent.Future; // checkstyle: permit this import
-
 import static java.util.Collections.synchronizedList;
 import static java.util.concurrent.TimeUnit.MINUTES;
+
 import static org.apache.cassandra.concurrent.Stage.MUTATION;
+import static org.apache.cassandra.config.CassandraRelevantProperties.NON_GRACEFUL_SHUTDOWN;
 import static org.apache.cassandra.utils.Clock.Global.nanoTime;
 import static org.apache.cassandra.utils.Throwables.maybeFail;
 
@@ -208,12 +210,14 @@ public class MessagingService extends MessagingServiceMBeanImpl
     private static final Logger logger = LoggerFactory.getLogger(MessagingService.class);
 
     // 8 bits version, so don't waste versions
+    @Deprecated
     public static final int VERSION_30 = 10;
+    @Deprecated
     public static final int VERSION_3014 = 11;
     public static final int VERSION_40 = 12;
-    public static final int VERSION_41 = 13;
-    public static final int minimum_version = VERSION_30;
-    public static final int current_version = VERSION_40;
+    public static final int VERSION_50 = 13; // c14227 TTL overflow, 'uint' timestamps
+    public static final int minimum_version = VERSION_40;
+    public static final int current_version = DatabaseDescriptor.getStorageCompatibilityMode().isBefore(5) ? VERSION_40 : VERSION_50;
     static AcceptVersions accept_messaging = new AcceptVersions(minimum_version, current_version);
     static AcceptVersions accept_streaming = new AcceptVersions(current_version, current_version);
     static Map<Integer, Integer> versionOrdinalMap = Arrays.stream(Version.values()).collect(Collectors.toMap(v -> v.value, v -> v.ordinal()));
@@ -236,15 +240,28 @@ public class MessagingService extends MessagingServiceMBeanImpl
 
     public enum Version
     {
+        @Deprecated
         VERSION_30(10),
+        @Deprecated
         VERSION_3014(11),
-        VERSION_40(12);
+        VERSION_40(12),
+        VERSION_50(13);
 
         public final int value;
 
         Version(int value)
         {
             this.value = value;
+        }
+
+        public static List<Version> supportedVersions()
+        {
+            List<Version> versions = Lists.newArrayList();
+            for (Version version : values())
+                if (minimum_version <= version.value)
+                    versions.add(version);
+
+            return Collections.unmodifiableList(versions);
         }
     }
 
@@ -377,10 +394,10 @@ public class MessagingService extends MessagingServiceMBeanImpl
      * @param handler callback interface which is used to pass the responses or
      *                suggest that a timeout occurred to the invoker of the send().
      */
-    public void sendWriteWithCallback(Message message, Replica to, AbstractWriteResponseHandler<?> handler, boolean allowHints)
+    public void sendWriteWithCallback(Message message, Replica to, AbstractWriteResponseHandler<?> handler)
     {
         assert message.callBackOnFailure();
-        callbacks.addWithExpiration(handler, message, to, handler.consistencyLevel(), allowHints);
+        callbacks.addWithExpiration(handler, message, to);
         send(message, to.endpoint(), null);
     }
 
@@ -524,15 +541,20 @@ public class MessagingService extends MessagingServiceMBeanImpl
     }
 
     /**
-     * Wait for callbacks and don't allow any more to be created (since they could require writing hints)
+     * Wait for callbacks and don't allow anymore to be created (since they could require writing hints)
      */
     public void shutdown()
     {
-        shutdown(1L, MINUTES, true, true);
+        if (NON_GRACEFUL_SHUTDOWN.getBoolean())
+            // this branch is used in unit-tests when we really never restart a node and shutting down means the end of test
+            shutdownAbrubtly();
+        else
+            shutdown(1L, MINUTES, true, true);
     }
 
     public void shutdown(long timeout, TimeUnit units, boolean shutdownGracefully, boolean shutdownExecutors)
     {
+        logger.debug("Shutting down: timeout={}s, gracefully={}, shutdownExecutors={}", units.toSeconds(timeout), shutdownGracefully, shutdownExecutors);
         if (isShuttingDown)
         {
             logger.info("Shutdown was already called");
@@ -556,7 +578,7 @@ public class MessagingService extends MessagingServiceMBeanImpl
                       () -> {
                           List<ExecutorService> inboundExecutors = new ArrayList<>();
                           inboundSockets.close(synchronizedList(inboundExecutors)::add).get();
-                          ExecutorUtils.awaitTermination(1L, TimeUnit.MINUTES, inboundExecutors);
+                          ExecutorUtils.awaitTermination(timeout, units, inboundExecutors);
                       },
                       () -> {
                           if (shutdownExecutors)
@@ -586,6 +608,30 @@ public class MessagingService extends MessagingServiceMBeanImpl
                       inboundSink::clear,
                       outboundSink::clear);
         }
+    }
+
+    public void shutdownAbrubtly()
+    {
+        logger.debug("Shutting down abruptly");
+        if (isShuttingDown)
+        {
+            logger.info("Shutdown was already called");
+            return;
+        }
+
+        isShuttingDown = true;
+        logger.info("Waiting for messaging service to quiesce");
+        // We may need to schedule hints on the mutation stage, so it's erroneous to shut down the mutation stage first
+        assert !MUTATION.executor().isShutdown();
+
+        callbacks.shutdownNow(false);
+        inboundSockets.close();
+        for (OutboundConnections pool : channelManagers.values())
+            pool.close(false);
+
+        maybeFail(socketFactory::shutdownNow,
+                  inboundSink::clear,
+                  outboundSink::clear);
     }
 
     private void shutdownExecutors(long deadlineNanos) throws TimeoutException, InterruptedException

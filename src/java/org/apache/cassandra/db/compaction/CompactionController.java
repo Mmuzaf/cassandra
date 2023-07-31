@@ -30,16 +30,13 @@ import java.util.function.LongPredicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.RateLimiter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.cassandra.config.Config;
 import org.apache.cassandra.db.AbstractCompactionController;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.PartitionPosition;
-import org.apache.cassandra.db.RowIndexEntry;
 import org.apache.cassandra.db.memtable.Memtable;
 import org.apache.cassandra.db.rows.UnfilteredRowIterator;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
@@ -49,6 +46,7 @@ import org.apache.cassandra.schema.CompactionParams.TombstoneOption;
 import org.apache.cassandra.utils.OverlapIterator;
 import org.apache.cassandra.utils.concurrent.Refs;
 
+import static org.apache.cassandra.config.CassandraRelevantProperties.NEVER_PURGE_TOMBSTONES;
 import static org.apache.cassandra.db.lifecycle.SSTableIntervalTree.buildIntervals;
 
 /**
@@ -57,8 +55,7 @@ import static org.apache.cassandra.db.lifecycle.SSTableIntervalTree.buildInterva
 public class CompactionController extends AbstractCompactionController
 {
     private static final Logger logger = LoggerFactory.getLogger(CompactionController.class);
-    private static final String NEVER_PURGE_TOMBSTONES_PROPERTY = Config.PROPERTY_PREFIX + "never_purge_tombstones";
-    static final boolean NEVER_PURGE_TOMBSTONES = Boolean.getBoolean(NEVER_PURGE_TOMBSTONES_PROPERTY);
+    static final boolean NEVER_PURGE_TOMBSTONES_PROPERTY_VALUE = NEVER_PURGE_TOMBSTONES.getBoolean();
 
     private final boolean compactingRepaired;
     // note that overlapIterator and overlappingSSTables will be null if NEVER_PURGE_TOMBSTONES is set - this is a
@@ -71,18 +68,18 @@ public class CompactionController extends AbstractCompactionController
     private final long minTimestamp;
     final Map<SSTableReader, FileDataInput> openDataFiles = new HashMap<>();
 
-    protected CompactionController(ColumnFamilyStore cfs, int maxValue)
+    protected CompactionController(ColumnFamilyStore cfs, long maxValue)
     {
         this(cfs, null, maxValue);
     }
 
-    public CompactionController(ColumnFamilyStore cfs, Set<SSTableReader> compacting, int gcBefore)
+    public CompactionController(ColumnFamilyStore cfs, Set<SSTableReader> compacting, long gcBefore)
     {
         this(cfs, compacting, gcBefore, null,
              cfs.getCompactionStrategyManager().getCompactionParams().tombstoneOption());
     }
 
-    public CompactionController(ColumnFamilyStore cfs, Set<SSTableReader> compacting, int gcBefore, RateLimiter limiter, TombstoneOption tombstoneOption)
+    public CompactionController(ColumnFamilyStore cfs, Set<SSTableReader> compacting, long gcBefore, RateLimiter limiter, TombstoneOption tombstoneOption)
     {
         super(cfs, gcBefore, tombstoneOption);
         this.compacting = compacting;
@@ -92,16 +89,15 @@ public class CompactionController extends AbstractCompactionController
                           ? compacting.stream().mapToLong(SSTableReader::getMinTimestamp).min().getAsLong()
                           : 0;
         refreshOverlaps();
-        if (NEVER_PURGE_TOMBSTONES)
-            logger.warn("You are running with -Dcassandra.never_purge_tombstones=true, this is dangerous!");
+        if (NEVER_PURGE_TOMBSTONES_PROPERTY_VALUE)
+            logger.warn("You are running with -D{}=true, this is dangerous!", NEVER_PURGE_TOMBSTONES.getKey());
     }
 
     public void maybeRefreshOverlaps()
     {
-        if (NEVER_PURGE_TOMBSTONES)
+        if (NEVER_PURGE_TOMBSTONES_PROPERTY_VALUE)
         {
-            logger.debug("not refreshing overlaps - running with -D{}=true",
-                    NEVER_PURGE_TOMBSTONES_PROPERTY);
+            logger.debug("not refreshing overlaps - running with -D{}=true", NEVER_PURGE_TOMBSTONES.getKey());
             return;
         }
 
@@ -113,7 +109,7 @@ public class CompactionController extends AbstractCompactionController
 
         if (cfs.getNeverPurgeTombstones())
         {
-            logger.debug("not refreshing overlaps for {}.{} - neverPurgeTombstones is enabled", cfs.keyspace.getName(), cfs.getTableName());
+            logger.debug("not refreshing overlaps for {}.{} - neverPurgeTombstones is enabled", cfs.getKeyspaceName(), cfs.getTableName());
             return;
         }
 
@@ -121,9 +117,9 @@ public class CompactionController extends AbstractCompactionController
             refreshOverlaps();
     }
 
-    private void refreshOverlaps()
+    void refreshOverlaps()
     {
-        if (NEVER_PURGE_TOMBSTONES || cfs.getNeverPurgeTombstones())
+        if (NEVER_PURGE_TOMBSTONES_PROPERTY_VALUE || cfs.getNeverPurgeTombstones())
             return;
 
         if (this.overlappingSSTables != null)
@@ -161,12 +157,12 @@ public class CompactionController extends AbstractCompactionController
     public static Set<SSTableReader> getFullyExpiredSSTables(ColumnFamilyStore cfStore,
                                                              Iterable<SSTableReader> compacting,
                                                              Iterable<SSTableReader> overlapping,
-                                                             int gcBefore,
+                                                             long gcBefore,
                                                              boolean ignoreOverlaps)
     {
         logger.trace("Checking droppable sstables in {}", cfStore);
 
-        if (NEVER_PURGE_TOMBSTONES || compacting == null || cfStore.getNeverPurgeTombstones() || overlapping == null)
+        if (NEVER_PURGE_TOMBSTONES_PROPERTY_VALUE || compacting == null || cfStore.getNeverPurgeTombstones() || overlapping == null)
             return Collections.emptySet();
 
         if (cfStore.getCompactionStrategyManager().onlyPurgeRepairedTombstones() && !Iterables.all(compacting, SSTableReader::isRepaired))
@@ -177,11 +173,11 @@ public class CompactionController extends AbstractCompactionController
             Set<SSTableReader> fullyExpired = new HashSet<>();
             for (SSTableReader candidate : compacting)
             {
-                if (candidate.getSSTableMetadata().maxLocalDeletionTime < gcBefore)
+                if (candidate.getMaxLocalDeletionTime() < gcBefore)
                 {
                     fullyExpired.add(candidate);
                     logger.trace("Dropping overlap ignored expired SSTable {} (maxLocalDeletionTime={}, gcBefore={})",
-                                 candidate, candidate.getSSTableMetadata().maxLocalDeletionTime, gcBefore);
+                                 candidate, candidate.getMaxLocalDeletionTime(), gcBefore);
                 }
             }
             return fullyExpired;
@@ -194,13 +190,13 @@ public class CompactionController extends AbstractCompactionController
         {
             // Overlapping might include fully expired sstables. What we care about here is
             // the min timestamp of the overlapping sstables that actually contain live data.
-            if (sstable.getSSTableMetadata().maxLocalDeletionTime >= gcBefore)
+            if (sstable.getMaxLocalDeletionTime() >= gcBefore)
                 minTimestamp = Math.min(minTimestamp, sstable.getMinTimestamp());
         }
 
         for (SSTableReader candidate : compacting)
         {
-            if (candidate.getSSTableMetadata().maxLocalDeletionTime < gcBefore)
+            if (candidate.getMaxLocalDeletionTime() < gcBefore)
                 candidates.add(candidate);
             else
                 minTimestamp = Math.min(minTimestamp, candidate.getMinTimestamp());
@@ -228,7 +224,7 @@ public class CompactionController extends AbstractCompactionController
             else
             {
                logger.trace("Dropping expired SSTable {} (maxLocalDeletionTime={}, gcBefore={})",
-                        candidate, candidate.getSSTableMetadata().maxLocalDeletionTime, gcBefore);
+                        candidate, candidate.getMaxLocalDeletionTime(), gcBefore);
             }
         }
         return new HashSet<>(candidates);
@@ -237,7 +233,7 @@ public class CompactionController extends AbstractCompactionController
     public static Set<SSTableReader> getFullyExpiredSSTables(ColumnFamilyStore cfStore,
                                                              Iterable<SSTableReader> compacting,
                                                              Iterable<SSTableReader> overlapping,
-                                                             int gcBefore)
+                                                             long gcBefore)
     {
         return getFullyExpiredSSTables(cfStore, compacting, overlapping, gcBefore, false);
     }
@@ -252,7 +248,7 @@ public class CompactionController extends AbstractCompactionController
     @Override
     public LongPredicate getPurgeEvaluator(DecoratedKey key)
     {
-        if (NEVER_PURGE_TOMBSTONES || !compactingRepaired() || cfs.getNeverPurgeTombstones() || overlapIterator == null)
+        if (NEVER_PURGE_TOMBSTONES_PROPERTY_VALUE || !compactingRepaired() || cfs.getNeverPurgeTombstones() || overlapIterator == null)
             return time -> false;
 
         overlapIterator.update(key);
@@ -263,7 +259,7 @@ public class CompactionController extends AbstractCompactionController
 
         for (SSTableReader sstable: filteredSSTables)
         {
-            if (sstable.maybePresent(key))
+            if (sstable.mayContainAssumingKeyIsInRange(key))
             {
                 minTimestampSeen = Math.min(minTimestampSeen, sstable.getMinTimestamp());
                 hasTimestamp = true;
@@ -313,7 +309,7 @@ public class CompactionController extends AbstractCompactionController
     // caller must close iterators
     public Iterable<UnfilteredRowIterator> shadowSources(DecoratedKey key, boolean tombstoneOnly)
     {
-        if (!provideTombstoneSources() || !compactingRepaired() || NEVER_PURGE_TOMBSTONES || cfs.getNeverPurgeTombstones())
+        if (!provideTombstoneSources() || !compactingRepaired() || NEVER_PURGE_TOMBSTONES_PROPERTY_VALUE || cfs.getNeverPurgeTombstones())
             return null;
         overlapIterator.update(key);
         return Iterables.filter(Iterables.transform(overlapIterator.overlaps(),
@@ -328,8 +324,8 @@ public class CompactionController extends AbstractCompactionController
             reader.getMaxTimestamp() <= minTimestamp ||
             tombstoneOnly && !reader.mayHaveTombstones())
             return null;
-        RowIndexEntry<?> position = reader.getPosition(key, SSTableReader.Operator.EQ);
-        if (position == null)
+        long position = reader.getPosition(key, SSTableReader.Operator.EQ);
+        if (position < 0)
             return null;
         FileDataInput dfile = openDataFiles.computeIfAbsent(reader, this::openDataFile);
         return reader.simpleIterator(dfile, key, position, tombstoneOnly);

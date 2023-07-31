@@ -23,6 +23,7 @@ import java.util.UUID;
 
 import com.google.common.collect.ImmutableList;
 
+import org.apache.cassandra.utils.concurrent.Condition;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -40,11 +41,11 @@ import org.apache.cassandra.gms.FailureDetector;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.schema.SchemaConstants;
 import org.apache.cassandra.service.StorageService;
-import org.apache.cassandra.utils.concurrent.Condition;
 import org.apache.cassandra.utils.progress.ProgressEventType;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.apache.cassandra.auth.AuthKeyspace.ROLES;
+import static org.apache.cassandra.config.CassandraRelevantProperties.SUPERUSER_SETUP_DELAY_MS;
 import static org.apache.cassandra.distributed.api.Feature.GOSSIP;
 import static org.apache.cassandra.distributed.api.Feature.NETWORK;
 import static org.apache.cassandra.distributed.shared.AssertUtils.assertRows;
@@ -114,7 +115,7 @@ public class UpdateSystemAuthAfterDCExpansionTest extends TestBaseImpl
     {
         // reduce the time from 10s to prevent "Cannot process role related query as the role manager isn't yet setup."
         // exception from CassandraRoleManager
-        System.setProperty("cassandra.superuser_setup_delay_ms", "0");
+        SUPERUSER_SETUP_DELAY_MS.setLong(0);
         TestBaseImpl.beforeClass();
     }
 

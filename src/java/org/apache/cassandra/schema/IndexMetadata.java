@@ -20,17 +20,14 @@ package org.apache.cassandra.schema;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,8 +36,12 @@ import org.apache.cassandra.cql3.ColumnIdentifier;
 import org.apache.cassandra.cql3.CqlBuilder;
 import org.apache.cassandra.cql3.statements.schema.IndexTarget;
 import org.apache.cassandra.exceptions.ConfigurationException;
+import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.UnknownIndexException;
 import org.apache.cassandra.index.Index;
+import org.apache.cassandra.index.internal.CassandraIndex;
+import org.apache.cassandra.index.sai.StorageAttachedIndex;
+import org.apache.cassandra.index.sasi.SASIIndex;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.utils.FBUtilities;
@@ -58,6 +59,18 @@ public final class IndexMetadata
 
 
     public static final Serializer serializer = new Serializer();
+
+    /**
+     * A mapping of user-friendly index names to their fully qualified index class names.
+     */
+    private static final Map<String, String> indexNameAliases = new ConcurrentHashMap<>();
+
+    static
+    {
+        indexNameAliases.put(StorageAttachedIndex.NAME, StorageAttachedIndex.class.getCanonicalName());
+        indexNameAliases.put(StorageAttachedIndex.class.getSimpleName().toLowerCase(), StorageAttachedIndex.class.getCanonicalName());
+        indexNameAliases.put(SASIIndex.class.getSimpleName(), SASIIndex.class.getCanonicalName());
+    }
 
     public enum Kind
     {
@@ -126,12 +139,25 @@ public final class IndexMetadata
             if (options == null || !options.containsKey(IndexTarget.CUSTOM_INDEX_OPTION_NAME))
                 throw new ConfigurationException(String.format("Required option missing for index %s : %s",
                                                                name, IndexTarget.CUSTOM_INDEX_OPTION_NAME));
-            String className = options.get(IndexTarget.CUSTOM_INDEX_OPTION_NAME);
+
+            // Get the fully qualified class name:
+            String className = getIndexClassName();
+
             Class<Index> indexerClass = FBUtilities.classForName(className, "custom indexer");
             if (!Index.class.isAssignableFrom(indexerClass))
                 throw new ConfigurationException(String.format("Specified Indexer class (%s) does not implement the Indexer interface", className));
             validateCustomIndexOptions(table, indexerClass, options);
         }
+    }
+
+    public String getIndexClassName()
+    {
+        if (isCustom())
+        {
+            String className = options.get(IndexTarget.CUSTOM_INDEX_OPTION_NAME);
+            return indexNameAliases.getOrDefault(className.toLowerCase(), className);
+        }
+        return CassandraIndex.class.getName();
     }
 
     private void validateCustomIndexOptions(TableMetadata table, Class<? extends Index> indexerClass, Map<String, String> options)
@@ -163,6 +189,8 @@ public final class IndexMetadata
         }
         catch (InvocationTargetException e)
         {
+            if (e.getTargetException() instanceof InvalidRequestException)
+                throw (InvalidRequestException) e.getTargetException();
             if (e.getTargetException() instanceof ConfigurationException)
                 throw (ConfigurationException) e.getTargetException();
             throw new ConfigurationException("Failed to validate custom indexer options: " + options);

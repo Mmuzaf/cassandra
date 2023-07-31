@@ -53,6 +53,7 @@ import org.apache.cassandra.utils.ExecutorUtils;
 import org.apache.cassandra.utils.NoSpamLogger;
 
 import static org.apache.cassandra.concurrent.ExecutorFactory.Global.executorFactory;
+import static org.apache.cassandra.config.CassandraRelevantProperties.LOG_DIR;
 import static org.apache.cassandra.utils.Clock.Global.currentTimeMillis;
 
 public class CompactionLogger
@@ -176,7 +177,7 @@ public class CompactionLogger
     {
         ObjectNode node = json.objectNode();
         node.put("generation", sstable.descriptor.id.toString());
-        node.put("version", sstable.descriptor.version.getVersion());
+        node.put("version", sstable.descriptor.version.version);
         node.put("size", sstable.onDiskLength());
         JsonNode logResult = strategy.strategyLogger().sstable(sstable);
         if (logResult != null)
@@ -228,7 +229,7 @@ public class CompactionLogger
         ColumnFamilyStore cfs = cfsRef.get();
         if (cfs == null)
             return;
-        node.put("keyspace", cfs.keyspace.getName());
+        node.put("keyspace", cfs.getKeyspaceName());
         node.put("table", cfs.getTableName());
         node.put("time", currentTimeMillis());
     }
@@ -304,7 +305,7 @@ public class CompactionLogger
 
     private static class CompactionLogSerializer implements Writer
     {
-        private static final String logDirectory = System.getProperty("cassandra.logdir", ".");
+        private static final String logDirectory = LOG_DIR.getString();
         private final ExecutorPlus loggerService = executorFactory().sequential("CompactionLogger");
         // This is only accessed on the logger service thread, so it does not need to be thread safe
         private final Set<Object> rolled = new HashSet<>();

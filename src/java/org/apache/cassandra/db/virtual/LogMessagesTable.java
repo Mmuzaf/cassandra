@@ -46,7 +46,10 @@ import ch.qos.logback.classic.spi.LoggingEvent;
  * the oldest one is removed.
  * <p>
  * This virtual table can be truncated.
+ * <p>
+ * This table does not enable {@code ALLOW FILTERING} implicitly.
  *
+ * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-18238">CASSANDRA-18238</a>
  * @see org.apache.cassandra.utils.logging.VirtualTableAppender
  */
 public final class LogMessagesTable extends AbstractMutableVirtualTable
@@ -134,6 +137,12 @@ public final class LogMessagesTable extends AbstractMutableVirtualTable
     public void truncate()
     {
         buffer.clear();
+    }
+
+    @Override
+    public boolean allowFilteringImplicitly()
+    {
+        return false;
     }
 
     @VisibleForTesting

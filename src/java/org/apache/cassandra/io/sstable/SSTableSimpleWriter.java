@@ -52,7 +52,7 @@ class SSTableSimpleWriter extends AbstractSSTableSimpleWriter
     private SSTableTxnWriter getOrCreateWriter() throws IOException
     {
         if (writer == null)
-            writer = createWriter();
+            writer = createWriter(null);
 
         return writer;
     }

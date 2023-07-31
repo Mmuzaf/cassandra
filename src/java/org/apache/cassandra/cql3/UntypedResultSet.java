@@ -38,21 +38,7 @@ import org.apache.cassandra.db.Clustering;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.ReadExecutionController;
-import org.apache.cassandra.db.marshal.AbstractType;
-import org.apache.cassandra.db.marshal.BooleanType;
-import org.apache.cassandra.db.marshal.ByteType;
-import org.apache.cassandra.db.marshal.CollectionType;
-import org.apache.cassandra.db.marshal.DoubleType;
-import org.apache.cassandra.db.marshal.InetAddressType;
-import org.apache.cassandra.db.marshal.Int32Type;
-import org.apache.cassandra.db.marshal.ListType;
-import org.apache.cassandra.db.marshal.LongType;
-import org.apache.cassandra.db.marshal.MapType;
-import org.apache.cassandra.db.marshal.SetType;
-import org.apache.cassandra.db.marshal.ShortType;
-import org.apache.cassandra.db.marshal.TimestampType;
-import org.apache.cassandra.db.marshal.UTF8Type;
-import org.apache.cassandra.db.marshal.UUIDType;
+import org.apache.cassandra.db.marshal.*;
 import org.apache.cassandra.db.partitions.PartitionIterator;
 import org.apache.cassandra.db.rows.Cell;
 import org.apache.cassandra.db.rows.ComplexColumnData;
@@ -226,7 +212,7 @@ public abstract class UntypedResultSet implements Iterable<UntypedResultSet.Row>
 
                 protected Row computeNext()
                 {
-                    int nowInSec = FBUtilities.nowInSeconds();
+                    long nowInSec = FBUtilities.nowInSeconds();
                     while (currentPage == null || !currentPage.hasNext())
                     {
                         if (pager.isExhausted())
@@ -235,7 +221,7 @@ public abstract class UntypedResultSet implements Iterable<UntypedResultSet.Row>
                         try (ReadExecutionController executionController = pager.executionController();
                              PartitionIterator iter = pager.fetchPageInternal(pageSize, executionController))
                         {
-                            currentPage = select.process(iter, nowInSec).rows.iterator();
+                            currentPage = select.process(iter, nowInSec, true).rows.iterator();
                         }
                     }
                     return new Row(metadata, currentPage.next());
@@ -292,7 +278,7 @@ public abstract class UntypedResultSet implements Iterable<UntypedResultSet.Row>
 
                 protected Row computeNext()
                 {
-                    int nowInSec = FBUtilities.nowInSeconds();
+                    long nowInSec = FBUtilities.nowInSeconds();
                     while (currentPage == null || !currentPage.hasNext())
                     {
                         if (pager.isExhausted())
@@ -300,7 +286,7 @@ public abstract class UntypedResultSet implements Iterable<UntypedResultSet.Row>
 
                         try (PartitionIterator iter = pager.fetchPage(pageSize, cl, clientState, nanoTime()))
                         {
-                            currentPage = select.process(iter, nowInSec).rows.iterator();
+                            currentPage = select.process(iter, nowInSec, true).rows.iterator();
                         }
                     }
                     return new Row(metadata, currentPage.next());
@@ -496,6 +482,12 @@ public abstract class UntypedResultSet implements Iterable<UntypedResultSet.Row>
         public Map<String, String> getFrozenTextMap(String column)
         {
             return getFrozenMap(column, UTF8Type.instance, UTF8Type.instance);
+        }
+
+        public <T> List<T> getVector(String column, AbstractType<T> elementType, int dimension)
+        {
+            ByteBuffer raw = data.get(column);
+            return raw == null ? null : VectorType.getInstance(elementType, dimension).compose(raw);
         }
 
         public List<ColumnSpecification> getColumns()

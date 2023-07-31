@@ -116,7 +116,7 @@ public class PaxosRepairTest extends TestBaseImpl
 
     static
     {
-        CassandraRelevantProperties.PAXOS_EXECUTE_ON_SELF.setBoolean(false);
+        CassandraRelevantProperties.PAXOS_USE_SELF_EXECUTION.setBoolean(false);
         DatabaseDescriptor.daemonInitialization();
     }
 

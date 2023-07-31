@@ -32,6 +32,8 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.SortedMap;
 
+import javax.management.InstanceNotFoundException;
+
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
@@ -39,142 +41,7 @@ import com.google.common.collect.Maps;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileWriter;
 import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
-import org.apache.cassandra.tools.nodetool.Assassinate;
-import org.apache.cassandra.tools.nodetool.BootstrapResume;
-import org.apache.cassandra.tools.nodetool.CfHistograms;
-import org.apache.cassandra.tools.nodetool.CfStats;
-import org.apache.cassandra.tools.nodetool.Cleanup;
-import org.apache.cassandra.tools.nodetool.ClearSnapshot;
-import org.apache.cassandra.tools.nodetool.ClientStats;
-import org.apache.cassandra.tools.nodetool.Compact;
-import org.apache.cassandra.tools.nodetool.CompactionHistory;
-import org.apache.cassandra.tools.nodetool.CompactionStats;
-import org.apache.cassandra.tools.nodetool.DataPaths;
-import org.apache.cassandra.tools.nodetool.Decommission;
-import org.apache.cassandra.tools.nodetool.DescribeCluster;
-import org.apache.cassandra.tools.nodetool.DescribeRing;
-import org.apache.cassandra.tools.nodetool.DisableAuditLog;
-import org.apache.cassandra.tools.nodetool.DisableAutoCompaction;
-import org.apache.cassandra.tools.nodetool.DisableBackup;
-import org.apache.cassandra.tools.nodetool.DisableBinary;
-import org.apache.cassandra.tools.nodetool.DisableFullQueryLog;
-import org.apache.cassandra.tools.nodetool.DisableGossip;
-import org.apache.cassandra.tools.nodetool.DisableHandoff;
-import org.apache.cassandra.tools.nodetool.DisableHintsForDC;
-import org.apache.cassandra.tools.nodetool.DisableOldProtocolVersions;
-import org.apache.cassandra.tools.nodetool.Drain;
-import org.apache.cassandra.tools.nodetool.EnableAuditLog;
-import org.apache.cassandra.tools.nodetool.EnableAutoCompaction;
-import org.apache.cassandra.tools.nodetool.EnableBackup;
-import org.apache.cassandra.tools.nodetool.EnableBinary;
-import org.apache.cassandra.tools.nodetool.EnableFullQueryLog;
-import org.apache.cassandra.tools.nodetool.EnableGossip;
-import org.apache.cassandra.tools.nodetool.EnableHandoff;
-import org.apache.cassandra.tools.nodetool.EnableHintsForDC;
-import org.apache.cassandra.tools.nodetool.EnableOldProtocolVersions;
-import org.apache.cassandra.tools.nodetool.FailureDetectorInfo;
-import org.apache.cassandra.tools.nodetool.Flush;
-import org.apache.cassandra.tools.nodetool.ForceCompact;
-import org.apache.cassandra.tools.nodetool.GarbageCollect;
-import org.apache.cassandra.tools.nodetool.GcStats;
-import org.apache.cassandra.tools.nodetool.GetAuditLog;
-import org.apache.cassandra.tools.nodetool.GetAuthCacheConfig;
-import org.apache.cassandra.tools.nodetool.GetBatchlogReplayTrottle;
-import org.apache.cassandra.tools.nodetool.GetColumnIndexSize;
-import org.apache.cassandra.tools.nodetool.GetCompactionThreshold;
-import org.apache.cassandra.tools.nodetool.GetCompactionThroughput;
-import org.apache.cassandra.tools.nodetool.GetConcurrency;
-import org.apache.cassandra.tools.nodetool.GetConcurrentCompactors;
-import org.apache.cassandra.tools.nodetool.GetConcurrentViewBuilders;
-import org.apache.cassandra.tools.nodetool.GetDefaultKeyspaceRF;
-import org.apache.cassandra.tools.nodetool.GetEndpoints;
-import org.apache.cassandra.tools.nodetool.GetFullQueryLog;
-import org.apache.cassandra.tools.nodetool.GetInterDCStreamThroughput;
-import org.apache.cassandra.tools.nodetool.GetLoggingLevels;
-import org.apache.cassandra.tools.nodetool.GetMaxHintWindow;
-import org.apache.cassandra.tools.nodetool.GetSSTables;
-import org.apache.cassandra.tools.nodetool.GetSeeds;
-import org.apache.cassandra.tools.nodetool.GetSnapshotThrottle;
-import org.apache.cassandra.tools.nodetool.GetStreamThroughput;
-import org.apache.cassandra.tools.nodetool.GetTimeout;
-import org.apache.cassandra.tools.nodetool.GetTraceProbability;
-import org.apache.cassandra.tools.nodetool.GossipInfo;
-import org.apache.cassandra.tools.nodetool.Import;
-import org.apache.cassandra.tools.nodetool.Info;
-import org.apache.cassandra.tools.nodetool.InvalidateCounterCache;
-import org.apache.cassandra.tools.nodetool.InvalidateCredentialsCache;
-import org.apache.cassandra.tools.nodetool.InvalidateJmxPermissionsCache;
-import org.apache.cassandra.tools.nodetool.InvalidateKeyCache;
-import org.apache.cassandra.tools.nodetool.InvalidateNetworkPermissionsCache;
-import org.apache.cassandra.tools.nodetool.InvalidatePermissionsCache;
-import org.apache.cassandra.tools.nodetool.InvalidateRolesCache;
-import org.apache.cassandra.tools.nodetool.InvalidateRowCache;
-import org.apache.cassandra.tools.nodetool.Join;
-import org.apache.cassandra.tools.nodetool.ListPendingHints;
-import org.apache.cassandra.tools.nodetool.ListSnapshots;
-import org.apache.cassandra.tools.nodetool.Move;
-import org.apache.cassandra.tools.nodetool.NetStats;
-import org.apache.cassandra.tools.nodetool.PauseHandoff;
-import org.apache.cassandra.tools.nodetool.ProfileLoad;
-import org.apache.cassandra.tools.nodetool.ProxyHistograms;
-import org.apache.cassandra.tools.nodetool.RangeKeySample;
-import org.apache.cassandra.tools.nodetool.Rebuild;
-import org.apache.cassandra.tools.nodetool.RebuildIndex;
-import org.apache.cassandra.tools.nodetool.RecompressSSTables;
-import org.apache.cassandra.tools.nodetool.Refresh;
-import org.apache.cassandra.tools.nodetool.RefreshSizeEstimates;
-import org.apache.cassandra.tools.nodetool.ReloadLocalSchema;
-import org.apache.cassandra.tools.nodetool.ReloadSeeds;
-import org.apache.cassandra.tools.nodetool.ReloadTriggers;
-import org.apache.cassandra.tools.nodetool.RelocateSSTables;
-import org.apache.cassandra.tools.nodetool.RemoveNode;
-import org.apache.cassandra.tools.nodetool.Repair;
-import org.apache.cassandra.tools.nodetool.RepairAdmin;
-import org.apache.cassandra.tools.nodetool.ReplayBatchlog;
-import org.apache.cassandra.tools.nodetool.ResetFullQueryLog;
-import org.apache.cassandra.tools.nodetool.ResetLocalSchema;
-import org.apache.cassandra.tools.nodetool.ResumeHandoff;
-import org.apache.cassandra.tools.nodetool.Ring;
-import org.apache.cassandra.tools.nodetool.Scrub;
-import org.apache.cassandra.tools.nodetool.SetAuthCacheConfig;
-import org.apache.cassandra.tools.nodetool.SetBatchlogReplayThrottle;
-import org.apache.cassandra.tools.nodetool.SetCacheCapacity;
-import org.apache.cassandra.tools.nodetool.SetCacheKeysToSave;
-import org.apache.cassandra.tools.nodetool.SetColumnIndexSize;
-import org.apache.cassandra.tools.nodetool.SetCompactionThreshold;
-import org.apache.cassandra.tools.nodetool.SetCompactionThroughput;
-import org.apache.cassandra.tools.nodetool.SetConcurrency;
-import org.apache.cassandra.tools.nodetool.SetConcurrentCompactors;
-import org.apache.cassandra.tools.nodetool.SetConcurrentViewBuilders;
-import org.apache.cassandra.tools.nodetool.SetDefaultKeyspaceRF;
-import org.apache.cassandra.tools.nodetool.SetHintedHandoffThrottleInKB;
-import org.apache.cassandra.tools.nodetool.SetHostStatWithPort;
-import org.apache.cassandra.tools.nodetool.SetInterDCStreamThroughput;
-import org.apache.cassandra.tools.nodetool.SetLoggingLevel;
-import org.apache.cassandra.tools.nodetool.SetMaxHintWindow;
-import org.apache.cassandra.tools.nodetool.SetSnapshotThrottle;
-import org.apache.cassandra.tools.nodetool.SetStreamThroughput;
-import org.apache.cassandra.tools.nodetool.SetTimeout;
-import org.apache.cassandra.tools.nodetool.SetTraceProbability;
-import org.apache.cassandra.tools.nodetool.Sjk;
-import org.apache.cassandra.tools.nodetool.Snapshot;
-import org.apache.cassandra.tools.nodetool.Status;
-import org.apache.cassandra.tools.nodetool.StatusAutoCompaction;
-import org.apache.cassandra.tools.nodetool.StatusBackup;
-import org.apache.cassandra.tools.nodetool.StatusBinary;
-import org.apache.cassandra.tools.nodetool.StatusGossip;
-import org.apache.cassandra.tools.nodetool.StatusHandoff;
-import org.apache.cassandra.tools.nodetool.Stop;
-import org.apache.cassandra.tools.nodetool.StopDaemon;
-import org.apache.cassandra.tools.nodetool.TableHistograms;
-import org.apache.cassandra.tools.nodetool.TableStats;
-import org.apache.cassandra.tools.nodetool.TopPartitions;
-import org.apache.cassandra.tools.nodetool.TpStats;
-import org.apache.cassandra.tools.nodetool.TruncateHints;
-import org.apache.cassandra.tools.nodetool.UpgradeSSTable;
-import org.apache.cassandra.tools.nodetool.Verify;
-import org.apache.cassandra.tools.nodetool.Version;
-import org.apache.cassandra.tools.nodetool.ViewBuildStatus;
+import org.apache.cassandra.tools.nodetool.*;
 import org.apache.cassandra.utils.FBUtilities;
 
 import io.airlift.airline.Cli;
@@ -230,6 +97,7 @@ public class NodeTool
                 CassHelp.class,
                 CfHistograms.class,
                 CfStats.class,
+                CIDRFilteringStats.class,
                 Cleanup.class,
                 ClearSnapshot.class,
                 ClientStats.class,
@@ -250,6 +118,7 @@ public class NodeTool
                 DisableHintsForDC.class,
                 DisableOldProtocolVersions.class,
                 Drain.class,
+                DropCIDRGroup.class,
                 EnableAuditLog.class,
                 EnableAutoCompaction.class,
                 EnableBackup.class,
@@ -266,6 +135,7 @@ public class NodeTool
                 GetAuditLog.class,
                 GetAuthCacheConfig.class,
                 GetBatchlogReplayTrottle.class,
+                GetCIDRGroupsOfIP.class,
                 GetColumnIndexSize.class,
                 GetCompactionThreshold.class,
                 GetCompactionThroughput.class,
@@ -287,15 +157,18 @@ public class NodeTool
                 GossipInfo.class,
                 Import.class,
                 Info.class,
+                InvalidateCIDRPermissionsCache.class,
                 InvalidateCounterCache.class,
                 InvalidateCredentialsCache.class,
                 InvalidateJmxPermissionsCache.class,
+                ReloadCIDRGroupsCache.class,
                 InvalidateKeyCache.class,
                 InvalidateNetworkPermissionsCache.class,
                 InvalidatePermissionsCache.class,
                 InvalidateRolesCache.class,
                 InvalidateRowCache.class,
                 Join.class,
+                ListCIDRGroups.class,
                 ListPendingHints.class,
                 ListSnapshots.class,
                 Move.class,
@@ -356,6 +229,7 @@ public class NodeTool
                 TopPartitions.class,
                 TpStats.class,
                 TruncateHints.class,
+                UpdateCIDRGroup.class,
                 UpgradeSSTable.class,
                 Verify.class,
                 Version.class,
@@ -441,6 +315,10 @@ public class NodeTool
 
     protected void err(Throwable e)
     {
+        // CASSANDRA-11537: friendly error message when server is not ready
+        if (e instanceof InstanceNotFoundException)
+            throw new IllegalArgumentException("Server is not initialized yet, cannot run nodetool.");
+
         output.err.println("error: " + e.getMessage());
         output.err.println("-- StackTrace --");
         output.err.println(getStackTraceAsString(e));

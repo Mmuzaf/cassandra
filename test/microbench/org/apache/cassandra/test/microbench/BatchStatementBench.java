@@ -89,7 +89,7 @@ public class BatchStatementBench
     static String keyspace = "keyspace1";
     String table = "tbl";
 
-    int nowInSec = FBUtilities.nowInSeconds();
+    long nowInSec = FBUtilities.nowInSeconds();
     long queryStartTime = nanoTime();
     BatchStatement bs;
     BatchQueryOptions bqo;

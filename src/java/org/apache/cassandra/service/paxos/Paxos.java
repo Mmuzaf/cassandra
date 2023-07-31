@@ -20,20 +20,36 @@ package org.apache.cassandra.service.paxos;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
-import com.codahale.metrics.Meter;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.codahale.metrics.Meter;
+import org.apache.cassandra.exceptions.CasWriteTimeoutException;
+import org.apache.cassandra.exceptions.ExceptionCode;
+import org.apache.cassandra.gms.FailureDetector;
+import org.apache.cassandra.locator.AbstractReplicationStrategy;
+import org.apache.cassandra.locator.EndpointsForToken;
+import org.apache.cassandra.locator.InOurDc;
+import org.apache.cassandra.locator.Replica;
+import org.apache.cassandra.locator.ReplicaLayout;
+import org.apache.cassandra.locator.ReplicaLayout.ForTokenWrite;
+import org.apache.cassandra.locator.ReplicaPlan.ForRead;
+import org.apache.cassandra.metrics.ClientRequestSizeMetrics;
+import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.config.Config;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.ConsistencyLevel;
@@ -47,8 +63,6 @@ import org.apache.cassandra.db.partitions.PartitionIterators;
 import org.apache.cassandra.db.partitions.PartitionUpdate;
 import org.apache.cassandra.db.rows.RowIterator;
 import org.apache.cassandra.dht.Token;
-import org.apache.cassandra.exceptions.CasWriteTimeoutException;
-import org.apache.cassandra.exceptions.ExceptionCode;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.exceptions.IsBootstrappingException;
 import org.apache.cassandra.exceptions.ReadFailureException;
@@ -61,49 +75,39 @@ import org.apache.cassandra.exceptions.UnavailableException;
 import org.apache.cassandra.exceptions.WriteFailureException;
 import org.apache.cassandra.exceptions.WriteTimeoutException;
 import org.apache.cassandra.gms.EndpointState;
-import org.apache.cassandra.gms.FailureDetector;
 import org.apache.cassandra.gms.Gossiper;
 import org.apache.cassandra.io.IVersionedSerializer;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
-import org.apache.cassandra.locator.AbstractReplicationStrategy;
-import org.apache.cassandra.locator.EndpointsForToken;
-import org.apache.cassandra.locator.InOurDc;
 import org.apache.cassandra.locator.InetAddressAndPort;
-import org.apache.cassandra.locator.Replica;
-import org.apache.cassandra.locator.ReplicaLayout;
-import org.apache.cassandra.locator.ReplicaLayout.ForTokenWrite;
-import org.apache.cassandra.locator.ReplicaPlan.ForRead;
 import org.apache.cassandra.metrics.ClientRequestMetrics;
-import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.service.CASRequest;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.FailureRecordingCallback.AsMap;
 import org.apache.cassandra.service.paxos.Commit.Proposal;
-import org.apache.cassandra.service.paxos.PaxosPrepare.FoundIncompleteAccepted;
-import org.apache.cassandra.service.paxos.PaxosPrepare.FoundIncompleteCommitted;
-import org.apache.cassandra.service.paxos.cleanup.PaxosTableRepairs;
 import org.apache.cassandra.service.reads.DataResolver;
 import org.apache.cassandra.service.reads.repair.NoopReadRepair;
+import org.apache.cassandra.service.paxos.cleanup.PaxosTableRepairs;
 import org.apache.cassandra.tracing.Tracing;
 import org.apache.cassandra.triggers.TriggerExecutor;
 import org.apache.cassandra.utils.CassandraVersion;
 import org.apache.cassandra.utils.CollectionSerializer;
 import org.apache.cassandra.utils.FBUtilities;
+import org.apache.cassandra.service.paxos.PaxosPrepare.FoundIncompleteAccepted;
+import org.apache.cassandra.service.paxos.PaxosPrepare.FoundIncompleteCommitted;
+import org.apache.cassandra.utils.NoSpamLogger;
 
 import static java.util.Collections.emptyMap;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.apache.cassandra.config.CassandraRelevantProperties.PAXOS_LOG_TTL_LINEARIZABILITY_VIOLATIONS;
+import static org.apache.cassandra.config.CassandraRelevantProperties.PAXOS_MODERN_RELEASE;
 import static org.apache.cassandra.config.Config.PaxosVariant.v2_without_linearizable_reads_or_rejected_writes;
-import static org.apache.cassandra.config.DatabaseDescriptor.getCasContentionTimeout;
-import static org.apache.cassandra.config.DatabaseDescriptor.getWriteRpcTimeout;
-import static org.apache.cassandra.db.ConsistencyLevel.LOCAL_QUORUM;
-import static org.apache.cassandra.db.ConsistencyLevel.LOCAL_SERIAL;
-import static org.apache.cassandra.db.ConsistencyLevel.QUORUM;
-import static org.apache.cassandra.db.ConsistencyLevel.SERIAL;
 import static org.apache.cassandra.db.Keyspace.openAndGetStore;
 import static org.apache.cassandra.exceptions.RequestFailureReason.TIMEOUT;
 import static org.apache.cassandra.gms.ApplicationState.RELEASE_VERSION;
+import static org.apache.cassandra.config.DatabaseDescriptor.*;
+import static org.apache.cassandra.db.ConsistencyLevel.*;
 import static org.apache.cassandra.locator.InetAddressAndPort.Serializer.inetAddressAndPortSerializer;
 import static org.apache.cassandra.locator.ReplicaLayout.forTokenWriteLiveAndDown;
 import static org.apache.cassandra.metrics.ClientRequestsMetricsHolder.casReadMetrics;
@@ -115,9 +119,9 @@ import static org.apache.cassandra.service.paxos.Ballot.Flag.GLOBAL;
 import static org.apache.cassandra.service.paxos.Ballot.Flag.LOCAL;
 import static org.apache.cassandra.service.paxos.BallotGenerator.Global.nextBallot;
 import static org.apache.cassandra.service.paxos.BallotGenerator.Global.staleBallot;
+import static org.apache.cassandra.service.paxos.ContentionStrategy.*;
 import static org.apache.cassandra.service.paxos.ContentionStrategy.Type.READ;
 import static org.apache.cassandra.service.paxos.ContentionStrategy.Type.WRITE;
-import static org.apache.cassandra.service.paxos.ContentionStrategy.waitForContention;
 import static org.apache.cassandra.service.paxos.PaxosCommit.commit;
 import static org.apache.cassandra.service.paxos.PaxosCommitAndPrepare.commitAndPrepare;
 import static org.apache.cassandra.service.paxos.PaxosPrepare.prepare;
@@ -125,6 +129,7 @@ import static org.apache.cassandra.service.paxos.PaxosPropose.propose;
 import static org.apache.cassandra.utils.Clock.Global.nanoTime;
 import static org.apache.cassandra.utils.CollectionSerializer.newHashSet;
 import static org.apache.cassandra.utils.FBUtilities.getBroadcastAddressAndPort;
+import static org.apache.cassandra.utils.NoSpamLogger.Level.WARN;
 
 /**
  * <p>This class serves as an entry-point to Cassandra's implementation of Paxos Consensus.
@@ -208,11 +213,13 @@ import static org.apache.cassandra.utils.FBUtilities.getBroadcastAddressAndPort;
  */
 public class Paxos
 {
-    private static volatile Config.PaxosVariant PAXOS_VARIANT = DatabaseDescriptor.getPaxosVariant();
-    private static final CassandraVersion MODERN_PAXOS_RELEASE = new CassandraVersion(System.getProperty("cassandra.paxos.modern_release", "4.1"));
-    static final boolean LOG_TTL_LINEARIZABILITY_VIOLATIONS = Boolean.parseBoolean(System.getProperty("cassandra.paxos.log_ttl_linearizability_violations", "true"));
+    private static final Logger logger = LoggerFactory.getLogger(Paxos.class);
 
-    static class Electorate
+    private static volatile Config.PaxosVariant PAXOS_VARIANT = DatabaseDescriptor.getPaxosVariant();
+    private static final CassandraVersion MODERN_PAXOS_RELEASE = new CassandraVersion(PAXOS_MODERN_RELEASE.getString());
+    static final boolean LOG_TTL_LINEARIZABILITY_VIOLATIONS = PAXOS_LOG_TTL_LINEARIZABILITY_VIOLATIONS.getBoolean();
+
+    static class Electorate implements Iterable<InetAddressAndPort>
     {
         static final Serializer serializer = new Serializer();
 
@@ -233,10 +240,10 @@ public class Paxos
             return natural.size() + pending.size();
         }
 
-        public void forEach(Consumer<InetAddressAndPort> forEach)
+        @Override
+        public Iterator<InetAddressAndPort> iterator()
         {
-            natural.forEach(forEach);
-            pending.forEach(forEach);
+            return Iterators.concat(natural.iterator(), pending.iterator());
         }
 
         static Electorate get(TableMetadata table, DecoratedKey key, ConsistencyLevel consistency)
@@ -705,6 +712,9 @@ public class Paxos
                     // TODO "turn null updates into delete?" - what does this TODO even mean?
                     PartitionUpdate updates = request.makeUpdates(current, clientState, begin.ballot);
 
+                    // Update the metrics before triggers potentially add mutations.
+                    ClientRequestSizeMetrics.recordRowAndColumnCountMetrics(updates);
+
                     // Apply triggers to cas updates. A consideration here is that
                     // triggers emit Mutations, and so a given trigger implementation
                     // may generate mutations for partitions other than the one this
@@ -1160,8 +1170,26 @@ public class Paxos
             return emptyMap();
 
         Map<InetAddressAndPort, EndpointState> endpoints = Maps.newHashMapWithExpectedSize(remoteElectorate.size() + localElectorate.size());
-        remoteElectorate.forEach(host -> endpoints.put(host, Gossiper.instance.copyEndpointStateForEndpoint(host)));
-        localElectorate.forEach(host -> endpoints.putIfAbsent(host, Gossiper.instance.copyEndpointStateForEndpoint(host)));
+        for (InetAddressAndPort host : remoteElectorate)
+        {
+            EndpointState endpoint = Gossiper.instance.copyEndpointStateForEndpoint(host);
+            if (endpoint == null)
+            {
+                NoSpamLogger.log(logger, WARN, 1, TimeUnit.MINUTES, "Remote electorate {} could not be found in Gossip", host);
+                continue;
+            }
+            endpoints.put(host, endpoint);
+        }
+        for (InetAddressAndPort host : localElectorate)
+        {
+            EndpointState endpoint = Gossiper.instance.copyEndpointStateForEndpoint(host);
+            if (endpoint == null)
+            {
+                NoSpamLogger.log(logger, WARN, 1, TimeUnit.MINUTES, "Local electorate {} could not be found in Gossip", host);
+                continue;
+            }
+            endpoints.putIfAbsent(host, endpoint);
+        }
 
         return endpoints;
     }

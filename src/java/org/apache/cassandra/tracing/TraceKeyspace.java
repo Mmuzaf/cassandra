@@ -21,6 +21,9 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
+
+import com.google.common.collect.ImmutableSet;
 
 import org.apache.cassandra.config.CassandraRelevantProperties;
 import org.apache.cassandra.config.DatabaseDescriptor;
@@ -67,6 +70,7 @@ public final class TraceKeyspace
 
     public static final String SESSIONS = "sessions";
     public static final String EVENTS = "events";
+    public static final Set<String> TABLE_NAMES = ImmutableSet.of(SESSIONS, EVENTS);
 
     private static final TableMetadata Sessions =
         parse(SESSIONS,

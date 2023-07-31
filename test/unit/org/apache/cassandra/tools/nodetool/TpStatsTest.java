@@ -25,12 +25,9 @@ import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.yaml.snakeyaml.Yaml;
 
 import org.apache.cassandra.cql3.CQLTester;
 import org.apache.cassandra.net.Message;
@@ -38,6 +35,8 @@ import org.apache.cassandra.net.MessagingService;
 import org.apache.cassandra.net.NoPayload;
 import org.apache.cassandra.tools.ToolRunner;
 import org.apache.cassandra.utils.FBUtilities;
+import org.apache.cassandra.utils.JsonUtils;
+import org.yaml.snakeyaml.Yaml;
 
 import static org.apache.cassandra.net.Verb.ECHO_REQ;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -112,6 +111,8 @@ public class TpStatsTest extends CQLTester
 
         createTable("CREATE TABLE %s (pk int, c int, PRIMARY KEY(pk))");
         execute("INSERT INTO %s (pk, c) VALUES (?, ?)", 1, 1);
+        flush();
+
         tool = ToolRunner.invokeNodetool("tpstats");
         tool.assertOnCleanExit();
         stdout = tool.getStdout();
@@ -162,8 +163,7 @@ public class TpStatsTest extends CQLTester
     {
         try
         {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.readTree(str);
+            JsonUtils.JSON_OBJECT_MAPPER.readTree(str);
             return true;
         }
         catch(IOException e)

@@ -22,13 +22,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
-
+import org.apache.cassandra.utils.JsonUtils;
 import org.assertj.core.api.Assertions;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertArrayEquals;
@@ -44,7 +45,7 @@ import static org.junit.Assert.fail;
  */
 public class SSTableExportSchemaLoadingTest extends OfflineToolUtils
 {
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = JsonUtils.JSON_OBJECT_MAPPER;
     private static final TypeReference<List<Map<String, Object>>> jacksonListOfMapsType = new TypeReference<List<Map<String, Object>>>() {};
     private static String sstable;
 
@@ -182,7 +183,7 @@ public class SSTableExportSchemaLoadingTest extends OfflineToolUtils
      */
     private void assertPostTestEnv()
     {
-        assertNoUnexpectedThreadsStarted(OPTIONAL_THREADS_WITH_SCHEMA, false);
+        assertNoUnexpectedThreadsStarted(OPTIONAL_THREADS_WITH_SCHEMA, true);
         assertCLSMNotLoaded();
         assertSystemKSNotLoaded();
         assertKeyspaceNotLoaded();

@@ -37,6 +37,7 @@ import org.apache.cassandra.distributed.api.IInstanceConfig;
 import org.apache.cassandra.service.paxos.ContentionStrategy;
 import org.apache.cassandra.utils.FBUtilities;
 
+import static org.apache.cassandra.config.CassandraRelevantProperties.PAXOS_USE_SELF_EXECUTION;
 import static org.apache.cassandra.distributed.api.ConsistencyLevel.QUORUM;
 import static org.apache.cassandra.net.Verb.PAXOS2_PREPARE_REQ;
 
@@ -47,7 +48,7 @@ public class CASContentionTest extends CASTestBase
     @BeforeClass
     public static void beforeClass() throws Throwable
     {
-        System.setProperty("cassandra.paxos.use_self_execution", "false");
+        PAXOS_USE_SELF_EXECUTION.setBoolean(false);
         TestBaseImpl.beforeClass();
         Consumer<IInstanceConfig> conf = config -> config
                 .set("paxos_variant", "v2")

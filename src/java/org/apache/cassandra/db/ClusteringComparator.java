@@ -350,8 +350,10 @@ public class ClusteringComparator implements Comparator<Clusterable>
      */
     public <V> Clustering<V> clusteringFromByteComparable(ValueAccessor<V> accessor, ByteComparable comparable)
     {
-        ByteComparable.Version version = ByteComparable.Version.OSS42;
+        ByteComparable.Version version = ByteComparable.Version.OSS50;
         ByteSource.Peekable orderedBytes = ByteSource.peekable(comparable.asComparableBytes(version));
+        if (orderedBytes == null)
+            return null;
 
         // First check for special cases (partition key only, static clustering) that can do without buffers.
         int sep = orderedBytes.next();
@@ -414,7 +416,7 @@ public class ClusteringComparator implements Comparator<Clusterable>
                                                           ByteComparable comparable,
                                                           boolean isEnd)
     {
-        ByteComparable.Version version = ByteComparable.Version.OSS42;
+        ByteComparable.Version version = ByteComparable.Version.OSS50;
         ByteSource.Peekable orderedBytes = ByteSource.peekable(comparable.asComparableBytes(version));
 
         int sep = orderedBytes.next();
@@ -444,6 +446,11 @@ public class ClusteringComparator implements Comparator<Clusterable>
                 return accessor.factory().bound(isEnd ? ClusteringPrefix.Kind.INCL_END_BOUND
                                                       : ClusteringPrefix.Kind.EXCL_START_BOUND,
                                                 Arrays.copyOf(components, cc));
+
+            case ByteSource.LTLT_NEXT_COMPONENT:
+            case ByteSource.GTGT_NEXT_COMPONENT:
+                throw new AssertionError("Unexpected sstable lower/upper bound - byte comparable representation of artificial sstable bounds is not supported");
+
             default:
                 throw new AssertionError("Unexpected separator " + Integer.toHexString(sep) + " in ClusteringBound encoding");
             }
@@ -466,7 +473,7 @@ public class ClusteringComparator implements Comparator<Clusterable>
      */
     public <V> ClusteringBoundary<V> boundaryFromByteComparable(ValueAccessor<V> accessor, ByteComparable comparable)
     {
-        ByteComparable.Version version = ByteComparable.Version.OSS42;
+        ByteComparable.Version version = ByteComparable.Version.OSS50;
         ByteSource.Peekable orderedBytes = ByteSource.peekable(comparable.asComparableBytes(version));
 
         int sep = orderedBytes.next();

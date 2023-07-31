@@ -46,9 +46,9 @@ import org.apache.cassandra.db.SystemKeyspace;
 import org.apache.cassandra.db.compaction.OperationType;
 import org.apache.cassandra.db.lifecycle.LogRecord.Type;
 import org.apache.cassandra.io.FSWriteError;
-import org.apache.cassandra.io.sstable.Component;
 import org.apache.cassandra.io.sstable.Descriptor;
 import org.apache.cassandra.io.sstable.SSTable;
+import org.apache.cassandra.io.sstable.format.SSTableFormat.Components;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileUtils;
@@ -371,15 +371,15 @@ class LogTransaction extends Transactional.AbstractTransactional implements Tran
             this.lock = parent.lock;
             this.parentRef = parent.selfRef.tryRef();
 
+            if (this.parentRef == null)
+                throw new IllegalStateException("Transaction already completed");
+
             // While the parent cfs may be dropped in the interim of us taking a reference to this and using it, at worst
             // we'll be updating a metric for a now dropped ColumnFamilyStore. We do not hold a reference to the tracker or
             // cfs as that would create a strong ref loop and violate our ability to do leak detection.
             totalDiskSpaceUsed = parent.tracker != null && parent.tracker.cfstore != null ?
                                  parent.tracker.cfstore.metric.totalDiskSpaceUsed :
                                  null;
-
-            if (this.parentRef == null)
-                throw new IllegalStateException("Transaction already completed");
         }
 
         public void run()
@@ -394,18 +394,14 @@ class LogTransaction extends Transactional.AbstractTransactional implements Tran
                 try
                 {
                     // If we can't successfully delete the DATA component, set the task to be retried later: see TransactionTidier
-                    File datafile = new File(desc.filenameFor(Component.DATA));
 
                     if (logger.isTraceEnabled())
-                        logger.trace("Tidier running for old sstable {}", desc.baseFilename());
+                        logger.trace("Tidier running for old sstable {}", desc);
 
-                    if (datafile.exists())
-                        delete(datafile);
-                    else if (!wasNew)
+                    if (!desc.fileFor(Components.DATA).exists() && !wasNew)
                         logger.error("SSTableTidier ran with no existing data file for an sstable that was not new");
 
-                    // let the remainder be cleaned up by delete
-                    SSTable.delete(desc, SSTable.discoverComponentsFor(desc));
+                    desc.getFormat().delete(desc);
                 }
                 catch (Throwable t)
                 {

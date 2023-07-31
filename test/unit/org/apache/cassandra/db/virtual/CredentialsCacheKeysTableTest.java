@@ -18,15 +18,15 @@
 
 package org.apache.cassandra.db.virtual;
 
-import com.datastax.driver.core.EndPoint;
-import com.datastax.driver.core.PlainTextAuthProvider;
 import com.google.common.collect.ImmutableList;
-
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.datastax.driver.core.EndPoint;
+import com.datastax.driver.core.PlainTextAuthProvider;
+import org.apache.cassandra.ServerTestUtils;
 import org.apache.cassandra.auth.AuthTestUtils;
 import org.apache.cassandra.auth.AuthenticatedUser;
 import org.apache.cassandra.auth.IAuthenticator;
@@ -49,6 +49,8 @@ public class CredentialsCacheKeysTableTest extends CQLTester
     @BeforeClass
     public static void setUpClass()
     {
+        ServerTestUtils.daemonInitialization();
+
         // high value is used for convenient debugging
         DatabaseDescriptor.setCredentialsValidity(20_000);
 

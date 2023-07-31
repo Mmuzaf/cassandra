@@ -43,6 +43,7 @@ import org.apache.cassandra.cql3.PasswordObfuscator;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.service.EmbeddedCassandraService;
 
+import static org.apache.cassandra.config.CassandraRelevantProperties.SUPERUSER_SETUP_DELAY_MS;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -69,14 +70,14 @@ public class AuditLoggerAuthTest
     public static void setup() throws Exception
     {
         OverrideConfigurationLoader.override((config) -> {
-            config.authenticator = "PasswordAuthenticator";
+            config.authenticator = new ParameterizedClass("PasswordAuthenticator");
             config.role_manager = "CassandraRoleManager";
             config.authorizer = "CassandraAuthorizer";
             config.audit_logging_options.enabled = true;
             config.audit_logging_options.logger = new ParameterizedClass("InMemoryAuditLogger", null);
         });
 
-        System.setProperty("cassandra.superuser_setup_delay_ms", "0");
+        SUPERUSER_SETUP_DELAY_MS.setLong(0);
         embedded = ServerTestUtils.startEmbeddedCassandraService();
 
         executeWithCredentials(

@@ -17,12 +17,12 @@
  */
 package org.apache.cassandra.auth;
 
-import com.datastax.driver.core.ResultSet;
-
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.datastax.driver.core.ResultSet;
+import org.apache.cassandra.ServerTestUtils;
 import org.apache.cassandra.Util;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.CQLTester;
@@ -37,6 +37,7 @@ public class GrantAndRevokeTest extends CQLTester
     @BeforeClass
     public static void setUpClass()
     {
+        ServerTestUtils.daemonInitialization();
         DatabaseDescriptor.setPermissionsValidity(0);
         CQLTester.setUpClass();
         requireAuthentication();

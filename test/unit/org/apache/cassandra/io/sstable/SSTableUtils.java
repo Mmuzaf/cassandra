@@ -39,8 +39,9 @@ import org.apache.cassandra.db.partitions.PartitionUpdate;
 import org.apache.cassandra.db.rows.EncodingStats;
 import org.apache.cassandra.db.rows.Unfiltered;
 import org.apache.cassandra.db.rows.UnfilteredRowIterator;
-import org.apache.cassandra.io.sstable.format.SSTableFormat;
+import org.apache.cassandra.io.sstable.format.SSTableFormat.Components;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
+import org.apache.cassandra.io.sstable.format.big.BigFormat;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileUtils;
 import org.apache.cassandra.schema.Schema;
@@ -92,7 +93,7 @@ public class SSTableUtils
         File cfDir = new File(tempdir, keyspaceName + File.pathSeparator() + cfname);
         cfDir.tryCreateDirectories();
         cfDir.deleteOnExit();
-        File datafile = new File(new Descriptor(cfDir, keyspaceName, cfname, id, SSTableFormat.Type.BIG).filenameFor(Component.DATA));
+        File datafile = new Descriptor(cfDir, keyspaceName, cfname, id, BigFormat.getInstance()).fileFor(Components.DATA);
         if (!datafile.createFileIfNotExists())
             throw new IOException("unable to create file " + datafile);
         datafile.deleteOnExit();
@@ -228,11 +229,11 @@ public class SSTableUtils
 
         public Collection<SSTableReader> write(int expectedSize, Appender appender) throws IOException
         {
-            File datafile = (dest == null) ? tempSSTableFile(ksname, cfname, id) : new File(dest.filenameFor(Component.DATA));
+            File datafile = (dest == null) ? tempSSTableFile(ksname, cfname, id) : dest.fileFor(Components.DATA);
             TableMetadata metadata = Schema.instance.getTableMetadata(ksname, cfname);
             ColumnFamilyStore cfs = Schema.instance.getColumnFamilyStoreInstance(metadata.id);
             SerializationHeader header = appender.header();
-            SSTableTxnWriter writer = SSTableTxnWriter.create(cfs, Descriptor.fromFilename(datafile.absolutePath()), expectedSize, UNREPAIRED_SSTABLE, NO_PENDING_REPAIR, false, 0, header);
+            SSTableTxnWriter writer = SSTableTxnWriter.create(cfs, Descriptor.fromFileWithComponent(datafile, false).left, expectedSize, UNREPAIRED_SSTABLE, NO_PENDING_REPAIR, false, header);
             while (appender.append(writer)) { /* pass */ }
             Collection<SSTableReader> readers = writer.finish(true);
 
@@ -240,7 +241,7 @@ public class SSTableUtils
             if (cleanup)
                 for (SSTableReader reader: readers)
                     for (Component component : reader.components)
-                        new File(reader.descriptor.filenameFor(component)).deleteOnExit();
+                        reader.descriptor.fileFor(component).deleteOnExit();
             return readers;
         }
     }

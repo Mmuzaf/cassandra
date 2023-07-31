@@ -22,9 +22,10 @@ import java.nio.ByteBuffer;
 import org.apache.cassandra.cql3.CQL3Type;
 import org.apache.cassandra.cql3.Constants;
 import org.apache.cassandra.cql3.Term;
+import org.apache.cassandra.cql3.functions.ArgumentDeserializer;
+import org.apache.cassandra.serializers.TypeSerializer;
 import org.apache.cassandra.serializers.BooleanSerializer;
 import org.apache.cassandra.serializers.MarshalException;
-import org.apache.cassandra.serializers.TypeSerializer;
 import org.apache.cassandra.transport.ProtocolVersion;
 import org.apache.cassandra.utils.bytecomparable.ByteComparable;
 import org.apache.cassandra.utils.bytecomparable.ByteSource;
@@ -32,6 +33,8 @@ import org.apache.cassandra.utils.bytecomparable.ByteSource;
 public class BooleanType extends AbstractType<Boolean>
 {
     public static final BooleanType instance = new BooleanType();
+    private static final ArgumentDeserializer ARGUMENT_DESERIALIZER = new DefaultArgumentDeserializer(instance);
+    private static final ByteBuffer MASKED_VALUE = instance.decompose(false);
 
     BooleanType() {super(ComparisonType.CUSTOM);} // singleton
 
@@ -112,8 +115,20 @@ public class BooleanType extends AbstractType<Boolean>
     }
 
     @Override
+    public ArgumentDeserializer getArgumentDeserializer()
+    {
+        return ARGUMENT_DESERIALIZER;
+    }
+
+    @Override
     public int valueLengthIfFixed()
     {
         return 1;
+    }
+
+    @Override
+    public ByteBuffer getMaskedValue()
+    {
+        return MASKED_VALUE;
     }
 }

@@ -31,7 +31,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.google.common.util.concurrent.Futures;
-
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -42,6 +41,7 @@ import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.Keyspace;
 import org.apache.cassandra.db.compaction.OperationType;
+import org.apache.cassandra.db.lifecycle.LifecycleTransaction;
 import org.apache.cassandra.db.marshal.Int32Type;
 import org.apache.cassandra.db.marshal.LongType;
 import org.apache.cassandra.db.marshal.UTF8Type;
@@ -63,6 +63,8 @@ import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.Tables;
 import org.apache.cassandra.utils.ByteBufferUtil;
 
+import static org.apache.cassandra.config.CassandraRelevantProperties.CASSANDRA_CONFIG;
+
 public class PerSSTableIndexWriterTest extends SchemaLoader
 {
     private static final String KS_NAME = "sasi";
@@ -71,7 +73,7 @@ public class PerSSTableIndexWriterTest extends SchemaLoader
     @BeforeClass
     public static void loadSchema() throws ConfigurationException
     {
-        System.setProperty("cassandra.config", "cassandra-murmur.yaml");
+        CASSANDRA_CONFIG.setString("cassandra-murmur.yaml");
         SchemaLoader.loadSchema();
         SchemaTestUtil.announceNewKeyspace(KeyspaceMetadata.create(KS_NAME,
                                                                    KeyspaceParams.simpleTransient(1),
@@ -92,7 +94,7 @@ public class PerSSTableIndexWriterTest extends SchemaLoader
 
         File directory = cfs.getDirectories().getDirectoryForNewSSTables();
         Descriptor descriptor = cfs.newSSTableDescriptor(directory);
-        PerSSTableIndexWriter indexWriter = (PerSSTableIndexWriter) sasi.getFlushObserver(descriptor, OperationType.FLUSH);
+        PerSSTableIndexWriter indexWriter = (PerSSTableIndexWriter) sasi.getFlushObserver(descriptor, LifecycleTransaction.offline(OperationType.FLUSH));
 
         SortedMap<DecoratedKey, Row> expectedKeys = new TreeMap<>(DecoratedKey.comparator);
 
@@ -120,7 +122,9 @@ public class PerSSTableIndexWriterTest extends SchemaLoader
 
                 Map.Entry<DecoratedKey, Row> key = keyIterator.next();
 
-                indexWriter.startPartition(key.getKey(), position++);
+
+                indexWriter.startPartition(key.getKey(), position, position);
+                position++;
                 indexWriter.nextUnfilteredCluster(key.getValue());
             }
 
@@ -134,7 +138,7 @@ public class PerSSTableIndexWriterTest extends SchemaLoader
         for (String segment : segments)
             Assert.assertTrue(new File(segment).exists());
 
-        String indexFile = indexWriter.indexes.get(column).filename(true);
+        File indexFile = indexWriter.indexes.get(column).file(true);
 
         // final flush
         indexWriter.complete();
@@ -142,7 +146,7 @@ public class PerSSTableIndexWriterTest extends SchemaLoader
         for (String segment : segments)
             Assert.assertFalse(new File(segment).exists());
 
-        OnDiskIndex index = new OnDiskIndex(new File(indexFile), Int32Type.instance, keyPosition -> {
+        OnDiskIndex index = new OnDiskIndex(indexFile, Int32Type.instance, keyPosition -> {
             ByteBuffer key = ByteBufferUtil.bytes(String.format(keyFormat, keyPosition));
             return cfs.metadata().partitioner.decorateKey(key);
         });
@@ -184,7 +188,7 @@ public class PerSSTableIndexWriterTest extends SchemaLoader
 
         File directory = cfs.getDirectories().getDirectoryForNewSSTables();
         Descriptor descriptor = cfs.newSSTableDescriptor(directory);
-        PerSSTableIndexWriter indexWriter = (PerSSTableIndexWriter) sasi.getFlushObserver(descriptor, OperationType.FLUSH);
+        PerSSTableIndexWriter indexWriter = (PerSSTableIndexWriter) sasi.getFlushObserver(descriptor, LifecycleTransaction.offline(OperationType.FLUSH));
 
         final long now = System.currentTimeMillis();
 
@@ -241,7 +245,7 @@ public class PerSSTableIndexWriterTest extends SchemaLoader
             Assert.assertFalse(new File(segment).exists());
 
         // and combined index doesn't exist either
-        Assert.assertFalse(new File(index.outputFile).exists());
+        Assert.assertFalse(index.outputFile.exists());
     }
 
     private static void populateSegment(TableMetadata metadata, PerSSTableIndexWriter.Index index, Map<Long, Set<Integer>> data)

@@ -18,6 +18,7 @@
 package org.apache.cassandra.net;
 
 import java.net.UnknownHostException;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentMap;
 
 import org.cliffc.high_scale_lib.NonBlockingHashMap;
@@ -31,6 +32,7 @@ import org.apache.cassandra.locator.InetAddressAndPort;
  */
 public class EndpointMessagingVersions
 {
+    public volatile int minClusterVersion = MessagingService.current_version;
     private static final Logger logger = LoggerFactory.getLogger(EndpointMessagingVersions.class);
 
     // protocol versions of the other nodes in the cluster
@@ -44,6 +46,7 @@ public class EndpointMessagingVersions
         logger.trace("Setting version {} for {}", version, endpoint);
 
         Integer v = versions.put(endpoint, version);
+        minClusterVersion = Collections.min(versions.values());
         return v == null ? version : v;
     }
 
@@ -51,6 +54,8 @@ public class EndpointMessagingVersions
     {
         logger.trace("Resetting version for {}", endpoint);
         versions.remove(endpoint);
+        if (!versions.values().isEmpty())
+            minClusterVersion = Collections.min(versions.values());
     }
 
     /**

@@ -18,40 +18,24 @@
 package org.apache.cassandra.cql3.statements;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableSet;
-import java.util.Set;
-import java.util.SortedSet;
+import java.util.*;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Iterables;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.auth.Permission;
-import org.apache.cassandra.cql3.Attributes;
-import org.apache.cassandra.cql3.CQLStatement;
-import org.apache.cassandra.cql3.ColumnIdentifier;
-import org.apache.cassandra.cql3.ColumnSpecification;
-import org.apache.cassandra.cql3.Operation;
-import org.apache.cassandra.cql3.Operations;
-import org.apache.cassandra.cql3.QualifiedName;
-import org.apache.cassandra.cql3.QueryOptions;
-import org.apache.cassandra.cql3.QueryProcessor;
-import org.apache.cassandra.cql3.ResultSet;
-import org.apache.cassandra.cql3.UpdateParameters;
-import org.apache.cassandra.cql3.Validation;
-import org.apache.cassandra.cql3.VariableSpecifications;
-import org.apache.cassandra.cql3.WhereClause;
+import org.apache.cassandra.db.guardrails.Guardrails;
+import org.apache.cassandra.dht.Token;
+import org.apache.cassandra.locator.Replica;
+import org.apache.cassandra.locator.ReplicaLayout;
+import org.apache.cassandra.schema.ColumnMetadata;
+import org.apache.cassandra.schema.Schema;
+import org.apache.cassandra.schema.SchemaConstants;
+import org.apache.cassandra.schema.TableMetadata;
+import org.apache.cassandra.schema.ViewMetadata;
+import org.apache.cassandra.cql3.*;
 import org.apache.cassandra.cql3.conditions.ColumnCondition;
 import org.apache.cassandra.cql3.conditions.ColumnConditions;
 import org.apache.cassandra.cql3.conditions.Conditions;
@@ -60,47 +44,14 @@ import org.apache.cassandra.cql3.restrictions.StatementRestrictions;
 import org.apache.cassandra.cql3.selection.ResultSetBuilder;
 import org.apache.cassandra.cql3.selection.Selection;
 import org.apache.cassandra.cql3.selection.Selection.Selectors;
-import org.apache.cassandra.db.CBuilder;
-import org.apache.cassandra.db.Clustering;
-import org.apache.cassandra.db.ClusteringBound;
-import org.apache.cassandra.db.ClusteringComparator;
-import org.apache.cassandra.db.ConsistencyLevel;
-import org.apache.cassandra.db.DecoratedKey;
-import org.apache.cassandra.db.IMutation;
-import org.apache.cassandra.db.Keyspace;
-import org.apache.cassandra.db.ReadExecutionController;
-import org.apache.cassandra.db.RegularAndStaticColumns;
-import org.apache.cassandra.db.SinglePartitionReadCommand;
-import org.apache.cassandra.db.SinglePartitionReadQuery;
-import org.apache.cassandra.db.Slice;
-import org.apache.cassandra.db.Slices;
-import org.apache.cassandra.db.filter.ClusteringIndexFilter;
-import org.apache.cassandra.db.filter.ClusteringIndexNamesFilter;
-import org.apache.cassandra.db.filter.ClusteringIndexSliceFilter;
-import org.apache.cassandra.db.filter.ColumnFilter;
-import org.apache.cassandra.db.filter.DataLimits;
-import org.apache.cassandra.db.filter.RowFilter;
-import org.apache.cassandra.db.guardrails.Guardrails;
+import org.apache.cassandra.db.*;
+import org.apache.cassandra.db.filter.*;
 import org.apache.cassandra.db.marshal.BooleanType;
-import org.apache.cassandra.db.marshal.ValueAccessor;
-import org.apache.cassandra.db.partitions.FilteredPartition;
-import org.apache.cassandra.db.partitions.Partition;
-import org.apache.cassandra.db.partitions.PartitionIterator;
-import org.apache.cassandra.db.partitions.PartitionIterators;
-import org.apache.cassandra.db.partitions.PartitionUpdate;
+import org.apache.cassandra.db.partitions.*;
 import org.apache.cassandra.db.rows.RowIterator;
 import org.apache.cassandra.db.view.View;
-import org.apache.cassandra.dht.Token;
-import org.apache.cassandra.exceptions.InvalidRequestException;
-import org.apache.cassandra.exceptions.RequestExecutionException;
-import org.apache.cassandra.exceptions.RequestValidationException;
-import org.apache.cassandra.exceptions.UnauthorizedException;
-import org.apache.cassandra.locator.Replica;
-import org.apache.cassandra.locator.ReplicaLayout;
-import org.apache.cassandra.schema.ColumnMetadata;
-import org.apache.cassandra.schema.Schema;
-import org.apache.cassandra.schema.TableMetadata;
-import org.apache.cassandra.schema.ViewMetadata;
+import org.apache.cassandra.exceptions.*;
+import org.apache.cassandra.metrics.ClientRequestSizeMetrics;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.service.StorageProxy;
@@ -350,6 +301,16 @@ public abstract class ModificationStatement implements CQLStatement.SingleKeyspa
         }
     }
 
+    public void validateTimestamp(QueryState queryState, QueryOptions options)
+    {
+        if (!isTimestampSet())
+            return;
+
+        long ts = attrs.getTimestamp(options.getTimestamp(queryState), options);
+        Guardrails.maximumAllowableTimestamp.guard(ts, table(), false, queryState.getClientState());
+        Guardrails.minimumAllowableTimestamp.guard(ts, table(), false, queryState.getClientState());
+    }
+
     public RegularAndStaticColumns updatedColumns()
     {
         return updatedColumns;
@@ -460,7 +421,7 @@ public abstract class ModificationStatement implements CQLStatement.SingleKeyspa
                                                            DataLimits limits,
                                                            boolean local,
                                                            ConsistencyLevel cl,
-                                                           int nowInSeconds,
+                                                           long nowInSeconds,
                                                            long queryStartNanoTime)
     {
         if (!requiresRead())
@@ -480,7 +441,7 @@ public abstract class ModificationStatement implements CQLStatement.SingleKeyspa
             commands.add(SinglePartitionReadCommand.create(metadata(),
                                                            nowInSeconds,
                                                            ColumnFilter.selection(this.requiresRead),
-                                                           RowFilter.NONE,
+                                                           RowFilter.none(),
                                                            limits,
                                                            metadata().partitioner.decorateKey(key),
                                                            filter));
@@ -554,6 +515,7 @@ public abstract class ModificationStatement implements CQLStatement.SingleKeyspa
             cl.validateForWrite();
 
         validateDiskUsage(options, queryState.getClientState());
+        validateTimestamp(queryState, options);
 
         List<? extends IMutation> mutations =
             getMutations(queryState.getClientState(),
@@ -563,7 +525,12 @@ public abstract class ModificationStatement implements CQLStatement.SingleKeyspa
                          options.getNowInSeconds(queryState),
                          queryStartNanoTime);
         if (!mutations.isEmpty())
+        {
             StorageProxy.mutateWithTriggers(mutations, cl, false, queryStartNanoTime);
+
+            if (!SchemaConstants.isSystemKeyspace(metadata.keyspace))
+                ClientRequestSizeMetrics.recordRowAndColumnCountMetrics(mutations);
+        }
 
         return null;
     }
@@ -597,7 +564,7 @@ public abstract class ModificationStatement implements CQLStatement.SingleKeyspa
 
         DecoratedKey key = metadata().partitioner.decorateKey(keys.get(0));
         long timestamp = options.getTimestamp(queryState);
-        int nowInSeconds = options.getNowInSeconds(queryState);
+        long nowInSeconds = options.getNowInSeconds(queryState);
 
         checkFalse(restrictions.clusteringKeyRestrictionsHasIN(),
                    "IN on the clustering key columns is not supported with conditional %s",
@@ -679,7 +646,7 @@ public abstract class ModificationStatement implements CQLStatement.SingleKeyspa
                                                       Iterable<ColumnMetadata> columnsWithConditions,
                                                       boolean isBatch,
                                                       QueryOptions options,
-                                                      int nowInSeconds)
+                                                      long nowInSeconds)
     {
         TableMetadata metadata = partition.metadata();
         Selection selection;
@@ -702,7 +669,7 @@ public abstract class ModificationStatement implements CQLStatement.SingleKeyspa
         }
 
         Selectors selectors = selection.newSelectors(options);
-        ResultSetBuilder builder = new ResultSetBuilder(selection.getResultMetadata(), selectors);
+        ResultSetBuilder builder = new ResultSetBuilder(selection.getResultMetadata(), selectors, false);
         SelectStatement.forSelection(metadata, selection)
                        .processPartition(partition, options, builder, nowInSeconds);
 
@@ -720,7 +687,7 @@ public abstract class ModificationStatement implements CQLStatement.SingleKeyspa
     throws RequestValidationException, RequestExecutionException
     {
         long timestamp = options.getTimestamp(queryState);
-        int nowInSeconds = options.getNowInSeconds(queryState);
+        long nowInSeconds = options.getNowInSeconds(queryState);
         for (IMutation mutation : getMutations(queryState.getClientState(), options, true, timestamp, nowInSeconds, queryStartNanoTime))
             mutation.apply();
         return null;
@@ -736,7 +703,7 @@ public abstract class ModificationStatement implements CQLStatement.SingleKeyspa
         }
     }
 
-    static RowIterator casInternal(ClientState state, CQL3CasRequest request, long timestamp, int nowInSeconds)
+    static RowIterator casInternal(ClientState state, CQL3CasRequest request, long timestamp, long nowInSeconds)
     {
         Ballot ballot = BallotGenerator.Global.atUnixMicros(timestamp, NONE);
 
@@ -773,7 +740,7 @@ public abstract class ModificationStatement implements CQLStatement.SingleKeyspa
                                                    QueryOptions options,
                                                    boolean local,
                                                    long timestamp,
-                                                   int nowInSeconds,
+                                                   long nowInSeconds,
                                                    long queryStartNanoTime)
     {
         List<ByteBuffer> keys = buildPartitionKeyNames(options, state);
@@ -789,7 +756,7 @@ public abstract class ModificationStatement implements CQLStatement.SingleKeyspa
                           QueryOptions options,
                           boolean local,
                           long timestamp,
-                          int nowInSeconds,
+                          long nowInSeconds,
                           long queryStartNanoTime)
     {
         if (hasSlices())
@@ -845,23 +812,11 @@ public abstract class ModificationStatement implements CQLStatement.SingleKeyspa
                 {
                     for (Clustering<?> clustering : clusterings)
                     {
-                        validateClustering(clustering);
+                        clustering.validate();
                         addUpdateForKey(updateBuilder, clustering, params);
                     }
                 }
             }
-        }
-    }
-
-    private <V> void validateClustering(Clustering<V> clustering)
-    {
-        ValueAccessor<V> accessor = clustering.accessor();
-        for (V v : clustering.getRawValues())
-        {
-            if (v != null && accessor.size(v) > FBUtilities.MAX_UNSIGNED_SHORT)
-                throw new InvalidRequestException(String.format("Key length of %d is longer than maximum of %d",
-                                                                clustering.dataSize(),
-                                                                FBUtilities.MAX_UNSIGNED_SHORT));
         }
     }
 
@@ -879,7 +834,7 @@ public abstract class ModificationStatement implements CQLStatement.SingleKeyspa
                                                   QueryOptions options,
                                                   boolean local,
                                                   long timestamp,
-                                                  int nowInSeconds,
+                                                  long nowInSeconds,
                                                   long queryStartNanoTime)
     {
         if (clusterings.contains(Clustering.STATIC_CLUSTERING))
@@ -911,7 +866,7 @@ public abstract class ModificationStatement implements CQLStatement.SingleKeyspa
                                                   DataLimits limits,
                                                   boolean local,
                                                   long timestamp,
-                                                  int nowInSeconds,
+                                                  long nowInSeconds,
                                                   long queryStartNanoTime)
     {
         // Some lists operation requires reading

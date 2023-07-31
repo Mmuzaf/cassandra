@@ -40,6 +40,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.psjava.util.Triple;
 
+import org.apache.cassandra.config.CassandraRelevantProperties;
 import org.apache.cassandra.config.DatabaseDescriptor;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -51,6 +52,7 @@ public class FileTest
     private static final java.io.File dir;
     static
     {
+        CassandraRelevantProperties.USE_NIX_RECURSIVE_DELETE.setBoolean(false);
         java.io.File parent = new java.io.File(JAVA_IO_TMPDIR.getString()); //checkstyle: permit this instantiation
         String dirName = Long.toHexString(ThreadLocalRandom.current().nextLong());
         while (new java.io.File(parent, dirName).exists()) //checkstyle: permit this instantiation

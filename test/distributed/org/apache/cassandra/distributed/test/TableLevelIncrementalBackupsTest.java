@@ -155,7 +155,11 @@ public class TableLevelIncrementalBackupsTest extends TestBaseImpl
 
     private static void assertSSTablesCount(Set<Descriptor> descs, String tableName, int expectedSeqGenIds)
     {
-        List<String> seqSSTables = descs.stream().filter(desc -> desc.id instanceof SequenceBasedSSTableId).map(Descriptor::baseFilename).sorted().collect(Collectors.toList());
+        List<String> seqSSTables = descs.stream()
+                                        .filter(desc -> desc.id instanceof SequenceBasedSSTableId)
+                                        .map(descriptor -> descriptor.baseFile().toString())
+                                        .sorted()
+                                        .collect(Collectors.toList());
         assertThat(seqSSTables).describedAs("SSTables of %s with sequence based id", tableName).hasSize(expectedSeqGenIds);
     }
 

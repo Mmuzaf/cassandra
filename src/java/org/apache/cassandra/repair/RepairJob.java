@@ -102,9 +102,9 @@ public class RepairJob extends AsyncFuture<RepairResult> implements Runnable
         this.state = new JobState(desc, session.state.commonRange.endpoints);
     }
 
-    public int getNowInSeconds()
+    public long getNowInSeconds()
     {
-        int nowInSeconds = FBUtilities.nowInSeconds();
+        long nowInSeconds = FBUtilities.nowInSeconds();
         if (session.previewKind == PreviewKind.REPAIRED)
         {
             return nowInSeconds + DatabaseDescriptor.getValidationPreviewPurgeHeadStartInSec();
@@ -473,7 +473,7 @@ public class RepairJob extends AsyncFuture<RepairResult> implements Runnable
         String message = String.format("Requesting merkle trees for %s (to %s)", desc.columnFamily, endpoints);
         logger.info("{} {}", session.previewKind.logPrefix(desc.sessionId), message);
         Tracing.traceRepair(message);
-        int nowInSec = getNowInSeconds();
+        long nowInSec = getNowInSeconds();
         List<Future<TreeResponse>> tasks = new ArrayList<>(endpoints.size());
         for (InetAddressAndPort endpoint : endpoints)
         {
@@ -494,7 +494,7 @@ public class RepairJob extends AsyncFuture<RepairResult> implements Runnable
         String message = String.format("Requesting merkle trees for %s (to %s)", desc.columnFamily, endpoints);
         logger.info("{} {}", session.previewKind.logPrefix(desc.sessionId), message);
         Tracing.traceRepair(message);
-        int nowInSec = getNowInSeconds();
+        long nowInSec = getNowInSeconds();
         List<Future<TreeResponse>> tasks = new ArrayList<>(endpoints.size());
 
         Queue<InetAddressAndPort> requests = new LinkedList<>(endpoints);
@@ -537,7 +537,7 @@ public class RepairJob extends AsyncFuture<RepairResult> implements Runnable
         String message = String.format("Requesting merkle trees for %s (to %s)", desc.columnFamily, endpoints);
         logger.info("{} {}", session.previewKind.logPrefix(desc.sessionId), message);
         Tracing.traceRepair(message);
-        int nowInSec = getNowInSeconds();
+        long nowInSec = getNowInSeconds();
         List<Future<TreeResponse>> tasks = new ArrayList<>(endpoints.size());
 
         Map<String, Queue<InetAddressAndPort>> requestsByDatacenter = new HashMap<>();
@@ -587,7 +587,7 @@ public class RepairJob extends AsyncFuture<RepairResult> implements Runnable
         return FutureCombiner.allOf(tasks);
     }
 
-    private ValidationTask newValidationTask(InetAddressAndPort endpoint, int nowInSec)
+    private ValidationTask newValidationTask(InetAddressAndPort endpoint, long nowInSec)
     {
         ValidationTask task = new ValidationTask(desc, endpoint, nowInSec, session.previewKind);
         validationTasks.add(task);

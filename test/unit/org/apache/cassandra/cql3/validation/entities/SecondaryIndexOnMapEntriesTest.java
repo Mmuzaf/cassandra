@@ -257,7 +257,7 @@ public class SecondaryIndexOnMapEntriesTest extends CQLTester
         assertRows(execute(query, params));
     }
 
-    private void createSimpleTableAndIndex() throws Throwable
+    private void createSimpleTableAndIndex()
     {
         createTable("CREATE TABLE %s (k TEXT PRIMARY KEY, v MAP<TEXT, INT>)");
         createIndex("CREATE INDEX ON %s(ENTRIES(v))");

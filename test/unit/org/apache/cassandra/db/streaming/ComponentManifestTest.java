@@ -20,18 +20,28 @@ package org.apache.cassandra.db.streaming;
 
 import java.util.LinkedHashMap;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.io.sstable.Component;
+import org.apache.cassandra.io.sstable.format.SSTableFormat.Components;
+import org.apache.cassandra.io.sstable.format.big.BigFormat;
 import org.apache.cassandra.serializers.SerializationUtils;
 
 public class ComponentManifestTest
 {
+    @BeforeClass
+    public static void beforeClass()
+    {
+        DatabaseDescriptor.clientInitialization();
+    }
+
     @Test
     public void testSerialization()
     {
-        ComponentManifest expected = new ComponentManifest(new LinkedHashMap<Component, Long>() {{ put(Component.DATA, 100L); }});
-        SerializationUtils.assertSerializationCycle(expected, ComponentManifest.serializer);
+        ComponentManifest expected = new ComponentManifest(new LinkedHashMap<Component, Long>() {{ put(Components.DATA, 100L); }});
+        SerializationUtils.assertSerializationCycle(expected, ComponentManifest.serializers.get(BigFormat.getInstance().name()));
     }
 
     // Propose removing this test which now fails on VIntOutOfRange
@@ -41,7 +51,7 @@ public class ComponentManifestTest
 //    public void testSerialization_FailsOnBadBytes() throws IOException
 //    {
 //        ByteBuffer buf = ByteBuffer.allocate(512);
-//        ComponentManifest expected = new ComponentManifest(new LinkedHashMap<Component, Long>() {{ put(Component.DATA, 100L); }});
+//        ComponentManifest expected = new ComponentManifest(new LinkedHashMap<Component, Long>() {{ put(Components.DATA, 100L); }});
 //
 //        DataOutputBufferFixed out = new DataOutputBufferFixed(buf);
 //

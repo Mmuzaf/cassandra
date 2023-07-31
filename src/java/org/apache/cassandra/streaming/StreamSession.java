@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -43,6 +44,9 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
+import io.netty.channel.Channel;
+import io.netty.util.concurrent.Future; //checkstyle: permit this import
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,8 +59,6 @@ import org.apache.cassandra.db.compaction.CompactionManager;
 import org.apache.cassandra.db.compaction.CompactionStrategyManager;
 import org.apache.cassandra.dht.Range;
 import org.apache.cassandra.dht.Token;
-import org.apache.cassandra.gms.EndpointState;
-import org.apache.cassandra.gms.IEndpointStateChangeSubscriber;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.locator.RangesAtEndpoint;
@@ -65,29 +67,17 @@ import org.apache.cassandra.metrics.StreamingMetrics;
 import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.service.ActiveRepairService;
 import org.apache.cassandra.streaming.async.StreamingMultiplexedChannel;
-import org.apache.cassandra.streaming.messages.CompleteMessage;
-import org.apache.cassandra.streaming.messages.IncomingStreamMessage;
-import org.apache.cassandra.streaming.messages.OutgoingStreamMessage;
-import org.apache.cassandra.streaming.messages.PrepareAckMessage;
-import org.apache.cassandra.streaming.messages.PrepareSynAckMessage;
-import org.apache.cassandra.streaming.messages.PrepareSynMessage;
-import org.apache.cassandra.streaming.messages.ReceivedMessage;
-import org.apache.cassandra.streaming.messages.SessionFailedMessage;
-import org.apache.cassandra.streaming.messages.StreamInitMessage;
-import org.apache.cassandra.streaming.messages.StreamMessage;
-import org.apache.cassandra.streaming.messages.StreamMessageHeader;
+import org.apache.cassandra.streaming.messages.*;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.JVMStabilityInspector;
 import org.apache.cassandra.utils.NoSpamLogger;
 import org.apache.cassandra.utils.TimeUUID;
 import org.apache.cassandra.utils.concurrent.FutureCombiner;
 
-import io.netty.channel.Channel;
-import io.netty.util.concurrent.Future; // checkstyle: permit this import
-
 import static com.google.common.collect.Iterables.all;
-import static org.apache.cassandra.locator.InetAddressAndPort.hostAddressAndPort;
+import static org.apache.cassandra.config.CassandraRelevantProperties.CASSANDRA_STREAMING_DEBUG_STACKTRACE_LIMIT;
 import static org.apache.cassandra.utils.Clock.Global.nanoTime;
+import static org.apache.cassandra.locator.InetAddressAndPort.hostAddressAndPort;
 import static org.apache.cassandra.utils.FBUtilities.getBroadcastAddressAndPort;
 
 /**
@@ -165,9 +155,10 @@ import static org.apache.cassandra.utils.FBUtilities.getBroadcastAddressAndPort;
  * (via {@link org.apache.cassandra.net.MessagingService}, while the actual files themselves are sent by a special
  * "streaming" connection type. See {@link StreamingMultiplexedChannel} for details. Because of the asynchronous
  */
-public class StreamSession implements IEndpointStateChangeSubscriber
+public class StreamSession
 {
     private static final Logger logger = LoggerFactory.getLogger(StreamSession.class);
+    private static final int DEBUG_STACKTRACE_LIMIT = CASSANDRA_STREAMING_DEBUG_STACKTRACE_LIMIT.getInt();
 
     public enum PrepareDirection { SEND, ACK }
 
@@ -213,6 +204,8 @@ public class StreamSession implements IEndpointStateChangeSubscriber
 
     private final TimeUUID pendingRepair;
     private final PreviewKind previewKind;
+
+    public String failureReason;
 
 /**
  * State Transition:
@@ -525,13 +518,20 @@ public class StreamSession implements IEndpointStateChangeSubscriber
         }
     }
 
-    private synchronized Future<?> closeSession(State finalState)
+    private Future<?> closeSession(State finalState)
+    {
+        return closeSession(finalState, null);
+    }
+
+    private synchronized Future<?> closeSession(State finalState, String failureReason)
     {
         // it's session is already closed
         if (closeFuture != null)
             return closeFuture;
 
         state(finalState);
+        //this refers to StreamInfo
+        this.failureReason = failureReason;
 
         List<Future<?>> futures = new ArrayList<>();
 
@@ -684,7 +684,6 @@ public class StreamSession implements IEndpointStateChangeSubscriber
             if (state.finalState)
             {
                 logger.debug("[Stream #{}] Socket closed after session completed with state {}", planId(), state);
-
                 return null;
             }
             else
@@ -693,8 +692,7 @@ public class StreamSession implements IEndpointStateChangeSubscriber
                              planId(),
                              peer.getHostAddressAndPort(),
                              e);
-
-                return closeSession(State.FAILED);
+                return closeSession(State.FAILED, "Failed because there was an " + e.getClass().getCanonicalName() + " with state=" + state.name());
             }
         }
 
@@ -705,8 +703,9 @@ public class StreamSession implements IEndpointStateChangeSubscriber
             state(State.FAILED); // make sure subsequent error handling sees the session in a final state 
             channel.sendControlMessage(new SessionFailedMessage()).awaitUninterruptibly();
         }
-
-        return closeSession(State.FAILED);
+        StringBuilder failureReason = new StringBuilder("Failed because of an unknown exception\n");
+        boundStackTrace(e, DEBUG_STACKTRACE_LIMIT, failureReason);
+        return closeSession(State.FAILED, failureReason.toString());
     }
 
     private void logError(Throwable e)
@@ -882,7 +881,7 @@ public class StreamSession implements IEndpointStateChangeSubscriber
             Set<FileStore> allWriteableFileStores = cfs.getDirectories().allFileStores(fileStoreMapper);
             if (allWriteableFileStores.isEmpty())
             {
-                logger.error("[Stream #{}] Could not get any writeable FileStores for {}.{}", planId, cfs.keyspace.getName(), cfs.getTableName());
+                logger.error("[Stream #{}] Could not get any writeable FileStores for {}.{}", planId, cfs.getKeyspaceName(), cfs.getTableName());
                 continue;
             }
             allFileStores.addAll(allWriteableFileStores);
@@ -907,7 +906,7 @@ public class StreamSession implements IEndpointStateChangeSubscriber
                          newStreamBytesToWritePerFileStore,
                          perTableIdIncomingBytes.keySet().stream()
                                                 .map(ColumnFamilyStore::getIfExists).filter(Objects::nonNull)
-                                                .map(cfs -> cfs.keyspace.getName() + '.' + cfs.name)
+                                                .map(cfs -> cfs.getKeyspaceName() + '.' + cfs.name)
                                                 .collect(Collectors.joining(",")),
                          totalStreamRemaining,
                          totalCompactionWriteRemaining,
@@ -944,7 +943,7 @@ public class StreamSession implements IEndpointStateChangeSubscriber
                     tasksStreamed = csm.getEstimatedRemainingTasks(perTableIdIncomingFiles.get(tableId),
                                                                    perTableIdIncomingBytes.get(tableId),
                                                                    isForIncremental);
-                    tables.add(String.format("%s.%s", cfs.keyspace.getName(), cfs.name));
+                    tables.add(String.format("%s.%s", cfs.getKeyspaceName(), cfs.name));
                 }
                 pendingCompactionsBeforeStreaming += tasksOther;
                 pendingCompactionsAfterStreaming += tasksStreamed;
@@ -992,7 +991,7 @@ public class StreamSession implements IEndpointStateChangeSubscriber
         StreamTransferTask task = transfers.get(message.header.tableId);
         if (task != null)
         {
-            task.scheduleTimeout(message.header.sequenceNumber, 12, TimeUnit.HOURS);
+            task.scheduleTimeout(message.header.sequenceNumber, DatabaseDescriptor.getStreamTransferTaskTimeout().toMilliseconds(), TimeUnit.MILLISECONDS);
         }
     }
 
@@ -1118,7 +1117,9 @@ public class StreamSession implements IEndpointStateChangeSubscriber
     public synchronized void sessionFailed()
     {
         logger.error("[Stream #{}] Remote peer {} failed stream session.", planId(), peer.toString());
-        closeSession(State.FAILED);
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Remote peer ").append(peer).append(" failed stream session");
+        closeSession(State.FAILED, stringBuilder.toString());
     }
 
     /**
@@ -1127,7 +1128,7 @@ public class StreamSession implements IEndpointStateChangeSubscriber
     public synchronized void sessionTimeout()
     {
         logger.error("[Stream #{}] timeout with {}.", planId(), peer.toString());
-        closeSession(State.FAILED);
+        closeSession(State.FAILED, "Session timed out");
     }
 
     /**
@@ -1141,7 +1142,7 @@ public class StreamSession implements IEndpointStateChangeSubscriber
         List<StreamSummary> transferSummaries = Lists.newArrayList();
         for (StreamTask transfer : transfers.values())
             transferSummaries.add(transfer.getSummary());
-        return new SessionInfo(channel.peer(), index, channel.connectedTo(), receivingSummaries, transferSummaries, state);
+        return new SessionInfo(channel.peer(), index, channel.connectedTo(), receivingSummaries, transferSummaries, state, failureReason);
     }
 
     public synchronized void taskCompleted(StreamReceiveTask completedTask)
@@ -1154,18 +1155,6 @@ public class StreamSession implements IEndpointStateChangeSubscriber
     {
         transfers.remove(completedTask.tableId);
         maybeCompleted();
-    }
-
-    public void onRemove(InetAddressAndPort endpoint)
-    {
-        logger.error("[Stream #{}] Session failed because remote peer {} has left.", planId(), peer.toString());
-        closeSession(State.FAILED);
-    }
-
-    public void onRestart(InetAddressAndPort endpoint, EndpointState epState)
-    {
-        logger.error("[Stream #{}] Session failed because remote peer {} was restarted.", planId(), peer.toString());
-        closeSession(State.FAILED);
     }
 
     private void completePreview()
@@ -1350,5 +1339,38 @@ public class StreamSession implements IEndpointStateChangeSubscriber
                ", previewKind=" + previewKind +
                ", state=" + state +
                '}';
+    }
+
+    public static StringBuilder boundStackTrace(Throwable e, int limit, StringBuilder out)
+    {
+        Set<Throwable> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        return boundStackTrace(e, limit, limit, visited, out);
+    }
+
+    public static StringBuilder boundStackTrace(Throwable e, int limit, int counter, Set<Throwable> visited, StringBuilder out)
+    {
+        if (e == null)
+            return out;
+
+        if (!visited.add(e))
+            return out.append("[CIRCULAR REFERENCE: ").append(e.getClass().getName()).append(": ").append(e.getMessage()).append("]").append('\n');
+        visited.add(e);
+
+        StackTraceElement[] stackTrace = e.getStackTrace();
+        out.append(e.getClass().getName() + ": " + e.getMessage()).append('\n');
+
+        // When dealing with the leaf, ignore how many stack traces were already written, and allow the max.
+        // This is here as the leaf tends to show where the issue started, so tends to be impactful for debugging
+        if (e.getCause() == null)
+            counter = limit;
+
+        for (int i = 0, size = Math.min(e.getStackTrace().length, limit); i < size && counter > 0; i++)
+        {
+            out.append('\t').append(stackTrace[i]).append('\n');
+            counter--;
+        }
+
+        boundStackTrace(e.getCause(), limit, counter, visited, out);
+        return out;
     }
 }

@@ -31,7 +31,6 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -119,7 +118,7 @@ public class Tracker
     /**
      * @return a Transaction over the provided sstables if we are able to mark the given @param sstables as compacted, before anyone else
      */
-    public LifecycleTransaction tryModify(Iterable<SSTableReader> sstables, OperationType operationType)
+    public LifecycleTransaction tryModify(Iterable<? extends SSTableReader> sstables, OperationType operationType)
     {
         if (Iterables.isEmpty(sstables))
             return new LifecycleTransaction(this, operationType, sstables);
@@ -177,7 +176,7 @@ public class Tracker
         for (SSTableReader sstable : newSSTables)
         {
             if (logger.isTraceEnabled())
-                logger.trace("adding {} to list of files tracked for {}.{}", sstable.descriptor, cfstore.keyspace.getName(), cfstore.name);
+                logger.trace("adding {} to list of files tracked for {}.{}", sstable.descriptor, cfstore.getKeyspaceName(), cfstore.name);
             try
             {
                 add += sstable.bytesOnDisk();
@@ -195,7 +194,7 @@ public class Tracker
         for (SSTableReader sstable : oldSSTables)
         {
             if (logger.isTraceEnabled())
-                logger.trace("removing {} from list of files tracked for {}.{}", sstable.descriptor, cfstore.keyspace.getName(), cfstore.name);
+                logger.trace("removing {} from list of files tracked for {}.{}", sstable.descriptor, cfstore.getKeyspaceName(), cfstore.name);
             try
             {
                 subtract += sstable.bytesOnDisk();
@@ -216,6 +215,12 @@ public class Tracker
         // we don't subtract from total until the sstable is deleted, see TransactionLogs.SSTableTidier
         cfstore.metric.totalDiskSpaceUsed.inc(add);
         return accumulate;
+    }
+
+    public void updateLiveDiskSpaceUsed(long adjustment)
+    {
+        cfstore.metric.liveDiskSpaceUsed.inc(adjustment);
+        cfstore.metric.totalDiskSpaceUsed.inc(adjustment);
     }
 
     // SETUP / CLEANUP
@@ -406,10 +411,11 @@ public class Tracker
         Throwable fail;
         fail = updateSizeTracking(emptySet(), sstables, null);
 
-        notifyDiscarded(memtable);
-
         // TODO: if we're invalidated, should we notifyadded AND removed, or just skip both?
         fail = notifyAdded(sstables, false, memtable, fail);
+
+        // make sure index sees flushed index files before dicarding memtable index
+        notifyDiscarded(memtable);
 
         if (!isDummy() && !cfstore.isValid())
             dropSSTables();

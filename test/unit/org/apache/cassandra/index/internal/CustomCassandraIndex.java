@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -57,7 +56,7 @@ import org.apache.cassandra.db.filter.RowFilter;
 import org.apache.cassandra.db.lifecycle.SSTableSet;
 import org.apache.cassandra.db.lifecycle.View;
 import org.apache.cassandra.db.marshal.AbstractType;
-import org.apache.cassandra.db.partitions.PartitionIterator;
+import org.apache.cassandra.db.memtable.Memtable;
 import org.apache.cassandra.db.partitions.PartitionUpdate;
 import org.apache.cassandra.db.rows.BTreeRow;
 import org.apache.cassandra.db.rows.Cell;
@@ -70,7 +69,6 @@ import org.apache.cassandra.index.IndexRegistry;
 import org.apache.cassandra.index.SecondaryIndexBuilder;
 import org.apache.cassandra.index.TargetParser;
 import org.apache.cassandra.index.transactions.IndexTransaction;
-import org.apache.cassandra.index.transactions.UpdateTransaction;
 import org.apache.cassandra.io.sstable.ReducingKeyIterator;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.schema.ColumnMetadata;
@@ -229,14 +227,6 @@ public class CustomCassandraIndex implements Index
         return indexCfs.getMeanEstimatedCellPerPartitionCount();
     }
 
-    /**
-     * No post processing of query results, just return them unchanged
-     */
-    public BiFunction<PartitionIterator, ReadCommand, PartitionIterator> postProcessorFor(ReadCommand command)
-    {
-        return (partitionIterator, readCommand) -> partitionIterator;
-    }
-
     public RowFilter getPostIndexQueryFilter(RowFilter filter)
     {
         return getTargetExpression(filter.getExpressions()).map(filter::without)
@@ -293,7 +283,7 @@ public class CustomCassandraIndex implements Index
         throw new UnsupportedOperationException("KEYS indexes do not use a specialized index entry format");
     }
 
-    public boolean isStale(Row row, ByteBuffer indexValue, int nowInSec)
+    public boolean isStale(Row row, ByteBuffer indexValue, long nowInSec)
     {
         if (row == null)
             return true;
@@ -307,9 +297,10 @@ public class CustomCassandraIndex implements Index
 
     public Indexer indexerFor(final DecoratedKey key,
                               final RegularAndStaticColumns columns,
-                              final int nowInSec,
+                              final long nowInSec,
                               final WriteContext ctx,
-                              final IndexTransaction.Type transactionType)
+                              final IndexTransaction.Type transactionType,
+                              final Memtable memtable)
     {
         if (!isPrimaryKeyIndex() && !columns.contains(indexedColumn))
             return null;
@@ -481,7 +472,7 @@ public class CustomCassandraIndex implements Index
                                                                cell));
         Row row = BTreeRow.noCellLiveRow(buildIndexClustering(rowKey, clustering, cell), info);
         PartitionUpdate upd = partitionUpdate(valueKey, row);
-        indexCfs.getWriteHandler().write(upd, ctx, UpdateTransaction.NO_OP);
+        indexCfs.getWriteHandler().write(upd, ctx, false);
         logger.debug("Inserted entry into index for value {}", valueKey);
     }
 
@@ -492,14 +483,14 @@ public class CustomCassandraIndex implements Index
                         Clustering<?> clustering,
                         Cell<?> cell,
                         WriteContext ctx,
-                        int nowInSec)
+                        long nowInSec)
     {
         DecoratedKey valueKey = getIndexKeyFor(getIndexedValue(rowKey,
                                                                clustering,
                                                                cell));
         doDelete(valueKey,
                  buildIndexClustering(rowKey, clustering, cell),
-                 new DeletionTime(cell.timestamp(), nowInSec),
+                 DeletionTime.build(cell.timestamp(), nowInSec),
                  ctx);
     }
 
@@ -527,7 +518,7 @@ public class CustomCassandraIndex implements Index
     {
         Row row = BTreeRow.emptyDeletedRow(indexClustering, Row.Deletion.regular(deletion));
         PartitionUpdate upd = partitionUpdate(indexKey, row);
-        indexCfs.getWriteHandler().write(upd, ctx, UpdateTransaction.NO_OP);
+        indexCfs.getWriteHandler().write(upd, ctx, false);
         logger.debug("Removed index entry for value {}", indexKey);
     }
 
@@ -624,7 +615,7 @@ public class CustomCassandraIndex implements Index
 
     private boolean isBuilt()
     {
-        return SystemKeyspace.isIndexBuilt(baseCfs.keyspace.getName(), metadata.name);
+        return SystemKeyspace.isIndexBuilt(baseCfs.getKeyspaceName(), metadata.name);
     }
 
     private boolean isPrimaryKeyIndex()

@@ -19,24 +19,26 @@
 package org.apache.cassandra.service;
 
 
+import java.util.Set;
+
+import com.google.common.collect.ImmutableSet;
+
+import org.apache.cassandra.io.util.File;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.DisallowedDirectories;
 import org.apache.cassandra.db.Keyspace;
-import org.apache.cassandra.io.FSDiskFullWriteError;
-import org.apache.cassandra.io.FSError;
-import org.apache.cassandra.io.FSErrorHandler;
-import org.apache.cassandra.io.FSNoDiskAvailableForWriteError;
-import org.apache.cassandra.io.FSReadError;
+import org.apache.cassandra.io.*;
 import org.apache.cassandra.io.sstable.CorruptSSTableException;
-import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.utils.JVMStabilityInspector;
 
 public class DefaultFSErrorHandler implements FSErrorHandler
 {
     private static final Logger logger = LoggerFactory.getLogger(DefaultFSErrorHandler.class);
+
+    private static final Set<Class<?>> exceptionsSkippingDataRemoval = ImmutableSet.of(OutOfMemoryError.class);
 
     @Override
     public void handleCorruptSSTable(CorruptSSTableException e)
@@ -46,6 +48,7 @@ public class DefaultFSErrorHandler implements FSErrorHandler
 
         switch (DatabaseDescriptor.getDiskFailurePolicy())
         {
+            case die:
             case stop_paranoid:
                 // exception not logged here on purpose as it is already logged
                 logger.error("Stopping transports as disk_failure_policy is " + DatabaseDescriptor.getDiskFailurePolicy());
@@ -62,6 +65,7 @@ public class DefaultFSErrorHandler implements FSErrorHandler
 
         switch (DatabaseDescriptor.getDiskFailurePolicy())
         {
+            case die:
             case stop_paranoid:
             case stop:
                 // exception not logged here on purpose as it is already logged
@@ -83,7 +87,7 @@ public class DefaultFSErrorHandler implements FSErrorHandler
 
                 // for both read and write errors mark the path as unwritable.
                 DisallowedDirectories.maybeMarkUnwritable(new File(e.path));
-                if (e instanceof FSReadError)
+                if (e instanceof FSReadError && shouldMaybeRemoveData(e))
                 {
                     File directory = DisallowedDirectories.maybeMarkUnreadable(new File(e.path));
                     if (directory != null)
@@ -96,6 +100,22 @@ public class DefaultFSErrorHandler implements FSErrorHandler
             default:
                 throw new IllegalStateException();
         }
+    }
+
+    private boolean shouldMaybeRemoveData(Throwable error)
+    {
+        for (Throwable t = error; t != null; t = t.getCause())
+        {
+            for (Class<?> c : exceptionsSkippingDataRemoval)
+                if (c.isAssignableFrom(t.getClass()))
+                    return false;
+            for (Throwable s : t.getSuppressed())
+                for (Class<?> c : exceptionsSkippingDataRemoval)
+                    if (c.isAssignableFrom(s.getClass()))
+                        return false;
+        }
+
+        return true;
     }
 
     @Override

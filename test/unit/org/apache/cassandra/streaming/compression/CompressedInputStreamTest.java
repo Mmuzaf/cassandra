@@ -17,7 +17,6 @@
  */
 package org.apache.cassandra.streaming.compression;
 
-import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
@@ -38,12 +37,13 @@ import org.apache.cassandra.db.streaming.CompressedInputStream;
 import org.apache.cassandra.db.streaming.CompressionInfo;
 import org.apache.cassandra.io.compress.CompressedSequentialWriter;
 import org.apache.cassandra.io.compress.CompressionMetadata;
-import org.apache.cassandra.io.sstable.Component;
 import org.apache.cassandra.io.sstable.Descriptor;
 import org.apache.cassandra.io.sstable.SequenceBasedSSTableId;
+import org.apache.cassandra.io.sstable.format.CompressionInfoComponent;
+import org.apache.cassandra.io.sstable.format.SSTableFormat.Components;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.io.sstable.metadata.MetadataCollector;
-import org.apache.cassandra.io.util.DataInputPlus.DataInputStreamPlus;
+import org.apache.cassandra.io.util.DataInputBuffer;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.RandomAccessReader;
 import org.apache.cassandra.io.util.SequentialWriterOption;
@@ -124,12 +124,12 @@ public class CompressedInputStreamTest
         // write compressed data file of longs
         File parentDir = new File(tempFolder.newFolder());
         Descriptor desc = new Descriptor(parentDir, "ks", "cf", new SequenceBasedSSTableId(1));
-        File tmp = new File(desc.filenameFor(Component.DATA));
+        File tmp = desc.fileFor(Components.DATA);
         MetadataCollector collector = new MetadataCollector(new ClusteringComparator(BytesType.instance));
         CompressionParams param = CompressionParams.snappy(32, minCompressRatio);
         Map<Long, Long> index = new HashMap<Long, Long>();
         try (CompressedSequentialWriter writer = new CompressedSequentialWriter(tmp,
-                                                                                desc.filenameFor(Component.COMPRESSION_INFO),
+                                                                                desc.fileFor(Components.COMPRESSION_INFO),
                                                                                 null,
                                                                                 SequentialWriterOption.DEFAULT,
                                                                                 param, collector))
@@ -142,7 +142,7 @@ public class CompressedInputStreamTest
             writer.finish();
         }
 
-        CompressionMetadata comp = CompressionMetadata.create(tmp.absolutePath());
+        CompressionMetadata comp = CompressionInfoComponent.load(desc);
         List<SSTableReader.PartitionPositionBounds> sections = new ArrayList<>();
         for (long l : valuesToCheck)
         {
@@ -187,7 +187,7 @@ public class CompressedInputStreamTest
             testException(sections, info);
             return;
         }
-        CompressedInputStream input = new CompressedInputStream(new DataInputStreamPlus(new ByteArrayInputStream(toRead)), info, ChecksumType.CRC32, () -> 1.0);
+        CompressedInputStream input = new CompressedInputStream(new DataInputBuffer(toRead), info, ChecksumType.CRC32, () -> 1.0);
 
         try (DataInputStream in = new DataInputStream(input))
         {
@@ -202,7 +202,7 @@ public class CompressedInputStreamTest
 
     private static void testException(List<SSTableReader.PartitionPositionBounds> sections, CompressionInfo info) throws IOException
     {
-        CompressedInputStream input = new CompressedInputStream(new DataInputStreamPlus(new ByteArrayInputStream(new byte[0])), info, ChecksumType.CRC32, () -> 1.0);
+        CompressedInputStream input = new CompressedInputStream(new DataInputBuffer(new byte[0]), info, ChecksumType.CRC32, () -> 1.0);
 
         try (DataInputStream in = new DataInputStream(input))
         {
@@ -221,4 +221,3 @@ public class CompressedInputStreamTest
         }
     }
 }
-

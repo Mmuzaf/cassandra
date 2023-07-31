@@ -23,7 +23,6 @@ import java.io.IOException;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.DeletionTime;
 import org.apache.cassandra.db.RegularAndStaticColumns;
-import org.apache.cassandra.db.RowIndexEntry;
 import org.apache.cassandra.db.UnfilteredValidation;
 import org.apache.cassandra.db.rows.DeserializationHelper;
 import org.apache.cassandra.db.rows.EncodingStats;
@@ -65,7 +64,7 @@ public class SSTableIdentityIterator implements Comparable<SSTableIdentityIterat
     {
         try
         {
-            DeletionTime partitionLevelDeletion = DeletionTime.serializer.deserialize(file);
+            DeletionTime partitionLevelDeletion = DeletionTime.getSerializer(sstable.descriptor.version).deserialize(file);
             if (!partitionLevelDeletion.validate())
                 UnfilteredValidation.handleInvalid(sstable.metadata(), key, sstable, "partitionLevelDeletion="+partitionLevelDeletion.toString());
             DeserializationHelper helper = new DeserializationHelper(sstable.metadata(), sstable.descriptor.version.correspondingMessagingVersion(), DeserializationHelper.Flag.LOCAL);
@@ -80,13 +79,16 @@ public class SSTableIdentityIterator implements Comparable<SSTableIdentityIterat
     }
 
     @SuppressWarnings("resource")
-    public static SSTableIdentityIterator create(SSTableReader sstable, FileDataInput dfile, RowIndexEntry<?> indexEntry, DecoratedKey key, boolean tombstoneOnly)
+    public static SSTableIdentityIterator create(SSTableReader sstable, FileDataInput dfile, long dataPosition, DecoratedKey key, boolean tombstoneOnly)
     {
         try
         {
-            dfile.seek(indexEntry.position);
+            dfile.seek(dataPosition);
             ByteBufferUtil.skipShortLength(dfile); // Skip partition key
-            DeletionTime partitionLevelDeletion = DeletionTime.serializer.deserialize(dfile);
+            DeletionTime partitionLevelDeletion = DeletionTime.getSerializer(sstable.descriptor.version).deserialize(dfile);
+            if (!partitionLevelDeletion.validate())
+                UnfilteredValidation.handleInvalid(sstable.metadata(), key, sstable, "partitionLevelDeletion="+partitionLevelDeletion.toString());
+
             DeserializationHelper helper = new DeserializationHelper(sstable.metadata(), sstable.descriptor.version.correspondingMessagingVersion(), DeserializationHelper.Flag.LOCAL);
             SSTableSimpleIterator iterator = tombstoneOnly
                     ? SSTableSimpleIterator.createTombstoneOnly(sstable.metadata(), dfile, sstable.header, helper, partitionLevelDeletion)
@@ -136,7 +138,7 @@ public class SSTableIdentityIterator implements Comparable<SSTableIdentityIterat
         {
             return iterator.hasNext();
         }
-        catch (IndexOutOfBoundsException | VIntOutOfRangeException e)
+        catch (IndexOutOfBoundsException | VIntOutOfRangeException | AssertionError e)
         {
             sstable.markSuspect();
             throw new CorruptSSTableException(e, filename);
@@ -161,7 +163,7 @@ public class SSTableIdentityIterator implements Comparable<SSTableIdentityIterat
         {
             return doCompute();
         }
-        catch (IndexOutOfBoundsException e)
+        catch (IndexOutOfBoundsException | VIntOutOfRangeException | AssertionError e)
         {
             sstable.markSuspect();
             throw new CorruptSSTableException(e, filename);

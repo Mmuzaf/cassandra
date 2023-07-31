@@ -151,7 +151,7 @@ public class KeysSearcher extends CassandraIndexSearcher
                                                 Row indexHit,
                                                 ByteBuffer indexedValue,
                                                 WriteContext ctx,
-                                                int nowInSec)
+                                                long nowInSec)
     {
         Row data = iterator.staticRow();
         if (index.isStale(data, indexedValue, nowInSec))
@@ -159,7 +159,7 @@ public class KeysSearcher extends CassandraIndexSearcher
             // Index is stale, remove the index entry and ignore
             index.deleteStaleEntry(index.getIndexCfs().decorateKey(indexedValue),
                                    makeIndexClustering(iterator.partitionKey().getKey(), Clustering.EMPTY),
-                                   new DeletionTime(indexHit.primaryKeyLivenessInfo().timestamp(), nowInSec),
+                                   DeletionTime.build(indexHit.primaryKeyLivenessInfo().timestamp(), nowInSec),
                                    ctx);
             iterator.close();
             return null;

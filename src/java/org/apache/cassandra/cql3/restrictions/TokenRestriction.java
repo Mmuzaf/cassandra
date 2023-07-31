@@ -18,12 +18,13 @@
 package org.apache.cassandra.cql3.restrictions;
 
 import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.google.common.base.Joiner;
 
+import org.apache.cassandra.index.Index;
+import org.apache.cassandra.schema.ColumnMetadata;
+import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.cql3.QueryOptions;
 import org.apache.cassandra.cql3.Term;
 import org.apache.cassandra.cql3.functions.Function;
@@ -31,8 +32,6 @@ import org.apache.cassandra.cql3.statements.Bound;
 import org.apache.cassandra.db.filter.RowFilter;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.index.IndexRegistry;
-import org.apache.cassandra.schema.ColumnMetadata;
-import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.service.ClientState;
 
 import static org.apache.cassandra.cql3.statements.RequestValidations.invalidRequest;
@@ -125,9 +124,15 @@ public abstract class TokenRestriction implements PartitionKeyRestrictions
     }
 
     @Override
-    public void addRowFilterTo(RowFilter filter, IndexRegistry indexRegistry, QueryOptions options)
+    public void addToRowFilter(RowFilter filter, IndexRegistry indexRegistry, QueryOptions options)
     {
         throw new UnsupportedOperationException("Index expression cannot be created for token restriction");
+    }
+
+    @Override
+    public boolean needsFiltering(Index.Group indexGroup)
+    {
+        return false;
     }
 
     @Override

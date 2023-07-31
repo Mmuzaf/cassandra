@@ -56,6 +56,7 @@ public class DataTypeClassNameParser
     private static final String UDT_TYPE = "org.apache.cassandra.db.marshal.UserType";
     private static final String TUPLE_TYPE = "org.apache.cassandra.db.marshal.TupleType";
     private static final String DURATION_TYPE = "org.apache.cassandra.db.marshal.DurationType";
+    private static final String VECTOR_TYPE = "org.apache.cassandra.db.marshal.VectorType";
 
     private static final ImmutableMap<String, DataType> cassTypeToDataType =
     new ImmutableMap.Builder<String, DataType>()
@@ -121,6 +122,14 @@ public class DataTypeClassNameParser
             "Got o.a.c.db.marshal.FrozenType for something else than a collection, "
             + "this driver version might be too old for your version of Cassandra");
 
+        if (isVectorType(next))
+        {
+            List<String> parameters = parser.getTypeParameters();
+            DataType subtype = parseOne(parameters.get(0), protocolVersion, codecRegistry);
+            int dimensions = Integer.parseInt(parameters.get(1));
+            return DataType.vector(subtype, dimensions);
+        }
+
         if (isUserType(next))
         {
             ++parser.idx; // skipping '('
@@ -174,6 +183,11 @@ public class DataTypeClassNameParser
         if (l.size() != 1) throw new IllegalStateException();
         className = l.get(0);
         return className;
+    }
+
+    private static boolean isVectorType(String className)
+    {
+        return className.startsWith(VECTOR_TYPE);
     }
 
     private static boolean isUserType(String className)

@@ -54,7 +54,7 @@ public class RowUpdateBuilder
         this(metadata, FBUtilities.nowInSeconds(), timestamp, partitionKey);
     }
 
-    public RowUpdateBuilder(TableMetadata metadata, int localDeletionTime, long timestamp, Object partitionKey)
+    public RowUpdateBuilder(TableMetadata metadata, long localDeletionTime, long timestamp, Object partitionKey)
     {
         this(metadata, localDeletionTime, timestamp, metadata.params.defaultTimeToLive, partitionKey);
     }
@@ -64,7 +64,7 @@ public class RowUpdateBuilder
         this(metadata, FBUtilities.nowInSeconds(), timestamp, ttl, partitionKey);
     }
 
-    public RowUpdateBuilder(TableMetadata metadata, int localDeletionTime, long timestamp, int ttl, Object partitionKey)
+    public RowUpdateBuilder(TableMetadata metadata, long localDeletionTime, long timestamp, int ttl, Object partitionKey)
     {
         this(PartitionUpdate.simpleBuilder(metadata, partitionKey));
 
@@ -123,7 +123,7 @@ public class RowUpdateBuilder
         return updateBuilder.build();
     }
 
-    private static void deleteRow(PartitionUpdate.Builder updateBuilder, long timestamp, int localDeletionTime, Object... clusteringValues)
+    private static void deleteRow(PartitionUpdate.Builder updateBuilder, long timestamp, long localDeletionTime, Object... clusteringValues)
     {
         SimpleBuilders.RowBuilder b = new SimpleBuilders.RowBuilder(updateBuilder.metadata(), clusteringValues);
         b.nowInSec(localDeletionTime).timestamp(timestamp).delete();
@@ -135,7 +135,7 @@ public class RowUpdateBuilder
         return deleteRowAt(metadata, timestamp, FBUtilities.nowInSeconds(), key, clusteringValues);
     }
 
-    public static Mutation deleteRowAt(TableMetadata metadata, long timestamp, int localDeletionTime, Object key, Object... clusteringValues)
+    public static Mutation deleteRowAt(TableMetadata metadata, long timestamp, long localDeletionTime, Object key, Object... clusteringValues)
     {
         PartitionUpdate.Builder update = new PartitionUpdate.Builder(metadata, makeKey(metadata, key), metadata.regularAndStaticColumns(), 0);
         deleteRow(update, timestamp, localDeletionTime, clusteringValues);

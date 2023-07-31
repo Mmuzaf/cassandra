@@ -90,19 +90,17 @@ public class UpgradeTestBase extends DistributedTestBase
     public static final Semver v3X = new Semver("3.11.0", SemverType.LOOSE);
     public static final Semver v40 = new Semver("4.0-alpha1", SemverType.LOOSE);
     public static final Semver v41 = new Semver("4.1-alpha1", SemverType.LOOSE);
-    public static final Semver v42 = new Semver("4.2-alpha1", SemverType.LOOSE);
+    public static final Semver v50 = new Semver("5.0-alpha1", SemverType.LOOSE);
 
     protected static final SimpleGraph<Semver> SUPPORTED_UPGRADE_PATHS = new SimpleGraph.Builder<Semver>()
                                                                          .addEdge(v30, v3X)
                                                                          .addEdge(v30, v40)
                                                                          .addEdge(v30, v41)
-                                                                         .addEdge(v30, v42)
                                                                          .addEdge(v3X, v40)
                                                                          .addEdge(v3X, v41)
-                                                                         .addEdge(v3X, v42)
                                                                          .addEdge(v40, v41)
-                                                                         .addEdge(v40, v42)
-                                                                         .addEdge(v41, v42)
+                                                                         .addEdge(v40, v50)
+                                                                         .addEdge(v41, v50)
                                                                          .build();
 
     // the last is always the current
@@ -177,24 +175,26 @@ public class UpgradeTestBase extends DistributedTestBase
             return this;
         }
 
-        /** performs all supported upgrade paths that exist in between from and CURRENT (inclusive) **/
-        public TestCase upgradesToCurrentFrom(Semver from)
+        /** performs all supported upgrade paths that exist in between lowerBound and end on CURRENT (inclusive)
+         * {@code upgradesToCurrentFrom(3.0); // produces: 3.0 -> CURRENT, 3.11 -> CURRENT, …}
+         **/
+        public TestCase upgradesToCurrentFrom(Semver lowerBound)
         {
-            return upgradesTo(from, CURRENT);
+            return upgradesTo(lowerBound, CURRENT);
         }
 
         /**
          * performs all supported upgrade paths to the "to" target; example
          * {@code upgradesTo(3.0, 4.0); // produces: 3.0 -> 4.0, 3.11 -> 4.0}
          */
-        public TestCase upgradesTo(Semver from, Semver to)
+        public TestCase upgradesTo(Semver lowerBound, Semver to)
         {
             List<TestVersions> upgrade = new ArrayList<>();
             NavigableSet<Semver> vertices = sortedVertices(SUPPORTED_UPGRADE_PATHS);
-            for (Semver start : vertices.subSet(from, true, to, false))
+            for (Semver start : vertices.subSet(lowerBound, true, to, false))
             {
-                // only include pairs that are allowed
-                if (SUPPORTED_UPGRADE_PATHS.hasEdge(start, to))
+                // only include pairs that are allowed, and start or end on CURRENT
+                if (SUPPORTED_UPGRADE_PATHS.hasEdge(start, to) && edgeTouchesTarget(start, to, CURRENT))
                     upgrade.add(new TestVersions(versions.getLatest(start), Collections.singletonList(versions.getLatest(to))));
             }
             logger.info("Adding upgrades of\n{}", upgrade.stream().map(TestVersions::toString).collect(Collectors.joining("\n")));
@@ -206,14 +206,14 @@ public class UpgradeTestBase extends DistributedTestBase
          * performs all supported upgrade paths from the "from" target; example
          * {@code upgradesFrom(4.0, 4.2); // produces: 4.0 -> 4.1, 4.0 -> 4.2}
          */
-        public TestCase upgradesFrom(Semver from, Semver to)
+        public TestCase upgradesFrom(Semver from, Semver upperBound)
         {
             List<TestVersions> upgrade = new ArrayList<>();
             NavigableSet<Semver> vertices = sortedVertices(SUPPORTED_UPGRADE_PATHS);
-            for (Semver end : vertices.subSet(from, false, to, true))
+            for (Semver end : vertices.subSet(from, false, upperBound, true))
             {
-                // only include pairs that are allowed
-                if (SUPPORTED_UPGRADE_PATHS.hasEdge(from, end))
+                // only include pairs that are allowed, and start or end on CURRENT
+                if (SUPPORTED_UPGRADE_PATHS.hasEdge(from, end) && edgeTouchesTarget(from, end, CURRENT))
                     upgrade.add(new TestVersions(versions.getLatest(from), Collections.singletonList(versions.getLatest(end))));
             }
             logger.info("Adding upgrades of\n{}", upgrade.stream().map(TestVersions::toString).collect(Collectors.joining("\n")));
@@ -223,22 +223,43 @@ public class UpgradeTestBase extends DistributedTestBase
 
         /**
          * performs all supported upgrade paths that exist in between from and to that include the current version.
-         * This call is equivilent to calling {@code upgradesTo(from, CURRENT).upgradesFrom(CURRENT, to)}.
+         * This call is equivalent to calling {@code upgradesTo(from, CURRENT).upgradesFrom(CURRENT, to)}.
          **/
-        public TestCase upgrades(Semver from, Semver to)
+        public TestCase upgrades(Semver lowerBound, Semver upperBound)
         {
-            Assume.assumeTrue("Unable to do upgrades(" + from + ", " + to + "); does not contain CURRENT=" + CURRENT, contains(from, to, CURRENT));
-            if (from.compareTo(CURRENT) < 0)
-                upgradesTo(from, CURRENT);
-            if (CURRENT.compareTo(to) < 0)
-                upgradesFrom(CURRENT, to);
+            Assume.assumeTrue("Unable to do any upgrades in bounds (" + lowerBound + ", " + upperBound + "); does not cover CURRENT=" + CURRENT, rangeCoversTarget(lowerBound, upperBound, CURRENT));
+            if (lowerBound.compareTo(CURRENT) < 0)
+                upgradesTo(lowerBound, CURRENT);
+            if (CURRENT.compareTo(upperBound) < 0)
+                upgradesFrom(CURRENT, upperBound);
             return this;
         }
 
-        private static boolean contains(Semver from, Semver to, Semver target)
+        private static boolean rangeCoversTarget(Semver lowerBound, Semver upperBound, Semver target)
         {
             // target >= from && target <= to
-            return target.compareTo(from) >= 0 && target.compareTo(to) <= 0;
+            return target.isGreaterThanOrEqualTo(lowerBound) && target.isLowerThanOrEqualTo(upperBound);
+        }
+
+        /** returns true if the target version has the same major and minor as either the from or the to version **/
+        private static boolean edgeTouchesTarget(Semver from, Semver to, Semver target)
+        {
+            switch (from.diff(target))
+            {
+                default:
+                    return true;
+                case MAJOR:
+                case MINOR:
+                    // fall through
+            }
+            switch (to.diff(target))
+            {
+                default:
+                    return true;
+                case MAJOR:
+                case MINOR:
+                    return false;
+            }
         }
 
         /** Will test this specific upgrade path **/

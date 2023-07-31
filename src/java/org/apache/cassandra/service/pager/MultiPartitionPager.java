@@ -52,7 +52,7 @@ public class MultiPartitionPager<T extends SinglePartitionReadQuery> implements 
     private final SinglePartitionPager[] pagers;
     private final DataLimits limit;
 
-    private final int nowInSec;
+    private final long nowInSec;
 
     private int remaining;
     private int current;
@@ -90,7 +90,7 @@ public class MultiPartitionPager<T extends SinglePartitionReadQuery> implements 
 
     private MultiPartitionPager(SinglePartitionPager[] pagers,
                                 DataLimits limit,
-                                int nowInSec,
+                                long nowInSec,
                                 int remaining,
                                 int current)
     {

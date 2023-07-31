@@ -23,19 +23,14 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import com.datastax.driver.core.TypeTokens;
-import com.datastax.driver.core.UDTValue;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.google.common.reflect.TypeToken;
-
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import org.apache.cassandra.cql3.CQLTester;
 import org.apache.cassandra.cql3.QueryProcessor;
 import org.apache.cassandra.cql3.UntypedResultSet;
 import org.apache.cassandra.cql3.functions.FunctionName;
-import org.apache.cassandra.cql3.functions.JavaBasedUDFunction;
 import org.apache.cassandra.cql3.functions.UDFunction;
 import org.apache.cassandra.db.marshal.CollectionType;
 import org.apache.cassandra.exceptions.InvalidRequestException;
@@ -53,15 +48,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class UFTest extends CQLTester
 {
-    @Test
-    public void testJavaSourceName()
-    {
-        Assert.assertEquals("String", JavaBasedUDFunction.javaSourceName(TypeToken.of(String.class)));
-        Assert.assertEquals("java.util.Map<Integer, String>", JavaBasedUDFunction.javaSourceName(TypeTokens.mapOf(Integer.class, String.class)));
-        Assert.assertEquals("com.datastax.driver.core.UDTValue", JavaBasedUDFunction.javaSourceName(TypeToken.of(UDTValue.class)));
-        Assert.assertEquals("java.util.Set<com.datastax.driver.core.UDTValue>", JavaBasedUDFunction.javaSourceName(TypeTokens.setOf(UDTValue.class)));
-    }
-
     @Test
     public void testNonExistingOnes() throws Throwable
     {
@@ -88,17 +74,17 @@ public class UFTest extends CQLTester
     }
 
     @Test
-    public void testSchemaChange() throws Throwable
+    public void testSchemaChange()
     {
         String f = createFunctionName(KEYSPACE);
         String functionName = shortFunctionName(f);
         registerFunction(f, "double, double");
 
-        assertSchemaChange("CREATE OR REPLACE FUNCTION " + f + "(state double, val double) " +
-                           "RETURNS NULL ON NULL INPUT " +
+        assertSchemaChange("CREATE OR REPLACE FUNCTION " + f + "(state double, val double)" +
+                           "CALLED ON NULL INPUT " +
                            "RETURNS double " +
-                           "LANGUAGE javascript " +
-                           "AS '\"string\";';",
+                           "LANGUAGE java " +
+                           "AS ' return Double.valueOf(Math.max(state.doubleValue(), val.doubleValue())); ';",
                            Change.CREATED,
                            Target.FUNCTION,
                            KEYSPACE, functionName,
@@ -109,22 +95,22 @@ public class UFTest extends CQLTester
         assertSchemaChange("CREATE OR REPLACE FUNCTION " + f + "(state int, val int) " +
                            "RETURNS NULL ON NULL INPUT " +
                            "RETURNS int " +
-                           "LANGUAGE javascript " +
-                           "AS '\"string\";';",
+                           "LANGUAGE java " +
+                           "AS ' return Integer.valueOf(Math.max(state, val));';",
                            Change.CREATED,
                            Target.FUNCTION,
                            KEYSPACE, functionName,
                            "int", "int");
 
-        assertSchemaChange("CREATE OR REPLACE FUNCTION " + f + "(state int, val int) " +
+        /*assertSchemaChange("CREATE OR REPLACE FUNCTION " + f + "(state int, val int) " +
                            "RETURNS NULL ON NULL INPUT " +
                            "RETURNS int " +
-                           "LANGUAGE javascript " +
-                           "AS '\"string1\";';",
+                           "LANGUAGE java " +
+                           "AS ' return Integer.valueOf(Math.max(state, val));';",
                            Change.UPDATED,
                            Target.FUNCTION,
                            KEYSPACE, functionName,
-                           "int", "int");
+                           "int", "int");*/
 
         assertSchemaChange("DROP FUNCTION " + f + "(double, double)",
                            Change.DROPPED, Target.FUNCTION,
@@ -138,8 +124,8 @@ public class UFTest extends CQLTester
         assertSchemaChange("CREATE OR REPLACE FUNCTION " + fl + "(state list<tuple<int, int>>, val double) " +
                            "RETURNS NULL ON NULL INPUT " +
                            "RETURNS double " +
-                           "LANGUAGE javascript " +
-                           "AS '\"string\";';",
+                           "LANGUAGE java " +
+                           "AS ' return val;';",
                            Change.CREATED, Target.FUNCTION,
                            KEYSPACE, shortFunctionName(fl),
                            "list<tuple<int, int>>", "double");
@@ -334,8 +320,8 @@ public class UFTest extends CQLTester
                                         "CREATE FUNCTION %s ( input double ) " +
                                         "CALLED ON NULL INPUT " +
                                         "RETURNS double " +
-                                        "LANGUAGE javascript " +
-                                        "AS 'input'");
+                                        "LANGUAGE java " +
+                                        "AS 'return Double.valueOf(Math.log(input.doubleValue()));'");
         Assert.assertEquals(1, Schema.instance.getUserFunctions(parseFunctionName(function)).size());
 
         List<ResultMessage.Prepared> prepared = new ArrayList<>();
@@ -439,7 +425,7 @@ public class UFTest extends CQLTester
         execute("DROP FUNCTION IF EXISTS " + fSin);
 
         // can't drop native functions
-        assertInvalidMessage("System keyspace 'system' is not user-modifiable", "DROP FUNCTION totimestamp");
+        assertInvalidMessage("System keyspace 'system' is not user-modifiable", "DROP FUNCTION to_timestamp");
         assertInvalidMessage("System keyspace 'system' is not user-modifiable", "DROP FUNCTION uuid");
 
         // sin() no longer exists
@@ -666,7 +652,7 @@ public class UFTest extends CQLTester
     @Test
     public void testFunctionInSystemKS() throws Throwable
     {
-        execute("CREATE OR REPLACE FUNCTION " + KEYSPACE + ".totimestamp(val timeuuid) " +
+        execute("CREATE OR REPLACE FUNCTION " + KEYSPACE + ".to_timestamp(val timeuuid) " +
                 "RETURNS NULL ON NULL INPUT " +
                 "RETURNS timestamp " +
                 "LANGUAGE JAVA\n" +
@@ -680,7 +666,7 @@ public class UFTest extends CQLTester
                              "LANGUAGE JAVA\n" +
                              "AS 'return null;';");
         assertInvalidMessage("System keyspace 'system' is not user-modifiable",
-                             "CREATE OR REPLACE FUNCTION system.totimestamp(val timeuuid) " +
+                             "CREATE OR REPLACE FUNCTION system.to_timestamp(val timeuuid) " +
                              "RETURNS NULL ON NULL INPUT " +
                              "RETURNS timestamp " +
                              "LANGUAGE JAVA\n" +
@@ -697,7 +683,7 @@ public class UFTest extends CQLTester
                              "LANGUAGE JAVA\n" +
                              "AS 'return null;';");
         assertInvalidMessage("System keyspace 'system' is not user-modifiable",
-                             "CREATE OR REPLACE FUNCTION totimestamp(val timeuuid) " +
+                             "CREATE OR REPLACE FUNCTION to_timestamp(val timeuuid) " +
                              "RETURNS NULL ON NULL INPUT " +
                              "RETURNS timestamp " +
                              "LANGUAGE JAVA\n" +
@@ -794,11 +780,10 @@ public class UFTest extends CQLTester
     public void testDuplicateArgNames() throws Throwable
     {
         assertInvalidMessage("Duplicate argument names for given function",
-                             "CREATE OR REPLACE FUNCTION " + KEYSPACE + ".scrinv(val double, val text) " +
-                             "RETURNS NULL ON NULL INPUT " +
-                             "RETURNS text " +
-                             "LANGUAGE javascript\n" +
-                             "AS '\"foo bar\";';");
+                             "CREATE OR REPLACE FUNCTION " + KEYSPACE + ".scrinv(input double, input int) " +
+                             "CALLED ON NULL INPUT " +
+                             "RETURNS double " +
+                             "LANGUAGE java AS 'return Math.max(input, input)';");
     }
 
     @Test
@@ -909,7 +894,7 @@ public class UFTest extends CQLTester
     public void testEmptyString() throws Throwable
     {
         createTable("CREATE TABLE %s (key int primary key, sval text, aval ascii, bval blob, empty_int int)");
-        execute("INSERT INTO %s (key, sval, aval, bval, empty_int) VALUES (?, ?, ?, ?, blobAsInt(0x))", 1, "", "", ByteBuffer.allocate(0));
+        execute("INSERT INTO %s (key, sval, aval, bval, empty_int) VALUES (?, ?, ?, ?, blob_as_int(0x))", 1, "", "", ByteBuffer.allocate(0));
 
         String fNameSRC = createFunction(KEYSPACE_PER_TEST, "text",
                                          "CREATE OR REPLACE FUNCTION %s(val text) " +

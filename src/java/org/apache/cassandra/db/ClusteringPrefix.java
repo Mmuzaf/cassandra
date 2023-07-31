@@ -19,23 +19,23 @@ package org.apache.cassandra.db;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.ToIntFunction;
 
 import org.apache.cassandra.cache.IMeasurableMemory;
-import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.db.marshal.AbstractType;
+import org.apache.cassandra.config.*;
 import org.apache.cassandra.db.marshal.ByteArrayAccessor;
 import org.apache.cassandra.db.marshal.ByteBufferAccessor;
 import org.apache.cassandra.db.marshal.CompositeType;
 import org.apache.cassandra.db.marshal.ValueAccessor;
-import org.apache.cassandra.db.rows.Unfiltered;
-import org.apache.cassandra.db.rows.UnfilteredSerializer;
+import org.apache.cassandra.db.rows.*;
+import org.apache.cassandra.db.marshal.AbstractType;
+import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.utils.ByteArrayUtil;
+import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.bytecomparable.ByteComparable.Version;
 import org.apache.cassandra.utils.bytecomparable.ByteSource;
 
@@ -66,19 +66,20 @@ public interface ClusteringPrefix<V> extends IMeasurableMemory, Clusterable<V>
     {
         // WARNING: the ordering of that enum matters because we use ordinal() in the serialization
 
-        EXCL_END_BOUND              (0, -1, v -> ByteSource.LT_NEXT_COMPONENT),
-        INCL_START_BOUND            (0, -1, v -> ByteSource.LT_NEXT_COMPONENT),
-        EXCL_END_INCL_START_BOUNDARY(0, -1, v -> ByteSource.LT_NEXT_COMPONENT),
-        STATIC_CLUSTERING           (1, -1, v -> v == Version.LEGACY
-                                                 ? ByteSource.LT_NEXT_COMPONENT + 1
-                                                 : ByteSource.EXCLUDED),
-        CLUSTERING                  (2,  0, v -> v == Version.LEGACY
-                                                 ? ByteSource.NEXT_COMPONENT
-                                                 : ByteSource.TERMINATOR),
-        INCL_END_EXCL_START_BOUNDARY(3,  1, v -> ByteSource.GT_NEXT_COMPONENT),
-        INCL_END_BOUND              (3,  1, v -> ByteSource.GT_NEXT_COMPONENT),
-        EXCL_START_BOUND            (3,  1, v -> ByteSource.GT_NEXT_COMPONENT);
-
+        // @formatter:off
+        EXCL_END_BOUND               ( 0, -1, v -> ByteSource.LT_NEXT_COMPONENT),
+        INCL_START_BOUND             ( 0, -1, v -> ByteSource.LT_NEXT_COMPONENT),
+        EXCL_END_INCL_START_BOUNDARY ( 0, -1, v -> ByteSource.LT_NEXT_COMPONENT),
+        STATIC_CLUSTERING            ( 1, -1, v -> v == Version.LEGACY ? ByteSource.LT_NEXT_COMPONENT + 1
+                                                                       : ByteSource.EXCLUDED),
+        CLUSTERING                   ( 2,  0, v -> v == Version.LEGACY ? ByteSource.NEXT_COMPONENT
+                                                                       : ByteSource.TERMINATOR),
+        INCL_END_EXCL_START_BOUNDARY ( 3,  1, v -> ByteSource.GT_NEXT_COMPONENT),
+        INCL_END_BOUND               ( 3,  1, v -> ByteSource.GT_NEXT_COMPONENT),
+        EXCL_START_BOUND             ( 3,  1, v -> ByteSource.GT_NEXT_COMPONENT),
+        SSTABLE_LOWER_BOUND          (-1, -1, v -> ByteSource.LTLT_NEXT_COMPONENT),
+        SSTABLE_UPPER_BOUND          ( 4,  1, v -> ByteSource.GTGT_NEXT_COMPONENT);
+        // @formatter:on
 
         private final int comparison;
 
@@ -268,6 +269,24 @@ public interface ClusteringPrefix<V> extends IMeasurableMemory, Clusterable<V>
         return comparator.subtype(i).getString(get(i), accessor());
     }
 
+    default void validate()
+    {
+        ValueAccessor<V> accessor = accessor();
+        int sum = 0;
+        for (V v : getRawValues())
+        {
+            if (v != null && accessor.size(v) > FBUtilities.MAX_UNSIGNED_SHORT)
+                throw new InvalidRequestException(String.format("Key length of %d is longer than maximum of %d",
+                                                                dataSize(),
+                                                                FBUtilities.MAX_UNSIGNED_SHORT));
+            sum += v == null ? 0 : accessor.size(v);
+        }
+        if (sum > FBUtilities.MAX_UNSIGNED_SHORT)
+            throw new InvalidRequestException(String.format("Key length of %d is longer than maximum of %d",
+                                                            sum,
+                                                            FBUtilities.MAX_UNSIGNED_SHORT));
+    }
+
     default void validate(int i, ClusteringComparator comparator)
     {
         comparator.subtype(i).validate(get(i), accessor());
@@ -313,6 +332,22 @@ public interface ClusteringPrefix<V> extends IMeasurableMemory, Clusterable<V>
      * @return a human-readable string representation fo this prefix.
      */
     public String toString(TableMetadata metadata);
+
+    /**
+     * Returns this prefix as a start bound.
+     * If this prefix is a bound, just returns it asserting that it is a start bound.
+     * If this prefix is a clustering, returns an included start bound.
+     * If this prefix is a boundary, returns an open bound of it
+     */
+    ClusteringBound<V> asStartBound();
+
+    /**
+     * Returns this prefix as an end bound.
+     * If this prefix is a bound, just returns it asserting that it is an end bound.
+     * If this prefix is a clustering, returns an included end bound.
+     * In this prefix is a boundary, returns a close bound of it.
+     */
+    ClusteringBound<V> asEndBound();
 
     /*
      * TODO: we should stop using Clustering for partition keys. Maybe we can add

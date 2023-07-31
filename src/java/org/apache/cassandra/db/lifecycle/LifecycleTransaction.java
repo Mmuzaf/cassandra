@@ -32,7 +32,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,12 +181,12 @@ public class LifecycleTransaction extends Transactional.AbstractTransactional im
     }
 
     @SuppressWarnings("resource") // log closed during postCleanup
-    LifecycleTransaction(Tracker tracker, OperationType operationType, Iterable<SSTableReader> readers)
+    LifecycleTransaction(Tracker tracker, OperationType operationType, Iterable<? extends SSTableReader> readers)
     {
         this(tracker, new LogTransaction(operationType, tracker), readers);
     }
 
-    LifecycleTransaction(Tracker tracker, LogTransaction log, Iterable<SSTableReader> readers)
+    LifecycleTransaction(Tracker tracker, LogTransaction log, Iterable<? extends SSTableReader> readers)
     {
         this.tracker = tracker;
         this.log = log;
@@ -478,7 +477,7 @@ public class LifecycleTransaction extends Transactional.AbstractTransactional im
     private List<SSTableReader> restoreUpdatedOriginals()
     {
         Iterable<SSTableReader> torestore = filterIn(originals, logged.update, logged.obsolete);
-        return ImmutableList.copyOf(transform(torestore, (reader) -> current(reader).cloneWithRestoredStart(reader.first)));
+        return ImmutableList.copyOf(transform(torestore, (reader) -> current(reader).cloneWithRestoredStart(reader.getFirst())));
     }
 
     /**

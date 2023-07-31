@@ -17,31 +17,25 @@
  */
 package org.apache.cassandra.utils.btree;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.google.common.collect.Iterables;
-
-import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.Assert;
+
+import static org.apache.cassandra.config.CassandraRelevantProperties.BTREE_BRANCH_SHIFT;
+import static org.junit.Assert.*;
 
 public class BTreeTest
 {
     static Integer[] ints = new Integer[20];
     static
     {
-        System.setProperty("cassandra.btree.branchshift", "2");
+        BTREE_BRANCH_SHIFT.setInt(2);
         for (int i = 0 ; i < ints.length ; i++)
-            ints[i] = new Integer(i);
+            ints[i] = Integer.valueOf(i);
     }
 
     static final UpdateFunction<Integer, Integer> updateF = new UpdateFunction<Integer, Integer>()

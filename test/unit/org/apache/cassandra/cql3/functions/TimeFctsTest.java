@@ -23,9 +23,7 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 
 import org.junit.Test;
 
@@ -93,31 +91,12 @@ public class TimeFctsTest
     }
 
     @Test
-    public void testDateOf()
-    {
-
-        long timeInMillis = DATE_TIME.toInstant().toEpochMilli();
-        ByteBuffer input = ByteBuffer.wrap(atUnixMillisAsBytes(timeInMillis, 0));
-        ByteBuffer output = executeFunction(TimeFcts.dateOfFct, input);
-        assertEquals(Date.from(DATE_TIME.toInstant()), TimestampType.instance.compose(output));
-    }
-
-    @Test
     public void testTimeUuidToTimestamp()
     {
         long timeInMillis = DATE_TIME.toInstant().toEpochMilli();
         ByteBuffer input = ByteBuffer.wrap(atUnixMillisAsBytes(timeInMillis, 0));
         ByteBuffer output = executeFunction(toTimestamp(TimeUUIDType.instance), input);
         assertEquals(Date.from(DATE_TIME.toInstant()), TimestampType.instance.compose(output));
-    }
-
-    @Test
-    public void testUnixTimestampOfFct()
-    {
-        long timeInMillis = DATE_TIME.toInstant().toEpochMilli();
-        ByteBuffer input = ByteBuffer.wrap(atUnixMillisAsBytes(timeInMillis, 0));
-        ByteBuffer output = executeFunction(TimeFcts.unixTimestampOfFct, input);
-        assertEquals(timeInMillis, LongType.instance.compose(output).longValue());
     }
 
     @Test
@@ -209,7 +188,8 @@ public class TimeFctsTest
 
     private static ByteBuffer executeFunction(Function function, ByteBuffer input)
     {
-        List<ByteBuffer> params = Collections.singletonList(input);
-        return ((ScalarFunction) function).execute(ProtocolVersion.CURRENT, params);
+        Arguments arguments = function.newArguments(ProtocolVersion.CURRENT);
+        arguments.set(0, input);
+        return ((ScalarFunction) function).execute(arguments);
     }
 }

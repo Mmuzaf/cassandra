@@ -20,6 +20,7 @@ package org.apache.cassandra.audit;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 
 import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.PreparedStatement;
@@ -497,7 +498,7 @@ public class AuditLoggerTest extends CQLTester
     {
         String tblName = createTableName();
 
-        String cql = "CREATE FUNCTION IF NOT EXISTS  " + KEYSPACE + "." + tblName + " (column TEXT,num int) RETURNS NULL ON NULL INPUT RETURNS text LANGUAGE javascript AS $$ column.substring(0,num) $$";
+        String cql = "CREATE FUNCTION IF NOT EXISTS  " + KEYSPACE + "." + tblName + " (column TEXT,num int) RETURNS NULL ON NULL INPUT RETURNS text LANGUAGE java AS $$ return column.substring(0,num); $$";
         executeAndAssert(cql, AuditLogEntryType.CREATE_FUNCTION);
 
         cql = "DROP FUNCTION " + KEYSPACE + "." + tblName;
@@ -716,6 +717,34 @@ public class AuditLoggerTest extends CQLTester
         }
         assertEquals(1, QueryEvents.instance.listenerCount());
         assertEquals(0, AuthEvents.instance.listenerCount());
+    }
+
+    @Test
+    public void testJMXArchiveCommand()
+    {
+        disableAuditLogOptions();
+        AuditLogOptions options = new AuditLogOptions();
+
+        try
+        {
+            StorageService.instance.enableAuditLog("BinAuditLogger", Collections.emptyMap(), "", "", "", "",
+                                                   "", "", 10, true, options.roll_cycle,
+                                                   1000L, 1000, "/xyz/not/null");
+            fail("not allowed");
+        }
+        catch (ConfigurationException e)
+        {
+            assertTrue(e.getMessage().contains("Can't enable audit log archiving via nodetool"));
+        }
+
+        options.archive_command = "/xyz/not/null";
+        options.audit_logs_dir = "/tmp/abc";
+        DatabaseDescriptor.setAuditLoggingOptions(options);
+        StorageService.instance.enableAuditLog("BinAuditLogger", Collections.emptyMap(), "", "", "", "",
+                                               "", "", 10, true, options.roll_cycle,
+                                               1000L, 1000, null);
+        assertTrue(AuditLogManager.instance.isEnabled());
+        assertEquals("/xyz/not/null", AuditLogManager.instance.getAuditLogOptions().archive_command);
     }
 
     /**
