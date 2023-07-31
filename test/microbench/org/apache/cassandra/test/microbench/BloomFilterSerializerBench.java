@@ -35,7 +35,6 @@ import org.openjdk.jmh.annotations.Warmup;
 
 import org.apache.cassandra.db.BufferDecoratedKey;
 import org.apache.cassandra.dht.Murmur3Partitioner;
-import org.apache.cassandra.io.util.DataOutputStreamPlus;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileInputStreamPlus;
 import org.apache.cassandra.io.util.FileOutputStreamPlus;

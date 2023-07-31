@@ -32,10 +32,9 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import com.google.common.annotations.VisibleForTesting;
-
 import com.codahale.metrics.ExponentiallyDecayingReservoir;
 import com.codahale.metrics.Snapshot;
+import com.google.common.annotations.VisibleForTesting;
 
 import org.apache.cassandra.concurrent.ScheduledExecutors;
 import org.apache.cassandra.config.DatabaseDescriptor;

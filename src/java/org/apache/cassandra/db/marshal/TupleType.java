@@ -29,7 +29,6 @@ import com.google.common.collect.Lists;
 
 import org.apache.cassandra.cql3.CQL3Type;
 import org.apache.cassandra.cql3.Constants;
-import org.apache.cassandra.cql3.Json;
 import org.apache.cassandra.cql3.Term;
 import org.apache.cassandra.cql3.Tuples;
 import org.apache.cassandra.db.TypeSizes;

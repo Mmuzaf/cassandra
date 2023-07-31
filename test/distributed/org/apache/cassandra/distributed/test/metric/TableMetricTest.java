@@ -51,8 +51,8 @@ import org.apache.cassandra.schema.SystemDistributedKeyspace;
 import org.apache.cassandra.tracing.TraceKeyspace;
 import org.apache.cassandra.utils.MBeanWrapper;
 
-import static org.apache.cassandra.config.CassandraRelevantProperties.ORG_APACHE_CASSANDRA_DISABLE_MBEAN_REGISTRATION;
 import static org.apache.cassandra.config.CassandraRelevantProperties.MBEAN_REGISTRATION_CLASS;
+import static org.apache.cassandra.config.CassandraRelevantProperties.ORG_APACHE_CASSANDRA_DISABLE_MBEAN_REGISTRATION;
 
 public class TableMetricTest extends TestBaseImpl
 {

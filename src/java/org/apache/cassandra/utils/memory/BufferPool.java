@@ -40,7 +40,6 @@ import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import jdk.internal.ref.Cleaner;
 import net.nicoulaj.compilecommand.annotations.Inline;
 
 import org.slf4j.Logger;
@@ -54,9 +53,10 @@ import org.apache.cassandra.utils.NoSpamLogger;
 import org.apache.cassandra.utils.Shared;
 import org.apache.cassandra.utils.concurrent.Ref;
 import org.apache.cassandra.utils.concurrent.Ref.DirectBufferRef;
-import sun.nio.ch.DirectBuffer;
 
 import io.netty.util.concurrent.FastThreadLocal;
+import jdk.internal.ref.Cleaner;
+import sun.nio.ch.DirectBuffer;
 
 import static com.google.common.collect.ImmutableList.of;
 import static org.apache.cassandra.concurrent.ExecutorFactory.Global.executorFactory;

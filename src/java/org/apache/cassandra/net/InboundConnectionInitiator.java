@@ -70,8 +70,6 @@ import static org.apache.cassandra.concurrent.ExecutorFactory.Global.executorFac
 import static org.apache.cassandra.net.InternodeConnectionUtils.DISCARD_HANDLER_NAME;
 import static org.apache.cassandra.net.InternodeConnectionUtils.SSL_HANDLER_NAME;
 import static org.apache.cassandra.net.InternodeConnectionUtils.certificates;
-import static org.apache.cassandra.net.MessagingService.VERSION_30;
-import static org.apache.cassandra.net.MessagingService.VERSION_40;
 import static org.apache.cassandra.net.MessagingService.current_version;
 import static org.apache.cassandra.net.MessagingService.instance;
 import static org.apache.cassandra.net.MessagingService.minimum_version;

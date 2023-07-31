@@ -21,8 +21,6 @@ package org.apache.cassandra.distributed.upgrade;
 import java.util.UUID;
 import java.util.concurrent.RejectedExecutionException;
 
-import com.vdurmont.semver4j.Semver;
-
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 

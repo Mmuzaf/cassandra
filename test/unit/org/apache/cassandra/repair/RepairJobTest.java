@@ -85,7 +85,6 @@ import static org.apache.cassandra.repair.RepairParallelism.SEQUENTIAL;
 import static org.apache.cassandra.streaming.PreviewKind.NONE;
 import static org.apache.cassandra.utils.TimeUUID.Generator.nextTimeUUID;
 import static org.apache.cassandra.utils.asserts.SyncTaskAssert.assertThat;
-import static org.apache.cassandra.utils.asserts.SyncTaskListAssert.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

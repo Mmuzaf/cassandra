@@ -54,7 +54,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.util.concurrent.Future; // checkstyle: permit this import
 
 import static com.google.common.base.Throwables.getRootCause;
-
 import static java.lang.String.format;
 import static java.lang.Thread.currentThread;
 import static java.util.concurrent.TimeUnit.MINUTES;

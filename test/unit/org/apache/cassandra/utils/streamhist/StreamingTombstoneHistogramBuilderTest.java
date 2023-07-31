@@ -39,8 +39,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.quicktheories.QuickTheory.qt;
 import static org.quicktheories.generators.SourceDSL.integers;
-import static org.quicktheories.generators.SourceDSL.longs;
 import static org.quicktheories.generators.SourceDSL.lists;
+import static org.quicktheories.generators.SourceDSL.longs;
 
 public class StreamingTombstoneHistogramBuilderTest
 {

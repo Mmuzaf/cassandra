@@ -23,8 +23,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.assertj.core.api.Assertions;
-import org.awaitility.Awaitility;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

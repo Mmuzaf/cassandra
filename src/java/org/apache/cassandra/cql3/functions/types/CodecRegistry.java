@@ -43,7 +43,33 @@ import org.slf4j.LoggerFactory;
 import org.apache.cassandra.cql3.functions.types.exceptions.CodecNotFoundException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.apache.cassandra.cql3.functions.types.DataType.Name.*;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.ASCII;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.BIGINT;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.BLOB;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.BOOLEAN;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.COUNTER;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.DATE;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.DECIMAL;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.DOUBLE;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.DURATION;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.FLOAT;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.INET;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.INT;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.LIST;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.MAP;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.SET;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.SMALLINT;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.TEXT;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.TIME;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.TIMESTAMP;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.TIMEUUID;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.TINYINT;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.TUPLE;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.UDT;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.UUID;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.VARCHAR;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.VARINT;
+import static org.apache.cassandra.cql3.functions.types.DataType.Name.VECTOR;
 
 /**
  * A registry for {@link TypeCodec}s. When the driver needs to serialize or deserialize a Java type
