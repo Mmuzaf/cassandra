@@ -305,7 +305,7 @@
     <!-- needed to compile org.apache.cassandra.utils.JMXServerUtils -->
     <!-- needed to compile org.apache.cassandra.distributed.impl.Instance-->
     <!-- needed to compile org.apache.cassandra.utils.memory.BufferPool -->
-    <property name="jdk11plus-javac-exports" value="--add-exports java.rmi/sun.rmi.registry=ALL-UNNAMED --add-exports java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED --add-exports java.base/jdk.internal.ref=ALL-UNNAMED --add-exports java.base/sun.nio.ch=ALL-UNNAMED" />
+    <property name="jdk11plus-javac-exports" value="--add-exports java.rmi/sun.rmi.registry=ALL-UNNAMED --add-exports java.rmi/sun.rmi.transport.tcp=ALL-UNNAMED --add-exports java.base/jdk.internal.ref=ALL-UNNAMED --add-exports java.base/sun.nio.ch=ALL-UNNAMED -Xmaxerrs 65536" />
 
     <!--
          Add all the dependencies.
@@ -334,7 +334,7 @@
       <javadoc destdir="@{destdir}" author="true" version="true" use="true"
         windowtitle="${ant.project.name} API" classpathref="cassandra.classpath"
         bottom="Copyright &amp;copy; 2009- The Apache Software Foundation"
-        useexternalfile="yes" encoding="UTF-8" failonerror="false"
+        useexternalfile="yes" encoding="UTF-8" failonerror="true"
         maxmemory="256m" additionalparam="${jdk11plus-javac-exports}">
         <filesets/>
       </javadoc>

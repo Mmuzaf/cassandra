@@ -133,7 +133,7 @@ public class TableViews extends AbstractCollection<View>
 
     /**
      * Calculates and pushes updates to the views replicas. The replicas are determined by
-     * {@link ViewUtils#getViewNaturalEndpoint(String, Token, Token)}.
+     * {@code ViewUtils#getViewNaturalEndpoint(String, Token, Token)}.
      *
      * @param update an update on the base table represented by this object.
      * @param writeCommitLog whether we should write the commit log for the view updates.

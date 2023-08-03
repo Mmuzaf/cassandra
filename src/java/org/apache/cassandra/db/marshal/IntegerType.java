@@ -153,12 +153,12 @@ public final class IntegerType extends NumberType<BigInteger>
      *
      * In the current format we represent it:
      *    directly as varint, if the length is 6 or smaller (the encoding has non-00/FF first byte)
-     *    <signbyte><length as unsigned integer - 7><7 or more bytes>, otherwise
-     * where <signbyte> is 00 for negative numbers and FF for positive ones, and the length's bytes are inverted if
+     *    {@code <signbyte><length as unsigned integer - 7><7 or more bytes>}, otherwise
+     * where {@code <signbyte>} is 00 for negative numbers and FF for positive ones, and the length's bytes are inverted if
      * the number is negative (so that longer length sorts smaller).
      *
      * Because we present the sign separately, we don't need to include 0x00 prefix for positive integers whose first
-     * byte is >= 0x80 or 0xFF prefix for negative integers whose first byte is < 0x80. Note that we do this before
+     * byte is {@code >= 0x80} or 0xFF prefix for negative integers whose first byte is {@code <} 0x80. Note that we do this before
      * taking the length for the purposes of choosing between varint and full-form encoding.
      *
      * The representations are prefix-free, because the choice between varint and full-form encoding is determined by

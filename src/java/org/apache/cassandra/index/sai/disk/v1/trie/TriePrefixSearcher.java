@@ -27,7 +27,7 @@ import org.apache.cassandra.io.util.SizedInts;
 import org.apache.cassandra.utils.bytecomparable.ByteSource;
 
 /**
- * Thread-unsafe specialized value -> long trie prefix searcher.
+ * Thread-unsafe specialized value - long trie prefix searcher.
  * <p>
  * This is a specialization of the {@link Walker} that will look for a prefix or
  * a complete term and return the first payload associated with the term.

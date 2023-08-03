@@ -97,7 +97,7 @@ import static org.apache.cassandra.utils.MonotonicClock.Global.approxTime;
  * the untouched frames to the correct thread pool for the verb to be deserialized there and immediately processed.
  *
  * See {@link LargeMessage} and subclasses for concrete {@link AbstractMessageHandler} implementations for details
- * of the large-message accumulating state-machine, and {@link InboundMessageHandler.ProcessMessage} and its inheritors 
+ * of the large-message accumulating state-machine, and {@code InboundMessageHandler.ProcessMessage} and its inheritors
  * for the differences in execution.
  *
  * # Flow control (backpressure)

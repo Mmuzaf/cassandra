@@ -47,7 +47,7 @@
  *     to quickly locate the point id of a term by the term contents
  *     </li>
  * </ul>
- * </p>
+ * <p>
  *
  * The implementation has been based on code from Lucene version 7.5 {@link org.apache.lucene.index.SortedDocValues}.
  * Prefix compression and bitpacking are used extensively to save space.

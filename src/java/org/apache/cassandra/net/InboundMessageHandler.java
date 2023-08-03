@@ -58,7 +58,7 @@ import static org.apache.cassandra.utils.MonotonicClock.Global.approxTime;
  * To prevent nodes from overwhelming and bringing each other to the knees with more inbound messages that
  * can be processed in a timely manner, {@link InboundMessageHandler} implements a strict flow control policy.
  * The size of the incoming message is dependent on the messaging version of the specific peer connection. See
- * {@link Message.Serializer#inferMessageSize(ByteBuffer, int, int, int)}.
+ * {@code Message.Serializer#inferMessageSize(ByteBuffer, int, int, int)}.
  *
  * By default, every connection has 4MiB of exlusive permits available before needing to access the per-endpoint
  * and global reserves.
