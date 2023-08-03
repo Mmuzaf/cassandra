@@ -17,7 +17,7 @@
  */
 
 /**
- * <h1>Non-blocking streaming with netty</h1>
+ * <h2>Non-blocking streaming with netty</h2>
  * This document describes the implementation details of the streaming protocol. A listener for a streaming
  * session listens on the same socket as internode messaging, and participates in the same handshake protocol
  * That protocol is described in the package-level documentation for {@code org.apache.cassandra.net.async}, and

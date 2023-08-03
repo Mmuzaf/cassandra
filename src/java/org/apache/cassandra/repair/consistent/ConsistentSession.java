@@ -55,12 +55,12 @@ import org.apache.cassandra.utils.TimeUUID;
  * <p>
  * There are 4 stages to a consistent incremental repair.
  *
- * <h1>Repair prepare</h1>
+ * <h2>Repair prepare</h2>
  *  First, the normal {@link ActiveRepairService#prepareForRepair(TimeUUID, InetAddressAndPort, Set, RepairOption, boolean, List)} stuff
  *  happens, which sends out {@link PrepareMessage} and creates a {@link ActiveRepairService.ParentRepairSession}
  *  on the coordinator and each of the neighbors.
  *
- * <h1>Consistent prepare</h1>
+ * <h2>Consistent prepare</h2>
  *  The consistent prepare step promotes the parent repair session to a consistent session, and isolates the sstables
  *  being repaired from  other sstables. First, the coordinator sends a {@link PrepareConsistentRequest} message to each repair
  *  participant (including itself). When received, the node creates a {@link LocalSession} instance, sets it's state to
@@ -76,7 +76,7 @@ import org.apache.cassandra.utils.TimeUUID;
  *  <p>
  *  (see {@link CoordinatorSession#handlePrepareResponse(InetAddressAndPort, boolean)}
  *
- * <h1>Repair</h1>
+ * <h2>Repair</h2>
  *  The coordinator runs the normal data repair process against the sstables segregated in the previous step. When a
  *  node recieves a {@link ValidationRequest}, it sets it's local session state to {@code REPAIRING}.
  *  <p>
@@ -84,7 +84,7 @@ import org.apache.cassandra.utils.TimeUUID;
  *  If all of the RepairSessions complete successfully, the coordinator begins the {@code Finalization} process. Otherwise,
  *  it begins the {@code Failure} process.
  *
- * <h1>Finalization</h1>
+ * <h2>Finalization</h2>
  *  The finalization step finishes the session and promotes the sstables to repaired. The coordinator begins by sending
  *  {@link FinalizePropose} messages to each of the participants. Each participant will set it's state to {@code FINALIZE_PROMISED}
  *  and respond with a {@link FinalizePromise} message. Once the coordinator has received promise messages from all participants,
@@ -103,7 +103,7 @@ import org.apache.cassandra.utils.TimeUUID;
  *  On the local session side, see {@link LocalSessions#handleFinalizeProposeMessage(InetAddressAndPort, FinalizePropose)}
  *  and {@link LocalSessions#handleFinalizeCommitMessage(InetAddressAndPort, FinalizeCommit)}
  *
- * <h1>Failure</h1>
+ * <h2>Failure</h2>
  *  If there are any failures or problems during the process above, the session will be failed. When a session is failed,
  *  the coordinator will send {@link FailSession} messages to each of the participants. In some cases (basically those not
  *  including Validation and Sync) errors are reported back to the coordinator by the local session, at which point, it
@@ -115,7 +115,7 @@ import org.apache.cassandra.utils.TimeUUID;
  *  <p>
  *  See {@code LocalSessions#failSession(UUID, boolean)} and {@link CoordinatorSession#fail()}
  *
- * <h1>Failure Recovery and Session Cleanup</h1>
+ * <h2>Failure Recovery and Session Cleanup</h2>
  *  There are a few scenarios where sessions can get stuck. If a node fails mid session, or it misses a {@code FailSession}
  *  or {@code FinalizeCommit} message, it will never finish. To address this, there is a cleanup task that runs every
  *  10 minutes that attempts to complete idle sessions.

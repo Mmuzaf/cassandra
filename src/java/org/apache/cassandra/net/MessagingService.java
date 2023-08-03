@@ -89,7 +89,7 @@ import static org.apache.cassandra.utils.Throwables.maybeFail;
  *
  * MessagingService will now automatically invoke your handler whenever a {@link Message} with this verb arrives.
  *
- * <h1>Architecture of MessagingService</h1>
+ * <h2>Architecture of MessagingService</h2>
  *
  * <h2>QOS</h2>
  *
