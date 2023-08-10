@@ -217,6 +217,7 @@ public class SSTableLoaderTest
         assertTrue(partitions.size() > 0 && partitions.size() < NB_PARTITIONS);
 
         // now we complete the write and the second loader should load the last sstable as well
+        System.out.println(">>>>> Closing writer");
         writer.close();
         first.await();
 
@@ -224,12 +225,15 @@ public class SSTableLoaderTest
         loader = new SSTableLoader(dataDir, new TestClient(), new OutputHandler.SystemOutput(false, false));
         loader.stream(Collections.emptySet(), completionStreamListener(second)).get();
 
+        System.out.println(">>>>> Second stream");
         partitions = Util.getAll(Util.cmd(Keyspace.open(KEYSPACE1).getColumnFamilyStore(CF_STANDARD2)).build());
         assertEquals(NB_PARTITIONS, partitions.size());
 
         // The stream future is signalled when the work is complete but before releasing references. Wait for release
         // before cleanup (CASSANDRA-10118).
         second.await();
+
+        System.out.println(">>>>> Second awaited");
     }
 
     @Test
