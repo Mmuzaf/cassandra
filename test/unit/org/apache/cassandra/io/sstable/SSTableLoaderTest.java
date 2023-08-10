@@ -29,6 +29,7 @@ import org.apache.cassandra.io.util.File;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 
 import org.apache.cassandra.SchemaLoader;
@@ -50,6 +51,7 @@ import org.apache.cassandra.streaming.StreamState;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.OutputHandler;
+import org.junit.rules.TestName;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -87,15 +89,39 @@ public class SSTableLoaderTest
         StorageService.instance.initServer();
     }
 
+    @Rule
+    public TestName testName = new TestName();
+
     @Before
     public void setup() throws Exception
     {
+        System.out.println("Running " + testName.getMethodName());
         tmpdir = new File(Files.createTempDir());
     }
 
     @After
     public void cleanup()
     {
+        System.out.println(">>>>>> cleanup");
+        try
+        {
+            for (String[] keyspaceTable : new String[][] { {KEYSPACE1, CF_STANDARD1},
+                    {KEYSPACE1, CF_STANDARD2},
+                    {KEYSPACE1, CF_BACKUPS},
+                    {KEYSPACE1, CF_SNAPSHOTS},
+                    {KEYSPACE2, CF_STANDARD2}})
+            {
+                Keyspace keyspace = Keyspace.open(keyspaceTable[0]);
+                ColumnFamilyStore cfs = keyspace.getColumnFamilyStore(keyspaceTable[1]);
+                cfs.truncateBlocking();
+                StorageService.instance.truncate(keyspaceTable[0], keyspaceTable[1]);
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new RuntimeException("Unable to truncate table!", ex);
+        }
+
         try
         {
             tmpdir.deleteRecursive();
@@ -109,25 +135,6 @@ public class SSTableLoaderTest
              */
             System.gc();
             tmpdir.deleteRecursive();
-        }
-
-        try
-        {
-            for (String[] keyspaceTable : new String[][] { {KEYSPACE1, CF_STANDARD1},
-                                                           {KEYSPACE1, CF_STANDARD2},
-                                                           {KEYSPACE1, CF_BACKUPS},
-                                                           {KEYSPACE1, CF_SNAPSHOTS},
-                                                           {KEYSPACE2, CF_STANDARD2}})
-            {
-                Keyspace keyspace = Keyspace.open(keyspaceTable[0]);
-                ColumnFamilyStore cfs = keyspace.getColumnFamilyStore(keyspaceTable[1]);
-                cfs.truncateBlocking();
-                StorageService.instance.truncate(keyspaceTable[0], keyspaceTable[1]);
-            }
-        }
-        catch (Exception ex)
-        {
-            throw new RuntimeException("Unable to truncate table!", ex);
         }
     }
 
@@ -147,44 +154,44 @@ public class SSTableLoaderTest
             return Schema.instance.getTableMetadataRef(keyspace, tableName);
         }
     }
-//
-//    @Test
-//    public void testLoadingSSTable() throws Exception
-//    {
-//        File dataDir = dataDir(CF_STANDARD1);
-//        TableMetadata metadata = Schema.instance.getTableMetadata(KEYSPACE1, CF_STANDARD1);
-//
-//        try (CQLSSTableWriter writer = CQLSSTableWriter.builder()
-//                                                       .inDirectory(dataDir)
-//                                                       .forTable(String.format(schema, KEYSPACE1, CF_STANDARD1))
-//                                                       .using(String.format(query, KEYSPACE1, CF_STANDARD1))
-//                                                       .build())
-//        {
-//            writer.addRow("key1", "col1", "100");
-//        }
-//
-//        ColumnFamilyStore cfs = Keyspace.open(KEYSPACE1).getColumnFamilyStore(CF_STANDARD1);
-//        Util.flush(cfs); // wait for sstables to be on disk else we won't be able to stream them
-//
-//        final CountDownLatch latch = new CountDownLatch(1);
-//        SSTableLoader loader = new SSTableLoader(dataDir, new TestClient(), new OutputHandler.SystemOutput(false, false));
-//        loader.stream(Collections.emptySet(), completionStreamListener(latch)).get();
-//
-//        List<FilteredPartition> partitions = Util.getAll(Util.cmd(cfs).build());
-//
-//        assertEquals(1, partitions.size());
-//        assertEquals("key1", AsciiType.instance.getString(partitions.get(0).partitionKey().getKey()));
-//        assert metadata != null;
-//
-//        Row row = partitions.get(0).getRow(Clustering.make(ByteBufferUtil.bytes("col1")));
-//        assert row != null;
-//
-//        assertEquals(ByteBufferUtil.bytes("100"), row.getCell(metadata.getColumn(ByteBufferUtil.bytes("val"))).buffer());
-//
-//        // The stream future is signalled when the work is complete but before releasing references. Wait for release
-//        // before cleanup (CASSANDRA-10118).
-//        latch.await();
-//    }
+
+    @Test
+    public void testLoadingSSTable() throws Exception
+    {
+        File dataDir = dataDir(CF_STANDARD1);
+        TableMetadata metadata = Schema.instance.getTableMetadata(KEYSPACE1, CF_STANDARD1);
+
+        try (CQLSSTableWriter writer = CQLSSTableWriter.builder()
+                                                       .inDirectory(dataDir)
+                                                       .forTable(String.format(schema, KEYSPACE1, CF_STANDARD1))
+                                                       .using(String.format(query, KEYSPACE1, CF_STANDARD1))
+                                                       .build())
+        {
+            writer.addRow("key1", "col1", "100");
+        }
+
+        ColumnFamilyStore cfs = Keyspace.open(KEYSPACE1).getColumnFamilyStore(CF_STANDARD1);
+        Util.flush(cfs); // wait for sstables to be on disk else we won't be able to stream them
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        SSTableLoader loader = new SSTableLoader(dataDir, new TestClient(), new OutputHandler.SystemOutput(false, false));
+        loader.stream(Collections.emptySet(), completionStreamListener(latch)).get();
+
+        List<FilteredPartition> partitions = Util.getAll(Util.cmd(cfs).build());
+
+        assertEquals(1, partitions.size());
+        assertEquals("key1", AsciiType.instance.getString(partitions.get(0).partitionKey().getKey()));
+        assert metadata != null;
+
+        Row row = partitions.get(0).getRow(Clustering.make(ByteBufferUtil.bytes("col1")));
+        assert row != null;
+
+        assertEquals(ByteBufferUtil.bytes("100"), row.getCell(metadata.getColumn(ByteBufferUtil.bytes("val"))).buffer());
+
+        // The stream future is signalled when the work is complete but before releasing references. Wait for release
+        // before cleanup (CASSANDRA-10118).
+        latch.await();
+    }
 
     @Test
     public void testLoadingIncompleteSSTable() throws Exception
@@ -237,81 +244,80 @@ public class SSTableLoaderTest
         // The stream future is signalled when the work is complete but before releasing references. Wait for release
         // before cleanup (CASSANDRA-10118).
         second.await();
-        cfs.truncateBlocking();
         System.out.println(">>>>> Second awaited");
     }
-//
-//    @Test
-//    public void testLoadingSSTableToDifferentKeyspaceAndTable() throws Exception
-//    {
-//        File dataDir = dataDir(CF_STANDARD1);
-//        TableMetadata metadata = Schema.instance.getTableMetadata(KEYSPACE1, CF_STANDARD1);
-//
-//        String schema = "CREATE TABLE %s.%s (key ascii, name ascii, val ascii, val1 ascii, PRIMARY KEY (key, name))";
-//        String query = "INSERT INTO %s.%s (key, name, val) VALUES (?, ?, ?)";
-//
-//        try (CQLSSTableWriter writer = CQLSSTableWriter.builder()
-//                .inDirectory(dataDir)
-//                .forTable(String.format(schema, KEYSPACE1, CF_STANDARD1))
-//                .using(String.format(query, KEYSPACE1, CF_STANDARD1))
-//                .build())
-//        {
-//            writer.addRow("key1", "col1", "100");
-//        }
-//
-//        ColumnFamilyStore cfs = Keyspace.open(KEYSPACE1).getColumnFamilyStore(CF_STANDARD1);
-//        Util.flush(cfs); // wait for sstables to be on disk else we won't be able to stream them
-//
-//        for (String table : new String[] { CF_STANDARD2, null })
-//        {
-//            final CountDownLatch latch = new CountDownLatch(1);
-//            SSTableLoader loader = new SSTableLoader(dataDir, new TestClient(), new OutputHandler.SystemOutput(false, false), 1, KEYSPACE2, table);
-//            loader.stream(Collections.emptySet(), completionStreamListener(latch)).get();
-//
-//            String targetTable = table == null ? CF_STANDARD1 : table;
-//            cfs = Keyspace.open(KEYSPACE2).getColumnFamilyStore(targetTable);
-//            Util.flush(cfs);
-//
-//            List<FilteredPartition> partitions = Util.getAll(Util.cmd(cfs).build());
-//
-//            assertEquals(1, partitions.size());
-//            assertEquals("key1", AsciiType.instance.getString(partitions.get(0).partitionKey().getKey()));
-//            assert metadata != null;
-//
-//            Row row = partitions.get(0).getRow(Clustering.make(ByteBufferUtil.bytes("col1")));
-//            assert row != null;
-//
-//            assertEquals(ByteBufferUtil.bytes("100"), row.getCell(metadata.getColumn(ByteBufferUtil.bytes("val"))).buffer());
-//
-//            // The stream future is signalled when the work is complete but before releasing references. Wait for release
-//            // before cleanup (CASSANDRA-10118).
-//            latch.await();
-//        }
-//    }
-//
-//    @Test
-//    public void testLoadingBackupsTable() throws Exception
-//    {
-//        testLoadingTable(CF_BACKUPS, false);
-//    }
-//
-//    @Test
-//    public void testLoadingSnapshotsTable() throws Exception
-//    {
-//        testLoadingTable(CF_SNAPSHOTS, false);
-//    }
-//
-//    @Test
-//    public void testLoadingLegacyBackupsTable() throws Exception
-//    {
-//        testLoadingTable(CF_BACKUPS, true);
-//    }
-//
-//    @Test
-//    public void testLoadingLegacySnapshotsTable() throws Exception
-//    {
-//        testLoadingTable(CF_SNAPSHOTS, true);
-//    }
+
+    @Test
+    public void testLoadingSSTableToDifferentKeyspaceAndTable() throws Exception
+    {
+        File dataDir = dataDir(CF_STANDARD1);
+        TableMetadata metadata = Schema.instance.getTableMetadata(KEYSPACE1, CF_STANDARD1);
+
+        String schema = "CREATE TABLE %s.%s (key ascii, name ascii, val ascii, val1 ascii, PRIMARY KEY (key, name))";
+        String query = "INSERT INTO %s.%s (key, name, val) VALUES (?, ?, ?)";
+
+        try (CQLSSTableWriter writer = CQLSSTableWriter.builder()
+                .inDirectory(dataDir)
+                .forTable(String.format(schema, KEYSPACE1, CF_STANDARD1))
+                .using(String.format(query, KEYSPACE1, CF_STANDARD1))
+                .build())
+        {
+            writer.addRow("key1", "col1", "100");
+        }
+
+        ColumnFamilyStore cfs = Keyspace.open(KEYSPACE1).getColumnFamilyStore(CF_STANDARD1);
+        Util.flush(cfs); // wait for sstables to be on disk else we won't be able to stream them
+
+        for (String table : new String[] { CF_STANDARD2, null })
+        {
+            final CountDownLatch latch = new CountDownLatch(1);
+            SSTableLoader loader = new SSTableLoader(dataDir, new TestClient(), new OutputHandler.SystemOutput(false, false), 1, KEYSPACE2, table);
+            loader.stream(Collections.emptySet(), completionStreamListener(latch)).get();
+
+            String targetTable = table == null ? CF_STANDARD1 : table;
+            cfs = Keyspace.open(KEYSPACE2).getColumnFamilyStore(targetTable);
+            Util.flush(cfs);
+
+            List<FilteredPartition> partitions = Util.getAll(Util.cmd(cfs).build());
+
+            assertEquals(1, partitions.size());
+            assertEquals("key1", AsciiType.instance.getString(partitions.get(0).partitionKey().getKey()));
+            assert metadata != null;
+
+            Row row = partitions.get(0).getRow(Clustering.make(ByteBufferUtil.bytes("col1")));
+            assert row != null;
+
+            assertEquals(ByteBufferUtil.bytes("100"), row.getCell(metadata.getColumn(ByteBufferUtil.bytes("val"))).buffer());
+
+            // The stream future is signalled when the work is complete but before releasing references. Wait for release
+            // before cleanup (CASSANDRA-10118).
+            latch.await();
+        }
+    }
+
+    @Test
+    public void testLoadingBackupsTable() throws Exception
+    {
+        testLoadingTable(CF_BACKUPS, false);
+    }
+
+    @Test
+    public void testLoadingSnapshotsTable() throws Exception
+    {
+        testLoadingTable(CF_SNAPSHOTS, false);
+    }
+
+    @Test
+    public void testLoadingLegacyBackupsTable() throws Exception
+    {
+        testLoadingTable(CF_BACKUPS, true);
+    }
+
+    @Test
+    public void testLoadingLegacySnapshotsTable() throws Exception
+    {
+        testLoadingTable(CF_SNAPSHOTS, true);
+    }
 
     private void testLoadingTable(String tableName, boolean isLegacyTable) throws Exception
     {
