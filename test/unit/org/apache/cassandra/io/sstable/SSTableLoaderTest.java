@@ -116,7 +116,7 @@ public class SSTableLoaderTest
             for (String[] keyspaceTable : new String[][] { {KEYSPACE1, CF_STANDARD1},
                                                            {KEYSPACE1, CF_STANDARD2},
                                                            {KEYSPACE1, CF_BACKUPS},
-                                                           {KEYSPACE2, CF_STANDARD1},
+                                                           {KEYSPACE1, CF_SNAPSHOTS},
                                                            {KEYSPACE2, CF_STANDARD2}})
             StorageService.instance.truncate(keyspaceTable[0], keyspaceTable[1]);
         }
@@ -207,10 +207,10 @@ public class SSTableLoaderTest
         //make sure we have some tables...
         assertTrue(Objects.requireNonNull(dataDir.tryList()).length > 0);
 
-        final CountDownLatch latch = new CountDownLatch(2);
+        final CountDownLatch first = new CountDownLatch(1);
         //writer is still open so loader should not load anything
         SSTableLoader loader = new SSTableLoader(dataDir, new TestClient(), new OutputHandler.SystemOutput(false, false));
-        loader.stream(Collections.emptySet(), completionStreamListener(latch)).get();
+        loader.stream(Collections.emptySet(), completionStreamListener(first)).get();
 
         List<FilteredPartition> partitions = Util.getAll(Util.cmd(cfs).build());
 
@@ -218,16 +218,18 @@ public class SSTableLoaderTest
 
         // now we complete the write and the second loader should load the last sstable as well
         writer.close();
+        first.await();
 
+        final CountDownLatch second = new CountDownLatch(1);
         loader = new SSTableLoader(dataDir, new TestClient(), new OutputHandler.SystemOutput(false, false));
-        loader.stream(Collections.emptySet(), completionStreamListener(latch)).get();
+        loader.stream(Collections.emptySet(), completionStreamListener(second)).get();
 
         partitions = Util.getAll(Util.cmd(Keyspace.open(KEYSPACE1).getColumnFamilyStore(CF_STANDARD2)).build());
         assertEquals(NB_PARTITIONS, partitions.size());
 
         // The stream future is signalled when the work is complete but before releasing references. Wait for release
         // before cleanup (CASSANDRA-10118).
-        latch.await();
+        second.await();
     }
 
     @Test
