@@ -478,7 +478,7 @@ public enum CassandraRelevantProperties
     TCM_PROGRESS_BARRIER_TIMEOUT_MILLIS("cassandra.progress_barrier_timeout_ms", "3600000"),
 
     /**
-     * size of in-memory index of max epoch -> sealed period
+     * size of in-memory index of max epoch {@code ->} sealed period
      */
     TCM_RECENTLY_SEALED_PERIOD_INDEX_SIZE("cassandra.recently_sealed_period_index_size", "10"),
 
@@ -535,7 +535,7 @@ public enum CassandraRelevantProperties
     TEST_UNSAFE_VERBOSE_DEBUG_CLIENT_PROTOCOL("cassandra.unsafe_verbose_debug_client_protocol"),
     TEST_USE_PREPARED("cassandra.test.use_prepared", "true"),
     TEST_UTIL_ALLOW_TOOL_REINIT_FOR_TEST("org.apache.cassandra.tools.UtilALLOW_TOOL_REINIT_FOR_TEST"),
-    /** Activate write survey mode. The node not becoming an active ring member, and you must use JMX StorageService->joinRing() to finalize the ring joining. */
+    /** Activate write survey mode. The node not becoming an active ring member, and you must use JMX {@code StorageService->joinRing()} to finalize the ring joining. */
     TEST_WRITE_SURVEY("cassandra.write_survey"),
     TOLERATE_SSTABLE_SIZE("cassandra.tolerate_sstable_size"),
     TRIGGERS_DIR("cassandra.triggers_dir"),

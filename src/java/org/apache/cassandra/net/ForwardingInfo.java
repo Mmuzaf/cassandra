@@ -36,7 +36,7 @@ import static org.apache.cassandra.net.MessagingService.VERSION_40;
 import static org.apache.cassandra.utils.vint.VIntCoding.computeUnsignedVIntSize;
 
 /**
- * A container used to store a node -> message_id map for inter-DC write forwarding.
+ * A container used to store a node {@code ->} message_id map for inter-DC write forwarding.
  * We pick one node in each external DC to forward the message to its local peers.
  *
  * TODO: in the next protocol version only serialize peers, message id will become redundant once 3.0 is out of the picture

@@ -53,7 +53,7 @@ import static org.apache.cassandra.utils.MonotonicClock.Global.approxTime;
  * thread pool for processing. Large messages accumulate frames until completion of a message, then hand off
  * the untouched frames to the correct thread pool for the verb to be deserialized there and immediately processed.
  *
- * # Flow control (backpressure)
+ * <h2>Flow control (backpressure)</h2>
  *
  * To prevent nodes from overwhelming and bringing each other to the knees with more inbound messages that
  * can be processed in a timely manner, {@link InboundMessageHandler} implements a strict flow control policy.
@@ -64,6 +64,8 @@ import static org.apache.cassandra.utils.MonotonicClock.Global.approxTime;
  * and global reserves.
  *
  * Permits are released after the verb handler has been invoked on the {@link Stage} for the {@link Verb} of the message.
+ *
+ * @see Message.Serializer#inferMessageSize(ByteBuffer, int, int, int)
  */
 public class InboundMessageHandler extends AbstractMessageHandler
 {

@@ -58,7 +58,7 @@ import org.apache.cassandra.tcm.membership.NodeId;
  * each currently defined. There is no movement of data between the initial and new placements, only splitting of
  * existing ranges, so we can simply copy the replica groups from the old ranges to the new.
  * e.g.:
- * We start with a portion of the ring containing tokens 100, 200 assigned to nodes A & B respectively. The node
+ * We start with a portion of the ring containing tokens 100, 200 assigned to nodes A and B respectively. The node
  * with the next highest token after B is C. RF is 2. We want to add a new token, 150 and assign it to a new node, D.
  * Starting placement, with tokens 100, 200
  *  (0, 100]    : {A,B}

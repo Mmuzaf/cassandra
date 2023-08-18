@@ -63,7 +63,6 @@ import org.apache.cassandra.db.rows.Row;
 import org.apache.cassandra.db.rows.Rows;
 import org.apache.cassandra.db.rows.Unfiltered;
 import org.apache.cassandra.db.rows.UnfilteredRowIterator;
-import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.TableMetadataRef;
 import org.apache.cassandra.service.StorageProxy;
@@ -162,7 +161,7 @@ public class TableViews extends AbstractCollection<View>
 
     /**
      * Calculates and pushes updates to the views replicas. The replicas are determined by
-     * {@link ViewUtils#getViewNaturalEndpoint(String, Token, Token)}.
+     * {@link ViewUtils#getViewNaturalEndpoint(org.apache.cassandra.tcm.ClusterMetadata, String, org.apache.cassandra.dht.Token, org.apache.cassandra.dht.Token)}.
      *
      * @param update an update on the base table represented by this object.
      * @param writeCommitLog whether we should write the commit log for the view updates.

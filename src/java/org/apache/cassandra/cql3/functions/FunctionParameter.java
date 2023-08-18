@@ -48,7 +48,7 @@ public interface FunctionParameter
      * @param keyspace the current keyspace
      * @param arg a parameter value in a specific function call
      * @param receiverType the type of the object that will receive the result of the function call
-     * @return the inferred data type of the parameter, or {@link null} it isn't possible to infer it
+     * @return the inferred data type of the parameter, or {@code null} it isn't possible to infer it
      */
     @Nullable
     default AbstractType<?> inferType(String keyspace,

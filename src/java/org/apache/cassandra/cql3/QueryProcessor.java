@@ -694,8 +694,8 @@ public class QueryProcessor implements QueryHandler
      * 2. fully qualified query without keyspace
      * 3. unqualified query with keyspace
      * 4. unqualified query without keyspace
-     *
-     * The correct combination to return is 2/3 - the problem is during upgrades (assuming upgrading from < 3.0.26)
+     * <p>
+     * The correct combination to return is 2/3 - the problem is during upgrades (assuming upgrading from {@code <} 3.0.26)
      * - Existing clients have hash 1 or 3
      * - Query prepared on a 3.0.26/3.11.12/4.0.2 instance needs to return hash 1/3 to be able to execute it on a 3.0.25 instance
      * - This is handled by the useNewPreparedStatementBehaviour flag - while there still are 3.0.25 instances in

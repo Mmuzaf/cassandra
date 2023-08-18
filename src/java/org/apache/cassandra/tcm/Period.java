@@ -49,7 +49,7 @@ public class Period
 
     /**
      * Last resort fallback to find where in the log table (either local or distributed) we can find a
-     * given epoch. If the current ClusterMetadata.period > Period.FIRST (as should be the case normally),
+     * given epoch. If the current {@code ClusterMetadata.period > Period.FIRST} (as should be the case normally),
      * we start there and walk backwards through the log table. Otherwise, we walk forwards.
      * Note, this method is only used (and should only be used) as a last resort in case the local index of
      * max epoch to period (in system.metadata_sealed_periods) is not available.
@@ -75,7 +75,7 @@ public class Period
      * @param logTable which table to scan, system.local_metadata_log or cluster_metadata.distributed_metadata_log
      * @param startPeriod the period to begin reading from
      * @param max maximum number of sealed periods to collect
-     * @return the list of most recently sealed periods, starting from & including startPeriod
+     * @return the list of most recently sealed periods, starting from {@code &} including startPeriod
      */
     public static List<Sealed> scanLogForRecentlySealed(TableMetadata logTable, long startPeriod, int max)
     {

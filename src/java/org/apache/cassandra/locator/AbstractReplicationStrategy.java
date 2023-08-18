@@ -67,7 +67,7 @@ public abstract class AbstractReplicationStrategy
      *
      * Note that the order of the replicas is _implicitly relied upon_ by the definition of
      * "primary" range in
-     * {@link org.apache.cassandra.service.StorageService#getPrimaryRangesForEndpoint(String, InetAddressAndPort)}
+     * {@link org.apache.cassandra.tcm.compatibility.TokenRingUtils#getPrimaryRangesForEndpoint(String, InetAddressAndPort)}
      * which is in turn relied on by various components like repair and size estimate calculations.
      *
      * @param metadata the token metadata used to find the searchToken, e.g. contains token to endpoint

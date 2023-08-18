@@ -283,7 +283,7 @@ public class DistributedSchema implements MetadataValue<DistributedSchema>
 
     /**
      * Converts the given schema version to a string. Returns {@code unknown}, if {@code version} is {@code null}
-     * or {@code "(empty)"}, if {@code version} refers to an {@link SchemaConstants#emptyVersion empty) schema.
+     * or {@code "(empty)"}, if {@code version} refers to an {@link SchemaConstants#emptyVersion} schema.
      */
     public static String schemaVersionToString(UUID version)
     {
