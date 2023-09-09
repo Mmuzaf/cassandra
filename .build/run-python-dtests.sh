@@ -73,7 +73,7 @@ if [ "${java_version}" -eq 17 ] && [[ "${target}" == "dtest-upgrade" ]] ; then
     exit 1
 fi
 
-python_version=$(python -V | awk '{print $2}' | awk -F'.' '{print $1"."$2}')
+python_version=$(python -V 2>&1 | awk '{print $2}' | awk -F'.' '{print $1"."$2}')
 
 # check project is already built. no cleaning is done, so jenkins unstash works, beware.
 [[ -f "${DIST_DIR}/apache-cassandra-${version}.jar" ]] || [[ -f "${DIST_DIR}/apache-cassandra-${version}-SNAPSHOT.jar" ]] || { echo "Project must be built first. Use \`ant jar\`. Build directory is ${DIST_DIR} with: $(ls ${DIST_DIR})"; exit 1; }
