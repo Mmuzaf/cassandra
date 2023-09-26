@@ -76,7 +76,7 @@ public class FramingBenchmark
         DatabaseDescriptor.daemonInitialization(() -> config);
     }
 
-    public static IntUnaryOperator payloadLowerBound = size -> (int) (size * 0.9f);
+    public static IntUnaryOperator payloadLowerBound = size -> (int) (size * 0.95f);
 
     @State(Scope.Thread)
     public static class EncoderState
@@ -89,7 +89,7 @@ public class FramingBenchmark
         public FrameEncoder encoder;
         public FrameEncoder.Payload payload;
 
-        @Setup(Level.Iteration)
+        @Setup(Level.Invocation)
         public void setup()
         {
             encoder = createEncoder(type);
@@ -97,7 +97,7 @@ public class FramingBenchmark
                     .nextInt(payloadLowerBound.applyAsInt(payloadSize), payloadSize));
         }
 
-        @TearDown(Level.Iteration)
+        @TearDown(Level.Invocation)
         public void teardown()
         {
             payload.release();
@@ -116,7 +116,7 @@ public class FramingBenchmark
         public FrameDecoder decoder;
         public ShareableBytes encodedBytes;
 
-        @Setup(Level.Iteration)
+        @Setup(Level.Invocation)
         public void setup()
         {
             decoder = createDecoder(type, allocator);
@@ -132,7 +132,7 @@ public class FramingBenchmark
             encodedBytes = ShareableBytes.wrap(frames);
         }
 
-        @TearDown(Level.Iteration)
+        @TearDown(Level.Invocation)
         public void teardown()
         {
             encodedBytes.release();
