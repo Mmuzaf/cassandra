@@ -51,11 +51,11 @@ export CASS_DRIVER_NO_EXTENSIONS=true
 export CASS_DRIVER_NO_CYTHON=true
 export CCM_MAX_HEAP_SIZE="1024M"
 export CCM_HEAP_NEWSIZE="512M"
-export CCM_CONFIG_DIR=${DIST_DIR}/.ccm
+#export CCM_CONFIG_DIR=${DIST_DIR}/.ccm
 export NUM_TOKENS="16"
 #Have Cassandra skip all fsyncs to improve test performance and reliability
 export CASSANDRA_SKIP_SYNC=true
-export TMPDIR="$(mktemp -d /tmp/run-python-dtest.XXXXXX)"
+export TMPDIR="$(mktemp -d ${DIST_DIR}/run-python-dtest.XXXXXX)"
 unset CASSANDRA_HOME
 
 # pre-conditions
@@ -174,7 +174,7 @@ popd  >/dev/null
 #
 ################################
 
-rm -rf "/tmp/run-python-dtest.${TMPDIR/\/tmp\/run-python-dtest./}"
+[[ "${TMPDIR}" == *"${DIST_DIR}/run-python-dtest."* ]] && rm -rf "${TMPDIR}"
 unset TMPDIR
 deactivate
 

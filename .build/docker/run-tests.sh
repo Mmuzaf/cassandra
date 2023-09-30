@@ -69,10 +69,10 @@ if [[ ! "${java_version}" =~ $regx_java_version ]]; then
     exit 1
 fi
 
-# allow python version override, otherwise default to current python version or "3.6
+# allow python version override, otherwise default to current python version or 3.7
 if [ "x" == "x${python_version}" ] ; then
     command -v python >/dev/null 2>&1 && python_version="$(python -V 2>&1 | awk '{print $2}' | awk -F'.' '{print $1"."$2}')"
-    python_version="${python_version:-3.6}"
+    python_version="${python_version:-3.7}"
 fi
 
 # print debug information on versions
@@ -153,6 +153,13 @@ elif [[ "${target}" =~ dtest* ]] ; then
 else
     docker_flags="--cpus=${docker_cpus} -m 5g --memory-swap 5g"
 fi
+
+# FIXME --storage-opt is supported only for overlay over xfs with 'pquota' mount option.
+#if [[ "${target}" == "dtest-upgrade"* ]] && ( docker info | grep -q "Storage Driver: overlay2" && docker info | grep -q "Backing Filesystem: xfs" && docker info | grep -q "Supports d_type: true" ) 2>/dev/null ; then
+#    # python upgrade test splits often go above the 10G default container limit
+#    docker_flags="${docker_flags} --storage-opt size=50G"
+#fi
+
 docker_flags="${docker_flags} --env-file build/env.list -d --rm"
 
 # make sure build_dir is good
