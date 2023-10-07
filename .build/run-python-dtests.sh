@@ -55,7 +55,7 @@ export CCM_HEAP_NEWSIZE="512M"
 export NUM_TOKENS="16"
 #Have Cassandra skip all fsyncs to improve test performance and reliability
 export CASSANDRA_SKIP_SYNC=true
-export TMPDIR="$(mktemp -d ${DIST_DIR}/run-python-dtest.XXXXXX)"
+export TMPDIR="$(mktemp -d ${CASSANDRA_DTEST_DIR}/run-python-dtest.XXXXXX)"
 unset CASSANDRA_HOME
 
 # pre-conditions
@@ -157,7 +157,7 @@ pytest ${PYTEST_OPTS} --cassandra-dir=${CASSANDRA_DIR} --keep-failed-test-dir ${
 # tar up any ccm logs for easy retrieval
 if ls ${TMPDIR}/*/test/*/logs/* &>/dev/null ; then
     mkdir -p ${DIST_DIR}/test/logs
-    tar -C ${TMPDIR} -cJf ${DIST_DIR}/test/logs/ccm_logs.tar.xz ${TMPDIR}/*/test/*/logs
+    tar -C ${TMPDIR} -cJf ${DIST_DIR}/test/logs/ccm_logs.tar.xz */test/*/logs/*
 fi
 
 # merge all unit xml files into one, and print summary test numbers
