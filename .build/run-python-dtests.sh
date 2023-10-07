@@ -174,7 +174,7 @@ popd  >/dev/null
 #
 ################################
 
-[[ "${TMPDIR}" == *"${DIST_DIR}/run-python-dtest."* ]] && rm -rf "${TMPDIR}"
+rm -rf ${TMPDIR}
 unset TMPDIR
 deactivate
 
