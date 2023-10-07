@@ -128,7 +128,7 @@ case ${target} in
         [ -f "${cassandra_dtest_dir}/dtest.py" ] || { echo >&2 "${cassandra_dtest_dir}/dtest.py must exist"; exit 1; }
         [[ ${mem} -gt $((15 * 1024 * 1024 * 1024 * ${jenkins_executors})) ]] || { echo >&2 "dtests require minimum docker memory 16g (per jenkins executor (${jenkins_executors})), found ${mem}"; exit 1; }
         test_script="run-python-dtests.sh"
-        docker_mounts="${docker_mounts} -v ${cassandra_dtest_dir}:/home/cassandra/cassandra/cassandra-dtest"
+        docker_mounts="${docker_mounts} -v ${cassandra_dtest_dir}:/home/cassandra/cassandra-dtest"
         # check that ${cassandra_dtest_dir} is valid
         [ -f "${cassandra_dtest_dir}/dtest.py" ] || { echo >&2 "${cassandra_dtest_dir}/dtest.py not found. please specify 'cassandra_dtest_dir' to point to the local cassandra-dtest source"; exit 1; }
     ;;
@@ -181,7 +181,7 @@ cat > build/env.list <<EOF
 TEST_SCRIPT=${test_script}
 JAVA_VERSION=${java_version}
 PYTHON_VERSION=${python_version}
-CASSANDRA_DTEST_DIR=/home/cassandra/cassandra/cassandra-dtest
+CASSANDRA_DTEST_DIR=/home/cassandra/cassandra-dtest
 CCM_CONFIG_DIR=/home/cassandra/cassandra/.ccm
 cython=${cython}
 ANT_OPTS="-Dtesttag.extra=.arch=$(arch).python${python_version}"
