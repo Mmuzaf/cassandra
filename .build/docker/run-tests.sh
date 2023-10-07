@@ -181,6 +181,7 @@ cat > build/env.list <<EOF
 TEST_SCRIPT=${test_script}
 JAVA_VERSION=${java_version}
 PYTHON_VERSION=${python_version}
+CCM_CONFIG_DIR=/home/cassandra/cassandra/build/.ccm
 cython=${cython}
 ANT_OPTS="-Dtesttag.extra=.arch=$(arch).python${python_version}"
 EOF
