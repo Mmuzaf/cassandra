@@ -17,19 +17,42 @@
 import cmd
 import codecs
 import configparser
-import csv
 import getpass
 import argparse
 import os
 import re
 import subprocess
 import sys
+import time
 import traceback
 import warnings
 import webbrowser
 from contextlib import contextmanager
+from enum import Enum
 from io import StringIO
 from uuid import UUID
+
+import cassandra
+from cassandra.auth import PlainTextAuthProvider
+from cassandra.cluster import Cluster
+from cassandra.cqltypes import cql_typename
+from cassandra.marshal import int64_unpack
+from cassandra.metadata import (ColumnMetadata, KeyspaceMetadata, TableMetadata)
+from cassandra.policies import WhiteListRoundRobinPolicy
+from cassandra.query import SimpleStatement, ordered_dict_factory, TraceUnavailable
+from cassandra.util import datetime_from_timestamp
+
+from cqlshlib import cql3handling, pylexotron, sslhandling, cqlshhandling, authproviderhandling
+from cqlshlib.copyutil import ExportTask, ImportTask
+from cqlshlib.displaying import (ANSI_RESET, BLUE, COLUMN_NAME_COLORS, CYAN,
+                                 RED, WHITE, FormattedValue, colorme)
+from cqlshlib.formatting import (DEFAULT_DATE_FORMAT, DEFAULT_NANOTIME_FORMAT,
+                                 DEFAULT_TIMESTAMP_FORMAT, CqlType, DateTimeFormat,
+                                 format_by_type)
+from cqlshlib.helptopics import get_html_anchor, get_html_topics
+from cqlshlib.tracing import print_trace, print_trace_session
+from cqlshlib.util import get_file_encoding_bomsize, is_file_secure
+from cqlshlib.serverversion import version as build_version
 
 UTF8 = 'utf-8'
 
@@ -38,9 +61,8 @@ version = "6.2.0"
 
 readline = None
 try:
-    # check if tty first, cause readline doesn't check, and only cares
-    # about $TERM. we don't want the funky escape code stuff to be
-    # output if not a tty.
+    # Check if tty first, as readline doesn't check and only cares about $TERM.
+    # We don't want the funky escape code stuff to be output if not a tty.
     if sys.stdin.isatty():
         import readline
 except ImportError:
@@ -61,27 +83,6 @@ if webbrowser._tryorder and webbrowser._tryorder[0] == 'xdg-open' and os.environ
     webbrowser._tryorder.append('xdg-open')
 
 warnings.filterwarnings("ignore", r".*blist.*")
-
-import cassandra
-from cassandra.auth import PlainTextAuthProvider
-from cassandra.cluster import Cluster
-from cassandra.cqltypes import cql_typename
-from cassandra.marshal import int64_unpack
-from cassandra.metadata import (ColumnMetadata, KeyspaceMetadata, TableMetadata)
-from cassandra.policies import WhiteListRoundRobinPolicy
-from cassandra.query import SimpleStatement, ordered_dict_factory, TraceUnavailable
-from cassandra.util import datetime_from_timestamp
-
-from cqlshlib import cql3handling, pylexotron, sslhandling, cqlshhandling, authproviderhandling
-from cqlshlib.copyutil import ExportTask, ImportTask
-from cqlshlib.displaying import (ANSI_RESET, BLUE, COLUMN_NAME_COLORS, CYAN,
-                                 RED, WHITE, FormattedValue, colorme)
-from cqlshlib.formatting import (DEFAULT_DATE_FORMAT, DEFAULT_NANOTIME_FORMAT,
-                                 DEFAULT_TIMESTAMP_FORMAT, CqlType, DateTimeFormat,
-                                 format_by_type)
-from cqlshlib.tracing import print_trace, print_trace_session
-from cqlshlib.util import get_file_encoding_bomsize, is_file_secure
-from cqlshlib.serverversion import version as build_version
 
 DEFAULT_HOST = '127.0.0.1'
 DEFAULT_PORT = 9042
@@ -275,20 +276,13 @@ class DecodeError(Exception):
         return '<%s %s>' % (self.__class__.__name__, self.message())
 
 
-def maybe_ensure_text(val):
-    return str(val) if val else val
-
-
 class FormatError(DecodeError):
     verb = 'format'
 
 
-def full_cql_version(ver):
-    while ver.count('.') < 2:
-        ver += '.0'
-    ver_parts = ver.split('-', 1) + ['']
-    vertuple = tuple(list(map(int, ver_parts[0].split('.'))) + [ver_parts[1]])
-    return ver, vertuple
+class SwitchState(Enum):
+    ON = True
+    OFF = False
 
 
 def format_value(val, cqltype, encoding, addcolor=False, date_time_format=None,
@@ -336,7 +330,7 @@ class Shell(cmd.Cmd):
     default_page_size = 100
 
     def __init__(self, hostname, port, color=False,
-                 username=None, encoding=None, stdin=None, tty=True,
+                 username=None, encoding=None, elapsed_enabled=False, stdin=None, tty=True,
                  completekey=DEFAULT_COMPLETEKEY, browser=None, use_conn=None,
                  cqlver=None, keyspace=None,
                  tracing_enabled=False, expand_enabled=False,
@@ -410,7 +404,7 @@ class Shell(cmd.Cmd):
         self.session.row_factory = ordered_dict_factory
         self.session.default_consistency_level = cassandra.ConsistencyLevel.ONE
         self.get_connection_versions()
-        self.set_expanded_cql_version(self.connection_versions['cql'])
+        self.set_cql_version(self.connection_versions['cql'])
 
         self.current_keyspace = keyspace
 
@@ -419,6 +413,7 @@ class Shell(cmd.Cmd):
 
         self.tty = tty
         self.encoding = encoding
+        self.elapsed_enabled = elapsed_enabled
 
         self.output_codec = codecs.lookup(encoding)
 
@@ -448,6 +443,13 @@ class Shell(cmd.Cmd):
         self.single_statement = single_statement
         self.is_subshell = is_subshell
 
+        self.cql_version = None
+        self.cql_version_str = None
+
+        # configure length of history shown
+        self.max_history_length_shown = 50
+        self.lastcmd = ""
+
     def check_build_versions(self):
         baseversion = self.connection_versions['build']
         extra = baseversion.rfind('-')
@@ -460,13 +462,12 @@ class Shell(cmd.Cmd):
     def batch_mode(self):
         return not self.tty
 
-    def set_expanded_cql_version(self, ver):
-        ver, vertuple = full_cql_version(ver)
-        self.cql_version = ver
-        self.cql_ver_tuple = vertuple
-
-    def cqlver_atleast(self, major, minor=0, patch=0):
-        return self.cql_ver_tuple[:3] >= (major, minor, patch)
+    def set_cql_version(self, ver):
+        v = list(map(int, (ver.split("."))))
+        while (len(v) < 3):
+            v.append(0)
+        self.cql_version = tuple(v)
+        self.cql_version_str = ".".join(map(str, v))
 
     def myformat_value(self, val, cqltype=None, **kwargs):
         if isinstance(val, DecodeError):
@@ -508,12 +509,8 @@ class Shell(cmd.Cmd):
                       self.port))
 
     def show_version(self):
-        vers = self.connection_versions.copy()
-        vers['shver'] = version
-        # system.Versions['cql'] apparently does not reflect changes with
-        # set_cql_version.
-        vers['cql'] = self.cql_version
-        print("[cqlsh %(shver)s | Cassandra %(build)s | CQL spec %(cql)s | Native protocol v%(protocol)s]" % vers)
+        vers = self.connection_versions
+        print(f"[cqlsh {version} | Cassandra {vers['build']} | CQL spec {self.cql_version_str} | Native protocol v{vers['protocol']}]")
 
     def show_session(self, sessionid, partial_session=False):
         print_trace_session(self, self.session, sessionid, partial_session)
@@ -975,6 +972,7 @@ class Shell(cmd.Cmd):
         if not statement:
             return False, None
 
+        start_time = time.time()
         future = self.session.execute_async(statement, trace=self.tracing_enabled)
         result = None
         try:
@@ -995,6 +993,8 @@ class Shell(cmd.Cmd):
                               "nodes in system.local and system.peers.")
                 self.conn.refresh_schema_metadata(-1)
 
+        elapsed = int((time.time() - start_time) * 1000)
+
         if result is None:
             return False, None
 
@@ -1008,6 +1008,8 @@ class Shell(cmd.Cmd):
             # CAS INSERT/UPDATE
             self.writeresult("")
             self.print_static_result(result, self.parse_for_update_meta(statement.query_string), with_header=True, tty=self.tty)
+        if self.elapsed_enabled:
+            self.writeresult("(%dms elapsed)" % elapsed)
         self.flush_output()
         return True, future
 
@@ -1319,7 +1321,7 @@ class Shell(cmd.Cmd):
 
     def describe_list(self, rows):
         """
-        Print the output for all the DESCRIBE queries for element names (e.g DESCRIBE TABLES, DESCRIBE FUNCTIONS ...)
+        Print the output for all the DESCRIBE queries for element names (e.g. DESCRIBE TABLES, DESCRIBE FUNCTIONS ...)
         """
         keyspace = None
         names = list()
@@ -1346,7 +1348,7 @@ class Shell(cmd.Cmd):
 
     def describe_element(self, rows):
         """
-        Print the output for all the DESCRIBE queries where an element name as been specified (e.g DESCRIBE TABLE, DESCRIBE INDEX ...)
+        Print the output for all the DESCRIBE queries where an element name as been specified (e.g. DESCRIBE TABLE, DESCRIBE INDEX ...)
         """
         for row in rows:
             print('')
@@ -1357,7 +1359,7 @@ class Shell(cmd.Cmd):
         """
         Print the output for a DESCRIBE CLUSTER query.
 
-        If a specified keyspace was in use the returned ResultSet will contains a 'range_ownership' column,
+        If a specified keyspace was in use the returned ResultSet will contain a 'range_ownership' column,
         otherwise not.
         """
         for row in rows:
@@ -1556,7 +1558,8 @@ class Shell(cmd.Cmd):
             return
         subshell = Shell(self.hostname, self.port, color=self.color,
                          username=self.username,
-                         encoding=self.encoding, stdin=f, tty=False, use_conn=self.conn,
+                         encoding=self.encoding, elapsed_enabled=self.elapsed_enabled,
+                         stdin=f, tty=False, use_conn=self.conn,
                          cqlver=self.cql_version, keyspace=self.current_keyspace,
                          tracing_enabled=self.tracing_enabled,
                          display_nanotime_format=self.display_nanotime_format,
@@ -1658,7 +1661,24 @@ class Shell(cmd.Cmd):
 
           TRACING with no arguments shows the current tracing status.
         """
-        self.tracing_enabled = SwitchCommand("TRACING", "Tracing").execute(self.tracing_enabled, parsed, self.printerr)
+        self.tracing_enabled \
+            = self.on_off_switch("TRACING", self.tracing_enabled, parsed.get_binding('switch'))
+
+    def do_elapsed(self, parsed):
+        """
+        ELAPSED
+
+          Returns whether displaying of elapsed time for each CQL query is enabled or not
+
+        ELAPSED ON
+
+          Enables displaying of elapsed time for each CQL query
+
+        ELAPSED OFF
+
+          Disables displaying of elapsed time for each CQL query
+        """
+        self.elapsed_enabled = self.on_off_switch("ELAPSED", self.elapsed_enabled, parsed.get_binding('switch'))
 
     def do_expand(self, parsed):
         """
@@ -1678,7 +1698,7 @@ class Shell(cmd.Cmd):
 
           EXPAND with no arguments shows the current value of expand setting.
         """
-        self.expand_enabled = SwitchCommand("EXPAND", "Expanded output").execute(self.expand_enabled, parsed, self.printerr)
+        self.expand_enabled = self.on_off_switch("EXPAND", self.expand_enabled, parsed.get_binding('switch'))
 
     def do_consistency(self, parsed):
         """
@@ -1804,6 +1824,9 @@ class Shell(cmd.Cmd):
         pdb.set_trace()
 
     def get_help_topics(self):
+        """
+        List of 'do_' methods having method comments
+        """
         topics = [t[3:] for t in dir(self) if t.startswith('do_') and getattr(self, t, None).__doc__]
         for hide_from_help in ('quit',):
             topics.remove(hide_from_help)
@@ -1824,15 +1847,15 @@ class Shell(cmd.Cmd):
         if not topics:
             shell_topics = [t.upper() for t in self.get_help_topics()]
             self.print_topics("\nDocumented shell commands:", shell_topics, 15, 80)
-            cql_topics = [t.upper() for t in cqldocs.get_help_topics()]
+            cql_topics = [t.upper() for t in get_html_topics()]
             self.print_topics("CQL help topics:", cql_topics, 15, 80)
             return
         for t in topics:
             if t.lower() in self.get_help_topics():
                 doc = getattr(self, 'do_' + t.lower()).__doc__
                 self.stdout.write(doc + "\n")
-            elif t.lower() in cqldocs.get_help_topics():
-                urlpart = cqldocs.get_help_topic(t)
+            elif t.lower() in get_html_topics():
+                urlpart = get_html_anchor(t)
                 if urlpart is not None:
                     url = "%s#%s" % (CASSANDRA_CQL_HTML, urlpart)
                     if self.browser is not None:
@@ -1899,8 +1922,8 @@ class Shell(cmd.Cmd):
 
           PAGING with no arguments shows the current query paging status.
         """
-        (self.use_paging, requested_page_size) = SwitchCommandWithValue(
-            "PAGING", "Query paging", value_type=int).execute(self.use_paging, parsed, self.printerr)
+        (self.use_paging, requested_page_size) = \
+            self.on_off_switch_with_value("PAGING", self.use_paging, parsed.get_binding('switch'))
         if self.use_paging and requested_page_size is not None:
             self.page_size = requested_page_size
         if self.use_paging:
@@ -1952,9 +1975,6 @@ class Shell(cmd.Cmd):
             delims += '.'
             readline.set_completer_delims(delims)
 
-            # configure length of history shown
-            self.max_history_length_shown = 50
-
     def save_history(self):
         if readline is not None:
             try:
@@ -1962,65 +1982,46 @@ class Shell(cmd.Cmd):
             except IOError:
                 pass
 
+    @staticmethod
+    def on_off_switch(name, current, state_name=None):
+        """
+        switches between ON and OFF values
 
-class SwitchCommand(object):
-    command = None
-    description = None
+        :param name: a command name
+        :param current: a boolean value
+        :param state_name: "ON", "OFF" or None
+        :return: a boolean value
+        """
 
-    def __init__(self, command, desc):
-        self.command = command
-        self.description = desc
+        if state_name is None:
+            print(f"{name} is {SwitchState(current).name}")
+            return current
 
-    def execute(self, state, parsed, printerr):
-        switch = parsed.get_binding('switch')
-        if switch is None:
-            if state:
-                print("%s is currently enabled. Use %s OFF to disable"
-                      % (self.description, self.command))
-            else:
-                print("%s is currently disabled. Use %s ON to enable."
-                      % (self.description, self.command))
-            return state
+        new_state = SwitchState[state_name.upper()]
+        if current == new_state.value:
+            print(f"{name} is already {SwitchState(current).name}")
+            return current
+        else:
+            print(f"{name} set to {new_state.name}")
+            return new_state.value
 
-        if switch.upper() == 'ON':
-            if state:
-                printerr('%s is already enabled. Use %s OFF to disable.'
-                         % (self.description, self.command))
-                return state
-            print('Now %s is enabled' % (self.description,))
-            return True
+    @staticmethod
+    def on_off_switch_with_value(name, current, value=None):
+        """switches between ON and OFF values, and accepts an integer value in place of ON.
 
-        if switch.upper() == 'OFF':
-            if not state:
-                printerr('%s is not enabled.' % (self.description,))
-                return state
-            print('Disabled %s.' % (self.description,))
-            return False
+        This returns a tuple of the form: (SWITCH_VALUE, VALUE)
+        eg: PAGING 50 returns (True, 50)
+            PAGING OFF returns (False, None)
+            PAGING ON returns (True, None)
 
-
-class SwitchCommandWithValue(SwitchCommand):
-    """The same as SwitchCommand except it also accepts a value in place of ON.
-
-    This returns a tuple of the form: (SWITCH_VALUE, PASSED_VALUE)
-    eg: PAGING 50 returns (True, 50)
-        PAGING OFF returns (False, None)
-        PAGING ON returns (True, None)
-
-    The value_type must match for the PASSED_VALUE, otherwise it will return None.
-    """
-    def __init__(self, command, desc, value_type=int):
-        SwitchCommand.__init__(self, command, desc)
-        self.value_type = value_type
-
-    def execute(self, state, parsed, printerr):
-        binary_switch_value = SwitchCommand.execute(self, state, parsed, printerr)
-        switch = parsed.get_binding('switch')
-        try:
-            value = self.value_type(switch)
-            binary_switch_value = True
-        except (ValueError, TypeError):
-            value = None
-        return binary_switch_value, value
+        VALUE must be an Integer or None.
+        """
+        if value is None:
+            print(f"{name} is {SwitchState(current).name}")
+            return current, None
+        if value.isdigit():
+            return True, int(value)
+        return Shell.on_off_switch(name, current, value), None
 
 
 def option_with_default(cparser_getter, section, option, default=None):
@@ -2052,8 +2053,7 @@ def should_use_color():
         if int(stdout.strip()) < 8:
             return False
     except (OSError, ImportError, ValueError):
-        # oh well, we tried. at least we know there's a $TERM and it's
-        # not "dumb".
+        # at least it's a $TERM, and it's not "dumb".
         pass
     return True
 
@@ -2095,7 +2095,6 @@ def read_options(cmdlineargs, environment=os.environ):
                                                     DEFAULT_FLOAT_PRECISION)
     argvalues.double_precision = option_with_default(configs.getint, 'ui', 'double_precision',
                                                      DEFAULT_DOUBLE_PRECISION)
-    argvalues.field_size_limit = option_with_default(configs.getint, 'csv', 'field_size_limit', csv.field_size_limit())
     argvalues.max_trace_wait = option_with_default(configs.getfloat, 'tracing', 'max_trace_wait',
                                                    DEFAULT_MAX_TRACE_WAIT)
     argvalues.timezone = option_with_default(configs.get, 'ui', 'timezone', None)
@@ -2161,14 +2160,11 @@ def read_options(cmdlineargs, environment=os.environ):
         print("\nWarning: Using a password on the command line interface can be insecure."
               "\nRecommendation: use the credentials file to securely provide the password.\n", file=sys.stderr)
 
-    # Make sure some user values read from the command line are in unicode
-    options.execute = maybe_ensure_text(options.execute)
-    options.username = maybe_ensure_text(options.username)
-    options.password = maybe_ensure_text(options.password)
-    options.keyspace = maybe_ensure_text(options.keyspace)
-
     hostname = option_with_default(configs.get, 'connection', 'hostname', DEFAULT_HOST)
     port = option_with_default(configs.get, 'connection', 'port', DEFAULT_PORT)
+
+    hostname = environment.get('CQLSH_HOST', hostname)
+    port = environment.get('CQLSH_PORT', port)
 
     try:
         options.connect_timeout = int(options.connect_timeout)
@@ -2181,9 +2177,6 @@ def read_options(cmdlineargs, environment=os.environ):
     except ValueError:
         parser.error('"%s" is not a valid request timeout.' % (options.request_timeout,))
         options.request_timeout = DEFAULT_REQUEST_TIMEOUT_SECONDS
-
-    hostname = environment.get('CQLSH_HOST', hostname)
-    port = environment.get('CQLSH_PORT', port)
 
     if len(arguments) > 0:
         hostname = arguments[0]
@@ -2204,12 +2197,6 @@ def read_options(cmdlineargs, environment=os.environ):
         else:
             options.color = should_use_color()
 
-    if options.cqlversion is not None:
-        options.cqlversion, cqlvertup = full_cql_version(options.cqlversion)
-        if cqlvertup[0] < 3:
-            parser.error('%r is not a supported CQL version.' % options.cqlversion)
-    options.cqlmodule = cql3handling
-
     try:
         port = int(port)
     except ValueError:
@@ -2217,18 +2204,13 @@ def read_options(cmdlineargs, environment=os.environ):
     return options, hostname, port
 
 
-def setup_cqlruleset(cqlmodule):
+def setup_cqlruleset():
     global cqlruleset
-    cqlruleset = cqlmodule.CqlRuleSet
+    cqlruleset = cql3handling.CqlRuleSet
     cqlruleset.append_rules(cqlshhandling.cqlsh_extra_syntax_rules)
     for rulename, termname, func in cqlshhandling.cqlsh_syntax_completers:
         cqlruleset.completer_for(rulename, termname)(func)
     cqlruleset.commands_end_with_newline.update(cqlshhandling.my_commands_ending_with_newline)
-
-
-def setup_cqldocs(cqlmodule):
-    global cqldocs
-    cqldocs = cqlmodule.cqldocs
 
 
 def setup_docspath(path):
@@ -2253,7 +2235,7 @@ def insert_driver_hooks():
         pass
 
     # Display milliseconds when datetime overflows (CASSANDRA-10625), E.g., the year 10000.
-    # Native datetime types blow up outside of datetime.[MIN|MAX]_YEAR. We will fall back to an int timestamp
+    # Native datetime types blow up outside datetime.[MIN|MAX]_YEAR. We will fall back to an int timestamp
     def deserialize_date_fallback_int(byts, protocol_version):
         timestamp_ms = int64_unpack(byts)
         try:
@@ -2277,9 +2259,7 @@ def main(cmdline, pkgpath):
     (options, hostname, port) = read_options(cmdline)
 
     setup_docspath(pkgpath)
-    setup_cqlruleset(options.cqlmodule)
-    setup_cqldocs(options.cqlmodule)
-    csv.field_size_limit(options.field_size_limit)
+    setup_cqlruleset()
 
     if options.file is None:
         stdin = None
@@ -2332,7 +2312,7 @@ def main(cmdline, pkgpath):
             except ImportError:
                 sys.stderr.write("Warning: Timezone defined and 'pytz' module for timezone conversion not installed. Timestamps will be displayed in UTC timezone.\n\n")
 
-    # try auto-detect timezone if tzlocal is installed
+    # try to auto-detect timezone if tzlocal is installed
     if not timezone:
         try:
             from tzlocal import get_localzone
