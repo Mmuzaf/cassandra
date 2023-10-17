@@ -20,10 +20,13 @@ package org.apache.cassandra.db.marshal;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.annotation.Nullable;
 
 import org.apache.cassandra.cql3.CQL3Type;
 import org.apache.cassandra.cql3.Term;
@@ -165,6 +168,11 @@ public final class VectorType<T> extends AbstractType<List<T>>
         return array;
     }
 
+    public ByteBuffer decompose(T... values)
+    {
+        return decompose(Arrays.asList(values));
+    }
+
     public ByteBuffer decomposeAsFloat(float[] value)
     {
         return decomposeAsFloat(ByteBufferAccessor.instance, value);
@@ -172,10 +180,10 @@ public final class VectorType<T> extends AbstractType<List<T>>
 
     public <V> V decomposeAsFloat(ValueAccessor<V> accessor, float[] value)
     {
+        if (value == null)
+            rejectNullOrEmptyValue();
         if (!(elementType instanceof FloatType))
             throw new IllegalStateException("Attempted to read as float, but element type is " + elementType.asCQL3Type());
-        if (value == null)
-            return null;
         if (value.length != dimension)
             throw new IllegalArgumentException(String.format("Attempted to add float vector of dimension %d to %s", value.length, asCQL3Type()));
         // TODO : should we use TypeSizes to be consistent with other code?  Its the same value at the end of the day...
@@ -215,7 +223,8 @@ public final class VectorType<T> extends AbstractType<List<T>>
     public <V> V fromComparableBytes(ValueAccessor<V> accessor, ByteSource.Peekable comparableBytes, ByteComparable.Version version)
     {
         if (comparableBytes == null)
-            return accessor.empty();
+            rejectNullOrEmptyValue();
+
         assert version != ByteComparable.Version.LEGACY; // legacy translation is not reversible
 
         List<V> buffers = new ArrayList<>();
@@ -358,6 +367,18 @@ public final class VectorType<T> extends AbstractType<List<T>>
         if (remaining > 0)
             throw new MarshalException("Unexpected " + remaining + " extraneous bytes after " + asCQL3Type() + " value");
     }
+    
+    private static void rejectNullOrEmptyValue()
+    {
+        throw new MarshalException("Invalid empty vector value");
+    }
+
+    @Override
+    public ByteBuffer getMaskedValue()
+    {
+        List<ByteBuffer> values = Collections.nCopies(dimension, elementType.getMaskedValue());
+        return serializer.serializeRaw(values, ByteBufferAccessor.instance);
+    }
 
     public abstract class VectorSerializer extends TypeSerializer<List<T>>
     {
@@ -390,6 +411,13 @@ public final class VectorType<T> extends AbstractType<List<T>>
         {
             return (Class) List.class;
         }
+
+        @Override
+        public <V> boolean isNull(@Nullable V buffer, ValueAccessor<V> accessor)
+        {
+            // we don't allow empty vectors, so we can just check for null
+            return buffer == null;
+        }
     }
 
     private class FixedLengthSerializer extends VectorSerializer
@@ -404,8 +432,6 @@ public final class VectorType<T> extends AbstractType<List<T>>
         {
             if (elementType.isByteOrderComparable)
                 return ValueAccessor.compare(left, accessorL, right, accessorR);
-            if (accessorL.isEmpty(left) || accessorR.isEmpty(right))
-                return Boolean.compare(accessorR.isEmpty(right), accessorL.isEmpty(left));
             int offset = 0;
             int elementLength = elementType.valueLengthIfFixed();
             for (int i = 0; i < dimension; i++)
@@ -443,7 +469,8 @@ public final class VectorType<T> extends AbstractType<List<T>>
         public <V> V serializeRaw(List<V> value, ValueAccessor<V> accessor)
         {
             if (value == null)
-                return accessor.empty();
+                rejectNullOrEmptyValue();
+
             check(value);
 
             int size = elementType.valueLengthIfFixed();
@@ -458,7 +485,8 @@ public final class VectorType<T> extends AbstractType<List<T>>
         public ByteBuffer serialize(List<T> value)
         {
             if (value == null)
-                return ByteBufferUtil.EMPTY_BYTE_BUFFER;
+                rejectNullOrEmptyValue();
+
             check(value);
 
             ByteBuffer bb = ByteBuffer.allocate(elementType.valueLengthIfFixed() * dimension);
@@ -492,7 +520,8 @@ public final class VectorType<T> extends AbstractType<List<T>>
         public <V> void validate(V input, ValueAccessor<V> accessor) throws MarshalException
         {
             if (accessor.isEmpty(input))
-                return;
+                rejectNullOrEmptyValue();
+
             int offset = 0;
             int elementSize = elementType.valueLengthIfFixed();
 
@@ -520,9 +549,6 @@ public final class VectorType<T> extends AbstractType<List<T>>
         public <VL, VR> int compareCustom(VL left, ValueAccessor<VL> accessorL,
                                           VR right, ValueAccessor<VR> accessorR)
         {
-            if (accessorL.isEmpty(left) || accessorR.isEmpty(right))
-                return Boolean.compare(accessorR.isEmpty(right), accessorL.isEmpty(left));
-
             int leftOffset = 0;
             int rightOffset = 0;
             for (int i = 0; i < dimension; i++)
@@ -584,7 +610,8 @@ public final class VectorType<T> extends AbstractType<List<T>>
         public <V> V serializeRaw(List<V> value, ValueAccessor<V> accessor)
         {
             if (value == null)
-                return accessor.empty();
+                rejectNullOrEmptyValue();
+
             check(value);
 
             V bb = accessor.allocate(value.stream().mapToInt(v -> sizeOf(v, accessor)).sum());
@@ -598,7 +625,8 @@ public final class VectorType<T> extends AbstractType<List<T>>
         public ByteBuffer serialize(List<T> value)
         {
             if (value == null)
-                return ByteBufferUtil.EMPTY_BYTE_BUFFER;
+                rejectNullOrEmptyValue();
+
             check(value);
 
             List<ByteBuffer> bbs = new ArrayList<>(dimension);
@@ -630,7 +658,8 @@ public final class VectorType<T> extends AbstractType<List<T>>
         public <V> void validate(V input, ValueAccessor<V> accessor) throws MarshalException
         {
             if (accessor.isEmpty(input))
-                return;
+                rejectNullOrEmptyValue();
+
             int offset = 0;
             for (int i = 0; i < dimension; i++)
             {

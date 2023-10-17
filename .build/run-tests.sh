@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -49,6 +49,9 @@ git --version
 java -version  2>&1
 javac -version  2>&1
 
+# set the OFFLINE env var (to anything) to allow running jvm-dtest-upgrade offline
+[ "x" != "x${OFFLINE}" ] && echo "WARNING: running in offline mode. jvm-dtest-upgrade results may be stale."
+
 # lists all tests for the specific test type
 _list_tests() {
   local -r classlistprefix="$1"
@@ -85,11 +88,16 @@ _build_all_dtest_jars() {
     fi
 
     if [ -d ${TMP_DIR}/cassandra-dtest-jars ] && [ "https://github.com/apache/cassandra.git" == "$(git -C ${TMP_DIR}/cassandra-dtest-jars remote get-url origin)" ] ; then
-        until git -C ${TMP_DIR}/cassandra-dtest-jars fetch --quiet origin ; do echo "git pull failed… trying again… " ; done
+      echo "Reusing ${TMP_DIR}/cassandra-dtest-jars for past branch dtest jars"
+      if [ "x" == "x${OFFLINE}" ] ; then
+        until git -C ${TMP_DIR}/cassandra-dtest-jars fetch --quiet origin ; do echo "git -C ${TMP_DIR}/cassandra-dtest-jars fetch failed… trying again… " ; done
+      fi
     else
+        echo "Cloning cassandra to ${TMP_DIR}/cassandra-dtest-jars for past branch dtest jars"
         rm -fR ${TMP_DIR}/cassandra-dtest-jars
         pushd $TMP_DIR >/dev/null
         until git clone --quiet --depth 1 --no-single-branch https://github.com/apache/cassandra.git cassandra-dtest-jars ; do echo "git clone failed… trying again… " ; done
+        chmod -R ag+rwx cassandra-dtest-jars
         popd >/dev/null
     fi
 
@@ -98,6 +106,7 @@ _build_all_dtest_jars() {
 
     pushd ${TMP_DIR}/cassandra-dtest-jars >/dev/null
     for branch in cassandra-4.0 cassandra-4.1 cassandra-5.0 trunk ; do
+        git reset --hard HEAD && git clean -qxdff  || echo "failed to reset/clean ${TMP_DIR}/cassandra-dtest-jars… continuing…"
         git checkout --quiet $branch
         dtest_jar_version=$(grep 'property\s*name=\"base.version\"' build.xml |sed -ne 's/.*value=\"\([^"]*\)\".*/\1/p')
         if [ -f "${DIST_DIR}/dtest-${dtest_jar_version}.jar" ] ; then
@@ -172,7 +181,7 @@ _main() {
 
   # ant test setup
   export TMP_DIR="${DIST_DIR}/tmp"
-  mkdir -p "${TMP_DIR}" || true
+  [ -d ${TMP_DIR} ] || mkdir -p "${TMP_DIR}"
   export ANT_TEST_OPTS="-Dno-build-test=true -Dtmp.dir=${TMP_DIR}"
 
   # fresh virtualenv and test logs results everytime
