@@ -77,6 +77,7 @@ public class ColumnsTest
             }
             catch (IOException e)
             {
+                e.printStackTrace();
             }
         }
     }

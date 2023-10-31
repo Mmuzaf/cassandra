@@ -22,7 +22,9 @@ native_transport_port: 9042
 column_index_size: 4KiB
 saved_caches_directory: build/test/cassandra/saved_caches
 data_file_directories:
-    - build/test/cassandra/data
+    - build/test/cassandra/data0
+    - build/test/cassandra/data1
+    - build/test/cassandra/data2
 disk_access_mode: mmap
 seed_provider:
     - class_name: org.apache.cassandra.locator.SimpleSeedProvider

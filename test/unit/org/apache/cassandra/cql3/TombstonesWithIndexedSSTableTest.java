@@ -64,6 +64,7 @@ public class TombstonesWithIndexedSSTableTest extends CQLTester
         for (int i = 0; i < ROWS; i++)
             execute("INSERT INTO %s(k, t, v) VALUES (?, ?, ?)", 0, i, text + i);
 
+        compact();
         DecoratedKey dk = Util.dk(ByteBufferUtil.bytes(0));
         int minDeleted = ROWS;
         int maxDeleted = 0;

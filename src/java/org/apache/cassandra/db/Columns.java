@@ -514,8 +514,8 @@ public class Columns extends AbstractCollection<ColumnMetadata> implements Colle
              * to a vint encoded set of deltas, either adding or subtracting (whichever is most efficient).
              * We indicate this switch by sending our bitmap with every bit set, i.e. -1L
              */
-            int columnCount = columns.size();
-            int supersetCount = superset.size();
+            int columnCount = columns.size();    // :2
+            int supersetCount = superset.size(); // :3
             if (columnCount == supersetCount)
             {
                 out.writeUnsignedVInt32(0);
@@ -574,6 +574,8 @@ public class Columns extends AbstractCollection<ColumnMetadata> implements Colle
                         }
                         encoded >>>= 1;
                     }
+                    // superset has less that it was encoded with
+                    // - why we need to read sub
                     if (encoded != 0)
                         throw new IOException("Invalid Columns subset bytes; too many bits set:" + Long.toBinaryString(encoded));
                     return new Columns(builder.build(), firstComplexIdx);
