@@ -24,8 +24,8 @@ package org.apache.cassandra.locator;
  */
 public class SimpleSnitch extends AbstractEndpointSnitch
 {
-    public static final String DATA_CENTER_NAME = "datacenter1";
-    public static final String RACK_NAME = "rack1";
+    public static final String DATA_CENTER_NAME = "datacenter0";
+    public static final String RACK_NAME = "rack0";
 
     public String getRack(InetAddressAndPort endpoint)
     {
