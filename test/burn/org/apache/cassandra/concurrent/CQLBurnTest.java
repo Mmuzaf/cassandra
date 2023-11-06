@@ -18,34 +18,56 @@
 
 package org.apache.cassandra.concurrent;
 
+import org.apache.cassandra.SchemaLoader;
 import org.apache.cassandra.Util;
 import org.apache.cassandra.cql3.CQLTester;
+import org.apache.cassandra.cql3.QueryProcessor;
 import org.apache.cassandra.cql3.UntypedResultSet;
-import org.apache.cassandra.db.ClusteringBound;
+import org.apache.cassandra.db.BufferClusteringBound;
+import org.apache.cassandra.db.Clustering;
+import org.apache.cassandra.db.ClusteringPrefix;
+import org.apache.cassandra.db.ColumnFamilyStore;
+import org.apache.cassandra.db.DataRange;
 import org.apache.cassandra.db.DecoratedKey;
+import org.apache.cassandra.db.DeletionTime;
+import org.apache.cassandra.db.Keyspace;
+import org.apache.cassandra.db.ReadCommand;
 import org.apache.cassandra.db.SinglePartitionReadCommand;
 import org.apache.cassandra.db.Slice;
 import org.apache.cassandra.db.Slices;
+import org.apache.cassandra.db.compaction.CompactionManager;
+import org.apache.cassandra.db.filter.AbstractClusteringIndexFilter;
 import org.apache.cassandra.db.filter.ClusteringIndexSliceFilter;
 import org.apache.cassandra.db.filter.ColumnFilter;
 import org.apache.cassandra.db.filter.DataLimits;
 import org.apache.cassandra.db.filter.RowFilter;
+import org.apache.cassandra.db.marshal.AsciiType;
+import org.apache.cassandra.db.marshal.DecimalType;
+import org.apache.cassandra.db.marshal.FloatType;
+import org.apache.cassandra.db.marshal.IntegerType;
 import org.apache.cassandra.db.marshal.UTF8Type;
+import org.apache.cassandra.db.partitions.UnfilteredPartitionIterator;
+import org.apache.cassandra.db.rows.RangeTombstoneMarker;
 import org.apache.cassandra.db.rows.Unfiltered;
+import org.apache.cassandra.db.rows.UnfilteredRowIterator;
 import org.apache.cassandra.db.rows.UnfilteredRowIteratorWithLowerBound;
 import org.apache.cassandra.dht.Murmur3Partitioner;
 import org.apache.cassandra.io.sstable.Descriptor;
+import org.apache.cassandra.io.sstable.ISSTableScanner;
 import org.apache.cassandra.io.sstable.SSTableReadsListener;
 import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.io.util.File;
+import org.apache.cassandra.schema.KeyspaceParams;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.TableMetadataRef;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.Clock;
 import org.apache.cassandra.utils.FBUtilities;
+import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.nio.ByteBuffer;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -55,7 +77,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.apache.cassandra.SchemaLoader.standardCFMD;
+import static org.apache.cassandra.cql3.QueryProcessor.executeInternal;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class CQLBurnTest extends CQLTester
@@ -70,7 +97,7 @@ public class CQLBurnTest extends CQLTester
 //      "ZYFiYEUkzcKOhdyazcKOhdyazcKOhdyazcKOhdyazcKOhdyaWGvFtKGKPLETZpMp103558722216718690109",
 //      "ZYFiYEUkzcKOhdyazcKOhdyazcKOhdyazcKOhdyazcKOhdyaHHruatGSYPEdCtCM183223761074621719323664239",
 //      "ZYFiYEUkzcKOhdyazcKOhdyazcKOhdyazcKOhdyazcKOhdyaQrShISWKhUkPNKtL15916716250240"}
-
+//
 //    LTS: 457625. Pd -954500797334660271. Operation: Operation{, opId=0, opType=INSERT} Statement
 //    CompiledStatement{cql='INSERT INTO harry.table_1 (pk0003,pk0004,pk0005,ck0002,ck0003,ck0004,regular0004,regular0005)
 //      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -243,44 +270,101 @@ public class CQLBurnTest extends CQLTester
         return new String(chars);
     }
 
+    private static final UTF8Type UTF8 = UTF8Type.instance;
+    private static final DecimalType DECIMAL = DecimalType.instance;
+    private static final IntegerType VARINT = IntegerType.instance;
+
     @Test
     public void testLowerBoundApplicableMultipleColumnsDesc()
     {
         Descriptor descriptor = Descriptor.fromFileWithComponent(new File("test/data/cassandra-18932/data1/harry/table_1-07c35a606c0a11eeae7a4f6ca489eb0c/nc-5-big-Data.db"), false).left;
         TableMetadata tm = TableMetadata.builder("harry", "table_1")
-                .addPartitionKeyColumn("pk0001", UTF8Type.instance)
+                .addPartitionKeyColumn("pk0003", UTF8Type.instance)
+                .addPartitionKeyColumn("pk0004", AsciiType.instance)
+                .addPartitionKeyColumn("pk0005", FloatType.instance)
+                .addClusteringColumn("ck0002", IntegerType.instance)
                 .addClusteringColumn("ck0003", UTF8Type.instance)
-                .addClusteringColumn("ck0004", UTF8Type.instance)
-                .addClusteringColumn("ck0005", UTF8Type.instance)
-                .addRegularColumn("regular0003", UTF8Type.instance)
-                .addRegularColumn("regular0004", UTF8Type.instance)
+                .addClusteringColumn("ck0004",AsciiType.instance)
+                .addRegularColumn("regular0003", FloatType.instance)
+                .addRegularColumn("regular0004", AsciiType.instance)
                 .addRegularColumn("regular0005", UTF8Type.instance)
-                .addRegularColumn("regular0006", UTF8Type.instance)
+                .addRegularColumn("regular0006", FloatType.instance)
                 .addRegularColumn("regular0007", UTF8Type.instance)
                 .partitioner(Murmur3Partitioner.instance)
                 .build();
 
         SSTableReader sstable = SSTableReader.openNoValidation(null, descriptor, TableMetadataRef.forOfflineTools(tm));
-//
-//        String TABLE_REVERSED = "tbl_slices_reversed";
-//        String createTable = String.format(
-//                "CREATE TABLE %s.%s (k text, c1 int, c2 int, v int, primary key (k, c1, c2)) WITH CLUSTERING ORDER BY (c1 ASC, c2 DESC)",
-//                KEYSPACE, TABLE_REVERSED);
-//        QueryProcessor.executeOnceInternal(createTable);
-//        ColumnFamilyStore cfs = Keyspace.open(KEYSPACE).getColumnFamilyStore(TABLE_REVERSED);
-//        TableMetadata metadata = cfs.metadata();
-//
-//        String query = "INSERT INTO %s.%s (k, c1, c2) VALUES ('k1', 0, %s)";
-//        SSTableReader sstable = createSSTable(metadata, KEYSPACE, TABLE_REVERSED, query);
-//        assertEquals(Slice.make(Util.clustering(metadata.comparator, 0, 9),
-//                        Util.clustering(metadata.comparator, 0, 0)),
-//                sstable.getSSTableMetadata().coveredClustering);
 
 //        DecoratedKey(-1562687481824787574, 004a5a696e7a44645575414267446b6e4974414267446b6e4974414267446b6e49745845467267426e4f6d506d50796c5772775848716a42486765517247666e5a64313132343132343538330000485a696e7a44645575414267446b6e4974414267446b6e4974414267446b6e4974414267446b6e4974414267446b6e49747a4871636867687143584c6856594b4d323232313532353100000400005b5100)
 //        DecoratedKey key = tm.partitioner.decorateKey(ByteBufferUtil.bytes("k1"));
-        DecoratedKey dk = Util.dk(ByteBufferUtil.bytes(0));
-        Slice slice1 = Slice.make(Util.clustering(tm.comparator, "1", "2", "3").asStartBound(), ClusteringBound.TOP);
-        assertTrue(lowerBoundApplicable(tm, dk, slice1, sstable, true));
+
+        // keyRange = {Bounds@10861} "[DecoratedKey(-1562687481824787574, 004a5a696e7a44645575414267446b6e4974414267446b6e4974414267446b6e49745845467267426e4f6d506d50796c5772775848716a42486765517247666e5a64313132343132343538330000485a696e7a44645575414267446b6e4974414267446b6e4974414267446b6e4974414267446b6e4974414267446b6e49747a4871636867687143584c6856594b4d323232313532353100000400005b5100),min(-9223372036854775808)]"
+        // left = {PreHashedDecoratedKey@10866} "DecoratedKey(-1562687481824787574, 004a5a696e7a44645575414267446b6e4974414267446b6e4974414267446b6e49745845467267426e4f6d506d50796c5772775848716a42486765517247666e5a64313132343132343538330000485a696e7a44645575414267446b6e4974414267446b6e4974414267446b6e4974414267446b6e4974414267446b6e49747a4871636867687143584c6856594b4d323232313532353100000400005b5100)"
+        // right = {Token$KeyBound@10867} "min(-9223372036854775808)"
+
+//        DecoratedKey(-1562687481824787574, 004a5a696e7a44645575414267446b6e4974414267446b6e4974414267446b6e49745845467267426e4f6d506d50796c5772775848716a42486765517247666e5a64313132343132343538330000485a696e7a44645575414267446b6e4974414267446b6e4974414267446b6e4974414267446b6e4974414267446b6e49747a4871636867687143584c6856594b4d323232313532353100000400005b5100)
+
+//        {(-1110871748
+//        :ZYFiYEUkzcKOhdyazcKOhdyazcKOhdyazcKOhdyazcKOhdyaFfLoPrEzlMDvLfXY18918213101196160
+//        :ZYFiYEUkzcKOhdyazcKOhdyazcKOhdyazcKOhdyazcKOhdyachTAyMjmsZMUPCzi23819065184175,
+//        -1110871748:ZYFiYEUkzcKOhdyazcKOhdyazcKOhdyazcKOhdyazcKOhdyaFfLoPrEzlMDvLfXY18918213101196160]}
+
+//        cqlsh> SELECT * FROM harry.table_1 WHERE pk0003 = 'ZinzDdUuABgDknItABgDknItABgDknItXEFrgBnOmPmPylWrwXHqjBHgeQrGfnZd1124124583'
+//        AND pk0004 = 'ZinzDdUuABgDknItABgDknItABgDknItABgDknItABgDknItzHqchghqCXLhVYKM22215251'
+//        AND pk0005 = 3.2758E-41 AND ck0002 = -1110871748
+//        AND ck0003 = 'ZYFiYEUkzcKOhdyazcKOhdyazcKOhdyazcKOhdyazcKOhdyaFfLoPrEzlMDvLfXY18918213101196160'
+//        AND ck0004 < 'ZYFiYEUkzcKOhdyazcKOhdyazcKOhdyazcKOhdyazcKOhdyachTAyMjmsZMUPCzi23819065184175';
+
+//        ByteBuffer[] clusteringKeyValues = new ByteBuffer[] {
+//                UTF8.decompose(stringValue),
+//                DECIMAL.decompose(decimalValue),
+//                VARINT.decompose(varintValue)
+//        };
+
+//        BufferClusteringBound.create(ClusteringPrefix.Kind.EXCL_START_BOUND, )
+
+        UnfilteredPartitionIterator partitionIterator = sstable.partitionIterator(ColumnFilter.all(tm),
+                DataRange.allData(tm.partitioner),
+                SSTableReadsListener.NOOP_LISTENER);
+
+        assertTrue(partitionIterator.hasNext());
+        while(partitionIterator.hasNext())
+        {
+            UnfilteredRowIterator iter = partitionIterator.next();
+            while (iter.hasNext())
+                System.out.println(">>>>>> data " + iter.next());
+        }
+        partitionIterator.close();
+
+        // (min(-9223372036854775808),min(-9223372036854775808)]
+
+
+        Slices.Builder slicesBuilder = new Slices.Builder(tm.comparator);
+        slicesBuilder.add(Slice.ALL);
+        Slices slices = slicesBuilder.build();
+        DecoratedKey key = Util.dk(ByteBufferUtil.bytes(0));
+
+        SinglePartitionReadCommand cmd = SinglePartitionReadCommand.create(tm,
+                FBUtilities.nowInSeconds(),
+                ColumnFilter.all(tm),
+                RowFilter.none(),
+                DataLimits.NONE,
+                key,
+                new ClusteringIndexSliceFilter(slices, true));
+
+        try (UnfilteredRowIteratorWithLowerBound iter = new UnfilteredRowIteratorWithLowerBound(key,
+                sstable,
+                slices,
+                true,
+                ColumnFilter.all(tm),
+                Mockito.mock(SSTableReadsListener.class)))
+        {
+            while (iter.hasNext())
+            {
+                Unfiltered row = iter.next();
+                System.out.println(">>>>>> " + row.toString(tm));
+            }
+        }
     }
 //
 //    private SSTableReader createSSTable(TableMetadata metadata, String keyspace, String table, String query)
@@ -295,35 +379,40 @@ public class CQLBurnTest extends CQLTester
 //        return view.sstables.get(0);
 //    }
 
-    private boolean lowerBoundApplicable(TableMetadata metadata, DecoratedKey key, Slice slice, SSTableReader sstable, boolean isReversed)
+    @Test
+    public void testPagingUsingUppgerCommand() throws Exception
     {
-        Slices.Builder slicesBuilder = new Slices.Builder(metadata.comparator);
-        slicesBuilder.add(slice);
-        Slices slices = slicesBuilder.build();
-        ClusteringIndexSliceFilter filter = new ClusteringIndexSliceFilter(slices, isReversed);
+        Descriptor descriptor = Descriptor.fromFileWithComponent(new File("test/data/cassandra-18932/data1/harry/table_1-07c35a606c0a11eeae7a4f6ca489eb0c/nc-5-big-Data.db"), false).left;
+        TableMetadata tm = TableMetadata.builder("harry", "table_1")
+            .addPartitionKeyColumn("pk0003", UTF8Type.instance)
+            .addPartitionKeyColumn("pk0004", AsciiType.instance)
+            .addPartitionKeyColumn("pk0005", FloatType.instance)
+            .addClusteringColumn("ck0002", IntegerType.instance)
+            .addClusteringColumn("ck0003", UTF8Type.instance)
+            .addClusteringColumn("ck0004",AsciiType.instance)
+            .addRegularColumn("regular0003", FloatType.instance)
+            .addRegularColumn("regular0004", AsciiType.instance)
+            .addRegularColumn("regular0005", UTF8Type.instance)
+            .addRegularColumn("regular0006", FloatType.instance)
+            .addRegularColumn("regular0007", UTF8Type.instance)
+            .partitioner(Murmur3Partitioner.instance)
+                .build();
 
-        SinglePartitionReadCommand cmd = SinglePartitionReadCommand.create(metadata,
-                FBUtilities.nowInSeconds(),
-                ColumnFilter.all(metadata),
-                RowFilter.none(),
-                DataLimits.NONE,
-                key,
-                filter);
+        DecoratedKey key = Util.dk(ByteBufferUtil.bytes("ZinzDdUuABgDknItABgDknItABgDknItXEFrgBnOmPmPylWrwXHqjBHgeQrGfnZd1124124583"));
+        ReadCommand readCommand = SinglePartitionReadCommand.create(tm, FBUtilities.nowInSeconds(), ColumnFilter.all(tm),
+                RowFilter.none(), DataLimits.cqlLimits(1), key, new ClusteringIndexSliceFilter(Slices.ALL, false));
 
-        try (UnfilteredRowIteratorWithLowerBound iter = new UnfilteredRowIteratorWithLowerBound(key,
-                sstable,
-                slices,
-                isReversed,
-                ColumnFilter.all(metadata),
-                Mockito.mock(SSTableReadsListener.class)))
+        // PartitionRangeReadCommand.withUpdatedLimitsAndDataRange(DataLimits.cqlLimits(1), DataRange.allData(tm.partitioner));
+
+
+        UnfilteredPartitionIterator partitionIterator = readCommand.executeLocally(readCommand.executionController());
+        assert partitionIterator.hasNext();
+        UnfilteredRowIterator partition = partitionIterator.next();
+
+        while (partition.hasNext())
         {
-            while (iter.hasNext())
-            {
-                Unfiltered row = iter.next();
-                System.out.println(">>>>>> " + row.toString(metadata));
-            }
-
-            return iter.lowerBound() != null;
+            Unfiltered unfiltered = partition.next();
+            System.out.println(">>>>>> " + unfiltered);
         }
     }
 /*

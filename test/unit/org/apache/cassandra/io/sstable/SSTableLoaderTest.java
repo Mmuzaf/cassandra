@@ -410,7 +410,7 @@ public class SSTableLoaderTest
         return dataDir;
     }
 
-    StreamEventHandler completionStreamListener(final CountDownLatch latch)
+    public static StreamEventHandler completionStreamListener(final CountDownLatch latch)
     {
         return new StreamEventHandler() {
             public void onFailure(Throwable arg0)
