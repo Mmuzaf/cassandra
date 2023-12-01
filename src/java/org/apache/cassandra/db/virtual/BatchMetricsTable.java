@@ -30,7 +30,7 @@ import org.apache.cassandra.service.ClientWarn;
 
 /**
  * @deprecated The "batch_metrics" virtual table is no longer used, and will be removed in a future release. Please,
- * use either "metrics_group_batch", or "metrics_type_histogram" virtual tables instead.
+ * use either "metrics_batch", or "metrics_type_histogram" virtual tables instead.
  */
 @Deprecated(since = "5.2")
 public class BatchMetricsTable extends AbstractVirtualTable
@@ -68,7 +68,7 @@ public class BatchMetricsTable extends AbstractVirtualTable
         addRow(result, PARTITIONS_PER_COUNTER_BATCH, metrics.partitionsPerCounterBatch.getSnapshot());
 
         ClientWarn.instance.warn("The \"batch_metrics\" virtual table is deprecated. " +
-                "Please, use either \"metrics_group_batch\", or \"metrics_type_histogram\" virtual tables instead.");
+                "Please, use either \"metrics_batch\", or \"metrics_type_histogram\" virtual tables instead.");
         return result;
     }
 
