@@ -30,7 +30,7 @@ import org.apache.cassandra.service.ClientWarn;
 
 /**
  * @deprecated The "cql_metrics" virtual table is no longer used, and will be removed in a future release. Please,
- * use "cql_group_metrics" virtual table instead.
+ * use "metrics_group_cql" virtual table instead.
  */
 @Deprecated(since = "5.2")
 final class CQLMetricsTable extends AbstractVirtualTable
@@ -76,7 +76,7 @@ final class CQLMetricsTable extends AbstractVirtualTable
         addRow(result, REGULAR_STATEMENTS_EXECUTED, cqlMetrics.regularStatementsExecuted.getCount());
 
         ClientWarn.instance.warn("The \"" + TABLE_NAME + "\" virtual table is deprecated. " +
-                "Please, use \"cql_group_metrics\" virtual table instead.");
+                "Please, use \"metrics_group_cql\" virtual table instead.");
         return result;
     }
 

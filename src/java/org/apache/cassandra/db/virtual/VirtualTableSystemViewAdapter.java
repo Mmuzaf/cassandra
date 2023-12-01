@@ -78,10 +78,10 @@ public class VirtualTableSystemViewAdapter<R> extends AbstractVirtualTable
                 .replaceAll("_");
     }
 
-    private static TableMetadata createMetadata(SystemView<?> systemView, UnaryOperator<String> nameMapper)
+    private static TableMetadata createMetadata(SystemView<?> systemView, UnaryOperator<String> tableNameMapper)
     {
 
-        TableMetadata.Builder builder = TableMetadata.builder(VIRTUAL_VIEWS, virtualTableStyle(nameMapper.apply(systemView.name())))
+        TableMetadata.Builder builder = TableMetadata.builder(VIRTUAL_VIEWS, tableNameMapper.apply(virtualTableStyle(systemView.name())))
                 .comment(systemView.description())
                 .kind(TableMetadata.Kind.VIRTUAL);
         systemView.walker().visitMeta(
