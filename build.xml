@@ -474,9 +474,6 @@
                source="${java.default}" target="${java.default}">
             <src path="${build.src}"/>
         </javac>
-<!--        <copy todir="${stress.build.classes}">-->
-<!--            <fileset dir="${stress.build.resources}" />-->
-<!--        </copy>-->
     </target>
 
     <target name="annotation-processor-jar"
@@ -545,11 +542,7 @@
             <compilerarg line="org.apache.cassandra.db.virtual.proc.SystemViewAnnotationProcessor,net.nicoulaj.compilecommand.CompileCommandProcessor"/>
             <compilerarg line="-s"/>
             <compilerarg line="${build.src.gen-java}"/>
-<!--            <compilerarg value="-verbose"/>-->
-<!--            <compilerarg value="-XprintRounds"/>-->
             <compilerarg value="-XprintProcessorInfo"/>
-<!--            <compilerarg value="-Xlint"/>-->
-<!--            <compilerarg value="-J-verbose"/>-->
             <classpath>
                 <path refid="cassandra.classpath"/>
             </classpath>
