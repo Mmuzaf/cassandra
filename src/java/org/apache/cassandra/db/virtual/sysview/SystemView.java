@@ -15,22 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.metrics;
 
+package org.apache.cassandra.db.virtual.sysview;
 
-public interface MetricNameFactory
+import org.apache.cassandra.db.virtual.proc.RowWalker;
+
+/**
+ * Implementation provides data for some internal Cassandra objects.
+ */
+public interface SystemView<R> extends Iterable<R>
 {
-    MetricNameFactory NO_GROUP = metricName -> CassandraMetricsRegistry.MetricName.EMPTY;
-    /**
-     * Create a qualified name from given metric name.
-     *
-     * @param metricName part of qualified name.
-     * @return new String with given metric name.
-     */
-    CassandraMetricsRegistry.MetricName createMetricName(String metricName);
+    RowWalker<R> walker();
 
-    default String groupName()
-    {
-        throw new UnsupportedOperationException("MetricNameFactory.factoryName() is not implemented");
-    }
+    String name();
+
+    String description();
+
+    long size();
 }

@@ -21,8 +21,6 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Meter;
 import org.apache.cassandra.utils.memory.BufferPool;
 
-import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
-
 public class BufferPoolMetrics
 {
     /** Total number of hits */
@@ -49,19 +47,14 @@ public class BufferPoolMetrics
 
     public BufferPoolMetrics(String scope, BufferPool bufferPool)
     {
-        MetricNameFactory factory = new DefaultNameFactory("BufferPool", scope);
-
-        hits = Metrics.meter(factory.createMetricName("Hits"));
-
-        misses = Metrics.meter(factory.createMetricName("Misses"));
-
-        capacity = Metrics.register(factory.createMetricName("Capacity"), bufferPool::memoryUsageThreshold);
-
-        overflowSize = Metrics.register(factory.createMetricName("OverflowSize"), bufferPool::overflowMemoryInBytes);
-
-        usedSize = Metrics.register(factory.createMetricName("UsedSize"), bufferPool::usedSizeInBytes);
-
-        size = Metrics.register(factory.createMetricName("Size"), bufferPool::sizeInBytes);
+        CassandraMetricsRegistry group = CassandraMetricsRegistry.getOrCreateGroup(
+                new DefaultNameFactory("BufferPool", scope),
+                "Metrics for buffer pool: \"" + scope + "\".");
+        hits = group.meterMetric("Hits");
+        misses = group.meterMetric("Misses");
+        capacity = group.registerMetric("Capacity", bufferPool::memoryUsageThreshold);
+        overflowSize = group.registerMetric("OverflowSize", bufferPool::overflowMemoryInBytes);
+        usedSize = group.registerMetric("UsedSize", bufferPool::usedSizeInBytes);
+        size = group.registerMetric("Size", bufferPool::sizeInBytes);
     }
-
 }

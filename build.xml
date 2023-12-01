@@ -458,6 +458,38 @@
         </exec>
     </target>
 
+    <!-- Include annotation processor for SystemView -->
+    <property name="processor.build.classes" value="${build.classes}/processor" />
+    <property name="processor.manifest" value="${processor.build.classes}/MANIFEST.MF" />
+
+    <target name="annotation-processor-build" depends="init" description="Build system view annotation processor">
+        <antcall target="_annotation_processor_build"/>
+    </target>
+
+    <target name="_annotation_processor_build">
+        <mkdir dir="${processor.build.classes}" />
+        <javac includes="**/virtual/proc/*.java"
+               destdir="${processor.build.classes}"
+               includeantruntime="true"
+               source="${java.default}" target="${java.default}">
+            <src path="${build.src}"/>
+        </javac>
+<!--        <copy todir="${stress.build.classes}">-->
+<!--            <fileset dir="${stress.build.resources}" />-->
+<!--        </copy>-->
+    </target>
+
+    <target name="annotation-processor-jar"
+            depends="annotation-processor-build">
+        <mkdir dir="${processor.build.classes}/META-INF" />
+        <jar destfile="${build.dir.lib}/jars/cassandra-annotation-processor-${version}.jar">
+            <fileset dir="${processor.build.classes}"/>
+            <manifest>
+                <attribute name="Built-By" value="Maxim Muzafarov"/>
+            </manifest>
+        </jar>
+    </target>
+
     <!--
         Generates Java sources for tokenization support from jflex
         grammar files
@@ -509,13 +541,22 @@
             <src path="${build.src.gen-java}"/>
             <compilerarg value="-XDignore.symbol.file"/>
             <compilerarg line="${jdk11plus-javac-exports}"/>
+            <compilerarg line="-processor"/>
+            <compilerarg line="org.apache.cassandra.db.virtual.proc.SystemViewAnnotationProcessor,net.nicoulaj.compilecommand.CompileCommandProcessor"/>
+            <compilerarg line="-s"/>
+            <compilerarg line="${build.src.gen-java}"/>
+<!--            <compilerarg value="-verbose"/>-->
+<!--            <compilerarg value="-XprintRounds"/>-->
+            <compilerarg value="-XprintProcessorInfo"/>
+<!--            <compilerarg value="-Xlint"/>-->
+<!--            <compilerarg value="-J-verbose"/>-->
             <classpath>
                 <path refid="cassandra.classpath"/>
             </classpath>
         </javac>
     </target>
 
-    <target depends="init,gen-cql3-grammar,generate-cql-html,generate-jflex-java"
+    <target depends="init,gen-cql3-grammar,generate-cql-html,generate-jflex-java,annotation-processor-jar"
             name="build-project">
         <echo message="${ant.project.name}: ${ant.file}"/>
         <!-- Order matters! -->

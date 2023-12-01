@@ -17,21 +17,35 @@
  */
 package org.apache.cassandra.metrics;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Metered;
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.MetricRegistryListener;
+import com.codahale.metrics.MetricSet;
+import com.codahale.metrics.Timer;
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.cassandra.utils.MBeanWrapper;
+
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
-import com.google.common.annotations.VisibleForTesting;
-
-import com.codahale.metrics.*;
-import org.apache.cassandra.utils.MBeanWrapper;
+import static java.util.Optional.ofNullable;
 
 /**
  * Makes integrating 3.0 metrics API with 2.0.
@@ -39,40 +53,102 @@ import org.apache.cassandra.utils.MBeanWrapper;
  * The 3.0 API comes with poor JMX integration
  * </p>
  */
-public class CassandraMetricsRegistry extends MetricRegistry
+public class CassandraMetricsRegistry extends MetricRegistry implements AliasedMetricSet
 {
-    public static final CassandraMetricsRegistry Metrics = new CassandraMetricsRegistry();
+    private static final Map<String, Set<MetricName>> aliases = new ConcurrentHashMap<>();
+    private static final MetricRegistryListener jmxMetricsExporter = new CassandraJmxMetricsExporter(name ->
+            ofNullable(aliases.get(name)).orElse(Collections.emptySet())
+                    .stream()
+                    .map(MetricName::getMBeanName)
+                    .collect(Collectors.toSet()));
+    public static final CassandraMetricsRegistry Metrics = new CassandraMetricsRegistry(MetricNameFactory.NO_GROUP,
+            "Root metrics registry",
+            jmxMetricsExporter);
+    private final Map<String, CassandraMetricsRegistry> metricGroups = new ConcurrentHashMap<>();
     private final Map<String, ThreadPoolMetrics> threadPoolMetrics = new ConcurrentHashMap<>();
-
-    private final MBeanWrapper mBeanServer = MBeanWrapper.instance;
+    private final MetricNameFactory metricNameFactory;
+    private final String description;
     public final static TimeUnit DEFAULT_TIMER_UNIT = TimeUnit.MICROSECONDS;
 
-    private CassandraMetricsRegistry()
+    static
     {
-        super();
+        // Load all metric classes to ensure they register themselves.
+        BatchMetrics metrics = BatchMetrics.instance;
     }
 
-    public Counter counter(MetricName name)
+    private CassandraMetricsRegistry(MetricNameFactory metricNameFactory, String description, MetricRegistryListener listener)
     {
-        Counter counter = counter(name.getMetricName());
-        registerMBean(counter, name.getMBeanName());
-
-        return counter;
+        this.metricNameFactory = metricNameFactory;
+        this.description = description;
+        addListener(listener);
     }
 
-    public Counter counter(MetricName name, MetricName alias)
+    public static CassandraMetricsRegistry getOrCreateGroup(MetricNameFactory factory, String description)
     {
-        Counter counter = counter(name);
-        registerAlias(name, alias);
-        return counter;
+        return Metrics.metricGroups.computeIfAbsent(factory.groupName(),
+                t -> new CassandraMetricsRegistry(factory,
+                        description,
+                        new DelegateMetricsListener(CassandraMetricsRegistry.Metrics)));
+    }
+
+    public Map<String, CassandraMetricsRegistry> getMetricGroups()
+    {
+        return Collections.unmodifiableMap(metricGroups);
+    }
+
+    @Override
+    public Map<String, Set<MetricName>> getAliases()
+    {
+        return aliases;
+    }
+
+    public String getDescription()
+    {
+        return description;
+    }
+
+    @Override
+    public void registerAll(MetricSet metrics) throws IllegalArgumentException
+    {
+        if (metrics instanceof AliasedMetricSet)
+            ((AliasedMetricSet) metrics).getAliases().forEach((name, add) ->
+                    CassandraMetricsRegistry.aliases.computeIfAbsent(name, k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
+                            .addAll(add));
+
+        super.registerAll(metrics);
+    }
+
+    public Counter counterMetric(String metricName)
+    {
+        return counter(metricNameFactory.createMetricName(metricName));
+    }
+
+    public Histogram histogramMetric(String metricName, boolean considerZeroes)
+    {
+        return histogram(metricNameFactory.createMetricName(metricName), considerZeroes);
+    }
+
+    public Meter meterMetric(String name)
+    {
+        return meter(metricNameFactory.createMetricName(name));
+    }
+
+    public <T extends Metric> T registerMetric(String name, T metric)
+    {
+        return register(metricNameFactory.createMetricName(name), metric);
+    }
+
+    public Counter counter(MetricName... name)
+    {
+        aliases.computeIfAbsent(name[0].getMetricName(),
+                n -> Collections.newSetFromMap(new ConcurrentHashMap<>())).addAll(Arrays.asList(name));
+        return counter(name[0].getMetricName());
     }
 
     public Meter meter(MetricName name)
     {
-        Meter meter = meter(name.getMetricName());
-        registerMBean(meter, name.getMBeanName());
-
-        return meter;
+        aliases.computeIfAbsent(name.getMetricName(), n -> Collections.newSetFromMap(new ConcurrentHashMap<>())).add(name);
+        return meter(name.getMetricName());
     }
 
     public Meter meter(MetricName name, MetricName alias)
@@ -84,10 +160,8 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
     public Histogram histogram(MetricName name, boolean considerZeroes)
     {
-        Histogram histogram = register(name, new ClearableHistogram(new DecayingEstimatedHistogramReservoir(considerZeroes)));
-        registerMBean(histogram, name.getMBeanName());
-
-        return histogram;
+        aliases.computeIfAbsent(name.getMetricName(), n -> Collections.newSetFromMap(new ConcurrentHashMap<>())).add(name);
+        return register(name, new ClearableHistogram(new DecayingEstimatedHistogramReservoir(considerZeroes)));
     }
 
     public Histogram histogram(MetricName name, MetricName alias, boolean considerZeroes)
@@ -109,9 +183,8 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
     public SnapshottingTimer timer(MetricName name, TimeUnit durationUnit)
     {
-        SnapshottingTimer timer = register(name, new SnapshottingTimer(CassandraMetricsRegistry.createReservoir(durationUnit)));
-        registerMBean(timer, name.getMBeanName());
-        return timer;
+        aliases.computeIfAbsent(name.getMetricName(), n -> Collections.newSetFromMap(new ConcurrentHashMap<>())).add(name);
+        return register(name, new SnapshottingTimer(CassandraMetricsRegistry.createReservoir(durationUnit)));
     }
 
     public SnapshottingTimer timer(MetricName name, MetricName alias, TimeUnit durationUnit)
@@ -146,9 +219,8 @@ public class CassandraMetricsRegistry extends MetricRegistry
     {
         try
         {
-            register(name.getMetricName(), metric);
-            registerMBean(metric, name.getMBeanName());
-            return metric;
+            aliases.computeIfAbsent(name.getMetricName(), n -> Collections.newSetFromMap(new ConcurrentHashMap<>())).add(name);
+            return register(name.getMetricName(), metric);
         }
         catch (IllegalArgumentException e)
         {
@@ -164,7 +236,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
     public Optional<ThreadPoolMetrics> getThreadPoolMetrics(String poolName)
     {
-        return Optional.ofNullable(threadPoolMetrics.get(poolName));
+        return ofNullable(threadPoolMetrics.get(poolName));
     }
 
     ThreadPoolMetrics register(ThreadPoolMetrics metrics)
@@ -197,26 +269,22 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
     public boolean remove(MetricName name)
     {
-        boolean removed = remove(name.getMetricName());
-
-        mBeanServer.unregisterMBean(name.getMBeanName(), MBeanWrapper.OnException.IGNORE);
-        return removed;
+        // TODO remove aliases from alias map
+        return remove(name.getMetricName());
     }
 
     public boolean remove(MetricName name, MetricName... aliases)
     {
-        if (remove(name))
-        {
-            for (MetricName alias : aliases)
-            {
-                removeAlias(alias);
-            }
-            return true;
-        }
-        return false;
+        return remove(name);
     }
 
+    // TODO cleanup
     public void registerMBean(Metric metric, ObjectName name)
+    {
+        registerMBean(metric, name, MBeanWrapper.instance);
+    }
+
+    public void registerMBean(Metric metric, ObjectName name, MBeanWrapper mBeanServer)
     {
         AbstractBean mbean;
 
@@ -233,7 +301,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
         else
             throw new IllegalArgumentException("Unknown metric type: " + metric.getClass());
 
-        if (!mBeanServer.isRegistered(name))
+        if (mBeanServer != null && !mBeanServer.isRegistered(name))
             mBeanServer.registerMBean(mbean, name, MBeanWrapper.OnException.LOG);
     }
 
@@ -243,12 +311,6 @@ public class CassandraMetricsRegistry extends MetricRegistry
         assert existing != null : existingName + " not registered";
 
         registerMBean(existing, aliasName.getMBeanName());
-    }
-
-    private void removeAlias(MetricName name)
-    {
-        if (mBeanServer.isRegistered(name.getMBeanName()))
-            MBeanWrapper.instance.unregisterMBean(name.getMBeanName(), MBeanWrapper.OnException.IGNORE);
     }
     
     /**
@@ -693,6 +755,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
      */
     public static class MetricName implements Comparable<MetricName>
     {
+        public static final MetricName EMPTY = new MetricName("", "", "", "", "");
         private final String group;
         private final String type;
         private final String name;
@@ -961,6 +1024,152 @@ public class CassandraMetricsRegistry extends MetricRegistry
                 name = method.getName();
             }
             return name;
+        }
+    }
+
+    private static class CassandraJmxMetricsExporter implements MetricRegistryListener
+    {
+        private final MBeanWrapper mBeanWrapper = MBeanWrapper.instance;
+        private final java.util.function.Function<String, Set<ObjectName>> mapper;
+
+        public CassandraJmxMetricsExporter(java.util.function.Function<String, Set<ObjectName>> mapper)
+        {
+            this.mapper = mapper;
+        }
+
+        private void each(String metricName, Consumer<ObjectName> consumer)
+        {
+            mapper.apply(metricName).forEach(consumer);
+        }
+
+        @Override
+        public void onGaugeAdded(String metricName, Gauge<?> gauge)
+        {
+            each(metricName, objName -> Metrics.registerMBean(gauge, objName, mBeanWrapper));
+        }
+
+        @Override
+        public void onGaugeRemoved(String metricName)
+        {
+            each(metricName, objName -> mBeanWrapper.unregisterMBean(objName, MBeanWrapper.OnException.IGNORE));
+        }
+
+        @Override
+        public void onCounterAdded(String metricName, Counter counter)
+        {
+            each(metricName, objName -> Metrics.registerMBean(counter, objName, mBeanWrapper));
+        }
+
+        @Override
+        public void onCounterRemoved(String metricName)
+        {
+            each(metricName, objName -> mBeanWrapper.unregisterMBean(objName, MBeanWrapper.OnException.IGNORE));
+        }
+
+        @Override
+        public void onHistogramAdded(String metricName, Histogram histogram)
+        {
+            each(metricName, objName -> Metrics.registerMBean(histogram, objName, mBeanWrapper));
+        }
+
+        @Override
+        public void onHistogramRemoved(String metricName)
+        {
+            each(metricName, objName -> mBeanWrapper.unregisterMBean(objName, MBeanWrapper.OnException.IGNORE));
+        }
+
+        @Override
+        public void onMeterAdded(String metricName, Meter meter)
+        {
+            each(metricName, objName -> Metrics.registerMBean(meter, objName, mBeanWrapper));
+        }
+
+        @Override
+        public void onMeterRemoved(String metricName)
+        {
+            each(metricName, objName -> mBeanWrapper.unregisterMBean(objName, MBeanWrapper.OnException.IGNORE));
+        }
+
+        @Override
+        public void onTimerAdded(String metricName, Timer timer)
+        {
+            each(metricName, objName -> Metrics.registerMBean(timer, objName, mBeanWrapper));
+        }
+
+        @Override
+        public void onTimerRemoved(String metricName)
+        {
+            each(metricName, objName -> mBeanWrapper.unregisterMBean(objName, MBeanWrapper.OnException.IGNORE));
+        }
+    }
+
+    private static class DelegateMetricsListener implements MetricRegistryListener
+    {
+        private final MetricRegistry delegate;
+
+        public DelegateMetricsListener(MetricRegistry delegate)
+        {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public void onGaugeAdded(String name, Gauge<?> gauge)
+        {
+            delegate.gauge(name, () -> gauge);
+        }
+
+        @Override
+        public void onGaugeRemoved(String name)
+        {
+            delegate.remove(name);
+        }
+
+        @Override
+        public void onCounterAdded(String name, Counter counter)
+        {
+            delegate.counter(name, () -> counter);
+        }
+
+        @Override
+        public void onCounterRemoved(String name)
+        {
+            delegate.remove(name);
+        }
+
+        @Override
+        public void onHistogramAdded(String name, Histogram histogram)
+        {
+            delegate.histogram(name, () -> histogram);
+        }
+
+        @Override
+        public void onHistogramRemoved(String name)
+        {
+            delegate.remove(name);
+        }
+
+        @Override
+        public void onMeterAdded(String name, Meter meter)
+        {
+            delegate.meter(name, () -> meter);
+        }
+
+        @Override
+        public void onMeterRemoved(String name)
+        {
+            delegate.remove(name);
+        }
+
+        @Override
+        public void onTimerAdded(String name, Timer timer)
+        {
+            delegate.timer(name, () -> timer);
+        }
+
+        @Override
+        public void onTimerRemoved(String name)
+        {
+            delegate.remove(name);
         }
     }
 }

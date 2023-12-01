@@ -26,7 +26,13 @@ import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.dht.LocalPartitioner;
 import org.apache.cassandra.metrics.BatchMetrics;
 import org.apache.cassandra.schema.TableMetadata;
+import org.apache.cassandra.service.ClientWarn;
 
+/**
+ * @deprecated The "batch_metrics" virtual table is no longer used, and will be removed in a future release. Please,
+ * use either "batch_group_metrics", or "histogram_type_metrics" virtual tables instead.
+ */
+@Deprecated(since = "5.2")
 public class BatchMetricsTable extends AbstractVirtualTable
 {
 
@@ -61,6 +67,8 @@ public class BatchMetricsTable extends AbstractVirtualTable
         addRow(result, PARTITIONS_PER_UNLOGGED_BATCH, metrics.partitionsPerUnloggedBatch.getSnapshot());
         addRow(result, PARTITIONS_PER_COUNTER_BATCH, metrics.partitionsPerCounterBatch.getSnapshot());
 
+        ClientWarn.instance.warn("The \"batch_metrics\" virtual table is deprecated. " +
+                "Please, use either \"batch_group_metrics\", or \"histogram_type_metrics\" virtual tables instead.");
         return result;
     }
 

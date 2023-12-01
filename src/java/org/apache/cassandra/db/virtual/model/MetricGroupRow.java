@@ -15,22 +15,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.metrics;
+
+package org.apache.cassandra.db.virtual.model;
+
+import org.apache.cassandra.db.virtual.proc.Column;
+import org.apache.cassandra.metrics.CassandraMetricsRegistry;
+
+import java.util.Map;
 
 
-public interface MetricNameFactory
+/**
+ * Metric group row representation for a {@link org.apache.cassandra.db.virtual.sysview.SystemView}.
+ */
+public class MetricGroupRow
 {
-    MetricNameFactory NO_GROUP = metricName -> CassandraMetricsRegistry.MetricName.EMPTY;
-    /**
-     * Create a qualified name from given metric name.
-     *
-     * @param metricName part of qualified name.
-     * @return new String with given metric name.
-     */
-    CassandraMetricsRegistry.MetricName createMetricName(String metricName);
+    private final String group;
+    private final String comment;
 
-    default String groupName()
+    public MetricGroupRow(Map.Entry<String, CassandraMetricsRegistry> group)
     {
-        throw new UnsupportedOperationException("MetricNameFactory.factoryName() is not implemented");
+        this.group = group.getKey();
+        this.comment = group.getValue().getDescription();
+    }
+
+    @Column(index = 0)
+    public String groupName()
+    {
+        return group;
+    }
+
+    @Column(index = 1)
+    public String comment()
+    {
+        return comment;
     }
 }

@@ -15,22 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.metrics;
+
+package org.apache.cassandra.db.virtual.proc;
 
 
-public interface MetricNameFactory
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Annotation to mark a walk order for a {@link RowWalker}.
+ */
+@Retention(RetentionPolicy.SOURCE)
+@Target(ElementType.METHOD)
+public @interface Column
 {
-    MetricNameFactory NO_GROUP = metricName -> CassandraMetricsRegistry.MetricName.EMPTY;
     /**
-     * Create a qualified name from given metric name.
-     *
-     * @param metricName part of qualified name.
-     * @return new String with given metric name.
+     * @return Index of the column. {@code 0} value means that column is the partition key column.
      */
-    CassandraMetricsRegistry.MetricName createMetricName(String metricName);
-
-    default String groupName()
-    {
-        throw new UnsupportedOperationException("MetricNameFactory.factoryName() is not implemented");
-    }
+    int index();
 }

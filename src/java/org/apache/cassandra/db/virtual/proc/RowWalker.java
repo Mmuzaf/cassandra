@@ -15,22 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.metrics;
 
+package org.apache.cassandra.db.virtual.proc;
 
-public interface MetricNameFactory
+/**
+ * Utility class for quick iteration over row attributes and row values.
+ * Walk order is defined by {@link org.apache.cassandra.db.virtual.proc.Column} annotations and walks from a lower to higher index.
+ */
+public interface RowWalker<R>
 {
-    MetricNameFactory NO_GROUP = metricName -> CassandraMetricsRegistry.MetricName.EMPTY;
-    /**
-     * Create a qualified name from given metric name.
-     *
-     * @param metricName part of qualified name.
-     * @return new String with given metric name.
-     */
-    CassandraMetricsRegistry.MetricName createMetricName(String metricName);
+    int count();
+    void visitMeta(MetadataVisitor visitor);
+    void visitRow(R row, RowMetadataVisitor visitor);
 
-    default String groupName()
+    interface MetadataVisitor
     {
-        throw new UnsupportedOperationException("MetricNameFactory.factoryName() is not implemented");
+        <T> void accept(int index, String name, Class<T> clazz);
+    }
+
+    interface RowMetadataVisitor
+    {
+        <T> void accept(int index, String name, Class<T> clazz, T value);
     }
 }

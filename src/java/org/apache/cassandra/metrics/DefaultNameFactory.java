@@ -18,6 +18,8 @@
 package org.apache.cassandra.metrics;
 
 
+import com.datastax.shaded.metrics.MetricRegistry;
+
 /**
  * MetricNameFactory that generates default MetricName of metrics.
  */
@@ -42,6 +44,12 @@ public class DefaultNameFactory implements MetricNameFactory
     public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
     {
         return createMetricName(type, metricName, scope);
+    }
+
+    @Override
+    public String groupName()
+    {
+        return MetricRegistry.name(type, scope);
     }
 
     public static CassandraMetricsRegistry.MetricName createMetricName(String type, String metricName, String scope)
