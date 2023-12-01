@@ -46,9 +46,9 @@ import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;
 public final class SystemViewsKeyspace extends VirtualKeyspace
 {
     private static final String METRICS_PREFIX = "metrics_";
-    private static final UnaryOperator<String> GROUP_METRICS_OPERATOR = name ->
+    private static final UnaryOperator<String> GROUP_NAME_MAPPER = name ->
             METRICS_PREFIX + "group_" + (name.chars().allMatch(Character::isUpperCase) ? name.toLowerCase() : name);
-    private static final UnaryOperator<String> TYPE_METRICS_OPERATOR = name -> METRICS_PREFIX + "type_" + name;
+    private static final UnaryOperator<String> TYPE_NAME_MAPPER = name -> METRICS_PREFIX + "type_" + name;
 
     public static SystemViewsKeyspace instance = new SystemViewsKeyspace();
 
@@ -98,7 +98,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                             new MetricRowWalker(),
                             group.getMetrics().entrySet(),
                             MetricRow::new),
-                    GROUP_METRICS_OPERATOR
+                    GROUP_NAME_MAPPER
             ));
         });
         tables.add(new VirtualTableSystemViewAdapter<>(
@@ -115,7 +115,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                         Metrics.getMetricGroups().entrySet(),
                         e -> e.getValue().getCounters().entrySet(),
                         (groupEntry, counter) -> new CounterMetricRow(groupEntry.getKey(), counter)),
-                TYPE_METRICS_OPERATOR));
+                TYPE_NAME_MAPPER));
         tables.add(new VirtualTableSystemViewAdapter<>(
                 SystemViewCollectionAdapter.create("gauge",
                         "All metrics with type \"Gauge\"",
@@ -123,7 +123,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                         Metrics.getMetricGroups().entrySet(),
                         e -> e.getValue().getGauges().entrySet(),
                         (groupEntry, gauge) -> new GaugeMetricRow(groupEntry.getKey(), gauge)),
-                TYPE_METRICS_OPERATOR));
+                TYPE_NAME_MAPPER));
         tables.add(new VirtualTableSystemViewAdapter<>(
                 SystemViewCollectionAdapter.create("histogram",
                         "All metrics with type \"Histogram\"",
@@ -131,7 +131,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                         Metrics.getMetricGroups().entrySet(),
                         e -> e.getValue().getHistograms().entrySet(),
                         (groupEntry, histogram) -> new HistogramMetricRow(groupEntry.getKey(), histogram)),
-                TYPE_METRICS_OPERATOR));
+                TYPE_NAME_MAPPER));
         tables.add(new VirtualTableSystemViewAdapter<>(
                 SystemViewCollectionAdapter.create("meter",
                         "All metrics with type \"Meter\"",
@@ -139,7 +139,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                         Metrics.getMetricGroups().entrySet(),
                         e -> e.getValue().getMeters().entrySet(),
                         (groupEntry, meter) -> new MeterMetricRow(groupEntry.getKey(), meter)),
-                TYPE_METRICS_OPERATOR));
+                TYPE_NAME_MAPPER));
         tables.add(new VirtualTableSystemViewAdapter<>(
                 SystemViewCollectionAdapter.create("timer",
                         "All metrics with type \"Timer\"",
@@ -147,7 +147,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                         Metrics.getMetricGroups().entrySet(),
                         e -> e.getValue().getTimers().entrySet(),
                         (groupEntry, timer) -> new TimerMetricRow(groupEntry.getKey(), timer)),
-                TYPE_METRICS_OPERATOR));
+                TYPE_NAME_MAPPER));
         return tables;
     }
 }
