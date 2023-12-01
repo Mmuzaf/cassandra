@@ -46,8 +46,7 @@ import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;
 public final class SystemViewsKeyspace extends VirtualKeyspace
 {
     private static final String METRICS_PREFIX = "metrics_";
-    private static final UnaryOperator<String> GROUP_NAME_MAPPER = name ->
-            METRICS_PREFIX + "group_" + (name.chars().allMatch(Character::isUpperCase) ? name.toLowerCase() : name);
+    private static final UnaryOperator<String> GROUP_NAME_MAPPER = name -> METRICS_PREFIX + name;
     private static final UnaryOperator<String> TYPE_NAME_MAPPER = name -> METRICS_PREFIX + "type_" + name;
 
     public static SystemViewsKeyspace instance = new SystemViewsKeyspace();
@@ -107,7 +106,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                         new MetricGroupRowWalker(),
                         Metrics.getMetricGroups().entrySet(),
                         MetricGroupRow::new),
-                name -> METRICS_PREFIX + name));
+                GROUP_NAME_MAPPER));
         tables.add(new VirtualTableSystemViewAdapter<>(
                 SystemViewCollectionAdapter.create("counter",
                         "All metrics with type \"Counter\"",

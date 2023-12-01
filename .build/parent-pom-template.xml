@@ -703,11 +703,6 @@
       </dependency>
       <dependency>
         <groupId>io.dropwizard.metrics</groupId>
-        <artifactId>metrics-jmx</artifactId>
-        <version>4.2.19</version>
-      </dependency>
-      <dependency>
-        <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-logback</artifactId>
         <version>4.2.19</version>
         <exclusions>
