@@ -31,6 +31,6 @@ public interface MetricNameFactory
 
     default String groupName()
     {
-        throw new UnsupportedOperationException("MetricNameFactory.factoryName() is not implemented");
+        throw new UnsupportedOperationException("MetricNameFactory.groupName() is not implemented");
     }
 }
