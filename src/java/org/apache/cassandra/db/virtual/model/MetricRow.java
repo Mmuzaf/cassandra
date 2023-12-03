@@ -51,7 +51,7 @@ public class MetricRow
     }
 
     @Column(index = 1)
-    public String metricScope()
+    public String scope()
     {
         Optional<CassandraMetricsRegistry.MetricName> fullMetric = CassandraMetricsRegistry.Metrics.getAliases()
                 .get(metricEntry.getKey())
