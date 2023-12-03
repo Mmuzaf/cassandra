@@ -61,7 +61,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                     .add(new SettingsTable(VIRTUAL_VIEWS))
                     .add(new SystemPropertiesTable(VIRTUAL_VIEWS))
                     .add(new SSTableTasksTable(VIRTUAL_VIEWS))
-                    // Fully backwards compatible with legacy ThreadPoolsTable under the same "system_views.thread_pools" name.
+                    // Fully backward/forward compatible with the legace ThreadPoolsTable under the same "system_views.thread_pools" name.
                     .add(new VirtualTableSystemViewAdapter<>(
                             SystemViewCollectionAdapter.create("thread_pools",
                                     "Thread pool metrics for all thread pools",

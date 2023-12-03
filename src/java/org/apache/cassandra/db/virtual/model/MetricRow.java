@@ -23,11 +23,14 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import org.apache.cassandra.db.virtual.proc.Column;
+import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Metric row representation for a {@link org.apache.cassandra.db.virtual.sysview.SystemView}.
@@ -48,6 +51,16 @@ public class MetricRow
     }
 
     @Column(index = 1)
+    public String metricScope()
+    {
+        Optional<CassandraMetricsRegistry.MetricName> fullMetric = CassandraMetricsRegistry.Metrics.getAliases()
+                .get(metricEntry.getKey())
+                .stream()
+                .findFirst();
+        return fullMetric.map(CassandraMetricsRegistry.MetricName::getScope).orElse("Undefined");
+    }
+
+    @Column(index = 2)
     public String type()
     {
         Class<?> clazz = metricEntry.getValue().getClass();
@@ -65,7 +78,7 @@ public class MetricRow
             throw new IllegalStateException("Unknown metric type: " + metricEntry.getValue().getClass());
     }
 
-    @Column(index = 2)
+    @Column(index = 3)
     public String value()
     {
         Metric metric = metricEntry.getValue();
