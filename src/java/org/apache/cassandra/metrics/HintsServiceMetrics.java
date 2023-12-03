@@ -36,7 +36,7 @@ public final class HintsServiceMetrics
 {
     private static final Logger logger = LoggerFactory.getLogger(HintsServiceMetrics.class);
 
-    private static final MetricNameFactory factory = new DefaultNameFactory("HintsService");
+    private static final MetricNameFactory factory = Metrics.regsiterMetricFactory(new DefaultNameFactory("HintsService"), "Hints service metrics");
 
     public static final Meter hintsSucceeded = Metrics.meter(factory.createMetricName("HintsSucceeded"));
     public static final Meter hintsFailed    = Metrics.meter(factory.createMetricName("HintsFailed"));

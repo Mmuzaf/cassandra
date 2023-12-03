@@ -194,7 +194,7 @@ public class KeyspaceMetrics
      */
     public KeyspaceMetrics(final Keyspace ks)
     {
-        factory = new KeyspaceMetricNameFactory(ks);
+        factory = Metrics.regsiterMetricFactory(new KeyspaceMetricNameFactory(ks), "Metrics for keyspace \"" + ks.getName() + '"');
         keyspace = ks;
         memtableColumnsCount = createKeyspaceGauge("MemtableColumnsCount",
                 metric -> metric.memtableColumnsCount.getValue());
@@ -402,12 +402,14 @@ public class KeyspaceMetrics
         Metrics.remove(factory.createMetricName(name));
     }
 
-    static class KeyspaceMetricNameFactory implements MetricNameFactory
+    static class KeyspaceMetricNameFactory extends AbstractMetricNameFactory
     {
+        private static final String KEYSPACE_TYPE = "Keyspace";
         private final String keyspaceName;
 
         KeyspaceMetricNameFactory(Keyspace ks)
         {
+            super(KEYSPACE_TYPE);
             this.keyspaceName = ks.getName();
         }
 
@@ -418,11 +420,11 @@ public class KeyspaceMetrics
 
             StringBuilder mbeanName = new StringBuilder();
             mbeanName.append(groupName).append(":");
-            mbeanName.append("type=Keyspace");
+            mbeanName.append("type=").append(KEYSPACE_TYPE);
             mbeanName.append(",keyspace=").append(keyspaceName);
             mbeanName.append(",name=").append(metricName);
 
-            return new MetricName(groupName, "keyspace", metricName, keyspaceName, mbeanName.toString());
+            return new MetricName(groupName, KEYSPACE_TYPE, metricName, keyspaceName, mbeanName.toString());
         }
     }
 }

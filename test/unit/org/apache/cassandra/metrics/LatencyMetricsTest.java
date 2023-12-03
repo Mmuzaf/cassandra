@@ -29,13 +29,18 @@ public class LatencyMetricsTest
 {
     private final MetricNameFactory factory = new TestMetricsNameFactory();
 
-    private class TestMetricsNameFactory implements MetricNameFactory
+    private static class TestMetricsNameFactory implements MetricNameFactory
     {
-
         @Override
         public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
         {
             return new CassandraMetricsRegistry.MetricName(TestMetricsNameFactory.class, metricName);
+        }
+
+        @Override
+        public String groupName()
+        {
+            return "TestMetricsNameFactory";
         }
     }
 

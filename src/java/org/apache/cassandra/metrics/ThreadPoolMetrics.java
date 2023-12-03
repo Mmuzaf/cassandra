@@ -115,11 +115,29 @@ public class ThreadPoolMetrics
 
     private static MetricName makeMetricName(String path, String poolName, String metricName)
     {
-        return new MetricName("org.apache.cassandra.metrics",
-                              "ThreadPools",
-                              metricName,
-                              path + '.' + poolName,
-                              format("org.apache.cassandra.metrics:type=ThreadPools,path=%s,scope=%s,name=%s",
-                                     path, poolName, metricName));
+        MetricNameFactory factory = Metrics.regsiterMetricFactory(new ThreadPoolMetricNameFactory(path, poolName),
+                                                                  "Metrics for thread pool \"" + poolName + '"');
+        return factory.createMetricName(metricName);
+    }
+
+    private static class ThreadPoolMetricNameFactory extends AbstractMetricNameFactory
+    {
+        private static final String THREAD_POOLS = "ThreadPools";
+        private final String path;
+        private final String poolName;
+
+        ThreadPoolMetricNameFactory(String path, String poolName)
+        {
+            super(THREAD_POOLS);
+            this.path = path;
+            this.poolName = poolName;
+        }
+
+        public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
+        {
+            String mbeanName = format("%s:type=%s,path=%s,scope=%s,name=%s",
+                    GROUP_NAME, THREAD_POOLS, path, poolName, metricName);
+            return new CassandraMetricsRegistry.MetricName(GROUP_NAME, THREAD_POOLS, metricName, path + '.' + poolName, mbeanName);
+        }
     }
 }

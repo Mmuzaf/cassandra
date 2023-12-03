@@ -64,7 +64,7 @@ public class CacheMetrics
      */
     public CacheMetrics(String type, CacheSize cache)
     {
-        factory = new DefaultNameFactory("Cache", type);
+        factory = Metrics.regsiterMetricFactory(new DefaultNameFactory("Cache", type), "Cache metrics for \"" + type + "\" cache");
 
         capacity = Metrics.register(factory.createMetricName("Capacity"), cache::capacity);
         size = Metrics.register(factory.createMetricName("Size"), cache::weightedSize);

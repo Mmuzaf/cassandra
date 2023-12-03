@@ -25,7 +25,6 @@ import com.codahale.metrics.Metered;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.MetricRegistryListener;
-import com.codahale.metrics.MetricSet;
 import com.codahale.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.cassandra.utils.MBeanWrapper;
@@ -41,11 +40,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
+import static org.apache.cassandra.metrics.AbstractMetricNameFactory.GROUP_NAME;
 
 /**
  * Makes integrating 3.0 metrics API with 2.0.
@@ -55,15 +58,30 @@ import static java.util.Optional.ofNullable;
  */
 public class CassandraMetricsRegistry extends MetricRegistry implements AliasedMetricSet
 {
-    private static final Map<String, Set<MetricName>> aliases = new ConcurrentHashMap<>();
-    private static final MetricRegistryListener jmxMetricsExporter = new CassandraJmxMetricsExporter(name ->
-            ofNullable(aliases.get(name)).orElse(Collections.emptySet())
-                    .stream()
-                    .map(MetricName::getMBeanName)
-                    .collect(Collectors.toSet()));
-    public static final CassandraMetricsRegistry Metrics = new CassandraMetricsRegistry(MetricNameFactory.NO_GROUP,
+    /** A default metric name factory that does not create any metric associated instance. */
+    private static final MetricNameFactory DEFAULT_FACTORY = new AbstractMetricNameFactory(CassandraMetricsRegistry.MetricName.EMPTY.getType())
+    {
+        @Override
+        public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
+        {
+            throw new IllegalStateException("A default metric name factory that does not create any metric associated instance.");
+        }
+    };
+
+    /** A map of metric name constructed by {@link com.codahale.metrics.MetricRegistry#name(String, String...)} and
+     * its full name in the way how it is represented in JMX. The map is used by {@link CassandraJmxMetricsExporter}
+     * to export metrics to JMX. */
+    private final ConcurrentMap<String, Set<MetricName>> aliases = new ConcurrentHashMap<>();
+    /** A map of metric name constructed by {@link org.apache.cassandra.metrics.MetricNameFactory} and the factory name. */
+    private final ConcurrentMap<MetricName, String> metricToFactory = new ConcurrentHashMap<>();
+
+    public static final CassandraMetricsRegistry Metrics = new CassandraMetricsRegistry(DEFAULT_FACTORY,
             "Root metrics registry",
-            jmxMetricsExporter);
+            r -> new CassandraJmxMetricsExporter(name ->
+                    ofNullable(r.getAliases().get(name)).orElse(Collections.emptySet())
+                            .stream()
+                            .map(MetricName::getMBeanName)
+                            .collect(Collectors.toSet())));
     private final Map<String, CassandraMetricsRegistry> metricGroups = new ConcurrentHashMap<>();
     private final Map<String, ThreadPoolMetrics> threadPoolMetrics = new ConcurrentHashMap<>();
     private final MetricNameFactory metricNameFactory;
@@ -76,24 +94,49 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
         BatchMetrics metrics = BatchMetrics.instance;
     }
 
-    private CassandraMetricsRegistry(MetricNameFactory metricNameFactory, String description, MetricRegistryListener listener)
+    private CassandraMetricsRegistry(
+            MetricNameFactory metricNameFactory,
+            String description,
+            Function<CassandraMetricsRegistry, MetricRegistryListener> listenerFactory)
     {
         this.metricNameFactory = metricNameFactory;
         this.description = description;
-        addListener(listener);
-    }
-
-    public static CassandraMetricsRegistry getOrCreateGroup(MetricNameFactory factory, String description)
-    {
-        return Metrics.metricGroups.computeIfAbsent(factory.groupName(),
-                t -> new CassandraMetricsRegistry(factory,
-                        description,
-                        new DelegateMetricsListener(CassandraMetricsRegistry.Metrics)));
+        addListener(listenerFactory.apply(this));
     }
 
     public Map<String, CassandraMetricsRegistry> getMetricGroups()
     {
         return Collections.unmodifiableMap(metricGroups);
+    }
+
+    public MetricNameFactory regsiterMetricFactory(MetricNameFactory factory, String description)
+    {
+        CassandraMetricsRegistry registry = metricGroups.computeIfAbsent(factory.groupName(), factoryName -> {
+            MetricNameFactory factoryWrapper = new MetricNameFactoryWrapper(factory,
+                    createdMetricName -> {
+                        aliases.computeIfAbsent(createdMetricName.getMetricName(),
+                                        k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
+                                .add(createdMetricName);
+                        metricToFactory.putIfAbsent(createdMetricName, factory.groupName());
+                        return createdMetricName;
+                    });
+            return new CassandraMetricsRegistry(factoryWrapper,
+                    description,
+                    r -> new DelegateMetricsListener(CassandraMetricsRegistry.Metrics));
+        });
+        return registry.metricNameFactory;
+    }
+
+    private static CassandraMetricsRegistry getMetricGroupByName(MetricName metricName)
+    {
+        assertKnownMetric(metricName);
+        return Metrics.metricGroups.get(Metrics.metricToFactory.get(metricName));
+    }
+
+    private static void assertKnownMetric(MetricName name)
+    {
+        if (!Metrics.metricToFactory.containsKey(name))
+            throw new IllegalArgumentException(name + " is not a registered metric: " + Metrics.metricToFactory.keySet());
     }
 
     @Override
@@ -107,48 +150,15 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
         return description;
     }
 
-    @Override
-    public void registerAll(MetricSet metrics) throws IllegalArgumentException
-    {
-        if (metrics instanceof AliasedMetricSet)
-            ((AliasedMetricSet) metrics).getAliases().forEach((name, add) ->
-                    CassandraMetricsRegistry.aliases.computeIfAbsent(name, k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
-                            .addAll(add));
-
-        super.registerAll(metrics);
-    }
-
-    public Counter counterMetric(String metricName)
-    {
-        return counter(metricNameFactory.createMetricName(metricName));
-    }
-
-    public Histogram histogramMetric(String metricName, boolean considerZeroes)
-    {
-        return histogram(metricNameFactory.createMetricName(metricName), considerZeroes);
-    }
-
-    public Meter meterMetric(String name)
-    {
-        return meter(metricNameFactory.createMetricName(name));
-    }
-
-    public <T extends Metric> T registerMetric(String name, T metric)
-    {
-        return register(metricNameFactory.createMetricName(name), metric);
-    }
-
     public Counter counter(MetricName... name)
     {
-        aliases.computeIfAbsent(name[0].getMetricName(),
-                n -> Collections.newSetFromMap(new ConcurrentHashMap<>())).addAll(Arrays.asList(name));
-        return counter(name[0].getMetricName());
+        Arrays.asList(name).forEach(CassandraMetricsRegistry::assertKnownMetric);
+        return getMetricGroupByName(name[0]).counter(name[0].getMetricName());
     }
 
     public Meter meter(MetricName name)
     {
-        aliases.computeIfAbsent(name.getMetricName(), n -> Collections.newSetFromMap(new ConcurrentHashMap<>())).add(name);
-        return meter(name.getMetricName());
+        return getMetricGroupByName(name).meter(name.getMetricName());
     }
 
     public Meter meter(MetricName name, MetricName alias)
@@ -160,7 +170,6 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
 
     public Histogram histogram(MetricName name, boolean considerZeroes)
     {
-        aliases.computeIfAbsent(name.getMetricName(), n -> Collections.newSetFromMap(new ConcurrentHashMap<>())).add(name);
         return register(name, new ClearableHistogram(new DecayingEstimatedHistogramReservoir(considerZeroes)));
     }
 
@@ -181,15 +190,14 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
         return timer(name, alias, DEFAULT_TIMER_UNIT);
     }
 
-    public SnapshottingTimer timer(MetricName name, TimeUnit durationUnit)
+    private SnapshottingTimer timer(MetricName name, TimeUnit durationUnit)
     {
-        aliases.computeIfAbsent(name.getMetricName(), n -> Collections.newSetFromMap(new ConcurrentHashMap<>())).add(name);
-        return register(name, new SnapshottingTimer(CassandraMetricsRegistry.createReservoir(durationUnit)));
+        return getMetricGroupByName(name).register(name, new SnapshottingTimer(CassandraMetricsRegistry.createReservoir(durationUnit)));
     }
 
     public SnapshottingTimer timer(MetricName name, MetricName alias, TimeUnit durationUnit)
     {
-        SnapshottingTimer timer = timer(name, durationUnit);
+        SnapshottingTimer timer = getMetricGroupByName(name).timer(name, durationUnit);
         registerAlias(name, alias);
         return timer;
     }
@@ -219,8 +227,7 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
     {
         try
         {
-            aliases.computeIfAbsent(name.getMetricName(), n -> Collections.newSetFromMap(new ConcurrentHashMap<>())).add(name);
-            return register(name.getMetricName(), metric);
+            return getMetricGroupByName(name).register(name.getMetricName(), metric);
         }
         catch (IllegalArgumentException e)
         {
@@ -755,7 +762,7 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
      */
     public static class MetricName implements Comparable<MetricName>
     {
-        public static final MetricName EMPTY = new MetricName("", "", "", "", "");
+        public static final MetricName EMPTY = new MetricName(GROUP_NAME, "Root", "", "", "");
         private final String group;
         private final String type;
         private final String name;
@@ -1170,6 +1177,30 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
         public void onTimerRemoved(String name)
         {
             delegate.remove(name);
+        }
+    }
+
+    private static class MetricNameFactoryWrapper implements MetricNameFactory
+    {
+        private final MetricNameFactory delegate;
+        private final UnaryOperator<MetricName> handler;
+
+        public MetricNameFactoryWrapper(MetricNameFactory delegate, UnaryOperator<MetricName> handler)
+        {
+            this.delegate = delegate;
+            this.handler = handler;
+        }
+
+        @Override
+        public MetricName createMetricName(String metricName)
+        {
+            return handler.apply(delegate.createMetricName(metricName));
+        }
+
+        @Override
+        public String groupName()
+        {
+            return delegate.groupName();
         }
     }
 }

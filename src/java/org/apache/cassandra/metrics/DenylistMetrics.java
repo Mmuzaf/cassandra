@@ -31,7 +31,7 @@ public class DenylistMetrics
 
     public DenylistMetrics()
     {
-        final MetricNameFactory factory = new DefaultNameFactory("StorageProxy", "PartitionDenylist");
+        final MetricNameFactory factory = Metrics.regsiterMetricFactory(new DefaultNameFactory("StorageProxy", "PartitionDenylist"), "Metrics for partition denylist");
         writesRejected = Metrics.meter(factory.createMetricName("WriteRejected"));
         readsRejected = Metrics.meter(factory.createMetricName("ReadRejected"));
         rangeReadsRejected = Metrics.meter(factory.createMetricName("RangeReadRejected"));

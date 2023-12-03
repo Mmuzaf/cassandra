@@ -41,11 +41,11 @@ public class TrieMemtableMetricsView
     // shard sizes distribution
     public final MinMaxAvgMetric lastFlushShardDataSizes;
 
-    private final TrieMemtableMetricNameFactory factory;
+    private final MetricNameFactory factory;
 
     public TrieMemtableMetricsView(String keyspace, String table)
     {
-        factory = new TrieMemtableMetricNameFactory(keyspace, table);
+        factory = Metrics.regsiterMetricFactory(new TrieMemtableMetricNameFactory(keyspace, table), "Metrics for TrieMemtable");
         
         uncontendedPuts = Metrics.counter(factory.createMetricName(UNCONTENDED_PUTS));
         contendedPuts = Metrics.counter(factory.createMetricName(CONTENDED_PUTS));
@@ -61,30 +61,29 @@ public class TrieMemtableMetricsView
         lastFlushShardDataSizes.release();
     }
 
-    static class TrieMemtableMetricNameFactory implements MetricNameFactory
+    static class TrieMemtableMetricNameFactory extends AbstractMetricNameFactory
     {
+        private static final String TRIE_MEMTABLE = "TrieMemtable";
         private final String keyspace;
         private final String table;
 
         TrieMemtableMetricNameFactory(String keyspace, String table)
         {
+            super(TRIE_MEMTABLE);
             this.keyspace = keyspace;
             this.table = table;
         }
 
         public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
         {
-            String groupName = TableMetrics.class.getPackage().getName();
-            String type = "TrieMemtable";
-
             StringBuilder mbeanName = new StringBuilder();
-            mbeanName.append(groupName).append(":");
-            mbeanName.append("type=").append(type);
+            mbeanName.append(GROUP_NAME).append(":");
+            mbeanName.append("type=").append(TRIE_MEMTABLE);
             mbeanName.append(",keyspace=").append(keyspace);
             mbeanName.append(",scope=").append(table);
             mbeanName.append(",name=").append(metricName);
 
-            return new CassandraMetricsRegistry.MetricName(groupName, type, metricName, keyspace + "." + table, mbeanName.toString());
+            return new CassandraMetricsRegistry.MetricName(GROUP_NAME, TRIE_MEMTABLE, metricName, keyspace + '.' + table, mbeanName.toString());
         }
     }
 }

@@ -29,6 +29,7 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Timer;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 import org.apache.cassandra.metrics.DefaultNameFactory;
+import org.apache.cassandra.metrics.MetricNameFactory;
 import org.apache.cassandra.utils.concurrent.WaitQueue;
 import org.apache.cassandra.utils.ExecutorUtils;
 
@@ -59,7 +60,7 @@ public abstract class MemtablePool
         this.onHeap = getSubPool(maxOnHeapMemory, cleanThreshold);
         this.offHeap = getSubPool(maxOffHeapMemory, cleanThreshold);
         this.cleaner = getCleaner(cleaner);
-        DefaultNameFactory nameFactory = new DefaultNameFactory("MemtablePool");
+        MetricNameFactory nameFactory = CassandraMetricsRegistry.Metrics.regsiterMetricFactory(new DefaultNameFactory("MemtablePool"), "MemtablePool metrics");
         blockedOnAllocating = CassandraMetricsRegistry.Metrics.timer(nameFactory.createMetricName("BlockedOnAllocation"));
         numPendingTasks = CassandraMetricsRegistry.Metrics.register(nameFactory.createMetricName("PendingFlushTasks"),
                                                                     () -> (long) this.cleaner.numPendingTasks());

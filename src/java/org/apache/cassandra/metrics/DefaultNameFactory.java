@@ -18,16 +18,13 @@
 package org.apache.cassandra.metrics;
 
 
-import com.datastax.shaded.metrics.MetricRegistry;
+import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 
 /**
  * MetricNameFactory that generates default MetricName of metrics.
  */
-public class DefaultNameFactory implements MetricNameFactory
+public class DefaultNameFactory extends AbstractMetricNameFactory
 {
-    public static final String GROUP_NAME = "org.apache.cassandra.metrics";
-
-    private final String type;
     private final String scope;
 
     public DefaultNameFactory(String type)
@@ -37,22 +34,23 @@ public class DefaultNameFactory implements MetricNameFactory
 
     public DefaultNameFactory(String type, String scope)
     {
-        this.type = type;
+        super(type);
         this.scope = scope;
     }
 
     public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
     {
-        return createMetricName(type, metricName, scope);
-    }
-
-    @Override
-    public String groupName()
-    {
-        return MetricRegistry.name(type, scope);
+        return createMetricNameLocal(type, metricName, scope);
     }
 
     public static CassandraMetricsRegistry.MetricName createMetricName(String type, String metricName, String scope)
+    {
+        return Metrics.regsiterMetricFactory(new DefaultNameFactory(type, scope),
+                        "Metrics group for \"" + type + '"')
+                .createMetricName(metricName);
+    }
+
+    protected static CassandraMetricsRegistry.MetricName createMetricNameLocal(String type, String metricName, String scope)
     {
         return new CassandraMetricsRegistry.MetricName(GROUP_NAME, type, metricName, scope, createDefaultMBeanName(type, metricName, scope));
     }

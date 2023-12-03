@@ -33,8 +33,11 @@ import org.apache.cassandra.db.virtual.proc.RowWalker;
 import org.apache.cassandra.db.virtual.sysview.SystemView;
 import org.apache.cassandra.dht.LocalPartitioner;
 import org.apache.cassandra.schema.TableMetadata;
+import org.apache.cassandra.utils.Pair;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
@@ -45,7 +48,9 @@ import static org.apache.cassandra.utils.FBUtilities.camelToSnake;
 
 public class VirtualTableSystemViewAdapter<R> extends AbstractVirtualTable
 {
-    private static final Pattern ONLY_ALPHABET_PATTERN = Pattern.compile("[^a-zA-Z]");
+    private static final Pattern ONLY_ALPHABET_PATTERN = Pattern.compile("[^a-zA-Z1-9]");
+    private static final List<Pair<String, String>> knownAbbreviations = Arrays.asList(Pair.create("CAS", "Cas"));
+
     private static final Map<Class<?>, ? extends AbstractType<?>> converters = ImmutableMap.<Class<?>, AbstractType<?>>builder()
             .put(String.class, UTF8Type.instance)
             .put(Integer.class, Int32Type.instance)
@@ -72,16 +77,35 @@ public class VirtualTableSystemViewAdapter<R> extends AbstractVirtualTable
         this.systemView = systemView;
     }
 
-    private static String virtualTableStyle(String name)
+    private static String virtualTableNameStyle(String camel)
     {
-        return ONLY_ALPHABET_PATTERN.matcher(camelToSnake(name))
-                .replaceAll("_");
+        // Process sub names in the full metrics group name separately and then join them.
+        // For example: "ClientRequest.Write-EACH_QUORUM" will be converted to "client_request_write_each_quorum".
+        String[] subNames = ONLY_ALPHABET_PATTERN.matcher(camel).replaceAll(".").split("\\.");
+        return Arrays.stream(subNames)
+                .map(VirtualTableSystemViewAdapter::camelToSnakeWithAbbreviations)
+                .reduce((a, b) -> a + '_' + b)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid table name: " + camel));
+    }
+
+    private static String camelToSnakeWithAbbreviations(String camel)
+    {
+        Pattern pattern = Pattern.compile("^[A-Z1-9_]+$");
+        // Contains only uppercase letters, numbers and underscores, so it's already snake case.
+        if (pattern.matcher(camel).matches())
+            return camel.toLowerCase();
+
+        // Some special cases must be handled manually.
+        String modifiedCamel = camel;
+        for (Pair<String, String> replacement : knownAbbreviations)
+            modifiedCamel = modifiedCamel.replace(replacement.left, replacement.right);
+
+        return camelToSnake(modifiedCamel);
     }
 
     private static TableMetadata createMetadata(SystemView<?> systemView, UnaryOperator<String> tableNameMapper)
     {
-
-        TableMetadata.Builder builder = TableMetadata.builder(VIRTUAL_VIEWS, tableNameMapper.apply(virtualTableStyle(systemView.name())))
+        TableMetadata.Builder builder = TableMetadata.builder(VIRTUAL_VIEWS, tableNameMapper.apply(virtualTableNameStyle(systemView.name())))
                 .comment(systemView.description())
                 .kind(TableMetadata.Kind.VIRTUAL);
         systemView.walker().visitMeta(

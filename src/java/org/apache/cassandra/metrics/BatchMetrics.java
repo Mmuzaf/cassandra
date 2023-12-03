@@ -19,20 +19,20 @@ package org.apache.cassandra.metrics;
 
 import com.codahale.metrics.Histogram;
 
+import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
+
 public class BatchMetrics
 {
+    private static final MetricNameFactory factory = Metrics.regsiterMetricFactory(new DefaultNameFactory("Batch"), "Metrics specific to batch statements");
     public static final BatchMetrics instance = new BatchMetrics();
     public final Histogram partitionsPerLoggedBatch;
     public final Histogram partitionsPerUnloggedBatch;
     public final Histogram partitionsPerCounterBatch;
 
-    private BatchMetrics()
+    public BatchMetrics()
     {
-        CassandraMetricsRegistry group = CassandraMetricsRegistry.getOrCreateGroup(
-                new DefaultNameFactory("Batch"),
-                "Metrics specific to batch statements.");
-        partitionsPerLoggedBatch = group.histogramMetric("PartitionsPerLoggedBatch", false);
-        partitionsPerUnloggedBatch = group.histogramMetric("PartitionsPerUnloggedBatch", false);
-        partitionsPerCounterBatch = group.histogramMetric("PartitionsPerCounterBatch", false);
+        partitionsPerLoggedBatch = Metrics.histogram(factory.createMetricName("PartitionsPerLoggedBatch"), false);
+        partitionsPerUnloggedBatch = Metrics.histogram(factory.createMetricName("PartitionsPerUnloggedBatch"), false);
+        partitionsPerCounterBatch = Metrics.histogram(factory.createMetricName("PartitionsPerCounterBatch"), false);
     }
 }

@@ -50,7 +50,8 @@ public class InternodeInboundMetrics
     public InternodeInboundMetrics(InetAddressAndPort peer, InboundMessageHandlers handlers)
     {
         // ipv6 addresses will contain colons, which are invalid in a JMX ObjectName
-        MetricNameFactory factory = new DefaultNameFactory("InboundConnection", peer.getHostAddressAndPortForJMX());
+        MetricNameFactory factory = CassandraMetricsRegistry.Metrics.regsiterMetricFactory(new DefaultNameFactory("InboundConnection", peer.getHostAddressAndPortForJMX()),
+                "Metrics for internode inbound connections");
 
         register(corruptFramesRecovered = factory.createMetricName("CorruptFramesRecovered"), handlers::corruptFramesRecovered);
         register(corruptFramesUnrecovered = factory.createMetricName("CorruptFramesUnrecovered"), handlers::corruptFramesUnrecovered);

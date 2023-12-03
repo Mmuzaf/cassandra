@@ -76,8 +76,8 @@ public class TableMetrics
      */
     private static final ConcurrentMap<String, Set<Metric>> ALL_TABLE_METRICS = Maps.newConcurrentMap();
     public static final long[] EMPTY = new long[0];
-    private static final MetricNameFactory GLOBAL_FACTORY = new AllTableMetricNameFactory("Table");
-    private static final MetricNameFactory GLOBAL_ALIAS_FACTORY = new AllTableMetricNameFactory("ColumnFamily");
+    private static final MetricNameFactory GLOBAL_FACTORY = Metrics.regsiterMetricFactory(new AllTableMetricNameFactory("Table"), "Table metrics");
+    private static final MetricNameFactory GLOBAL_ALIAS_FACTORY = Metrics.regsiterMetricFactory(new AllTableMetricNameFactory("ColumnFamily"), "ColumnFamily metrics");
 
     public final static LatencyMetrics GLOBAL_READ_LATENCY = new LatencyMetrics(GLOBAL_FACTORY, GLOBAL_ALIAS_FACTORY, "Read");
     public final static LatencyMetrics GLOBAL_WRITE_LATENCY = new LatencyMetrics(GLOBAL_FACTORY, GLOBAL_ALIAS_FACTORY, "Write");
@@ -400,8 +400,8 @@ public class TableMetrics
      */
     public TableMetrics(final ColumnFamilyStore cfs, ReleasableMetric memtableMetrics)
     {
-        factory = new TableMetricNameFactory(cfs, "Table");
-        aliasFactory = new TableMetricNameFactory(cfs, "ColumnFamily");
+        factory = Metrics.regsiterMetricFactory(new TableMetricNameFactory(cfs, "Table"), "Table metrics");
+        aliasFactory = Metrics.regsiterMetricFactory(new TableMetricNameFactory(cfs, "ColumnFamily"), "ColumnFamily metrics");
 
         if (memtableMetrics != null)
         {
@@ -1248,25 +1248,21 @@ public class TableMetrics
         }
     }
 
-    static class TableMetricNameFactory implements MetricNameFactory
+    static class TableMetricNameFactory extends AbstractMetricNameFactory
     {
         private final String keyspaceName;
         private final String tableName;
-        private final boolean isIndex;
-        private final String type;
 
         TableMetricNameFactory(ColumnFamilyStore cfs, String type)
         {
+            super(cfs.isIndex() ? "Index" + type : type);
             this.keyspaceName = cfs.getKeyspaceName();
             this.tableName = cfs.name;
-            this.isIndex = cfs.isIndex();
-            this.type = type;
         }
 
         public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
         {
             String groupName = TableMetrics.class.getPackage().getName();
-            String type = isIndex ? "Index" + this.type : this.type;
 
             StringBuilder mbeanName = new StringBuilder();
             mbeanName.append(groupName).append(":");
@@ -1279,22 +1275,17 @@ public class TableMetrics
         }
     }
 
-    static class AllTableMetricNameFactory implements MetricNameFactory
+    static class AllTableMetricNameFactory extends AbstractMetricNameFactory
     {
-        private final String type;
         public AllTableMetricNameFactory(String type)
         {
-            this.type = type;
+            super(type);
         }
 
         public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
         {
-            String groupName = TableMetrics.class.getPackage().getName();
-            StringBuilder mbeanName = new StringBuilder();
-            mbeanName.append(groupName).append(":");
-            mbeanName.append("type=").append(type);
-            mbeanName.append(",name=").append(metricName);
-            return new CassandraMetricsRegistry.MetricName(groupName, type, metricName, "all", mbeanName.toString());
+            String mbeanName = GROUP_NAME + ':' + "type=" + type + ",name=" + metricName;
+            return new CassandraMetricsRegistry.MetricName(GROUP_NAME, type, metricName, "all", mbeanName);
         }
     }
 

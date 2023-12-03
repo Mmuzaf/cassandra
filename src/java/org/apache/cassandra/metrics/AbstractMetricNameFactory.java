@@ -15,22 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.cassandra.metrics;
 
-
-public interface MetricNameFactory
+/**
+ * MetricNameFactory that generates default group name of metrics.
+ */
+public abstract class AbstractMetricNameFactory implements MetricNameFactory
 {
-    /**
-     * Create a qualified name from given metric name.
-     *
-     * @param metricName part of qualified name.
-     * @return new String with given metric name.
-     */
-    CassandraMetricsRegistry.MetricName createMetricName(String metricName);
+    public static final String GROUP_NAME = "org.apache.cassandra.metrics";
+    protected final String type;
 
-    /** @return group name that will be used for all metrics created by this factory. */
-    default String groupName()
+    public AbstractMetricNameFactory(String type)
     {
-        throw new UnsupportedOperationException();
+        this.type = type;
+    }
+
+    @Override
+    public String groupName()
+    {
+        return type;
     }
 }

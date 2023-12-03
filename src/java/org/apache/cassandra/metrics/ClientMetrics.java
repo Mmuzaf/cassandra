@@ -33,7 +33,7 @@ public final class ClientMetrics
 {
     public static final ClientMetrics instance = new ClientMetrics();
 
-    private static final MetricNameFactory factory = new DefaultNameFactory("Client");
+    private static final MetricNameFactory factory = Metrics.regsiterMetricFactory(new DefaultNameFactory("Client"), "Metrics for client requests");
 
     private volatile boolean initialized = false;
     private Collection<Server> servers = Collections.emptyList();

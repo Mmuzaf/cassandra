@@ -22,26 +22,31 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.RatioGauge;
 import org.apache.cassandra.cql3.QueryProcessor;
 
+import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
+
 public class CQLMetrics
 {
-    private static final CassandraMetricsRegistry group = CassandraMetricsRegistry.getOrCreateGroup(
-            new DefaultNameFactory("CQL"),
-            "Metrics specific to CQL prepared statement caching.");
+    private static final MetricNameFactory factory = Metrics.regsiterMetricFactory(new DefaultNameFactory("CQL"), "Metrics for CQL queries");
+
     public final Counter regularStatementsExecuted;
     public final Counter preparedStatementsExecuted;
     public final Counter preparedStatementsEvicted;
+
     public final Counter useStatementsExecuted;
+
     public final Gauge<Integer> preparedStatementsCount;
     public final Gauge<Double> preparedStatementsRatio;
 
     public CQLMetrics()
     {
-        regularStatementsExecuted = group.counterMetric("RegularStatementsExecuted");
-        preparedStatementsExecuted = group.counterMetric("PreparedStatementsExecuted");
-        preparedStatementsEvicted = group.counterMetric("PreparedStatementsEvicted");
-        useStatementsExecuted = group.counterMetric("UseStatementsExecuted");
-        preparedStatementsCount = group.registerMetric("PreparedStatementsCount", QueryProcessor::preparedStatementsCount);
-        preparedStatementsRatio = group.registerMetric("PreparedStatementsRatio", new RatioGauge()
+        regularStatementsExecuted = Metrics.counter(factory.createMetricName("RegularStatementsExecuted"));
+        preparedStatementsExecuted = Metrics.counter(factory.createMetricName("PreparedStatementsExecuted"));
+        preparedStatementsEvicted = Metrics.counter(factory.createMetricName("PreparedStatementsEvicted"));
+
+        useStatementsExecuted = Metrics.counter(factory.createMetricName("UseStatementsExecuted"));
+
+        preparedStatementsCount = Metrics.register(factory.createMetricName("PreparedStatementsCount"), QueryProcessor::preparedStatementsCount);
+        preparedStatementsRatio = Metrics.register(factory.createMetricName("PreparedStatementsRatio"), new RatioGauge()
         {
             public Ratio getRatio()
             {
