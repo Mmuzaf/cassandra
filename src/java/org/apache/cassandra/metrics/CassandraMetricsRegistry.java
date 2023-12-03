@@ -58,33 +58,22 @@ import static org.apache.cassandra.metrics.AbstractMetricNameFactory.GROUP_NAME;
  */
 public class CassandraMetricsRegistry extends MetricRegistry implements AliasedMetricSet
 {
-    /** A default metric name factory that does not create any metric associated instance. */
-    private static final MetricNameFactory DEFAULT_FACTORY = new AbstractMetricNameFactory(CassandraMetricsRegistry.MetricName.EMPTY.getType())
-    {
-        @Override
-        public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
-        {
-            throw new IllegalStateException("A default metric name factory that does not create any metric associated instance.");
-        }
-    };
-
     /** A map of metric name constructed by {@link com.codahale.metrics.MetricRegistry#name(String, String...)} and
      * its full name in the way how it is represented in JMX. The map is used by {@link CassandraJmxMetricsExporter}
      * to export metrics to JMX. */
-    private final ConcurrentMap<String, Set<MetricName>> aliases = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, Set<MetricName>> ALIASES = new ConcurrentHashMap<>();
     /** A map of metric name constructed by {@link org.apache.cassandra.metrics.MetricNameFactory} and the factory name. */
-    private final ConcurrentMap<MetricName, String> metricToFactory = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<MetricName, String> METRIC_TO_FACTORY_NAME_MAP = new ConcurrentHashMap<>();
+    private static final Map<String, CassandraMetricsRegistry> REGISTERS = new ConcurrentHashMap<>();
 
-    public static final CassandraMetricsRegistry Metrics = new CassandraMetricsRegistry(DEFAULT_FACTORY,
-            "Root metrics registry",
+    public static final CassandraMetricsRegistry Metrics = new CassandraMetricsRegistry("Root metrics registry",
             r -> new CassandraJmxMetricsExporter(name ->
                     ofNullable(r.getAliases().get(name)).orElse(Collections.emptySet())
                             .stream()
                             .map(MetricName::getMBeanName)
                             .collect(Collectors.toSet())));
-    private final Map<String, CassandraMetricsRegistry> metricGroups = new ConcurrentHashMap<>();
+
     private final Map<String, ThreadPoolMetrics> threadPoolMetrics = new ConcurrentHashMap<>();
-    private final MetricNameFactory metricNameFactory;
     private final String description;
     public final static TimeUnit DEFAULT_TIMER_UNIT = TimeUnit.MICROSECONDS;
 
@@ -95,54 +84,51 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
     }
 
     private CassandraMetricsRegistry(
-            MetricNameFactory metricNameFactory,
             String description,
             Function<CassandraMetricsRegistry, MetricRegistryListener> listenerFactory)
     {
-        this.metricNameFactory = metricNameFactory;
         this.description = description;
         addListener(listenerFactory.apply(this));
     }
 
-    public Map<String, CassandraMetricsRegistry> getMetricGroups()
+    public Map<String, CassandraMetricsRegistry> getRegisters()
     {
-        return Collections.unmodifiableMap(metricGroups);
+        return Collections.unmodifiableMap(REGISTERS);
     }
 
     public MetricNameFactory regsiterMetricFactory(MetricNameFactory factory, String description)
     {
-        CassandraMetricsRegistry registry = metricGroups.computeIfAbsent(factory.groupName(), factoryName -> {
-            MetricNameFactory factoryWrapper = new MetricNameFactoryWrapper(factory,
-                    createdMetricName -> {
-                        aliases.computeIfAbsent(createdMetricName.getMetricName(),
-                                        k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
-                                .add(createdMetricName);
-                        metricToFactory.putIfAbsent(createdMetricName, factory.groupName());
-                        return createdMetricName;
-                    });
-            return new CassandraMetricsRegistry(factoryWrapper,
-                    description,
-                    r -> new DelegateMetricsListener(CassandraMetricsRegistry.Metrics));
-        });
-        return registry.metricNameFactory;
+        MetricNameFactory factoryWrapper = new MetricNameFactoryWrapper(factory,
+                createdMetricName -> {
+                    ALIASES.computeIfAbsent(createdMetricName.getMetricName(),
+                                    k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
+                            .add(createdMetricName);
+                    String old = METRIC_TO_FACTORY_NAME_MAP.putIfAbsent(createdMetricName, factory.groupName());
+                    assert old == null || old.equals(factory.groupName());
+                    return createdMetricName;
+                });
+        REGISTERS.computeIfAbsent(factoryWrapper.groupName(),
+                name -> new CassandraMetricsRegistry(description,
+                        r -> new DelegateMetricsListener(CassandraMetricsRegistry.Metrics)));
+        return factoryWrapper;
     }
 
     private static CassandraMetricsRegistry getMetricGroupByName(MetricName metricName)
     {
         assertKnownMetric(metricName);
-        return Metrics.metricGroups.get(Metrics.metricToFactory.get(metricName));
+        return REGISTERS.get(METRIC_TO_FACTORY_NAME_MAP.get(metricName));
     }
 
     private static void assertKnownMetric(MetricName name)
     {
-        if (!Metrics.metricToFactory.containsKey(name))
-            throw new IllegalArgumentException(name + " is not a registered metric: " + Metrics.metricToFactory.keySet());
+        if (!METRIC_TO_FACTORY_NAME_MAP.containsKey(name))
+            throw new IllegalArgumentException(name + " is not a registered metric: " + Metrics.METRIC_TO_FACTORY_NAME_MAP.keySet());
     }
 
     @Override
     public Map<String, Set<MetricName>> getAliases()
     {
-        return aliases;
+        return ALIASES;
     }
 
     public String getDescription()

@@ -39,15 +39,15 @@ public class CounterMetricRow
     }
 
     @Column(index = 0)
-    public String group()
-    {
-        return group;
-    }
-
-    @Column(index = 1)
     public String name()
     {
         return counterEntry.getKey();
+    }
+
+    @Column(index = 1)
+    public String group()
+    {
+        return group;
     }
 
     @Column(index = 2)

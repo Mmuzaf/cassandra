@@ -38,13 +38,13 @@ public class TimerMetricRow
         this.timerEntry = timerEntry;
     }
 
-    @Column(index = 0)
+    @Column(index = 1)
     public String group()
     {
         return group;
     }
 
-    @Column(index = 1)
+    @Column(index = 0)
     public String name()
     {
         return timerEntry.getKey();

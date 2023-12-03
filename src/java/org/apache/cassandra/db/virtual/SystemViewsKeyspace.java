@@ -90,7 +90,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
     {
         List<VirtualTable> tables = new ArrayList<>();
         // Register virtual tables for all metrics groups.
-        Metrics.getMetricGroups().forEach((name, group) -> {
+        Metrics.getRegisters().forEach((name, group) -> {
             tables.add(new VirtualTableSystemViewAdapter<>(
                     SystemViewCollectionAdapter.create(name,
                             "All metrics for \"" + name + "\" metric group",
@@ -104,14 +104,14 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                 SystemViewCollectionAdapter.create("all_group_names",
                         "All metric group names",
                         new MetricGroupRowWalker(),
-                        Metrics.getMetricGroups().entrySet(),
+                        Metrics.getRegisters().entrySet(),
                         MetricGroupRow::new),
                 GROUP_NAME_MAPPER));
         tables.add(new VirtualTableSystemViewAdapter<>(
                 SystemViewCollectionAdapter.create("counter",
                         "All metrics with type \"Counter\"",
                         new CounterMetricRowWalker(),
-                        Metrics.getMetricGroups().entrySet(),
+                        Metrics.getRegisters().entrySet(),
                         e -> e.getValue().getCounters().entrySet(),
                         (groupEntry, counter) -> new CounterMetricRow(groupEntry.getKey(), counter)),
                 TYPE_NAME_MAPPER));
@@ -119,7 +119,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                 SystemViewCollectionAdapter.create("gauge",
                         "All metrics with type \"Gauge\"",
                         new GaugeMetricRowWalker(),
-                        Metrics.getMetricGroups().entrySet(),
+                        Metrics.getRegisters().entrySet(),
                         e -> e.getValue().getGauges().entrySet(),
                         (groupEntry, gauge) -> new GaugeMetricRow(groupEntry.getKey(), gauge)),
                 TYPE_NAME_MAPPER));
@@ -127,7 +127,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                 SystemViewCollectionAdapter.create("histogram",
                         "All metrics with type \"Histogram\"",
                         new HistogramMetricRowWalker(),
-                        Metrics.getMetricGroups().entrySet(),
+                        Metrics.getRegisters().entrySet(),
                         e -> e.getValue().getHistograms().entrySet(),
                         (groupEntry, histogram) -> new HistogramMetricRow(groupEntry.getKey(), histogram)),
                 TYPE_NAME_MAPPER));
@@ -135,7 +135,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                 SystemViewCollectionAdapter.create("meter",
                         "All metrics with type \"Meter\"",
                         new MeterMetricRowWalker(),
-                        Metrics.getMetricGroups().entrySet(),
+                        Metrics.getRegisters().entrySet(),
                         e -> e.getValue().getMeters().entrySet(),
                         (groupEntry, meter) -> new MeterMetricRow(groupEntry.getKey(), meter)),
                 TYPE_NAME_MAPPER));
@@ -143,7 +143,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                 SystemViewCollectionAdapter.create("timer",
                         "All metrics with type \"Timer\"",
                         new TimerMetricRowWalker(),
-                        Metrics.getMetricGroups().entrySet(),
+                        Metrics.getRegisters().entrySet(),
                         e -> e.getValue().getTimers().entrySet(),
                         (groupEntry, timer) -> new TimerMetricRow(groupEntry.getKey(), timer)),
                 TYPE_NAME_MAPPER));

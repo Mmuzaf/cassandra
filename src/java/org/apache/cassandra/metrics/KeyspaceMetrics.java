@@ -194,7 +194,7 @@ public class KeyspaceMetrics
      */
     public KeyspaceMetrics(final Keyspace ks)
     {
-        factory = Metrics.regsiterMetricFactory(new KeyspaceMetricNameFactory(ks), "Metrics for keyspace \"" + ks.getName() + '"');
+        factory = Metrics.regsiterMetricFactory(new KeyspaceMetricNameFactory(ks), "Metrics of keyspaces");
         keyspace = ks;
         memtableColumnsCount = createKeyspaceGauge("MemtableColumnsCount",
                 metric -> metric.memtableColumnsCount.getValue());

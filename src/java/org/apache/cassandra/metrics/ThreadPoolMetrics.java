@@ -33,6 +33,7 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
  */
 public class ThreadPoolMetrics
 {
+    public static final String THREAD_POOLS = "ThreadPools";
     public static final String ACTIVE_TASKS = "ActiveTasks";
     public static final String PENDING_TASKS = "PendingTasks";
     public static final String COMPLETED_TASKS = "CompletedTasks";
@@ -116,13 +117,12 @@ public class ThreadPoolMetrics
     private static MetricName makeMetricName(String path, String poolName, String metricName)
     {
         MetricNameFactory factory = Metrics.regsiterMetricFactory(new ThreadPoolMetricNameFactory(path, poolName),
-                                                                  "Metrics for thread pool \"" + poolName + '"');
+                                                                  "Metrics of thread pools");
         return factory.createMetricName(metricName);
     }
 
     private static class ThreadPoolMetricNameFactory extends AbstractMetricNameFactory
     {
-        private static final String THREAD_POOLS = "ThreadPools";
         private final String path;
         private final String poolName;
 
