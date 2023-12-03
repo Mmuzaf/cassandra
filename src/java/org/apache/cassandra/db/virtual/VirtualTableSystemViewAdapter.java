@@ -49,7 +49,8 @@ import static org.apache.cassandra.utils.FBUtilities.camelToSnake;
 public class VirtualTableSystemViewAdapter<R> extends AbstractVirtualTable
 {
     private static final Pattern ONLY_ALPHABET_PATTERN = Pattern.compile("[^a-zA-Z1-9]");
-    private static final List<Pair<String, String>> knownAbbreviations = Arrays.asList(Pair.create("CAS", "Cas"));
+    private static final List<Pair<String, String>> knownAbbreviations = Arrays.asList(Pair.create("CAS", "Cas"),
+            Pair.create("CIDR", "Cidr"));
 
     private static final Map<Class<?>, ? extends AbstractType<?>> converters = ImmutableMap.<Class<?>, AbstractType<?>>builder()
             .put(String.class, UTF8Type.instance)
@@ -77,7 +78,7 @@ public class VirtualTableSystemViewAdapter<R> extends AbstractVirtualTable
         this.systemView = systemView;
     }
 
-    private static String virtualTableNameStyle(String camel)
+    public static String virtualTableNameStyle(String camel)
     {
         // Process sub names in the full metrics group name separately and then join them.
         // For example: "ClientRequest.Write-EACH_QUORUM" will be converted to "client_request_write_each_quorum".

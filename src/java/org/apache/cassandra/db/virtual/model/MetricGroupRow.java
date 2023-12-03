@@ -23,6 +23,9 @@ import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 
 import java.util.Map;
 
+import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.GROUP_NAME_MAPPER;
+import static org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter.virtualTableNameStyle;
+
 
 /**
  * Metric group row representation for a {@link org.apache.cassandra.db.virtual.sysview.SystemView}.
@@ -45,6 +48,12 @@ public class MetricGroupRow
     }
 
     @Column(index = 1)
+    public String virtualTable()
+    {
+        return GROUP_NAME_MAPPER.apply(virtualTableNameStyle(group));
+    }
+
+    @Column(index = 2)
     public String comment()
     {
         return comment;

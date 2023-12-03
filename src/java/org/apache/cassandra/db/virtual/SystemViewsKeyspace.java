@@ -47,9 +47,9 @@ import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;
 
 public final class SystemViewsKeyspace extends VirtualKeyspace
 {
-    private static final String METRICS_PREFIX = "metrics_";
-    private static final UnaryOperator<String> GROUP_NAME_MAPPER = name -> METRICS_PREFIX + name;
-    private static final UnaryOperator<String> TYPE_NAME_MAPPER = name -> METRICS_PREFIX + "type_" + name;
+    public static final String METRICS_PREFIX = "metrics_";
+    public static final UnaryOperator<String> GROUP_NAME_MAPPER = name -> METRICS_PREFIX + name;
+    public static final UnaryOperator<String> TYPE_NAME_MAPPER = name -> METRICS_PREFIX + "type_" + name;
 
     public static SystemViewsKeyspace instance = new SystemViewsKeyspace();
 

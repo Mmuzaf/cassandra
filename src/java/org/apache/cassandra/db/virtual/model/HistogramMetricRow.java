@@ -21,7 +21,6 @@ package org.apache.cassandra.db.virtual.model;
 import com.codahale.metrics.Histogram;
 import org.apache.cassandra.db.virtual.proc.Column;
 
-import java.util.Arrays;
 import java.util.Map;
 
 
@@ -49,12 +48,6 @@ public class HistogramMetricRow
     public String name()
     {
         return histogramEntry.getKey();
-    }
-
-    @Column(index = 2)
-    public String values()
-    {
-        return Arrays.toString(histogramEntry.getValue().getSnapshot().getValues());
     }
 
     @Column(index = 3)
