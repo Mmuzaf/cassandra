@@ -30,6 +30,8 @@ import org.apache.cassandra.db.virtual.model.MetricGroupRow;
 import org.apache.cassandra.db.virtual.model.MetricGroupRowWalker;
 import org.apache.cassandra.db.virtual.model.MetricRow;
 import org.apache.cassandra.db.virtual.model.MetricRowWalker;
+import org.apache.cassandra.db.virtual.model.ThreadPoolRow;
+import org.apache.cassandra.db.virtual.model.ThreadPoolRowWalker;
 import org.apache.cassandra.db.virtual.model.TimerMetricRow;
 import org.apache.cassandra.db.virtual.model.TimerMetricRowWalker;
 import org.apache.cassandra.db.virtual.sysview.SystemViewCollectionAdapter;
@@ -59,7 +61,15 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                     .add(new SettingsTable(VIRTUAL_VIEWS))
                     .add(new SystemPropertiesTable(VIRTUAL_VIEWS))
                     .add(new SSTableTasksTable(VIRTUAL_VIEWS))
-                    .add(new ThreadPoolsTable(VIRTUAL_VIEWS))
+                    // Fully backwards compatible with legacy ThreadPoolsTable under the same "system_views.thread_pools" name.
+                    .add(new VirtualTableSystemViewAdapter<>(
+                            SystemViewCollectionAdapter.create("thread_pools",
+                                    "Thread pool metrics for all thread pools",
+                                    new ThreadPoolRowWalker(),
+                                    Metrics.allThreadPoolMetrics(),
+                                    ThreadPoolRow::new),
+                            UnaryOperator.identity()
+                    ))
                     .add(new InternodeOutboundTable(VIRTUAL_VIEWS))
                     .add(new InternodeInboundTable(VIRTUAL_VIEWS))
                     .add(new PendingHintsTable(VIRTUAL_VIEWS))
