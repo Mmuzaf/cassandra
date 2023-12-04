@@ -188,40 +188,41 @@ public class SchemaTransformations
             public Keyspaces apply(ClusterMetadata metadata)
             {
                 Keyspaces schema = metadata.schema.getKeyspaces();
-                KeyspaceMetadata updatedKeyspace = keyspace;
-                KeyspaceMetadata curKeyspace = schema.getNullable(keyspace.name);
-                if (curKeyspace != null)
-                {
-                    // If the keyspace already exists, we preserve whatever parameters it has.
-                    updatedKeyspace = updatedKeyspace.withSwapped(curKeyspace.params);
-
-                    for (TableMetadata curTable : curKeyspace.tables)
-                    {
-                        TableMetadata desiredTable = updatedKeyspace.tables.getNullable(curTable.name);
-                        if (desiredTable == null)
-                        {
-                            // preserve exsiting tables which are missing in the new keyspace definition
-                            updatedKeyspace = updatedKeyspace.withSwapped(updatedKeyspace.tables.with(curTable));
-                        }
-                        else
-                        {
-                            updatedKeyspace = updatedKeyspace.withSwapped(updatedKeyspace.tables.without(desiredTable));
-
-                            TableMetadata.Builder updatedBuilder = desiredTable.unbuild();
-
-                            for (ColumnMetadata column : curTable.regularAndStaticColumns())
-                            {
-                                if (!desiredTable.regularAndStaticColumns().contains(column))
-                                    updatedBuilder.addColumn(column);
-                            }
-
-                            updatedKeyspace = updatedKeyspace.withSwapped(updatedKeyspace.tables.with(updatedBuilder.build()));
-                        }
-                    }
-                }
-                return schema.withAddedOrReplaced(updatedKeyspace);
+                return schema.withAddedOrReplaced(mergeKeyspaceTables(schema.getNullable(keyspace.name), keyspace));
             }
         };
     }
 
+    public static KeyspaceMetadata mergeKeyspaceTables(KeyspaceMetadata curKeyspace, KeyspaceMetadata updatedKeyspace)
+    {
+        if (curKeyspace == null)
+            return updatedKeyspace;
+
+        // If the keyspace already exists, we preserve whatever parameters it has.
+        updatedKeyspace = updatedKeyspace.withSwapped(curKeyspace.params);
+
+        for (TableMetadata curTable : curKeyspace.tables)
+        {
+            TableMetadata desiredTable = updatedKeyspace.tables.getNullable(curTable.name);
+            if (desiredTable == null)
+            {
+                // preserve exsiting tables which are missing in the new keyspace definition
+                updatedKeyspace = updatedKeyspace.withSwapped(updatedKeyspace.tables.with(curTable));
+            } else
+            {
+                updatedKeyspace = updatedKeyspace.withSwapped(updatedKeyspace.tables.without(desiredTable));
+
+                TableMetadata.Builder updatedBuilder = desiredTable.unbuild();
+
+                for (ColumnMetadata column : curTable.regularAndStaticColumns())
+                {
+                    if (!desiredTable.regularAndStaticColumns().contains(column))
+                        updatedBuilder.addColumn(column);
+                }
+
+                updatedKeyspace = updatedKeyspace.withSwapped(updatedKeyspace.tables.with(updatedBuilder.build()));
+            }
+        }
+        return updatedKeyspace;
+    }
 }

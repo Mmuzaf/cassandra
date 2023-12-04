@@ -87,7 +87,7 @@ public class MetricRow
         else if (metric instanceof Gauge)
             return ((Gauge) metric).getValue().toString();
         else if (metric instanceof Histogram)
-            return Arrays.toString(((Histogram) metric).getSnapshot().getValues());
+            return Double.toString(((Histogram) metric).getSnapshot().getMedian());
         else if (metric instanceof Meter)
             return Long.toString(((Meter) metric).getCount());
         else if (metric instanceof Timer)

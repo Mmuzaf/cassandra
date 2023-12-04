@@ -58,7 +58,6 @@ import org.apache.cassandra.db.SystemKeyspaceMigrator41;
 import org.apache.cassandra.db.commitlog.CommitLog;
 import org.apache.cassandra.db.virtual.SystemViewsKeyspace;
 import org.apache.cassandra.db.virtual.VirtualKeyspaceRegistry;
-import org.apache.cassandra.db.virtual.VirtualSchemaKeyspace;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.exceptions.StartupException;
 import org.apache.cassandra.io.util.File;
@@ -546,8 +545,7 @@ public class CassandraDaemon
 
     public void setupVirtualKeyspaces()
     {
-        VirtualKeyspaceRegistry.instance.register(VirtualSchemaKeyspace.instance);
-        VirtualKeyspaceRegistry.instance.register(SystemViewsKeyspace.instance);
+        VirtualKeyspaceRegistry.instance.update(SystemViewsKeyspace.defaults());
 
         // flush log messages to system_views.system_logs virtual table as there were messages already logged
         // before that virtual table was instantiated

@@ -404,7 +404,7 @@ public class KeyspaceMetrics
 
     static class KeyspaceMetricNameFactory extends AbstractMetricNameFactory
     {
-        private static final String KEYSPACE_TYPE = "Keyspace";
+        public static final String KEYSPACE_TYPE = "Keyspace";
         private final String keyspaceName;
 
         KeyspaceMetricNameFactory(Keyspace ks)

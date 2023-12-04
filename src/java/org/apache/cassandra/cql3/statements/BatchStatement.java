@@ -92,7 +92,7 @@ public class BatchStatement implements CQLStatement
                                                                 "tables involved in an atomic batch might cause batchlog " +
                                                                 "entries to expire before being replayed.";
 
-    public static final BatchMetrics metrics = BatchMetrics.instance;
+    public static final BatchMetrics metrics = new BatchMetrics();
 
     /**
      * Creates a new BatchStatement.

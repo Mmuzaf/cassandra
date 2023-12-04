@@ -27,6 +27,12 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.MetricRegistryListener;
 import com.codahale.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.cassandra.db.virtual.SystemViewsKeyspace;
+import org.apache.cassandra.db.virtual.VirtualKeyspaceRegistry;
+import org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter;
+import org.apache.cassandra.db.virtual.model.MetricRow;
+import org.apache.cassandra.db.virtual.model.MetricRowWalker;
+import org.apache.cassandra.db.virtual.sysview.SystemViewCollectionAdapter;
 import org.apache.cassandra.utils.MBeanWrapper;
 
 import javax.management.MalformedObjectNameException;
@@ -49,6 +55,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
+import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.GROUP_NAME_MAPPER;
 import static org.apache.cassandra.metrics.AbstractMetricNameFactory.GROUP_NAME;
 
 /**
@@ -78,12 +85,6 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
     private final String description;
     public final static TimeUnit DEFAULT_TIMER_UNIT = TimeUnit.MICROSECONDS;
 
-    static
-    {
-        // Load all metric classes to ensure they register themselves.
-        BatchMetrics metrics = BatchMetrics.instance;
-    }
-
     private CassandraMetricsRegistry(
             String description,
             Function<CassandraMetricsRegistry, MetricRegistryListener> listenerFactory)
@@ -103,19 +104,39 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
 
     public MetricNameFactory regsiterMetricFactory(MetricNameFactory factory, String description)
     {
-        MetricNameFactory factoryWrapper = new MetricNameFactoryWrapper(factory,
+        return new MetricNameFactoryWrapper(factory,
                 createdMetricName -> {
                     ALIASES.computeIfAbsent(createdMetricName.getMetricName(),
                                     k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
                             .add(createdMetricName);
                     String old = METRIC_TO_FACTORY_NAME_MAP.putIfAbsent(createdMetricName, factory.groupName());
                     assert old == null || old.equals(factory.groupName());
+
+                    // New group name must be registered in the virtual keyspace registry.
+                    registerNewMetricGroupIfNeed(factory.groupName(), description);
+
                     return createdMetricName;
                 });
-        REGISTERS.computeIfAbsent(factoryWrapper.groupName(),
-                name -> new CassandraMetricsRegistry(description,
-                        r -> new DelegateMetricsListener(CassandraMetricsRegistry.Metrics)));
-        return factoryWrapper;
+    }
+
+    private static void registerNewMetricGroupIfNeed(String groupName, String description)
+    {
+        if (REGISTERS.containsKey(groupName))
+            return;
+
+        CassandraMetricsRegistry group;
+        REGISTERS.putIfAbsent(groupName, group = new CassandraMetricsRegistry(description,
+                r -> new DelegateMetricsListener(CassandraMetricsRegistry.Metrics)));
+        // Register virtual tables for all metrics groups.
+        VirtualKeyspaceRegistry.instance.update(SystemViewsKeyspace.builder()
+                .add(new VirtualTableSystemViewAdapter<>(
+                        SystemViewCollectionAdapter.create(groupName,
+                                "All metrics for \"" + groupName + "\" metric group",
+                                new MetricRowWalker(),
+                                group.getMetrics().entrySet(),
+                                MetricRow::new),
+                        GROUP_NAME_MAPPER))
+                .build());
     }
 
     private static CassandraMetricsRegistry getMetricGroupByName(MetricName metricName)
@@ -127,7 +148,7 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
     private static void assertKnownMetric(MetricName name)
     {
         if (!METRIC_TO_FACTORY_NAME_MAP.containsKey(name))
-            throw new IllegalArgumentException(name + " is not a registered metric: " + Metrics.METRIC_TO_FACTORY_NAME_MAP.keySet());
+            throw new IllegalArgumentException(name + " is not a registered metric: " + METRIC_TO_FACTORY_NAME_MAP.keySet());
     }
 
     @Override
@@ -344,7 +365,10 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
         }
     }
 
-
+    /**
+     * Exports a gauge as a JMX MBean, check corresponding {@link org.apache.cassandra.db.virtual.model.GaugeMetricRow}
+     * for the same functionality for virtual tables.
+     */
     public interface JmxGaugeMBean extends MetricMBean
     {
         Object getValue();
@@ -367,6 +391,10 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
         }
     }
 
+    /**
+     * Exports a histogram as a JMX MBean, check corresponding {@link org.apache.cassandra.db.virtual.model.HistogramMetricRow}
+     * for the same functionality for virtual tables.
+     */
     public interface JmxHistogramMBean extends MetricMBean
     {
         long getCount();
@@ -497,6 +525,10 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
         }
     }
 
+    /**
+     * Exports a counter as a JMX MBean, check corresponding {@link org.apache.cassandra.db.virtual.model.CounterMetricRow}
+     * for the same functionality for virtual tables.
+     */
     public interface JmxCounterMBean extends MetricMBean
     {
         long getCount();
@@ -519,6 +551,10 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
         }
     }
 
+    /**
+     * Exports a meter as a JMX MBean, check corresponding {@link org.apache.cassandra.db.virtual.model.MeterMetricRow}
+     * for the same functionality for virtual tables.
+     */
     public interface JmxMeterMBean extends MetricMBean
     {
         long getCount();
@@ -534,6 +570,10 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
         String getRateUnit();
     }
 
+    /**
+     * Exports a timer as a JMX MBean, check corresponding {@link org.apache.cassandra.db.virtual.model.TimerMetricRow}
+     * for the same functionality for virtual tables.
+     */
     private static class JmxMeter extends AbstractBean implements JmxMeterMBean
     {
         private final Metered metric;
@@ -591,6 +631,10 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
         }
     }
 
+    /**
+     * Exports a timer as a JMX MBean, check corresponding {@link org.apache.cassandra.db.virtual.model.TimerMetricRow}
+     * for the same functionality for virtual tables.
+     */
     public interface JmxTimerMBean extends JmxMeterMBean
     {
         double getMin();

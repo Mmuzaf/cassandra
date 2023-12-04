@@ -17,8 +17,11 @@
  */
 package org.apache.cassandra.db.virtual;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 import com.google.common.collect.Iterables;
@@ -29,22 +32,30 @@ import org.apache.cassandra.schema.TableMetadata;
 
 public final class VirtualKeyspaceRegistry
 {
-    public static final VirtualKeyspaceRegistry instance = new VirtualKeyspaceRegistry();
-
     private final Map<String, VirtualKeyspace> virtualKeyspaces = new ConcurrentHashMap<>();
-    private final Map<TableId, VirtualTable> virtualTables = new ConcurrentHashMap<>();
+    public static final VirtualKeyspaceRegistry instance = new VirtualKeyspaceRegistry();
 
     private VirtualKeyspaceRegistry()
     {
+        register(VirtualSchemaKeyspace.instance);
+        register(SystemViewsKeyspace.builder().build());
+    }
+
+    public void update(VirtualKeyspace newKeyspace)
+    {
+        virtualKeyspaces.computeIfPresent(newKeyspace.name(),
+                (name, oldKeyspace) -> {
+                    Map<String, VirtualTable> tables = oldKeyspace.tables()
+                            .stream()
+                            .collect(Collectors.toMap(VirtualTable::name, Function.identity()));
+                    newKeyspace.tables().forEach(t -> tables.putIfAbsent(t.name(), t));
+                    return new VirtualKeyspace(name, tables.values());
+                });
     }
 
     public void register(VirtualKeyspace keyspace)
     {
-        VirtualKeyspace previous = virtualKeyspaces.put(keyspace.name(), keyspace);
-        // some tests choose to replace the keyspace, if so make sure to cleanup tables as well
-        if (previous != null)
-            previous.tables().forEach(t -> virtualTables.remove(t));
-        keyspace.tables().forEach(t -> virtualTables.put(t.metadata().id, t));
+        virtualKeyspaces.put(keyspace.name(), keyspace);
     }
 
     @Nullable
@@ -56,7 +67,7 @@ public final class VirtualKeyspaceRegistry
     @Nullable
     public VirtualTable getTableNullable(TableId id)
     {
-        return virtualTables.get(id);
+        return getTable(id);
     }
 
     @Nullable
@@ -69,12 +80,22 @@ public final class VirtualKeyspaceRegistry
     @Nullable
     public TableMetadata getTableMetadataNullable(TableId id)
     {
-        VirtualTable table = virtualTables.get(id);
+        VirtualTable table = getTable(id);
         return null != table ? table.metadata() : null;
     }
 
     public Iterable<KeyspaceMetadata> virtualKeyspacesMetadata()
     {
         return Iterables.transform(virtualKeyspaces.values(), VirtualKeyspace::metadata);
+    }
+
+    private VirtualTable getTable(TableId id)
+    {
+        return virtualKeyspaces.values().stream()
+                .map(VirtualKeyspace::tables)
+                .flatMap(Collection::stream)
+                .filter(t -> t.metadata().id.equals(id))
+                .findFirst()
+                .orElse(null);
     }
 }
