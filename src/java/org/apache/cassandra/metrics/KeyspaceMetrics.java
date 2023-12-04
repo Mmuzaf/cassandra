@@ -20,6 +20,7 @@ package org.apache.cassandra.metrics;
 import java.util.Set;
 import java.util.function.ToLongFunction;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
@@ -425,6 +426,12 @@ public class KeyspaceMetrics
             mbeanName.append(",name=").append(metricName);
 
             return new MetricName(groupName, KEYSPACE_TYPE, metricName, keyspaceName, mbeanName.toString());
+        }
+
+        @Override
+        public String groupName()
+        {
+            return MetricRegistry.name(KEYSPACE_TYPE, keyspaceName);
         }
     }
 }

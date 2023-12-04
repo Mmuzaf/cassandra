@@ -27,7 +27,6 @@ import com.codahale.metrics.Timer;
 import org.apache.cassandra.db.virtual.proc.Column;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 
