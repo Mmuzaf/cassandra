@@ -39,6 +39,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -91,9 +92,13 @@ public class CassandraMetricsRegistry extends MetricRegistry implements AliasedM
         addListener(listenerFactory.apply(this));
     }
 
-    public Map<String, CassandraMetricsRegistry> getRegisters()
+    public SortedMap<String, CassandraMetricsRegistry> getRegisters()
     {
-        return Collections.unmodifiableMap(REGISTERS);
+        return REGISTERS.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                        (e1, e2) -> e1, java.util.TreeMap::new));
     }
 
     public MetricNameFactory regsiterMetricFactory(MetricNameFactory factory, String description)
