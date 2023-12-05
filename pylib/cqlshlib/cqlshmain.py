@@ -615,13 +615,18 @@ class Shell(cmd.Cmd):
         if ksname is None:
             ksname = self.current_keyspace
         ksmeta = self.get_keyspace_meta(ksname)
-        if tablename not in ksmeta.tables:
-            if ksname == 'system_auth' and tablename in ['roles', 'role_permissions']:
-                self.get_fake_auth_table_meta(ksname, tablename)
-            else:
-                raise ColumnFamilyNotFound("Column family {} not found".format(tablename))
-        else:
+        if tablename in ksmeta.tables:
             return ksmeta.tables[tablename]
+
+        if ksname == 'system_auth' and tablename in ['roles', 'role_permissions']:
+            return self.get_fake_auth_table_meta(ksname, tablename)
+
+        if ksname == 'system_views':
+            self.conn.refresh_schema_metadata(-1)
+            ksmeta = self.get_keyspace_meta(ksname)
+            if tablename in ksmeta.tables:
+                return ksmeta.tables[tablename]
+        raise ColumnFamilyNotFound("Column family {} not found".format(tablename))
 
     def get_fake_auth_table_meta(self, ksname, tablename):
         # may be using external auth implementation so internal tables
