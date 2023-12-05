@@ -117,7 +117,6 @@ public class CassandraMetricsRegistry extends MetricRegistry
     {
         if (REGISTERS.containsKey(groupName))
             return;
-
         REGISTERS.putIfAbsent(groupName, new CassandraMetricsRegistry(description,
                 reg -> new DelegateMetricsListener(CassandraMetricsRegistry.Metrics)));
         // Register virtual tables for all metrics groups.
@@ -126,7 +125,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
                         SystemViewCollectionAdapter.create(groupName,
                                 "All metrics for \"" + groupName + "\" metric group",
                                 new MetricRowWalker(),
-                                REGISTERS.get(groupName).getMetrics().entrySet(),
+                                () -> REGISTERS.get(groupName).getMetrics().entrySet(),
                                 MetricRow::new),
                         GROUP_NAME_MAPPER))
                 .build());

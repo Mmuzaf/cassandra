@@ -23,6 +23,7 @@ import org.apache.cassandra.db.virtual.proc.RowWalker;
 import java.util.Iterator;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
 public class SystemViewCollectionAdapter<R> implements SystemView<R>
@@ -48,13 +49,13 @@ public class SystemViewCollectionAdapter<R> implements SystemView<R>
             String name,
             String description,
             RowWalker<R> walker,
-            Iterable<C> container,
+            Supplier<Iterable<C>> container,
             Function<C, R> rowFunc)
     {
         return new SystemViewCollectionAdapter<>(name,
                 description,
                 walker,
-                () -> StreamSupport.stream(container.spliterator(), false)
+                () -> StreamSupport.stream(container.get().spliterator(), false)
                         .map(rowFunc).iterator());
     }
 
@@ -62,14 +63,14 @@ public class SystemViewCollectionAdapter<R> implements SystemView<R>
             String name,
             String description,
             RowWalker<R> walker,
-            Iterable<C> container,
+            Supplier<Iterable<C>> container,
             Function<C, Iterable<D>> extractor,
             BiFunction<C, D, R> rowFunc)
     {
         return new SystemViewCollectionAdapter<>(name,
                 description,
                 walker,
-                () -> StreamSupport.stream(container.spliterator(), false)
+                () -> StreamSupport.stream(container.get().spliterator(), false)
                         .flatMap(c -> StreamSupport.stream(extractor.apply(c).spliterator(), true)
                                 .map(d -> rowFunc.apply(c, d))).iterator());
     }
