@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
-import javax.management.ObjectName;
 import javax.management.StandardMBean;
 import javax.management.remote.JMXConnectorServer;
 
@@ -131,8 +130,7 @@ public class CassandraDaemon
                 int separator = metricName.lastIndexOf('.');
                 String appenderName = metricName.substring(0, separator);
                 String metric = metricName.substring(separator + 1); // remove "."
-                ObjectName name = DefaultNameFactory.createMetricName(appenderName, metric, null).getMBeanName();
-                CassandraMetricsRegistry.Metrics.registerMBean(meter, name);
+                CassandraMetricsRegistry.Metrics.register(DefaultNameFactory.createMetricName(appenderName, metric, null), meter);
             }
         });
         logger = LoggerFactory.getLogger(CassandraDaemon.class);
@@ -545,7 +543,7 @@ public class CassandraDaemon
 
     public void setupVirtualKeyspaces()
     {
-        VirtualKeyspaceRegistry.instance.update(SystemViewsKeyspace.defaults());
+        VirtualKeyspaceRegistry.instance.updateUsingKeyspace(SystemViewsKeyspace.defaults());
 
         // flush log messages to system_views.system_logs virtual table as there were messages already logged
         // before that virtual table was instantiated

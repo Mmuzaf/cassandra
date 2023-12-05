@@ -1145,16 +1145,8 @@ public class TableMetrics
         {
             // Metric will be null if we are releasing a view metric.  Views have null for ViewLockAcquireTime and ViewLockReadTime
             ALL_TABLE_METRICS.get(tableMetricName).remove(metric);
-            CassandraMetricsRegistry.MetricName cfAlias = aliasFactory.createMetricName(cfMetricName);
-            
-            if (tableMetricAlias != null)
-            {
-                Metrics.remove(name, cfAlias, factory.createMetricName(tableMetricAlias), aliasFactory.createMetricName(tableMetricAlias));
-            }
-            else
-            {
-                Metrics.remove(name, cfAlias);
-            }
+            // Aliases are already known to the parent metrics, so we don't need to remove them here.
+            Metrics.remove(name);
         }
     }
 

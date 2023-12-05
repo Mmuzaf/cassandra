@@ -183,8 +183,7 @@ public final class ClientMetrics
     
     private void registerGauge(String name, String deprecated, Gauge<?> gauge)
     {
-        Gauge<?> registeredGauge = registerGauge(name, gauge);
-        Metrics.registerMBean(registeredGauge, factory.createMetricName(deprecated).getMBeanName());
+        Metrics.register(factory.createMetricName(name), factory.createMetricName(deprecated), gauge);
     }
 
     private Meter registerMeter(String name)

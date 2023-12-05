@@ -41,7 +41,7 @@ public final class VirtualKeyspaceRegistry
         register(SystemViewsKeyspace.builder().build());
     }
 
-    public void update(VirtualKeyspace newKeyspace)
+    public void updateUsingKeyspace(VirtualKeyspace newKeyspace)
     {
         virtualKeyspaces.computeIfPresent(newKeyspace.name(),
                 (name, oldKeyspace) -> {
@@ -49,6 +49,18 @@ public final class VirtualKeyspaceRegistry
                             .stream()
                             .collect(Collectors.toMap(VirtualTable::name, Function.identity()));
                     newKeyspace.tables().forEach(t -> tables.putIfAbsent(t.name(), t));
+                    return new VirtualKeyspace(name, tables.values());
+                });
+    }
+
+    public void removeUsingKeyspace(VirtualKeyspace keyspace)
+    {
+        virtualKeyspaces.computeIfPresent(keyspace.name(),
+                (name, oldKeyspace) -> {
+                    Map<String, VirtualTable> tables = oldKeyspace.tables()
+                            .stream()
+                            .collect(Collectors.toMap(VirtualTable::name, Function.identity()));
+                    keyspace.tables().forEach(t -> tables.remove(t.name(), t));
                     return new VirtualKeyspace(name, tables.values());
                 });
     }
