@@ -19,7 +19,7 @@
 package org.apache.cassandra.db.virtual.model;
 
 import org.apache.cassandra.db.virtual.proc.Column;
-import org.apache.cassandra.metrics.CassandraMetricsRegistry;
+import org.apache.cassandra.metrics.ReadOnlyMetricsRegistry;
 
 import java.util.Map;
 
@@ -35,7 +35,7 @@ public class MetricGroupRow
     private final String group;
     private final String comment;
 
-    public MetricGroupRow(Map.Entry<String, CassandraMetricsRegistry> group)
+    public MetricGroupRow(Map.Entry<String, ReadOnlyMetricsRegistry> group)
     {
         this.group = group.getKey();
         this.comment = group.getValue().getDescription();

@@ -39,6 +39,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.lang.reflect.Method;
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -61,12 +62,17 @@ import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.GROUP_NAME_MAP
 import static org.apache.cassandra.metrics.AbstractMetricNameFactory.GROUP_NAME;
 
 /**
- * Makes integrating 3.0 metrics API with 2.0.
- * <p>
- * The 3.0 API comes with poor JMX integration
- * </p>
+ * Dropwizard metrics registry for Cassandra, as of for now uses the latest version of Dropwizard metrics
+ * library {@code 4.2.x} that has a pretty good integration with JMX. The registry is used by Cassandra to
+ * store all metrics and expose them to JMX and {@link org.apache.cassandra.db.virtual.VirtualTable}.
+ * In addition to that, the registry provides a way to store aliases for metrics and group metrics by
+ * the Cassandra-specific metric groups, which are used to expose metrics in that way.
+ *
+ * @see org.apache.cassandra.db.virtual.VirtualTable
+ * @see org.apache.cassandra.db.virtual.sysview.SystemView
+ * @see org.apache.cassandra.db.virtual.SystemViewsKeyspace
  */
-public class CassandraMetricsRegistry extends MetricRegistry
+public class CassandraMetricsRegistry extends MetricRegistry implements ReadOnlyMetricsRegistry
 {
     /** A map of metric name constructed by {@link com.codahale.metrics.MetricRegistry#name(String, String...)} and
      * its full name in the way how it is represented in JMX. The map is used by {@link CassandraJmxMetricsExporter}
@@ -87,57 +93,53 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
     private CassandraMetricsRegistry(
             String description,
-            Function<CassandraMetricsRegistry, MetricRegistryListener> listenerFactory)
+            Function<ReadOnlyMetricsRegistry, MetricRegistryListener> listenerFactory)
     {
         this.description = description;
         addListener(listenerFactory.apply(this));
     }
 
-    public SortedMap<String, CassandraMetricsRegistry> getRegisters()
+    /** {@inheritDoc} */
+    @Override
+    public SortedMap<String, ReadOnlyMetricsRegistry> getRegisters()
     {
-        return REGISTERS.entrySet()
+        return withAliases(REGISTERS.entrySet()
                 .stream()
                 .sorted(Map.Entry.comparingByKey())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-                        (e1, e2) -> e1, java.util.TreeMap::new));
+                        (e1, e2) -> e1, java.util.TreeMap::new)));
     }
 
     public MetricNameFactory regsiterMetricFactory(MetricNameFactory factory, String description)
     {
         return new MetricNameFactoryWrapper(factory,
-                createdMetricName -> {
-                    onMetricCreated(createdMetricName, factory.groupName());
-                    // New group name must be registered in the virtual keyspace registry.
-                    registerNewMetricGroupIfNeed(factory.groupName(), description);
-                    return createdMetricName;
-                });
+                newMetricName -> onMetricCreated(newMetricName, factory.groupName(), description));
     }
 
-    private static void registerNewMetricGroupIfNeed(String groupName, String description)
+    private static MetricName onMetricCreated(MetricName metricName, String group, String description)
     {
-        if (REGISTERS.containsKey(groupName))
-            return;
-        REGISTERS.putIfAbsent(groupName, new CassandraMetricsRegistry(description,
-                reg -> new DelegateMetricsListener(CassandraMetricsRegistry.Metrics)));
-        // Register virtual tables for all metrics groups.
-        VirtualKeyspaceRegistry.instance.updateUsingKeyspace(SystemViewsKeyspace.builder()
-                .add(new VirtualTableSystemViewAdapter<>(
-                        SystemViewCollectionAdapter.create(groupName,
-                                "All metrics for \"" + groupName + "\" metric group",
-                                new MetricRowWalker(),
-                                () -> REGISTERS.get(groupName).getMetrics().entrySet(),
-                                MetricRow::new),
-                        GROUP_NAME_MAPPER))
-                .build());
-    }
-
-    private static void onMetricCreated(MetricName createdMetricName, String group)
-    {
-        ALIASES.computeIfAbsent(createdMetricName.getMetricName(),
+        ALIASES.computeIfAbsent(metricName.getMetricName(),
                         k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
-                .add(createdMetricName);
-        String old = METRIC_TO_GROUP_MAP.putIfAbsent(createdMetricName, group);
+                .add(metricName);
+        String old = METRIC_TO_GROUP_MAP.putIfAbsent(metricName, group);
         assert old == null || old.equals(group);
+        // New group name must be registered in the virtual keyspace registry.
+        if (!REGISTERS.containsKey(group))
+        {
+            REGISTERS.putIfAbsent(group, new CassandraMetricsRegistry(description,
+                    reg -> new DelegateMetricsListener(CassandraMetricsRegistry.Metrics)));
+            // Register virtual tables for all metrics groups.
+            VirtualKeyspaceRegistry.instance.updateUsingKeyspace(SystemViewsKeyspace.builder()
+                    .add(new VirtualTableSystemViewAdapter<>(
+                            SystemViewCollectionAdapter.create(group,
+                                    "All metrics for \"" + group + "\" metric group",
+                                    new MetricRowWalker(),
+                                    () -> REGISTERS.get(group).getMetrics().entrySet(),
+                                    MetricRow::new),
+                            GROUP_NAME_MAPPER))
+                    .build());
+        }
+        return metricName;
     }
 
     private static void onMetricRemoved(String name)
@@ -168,13 +170,15 @@ public class CassandraMetricsRegistry extends MetricRegistry
         ALIASES.get(names[0].getMetricName()).addAll(Arrays.asList(names));
     }
 
-    /** @return A map of metric name constructed by {@link com.codahale.metrics.MetricRegistry#name(String, String...)}
-     * and all of its aliases represented as MetricNames. */
+    /** {@inheritDoc} */
+    @Override
     public Map<String, Set<MetricName>> getAliases()
     {
         return ALIASES;
     }
 
+    /** {@inheritDoc} */
+    @Override
     public String getDescription()
     {
         return description;
@@ -262,6 +266,59 @@ public class CassandraMetricsRegistry extends MetricRegistry
             Metric existing = Metrics.getMetrics().get(name.getMetricName());
             return (T)existing;
         }
+    }
+
+    @Override
+    public SortedMap<String, Metric> getMetrics()
+    {
+        return withAliases(super.getMetrics());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @SuppressWarnings("rawtypes")
+    public SortedMap<String, Gauge> getGauges()
+    {
+        return withAliases(super.getGauges());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public SortedMap<String, Counter> getCounters()
+    {
+        return withAliases(super.getCounters());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public SortedMap<String, Histogram> getHistograms()
+    {
+        return withAliases(super.getHistograms());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public SortedMap<String, Meter> getMeters()
+    {
+        return withAliases(super.getMeters());
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public SortedMap<String, Timer> getTimers()
+    {
+        return withAliases(super.getTimers());
+    }
+
+    private static <T extends Metric> SortedMap<String, T> withAliases(Map<String, T> map)
+    {
+        return map.entrySet()
+                .stream()
+                .flatMap(e -> ALIASES.get(e.getKey())
+                        .stream()
+                        .map(alias -> new AbstractMap.SimpleEntry<>(alias.getMetricName(), e.getValue())))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                        (e1, e2) -> e1, java.util.TreeMap::new));
     }
 
     public Collection<ThreadPoolMetrics> allThreadPoolMetrics()
