@@ -23,25 +23,25 @@ import org.apache.cassandra.db.virtual.proc.Column;
 
 import java.util.Map;
 
+import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.getMetricGroup;
+
 
 /**
  * Historgam metric representation for a {@link org.apache.cassandra.db.virtual.sysview.SystemView}.
  */
 public class HistogramMetricRow
 {
-    private final String group;
     private final Map.Entry<String, Histogram> histogramEntry;
 
-    public HistogramMetricRow(String group, Map.Entry<String, Histogram> histogramEntry)
+    public HistogramMetricRow(Map.Entry<String, Histogram> histogramEntry)
     {
-        this.group = group;
         this.histogramEntry = histogramEntry;
     }
 
     @Column(index = 1)
     public String group()
     {
-        return group;
+        return getMetricGroup(histogramEntry.getKey());
     }
 
     @Column(index = 0)

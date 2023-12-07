@@ -23,25 +23,25 @@ import org.apache.cassandra.db.virtual.proc.Column;
 
 import java.util.Map;
 
+import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.getMetricGroup;
+
 
 /**
  * Timer metric representation for a {@link org.apache.cassandra.db.virtual.sysview.SystemView}.
  */
 public class TimerMetricRow
 {
-    private final String group;
     private final Map.Entry<String, Timer> timerEntry;
 
-    public TimerMetricRow(String group, Map.Entry<String, Timer> timerEntry)
+    public TimerMetricRow(Map.Entry<String, Timer> timerEntry)
     {
-        this.group = group;
         this.timerEntry = timerEntry;
     }
 
     @Column(index = 1)
     public String group()
     {
-        return group;
+        return getMetricGroup(timerEntry.getKey());
     }
 
     @Column(index = 0)

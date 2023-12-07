@@ -33,6 +33,7 @@ import org.apache.cassandra.db.virtual.model.TimerMetricRow;
 import org.apache.cassandra.db.virtual.model.TimerMetricRowWalker;
 import org.apache.cassandra.db.virtual.sysview.SystemViewCollectionAdapter;
 import org.apache.cassandra.index.sai.virtual.StorageAttachedIndexTables;
+import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -94,11 +95,18 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                 .addAll(CIDRFilteringMetricsTable.getAll(VIRTUAL_VIEWS))
                 .addAll(StorageAttachedIndexTables.getAll(VIRTUAL_VIEWS))
                 // Register virtual tables for all known metric group names.
+                // todo this should be a view on the created virtual tables and descriptions
                 .add(new VirtualTableSystemViewAdapter<>(
                         SystemViewCollectionAdapter.create("all_group_names",
                                 "All metric group names",
                                 new MetricGroupRowWalker(),
-                                () -> Metrics.getRegisters().entrySet(),
+                                () -> () -> Metrics.getAliases()
+                                        .values()
+                                        .stream()
+                                        .flatMap(Collection::stream)
+                                        .map(CassandraMetricsRegistry.MetricName::getSystemViewName)
+                                        .distinct()
+                                        .iterator(),
                                 MetricGroupRow::new),
                         GROUP_NAME_MAPPER))
                 // Register virtual tables for all metrics types similar to the JMX MBean structure,
@@ -107,43 +115,47 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                         SystemViewCollectionAdapter.create("counter",
                                 "All metrics with type \"Counter\"",
                                 new CounterMetricRowWalker(),
-                                () -> Metrics.getRegisters().entrySet(),
-                                e -> e.getValue().getCounters().entrySet(),
-                                (groupEntry, counter) -> new CounterMetricRow(groupEntry.getKey(), counter)),
+                                () -> Metrics.getCounters().entrySet(),
+                                CounterMetricRow::new),
                         TYPE_NAME_MAPPER))
                 .add(new VirtualTableSystemViewAdapter<>(
                         SystemViewCollectionAdapter.create("gauge",
                                 "All metrics with type \"Gauge\"",
                                 new GaugeMetricRowWalker(),
-                                () -> Metrics.getRegisters().entrySet(),
-                                e -> e.getValue().getGauges().entrySet(),
-                                (groupEntry, gauge) -> new GaugeMetricRow(groupEntry.getKey(), gauge)),
+                                () -> Metrics.getGauges().entrySet(),
+                                GaugeMetricRow::new),
                         TYPE_NAME_MAPPER))
                 .add(new VirtualTableSystemViewAdapter<>(
                         SystemViewCollectionAdapter.create("histogram",
                                 "All metrics with type \"Histogram\"",
                                 new HistogramMetricRowWalker(),
-                                () -> Metrics.getRegisters().entrySet(),
-                                e -> e.getValue().getHistograms().entrySet(),
-                                (groupEntry, histogram) -> new HistogramMetricRow(groupEntry.getKey(), histogram)),
+                                () -> Metrics.getHistograms().entrySet(),
+                                HistogramMetricRow::new),
                         TYPE_NAME_MAPPER))
                 .add(new VirtualTableSystemViewAdapter<>(
                         SystemViewCollectionAdapter.create("meter",
                                 "All metrics with type \"Meter\"",
                                 new MeterMetricRowWalker(),
-                                () -> Metrics.getRegisters().entrySet(),
-                                e -> e.getValue().getMeters().entrySet(),
-                                (groupEntry, meter) -> new MeterMetricRow(groupEntry.getKey(), meter)),
+                                () -> Metrics.getMeters().entrySet(),
+                                MeterMetricRow::new),
                         TYPE_NAME_MAPPER))
                 .add(new VirtualTableSystemViewAdapter<>(
                         SystemViewCollectionAdapter.create("timer",
                                 "All metrics with type \"Timer\"",
                                 new TimerMetricRowWalker(),
-                                () -> Metrics.getRegisters().entrySet(),
-                                e -> e.getValue().getTimers().entrySet(),
-                                (groupEntry, timer) -> new TimerMetricRow(groupEntry.getKey(), timer)),
+                                () -> Metrics.getTimers().entrySet(),
+                                TimerMetricRow::new),
                         TYPE_NAME_MAPPER))
                 .build();
+    }
+
+    public static String getMetricGroup(String metricName)
+    {
+        return Metrics.getAliases().get(metricName)
+                .stream()
+                .map(CassandraMetricsRegistry.MetricName::getSystemViewName)
+                .findFirst()
+                .orElse("unknown");
     }
 
     public static Builder builder()

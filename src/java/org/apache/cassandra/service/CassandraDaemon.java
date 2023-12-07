@@ -37,6 +37,7 @@ import javax.management.remote.JMXConnectorServer;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import org.apache.cassandra.db.virtual.VirtualSchemaKeyspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -415,6 +416,7 @@ public class CassandraDaemon
             logger.info("Prewarming of auth caches is disabled");
 
         PaxosState.startAutoRepairs();
+        CassandraMetricsRegistry.Metrics.start();
 
         completeSetup();
     }
@@ -543,6 +545,7 @@ public class CassandraDaemon
 
     public void setupVirtualKeyspaces()
     {
+        VirtualKeyspaceRegistry.instance.register(VirtualSchemaKeyspace.instance);
         VirtualKeyspaceRegistry.instance.updateUsingKeyspace(SystemViewsKeyspace.defaults());
 
         // flush log messages to system_views.system_logs virtual table as there were messages already logged
@@ -692,6 +695,7 @@ public class CassandraDaemon
                 logger.error("Error shutting down local JMX server: ", e);
             }
         }
+        CassandraMetricsRegistry.Metrics.stop();
     }
 
     @VisibleForTesting

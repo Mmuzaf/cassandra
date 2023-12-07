@@ -17,18 +17,14 @@
  */
 package org.apache.cassandra.metrics;
 
-import java.util.Set;
-import java.util.function.ToLongFunction;
-
-import com.codahale.metrics.MetricRegistry;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
-
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.Keyspace;
@@ -37,6 +33,9 @@ import org.apache.cassandra.io.sstable.format.SSTableFormat;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry.MetricName;
 import org.apache.cassandra.metrics.TableMetrics.ReleasableMetric;
 
+import java.util.Set;
+import java.util.function.ToLongFunction;
+
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 
 /**
@@ -44,6 +43,7 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
  */
 public class KeyspaceMetrics
 {
+    public static final String KEYSPACE_TYPE = "Keyspace";
     /** Total amount of live data stored in the memtable, excluding any data structure overhead */
     public final Gauge<Long> memtableLiveDataSize;
     /** Total amount of data stored in the memtable that resides on-heap, including column related overhead and partitions overwritten. */
@@ -195,7 +195,7 @@ public class KeyspaceMetrics
      */
     public KeyspaceMetrics(final Keyspace ks)
     {
-        factory = Metrics.regsiterMetricFactory(new KeyspaceMetricNameFactory(ks), "Metrics of keyspaces");
+        factory = Metrics.regsiterMetricFactory(new KeyspaceMetricNameFactory(ks));
         keyspace = ks;
         memtableColumnsCount = createKeyspaceGauge("MemtableColumnsCount",
                 metric -> metric.memtableColumnsCount.getValue());
@@ -403,14 +403,12 @@ public class KeyspaceMetrics
         Metrics.remove(factory.createMetricName(name));
     }
 
-    static class KeyspaceMetricNameFactory extends AbstractMetricNameFactory
+    static class KeyspaceMetricNameFactory implements MetricNameFactory
     {
-        public static final String KEYSPACE_TYPE = "Keyspace";
         private final String keyspaceName;
 
         KeyspaceMetricNameFactory(Keyspace ks)
         {
-            super(KEYSPACE_TYPE);
             this.keyspaceName = ks.getName();
         }
 
@@ -425,13 +423,8 @@ public class KeyspaceMetrics
             mbeanName.append(",keyspace=").append(keyspaceName);
             mbeanName.append(",name=").append(metricName);
 
-            return new MetricName(groupName, KEYSPACE_TYPE, metricName, keyspaceName, mbeanName.toString());
-        }
-
-        @Override
-        public String groupName()
-        {
-            return MetricRegistry.name(KEYSPACE_TYPE, keyspaceName);
+            return new MetricName(groupName, KEYSPACE_TYPE, metricName, keyspaceName, mbeanName.toString(),
+                    MetricRegistry.name(KEYSPACE_TYPE, keyspaceName));
         }
     }
 }

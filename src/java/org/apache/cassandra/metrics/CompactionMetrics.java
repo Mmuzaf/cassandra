@@ -39,7 +39,7 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
  */
 public class CompactionMetrics
 {
-    public static final MetricNameFactory factory = Metrics.regsiterMetricFactory(new DefaultNameFactory("Compaction"), "Compaction metrics");
+    public static final MetricNameFactory factory = Metrics.regsiterMetricFactory(new DefaultNameFactory("Compaction"));
 
     /** Estimated number of compactions remaining to perform */
     public final Gauge<Integer> pendingTasks;

@@ -29,6 +29,7 @@ import com.codahale.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.cassandra.db.virtual.SystemViewsKeyspace;
 import org.apache.cassandra.db.virtual.VirtualKeyspaceRegistry;
+import org.apache.cassandra.db.virtual.VirtualTable;
 import org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter;
 import org.apache.cassandra.db.virtual.model.MetricRow;
 import org.apache.cassandra.db.virtual.model.MetricRowWalker;
@@ -43,7 +44,7 @@ import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -52,17 +53,17 @@ import java.util.SortedMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.GROUP_NAME_MAPPER;
-import static org.apache.cassandra.metrics.AbstractMetricNameFactory.GROUP_NAME;
 
 /**
- * Dropwizard metrics registry for Cassandra, as of for now uses the latest version of Dropwizard metrics
+ * Dropwizard metrics registry extension for Cassandra, as of for now uses the latest version of Dropwizard metrics
  * library {@code 4.2.x} that has a pretty good integration with JMX. The registry is used by Cassandra to
  * store all metrics and expose them to JMX and {@link org.apache.cassandra.db.virtual.VirtualTable}.
  * In addition to that, the registry provides a way to store aliases for metrics and group metrics by
@@ -72,101 +73,81 @@ import static org.apache.cassandra.metrics.AbstractMetricNameFactory.GROUP_NAME;
  * @see org.apache.cassandra.db.virtual.sysview.SystemView
  * @see org.apache.cassandra.db.virtual.SystemViewsKeyspace
  */
-public class CassandraMetricsRegistry extends MetricRegistry implements ReadOnlyMetricsRegistry
+public class CassandraMetricsRegistry extends MetricRegistry implements MetricsRegistryView
 {
     /** A map of metric name constructed by {@link com.codahale.metrics.MetricRegistry#name(String, String...)} and
      * its full name in the way how it is represented in JMX. The map is used by {@link CassandraJmxMetricsExporter}
      * to export metrics to JMX. */
     private static final ConcurrentMap<String, Set<MetricName>> ALIASES = new ConcurrentHashMap<>();
-    /** A map of metric name constructed by {@link org.apache.cassandra.metrics.MetricNameFactory} and the group name provided by given factory. */
-    private static final ConcurrentMap<MetricName, String> METRIC_TO_GROUP_MAP = new ConcurrentHashMap<>();
-    private static final Map<String, CassandraMetricsRegistry> REGISTERS = new ConcurrentHashMap<>();
 
-    public static final CassandraMetricsRegistry Metrics = new CassandraMetricsRegistry("Root metrics registry",
-            reg -> new CassandraJmxMetricsExporter(name ->
-                    ofNullable(reg.getAliases().get(name)).orElse(Collections.emptySet()),
-                    CassandraMetricsRegistry::onMetricRemoved));
+    /**
+     * Root metrics registry that is used by Cassandra to store all metrics.
+     * All modifications to the registry are delegated to the corresponding listeners as well.
+     * Metrics from the root registry are exported to JMX by {@link CassandraJmxMetricsExporter} and to virtual tables
+     * by {@link CassandraVirtualTableMetricsExporter}.
+     */
+    public static final CassandraMetricsRegistry Metrics = new CassandraMetricsRegistry();
+    private final MetricRegistryListener jmxExporter = new CassandraJmxMetricsExporter(name ->
+            ofNullable(this.getAliases().get(name)).orElse(Collections.emptySet()));
+    private final MetricRegistryListener virtualTableExporter = new CassandraVirtualTableMetricsExporter();
+    /** We have to make sure that this metrics listener is called the last, so that it can clean up aliases. */
+    private final MetricRegistryListener housekeepingListener = new BaseMetricRegistryListener()
+    {
+        @Override
+        protected void onMetricRemove(String name)
+        {
+            ALIASES.remove(name);
+        }
+    };
 
     private final Map<String, ThreadPoolMetrics> threadPoolMetrics = new ConcurrentHashMap<>();
-    private final String description;
+    private final LinkedList<MetricRegistryListener> listeners = new LinkedList<>();
     public final static TimeUnit DEFAULT_TIMER_UNIT = TimeUnit.MICROSECONDS;
 
-    private CassandraMetricsRegistry(
-            String description,
-            Function<ReadOnlyMetricsRegistry, MetricRegistryListener> listenerFactory)
+    private CassandraMetricsRegistry()
     {
-        this.description = description;
-        addListener(listenerFactory.apply(this));
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public SortedMap<String, ReadOnlyMetricsRegistry> getRegisters()
+    public void start()
     {
-        return withAliases(REGISTERS.entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByKey())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-                        (e1, e2) -> e1, java.util.TreeMap::new)));
+        if (listeners.contains(housekeepingListener))
+            return;
+
+        assert listeners.isEmpty();
+        listeners.add(jmxExporter);
+        listeners.add(virtualTableExporter);
+        listeners.addLast(housekeepingListener);
+
+        Metrics.addListener(jmxExporter);
+        Metrics.addListener(virtualTableExporter);
+        Metrics.addListener(housekeepingListener);
     }
 
-    public MetricNameFactory regsiterMetricFactory(MetricNameFactory factory, String description)
+    public void stop()
+    {
+        listeners.forEach(Metrics::removeListener);
+        listeners.clear();
+    }
+
+    public MetricNameFactory regsiterMetricFactory(MetricNameFactory factory)
     {
         return new MetricNameFactoryWrapper(factory,
-                newMetricName -> onMetricCreated(newMetricName, factory.groupName(), description));
-    }
-
-    private static MetricName onMetricCreated(MetricName metricName, String group, String description)
-    {
-        ALIASES.computeIfAbsent(metricName.getMetricName(),
-                        k -> Collections.newSetFromMap(new ConcurrentHashMap<>()))
-                .add(metricName);
-        String old = METRIC_TO_GROUP_MAP.putIfAbsent(metricName, group);
-        assert old == null || old.equals(group);
-        // New group name must be registered in the virtual keyspace registry.
-        if (!REGISTERS.containsKey(group))
-        {
-            REGISTERS.putIfAbsent(group, new CassandraMetricsRegistry(description,
-                    reg -> new DelegateMetricsListener(CassandraMetricsRegistry.Metrics)));
-            // Register virtual tables for all metrics groups.
-            VirtualKeyspaceRegistry.instance.updateUsingKeyspace(SystemViewsKeyspace.builder()
-                    .add(new VirtualTableSystemViewAdapter<>(
-                            SystemViewCollectionAdapter.create(group,
-                                    "All metrics for \"" + group + "\" metric group",
-                                    new MetricRowWalker(),
-                                    () -> REGISTERS.get(group).getMetrics().entrySet(),
-                                    MetricRow::new),
-                            GROUP_NAME_MAPPER))
-                    .build());
-        }
-        return metricName;
-    }
-
-    private static void onMetricRemoved(String name)
-    {
-        Set<MetricName> toRemove = new HashSet<>();
-        ALIASES.computeIfPresent(name, (k, v) -> {
-            toRemove.addAll(v);
-            return null;
-        });
-        toRemove.forEach(METRIC_TO_GROUP_MAP::remove);
-    }
-
-    private static CassandraMetricsRegistry getMetricGroupByName(MetricName metricName)
-    {
-        assertKnownMetric(metricName);
-        return REGISTERS.get(METRIC_TO_GROUP_MAP.get(metricName));
+                newMetricName -> {
+                    ALIASES.computeIfAbsent(newMetricName.getMetricName(), k -> ConcurrentHashMap.newKeySet()).add(newMetricName);
+                    return newMetricName;
+                });
     }
 
     private static void assertKnownMetric(MetricName name)
     {
-        if (!METRIC_TO_GROUP_MAP.containsKey(name))
-            throw new IllegalArgumentException(name + " is not a registered metric: " + METRIC_TO_GROUP_MAP.keySet());
+        Set<MetricName> known = ALIASES.get(name.getMetricName());
+        if (known == null || !known.contains(name))
+            throw new IllegalArgumentException(name + " must be registered by the factory that is known to the registry");
     }
 
     private static void setAliases(MetricName... names)
     {
-        assertKnownMetric(names[0]);
+        Arrays.asList(names).forEach(CassandraMetricsRegistry::assertKnownMetric);
         ALIASES.get(names[0].getMetricName()).addAll(Arrays.asList(names));
     }
 
@@ -174,26 +155,19 @@ public class CassandraMetricsRegistry extends MetricRegistry implements ReadOnly
     @Override
     public Map<String, Set<MetricName>> getAliases()
     {
-        return ALIASES;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public String getDescription()
-    {
-        return description;
+        return Collections.unmodifiableMap(ALIASES);
     }
 
     public Counter counter(MetricName... name)
     {
-        Arrays.asList(name).forEach(CassandraMetricsRegistry::assertKnownMetric);
         setAliases(name);
-        return getMetricGroupByName(name[0]).counter(name[0].getMetricName());
+        return super.counter(name[0].getMetricName());
     }
 
     public Meter meter(MetricName name)
     {
-        return getMetricGroupByName(name).meter(name.getMetricName());
+        assertKnownMetric(name);
+        return meter(name.getMetricName());
     }
 
     public Meter meter(MetricName name, MetricName alias)
@@ -225,13 +199,13 @@ public class CassandraMetricsRegistry extends MetricRegistry implements ReadOnly
 
     private SnapshottingTimer timer(MetricName name, TimeUnit durationUnit)
     {
-        return getMetricGroupByName(name).register(name, new SnapshottingTimer(CassandraMetricsRegistry.createReservoir(durationUnit)));
+        return register(name, new SnapshottingTimer(CassandraMetricsRegistry.createReservoir(durationUnit)));
     }
 
     public SnapshottingTimer timer(MetricName name, MetricName alias, TimeUnit durationUnit)
     {
         setAliases(name, alias);
-        return getMetricGroupByName(name).timer(name, durationUnit);
+        return timer(name, durationUnit);
     }
 
     public static SnapshottingReservoir createReservoir(TimeUnit durationUnit)
@@ -259,7 +233,8 @@ public class CassandraMetricsRegistry extends MetricRegistry implements ReadOnly
     {
         try
         {
-            return getMetricGroupByName(name).register(name.getMetricName(), metric);
+            assertKnownMetric(name);
+            return super.register(name.getMetricName(), metric);
         }
         catch (IllegalArgumentException e)
         {
@@ -310,6 +285,22 @@ public class CassandraMetricsRegistry extends MetricRegistry implements ReadOnly
         return withAliases(super.getTimers());
     }
 
+    /**
+     * Returns an iterable of all metrics with their known aliases. If filter is provided, only metrics that match
+     * the filter will be returned.
+     */
+    public static <T extends Metric> Iterable<AbstractMap.SimpleEntry<String, T>> withAliases(Map<String, T> map, Predicate<MetricName> filer)
+    {
+        return () -> map.entrySet()
+                .stream()
+                .flatMap(e -> ALIASES.get(e.getKey())
+                        .stream()
+                        .filter(filer)
+                        .map(alias -> new AbstractMap.SimpleEntry<>(alias.getMetricName(), e.getValue())))
+                .sorted(Map.Entry.comparingByKey())
+                .iterator();
+    }
+
     private static <T extends Metric> SortedMap<String, T> withAliases(Map<String, T> map)
     {
         return map.entrySet()
@@ -358,7 +349,8 @@ public class CassandraMetricsRegistry extends MetricRegistry implements ReadOnly
     public boolean remove(MetricName name)
     {
         // Aliases are removed in onMetricRemoved by metrics listener.
-        return getMetricGroupByName(name).remove(name.getMetricName());
+        assertKnownMetric(name);
+        return super.remove(name.getMetricName());
     }
 
     private void registerMBean(Metric metric, ObjectName name, MBeanWrapper mBeanServer)
@@ -852,12 +844,13 @@ public class CassandraMetricsRegistry extends MetricRegistry implements ReadOnly
      */
     public static class MetricName implements Comparable<MetricName>
     {
-        public static final MetricName EMPTY = new MetricName(GROUP_NAME, "Root", "", "", "");
+        public static final MetricName EMPTY = new MetricName(MetricName.class, "EMPTY");
         private final String group;
         private final String type;
         private final String name;
         private final String scope;
         private final String mBeanName;
+        private final String systemViewName;
 
         /**
          * Creates a new {@link MetricName} without a scope.
@@ -910,17 +903,22 @@ public class CassandraMetricsRegistry extends MetricRegistry implements ReadOnly
             this(group, type, name, scope, createMBeanName(group, type, name, scope));
         }
 
+        public MetricName(String group, String type, String name, String scope, String mBeanName)
+        {
+            this(group, type, name, scope, mBeanName, type);
+        }
+
         /**
          * Creates a new {@link MetricName} without a scope.
          *
-         * @param group     the group to which the {@link Metric} belongs
-         * @param type      the type to which the {@link Metric} belongs
-         * @param name      the name of the {@link Metric}
-         * @param scope     the scope of the {@link Metric}
-         * @param mBeanName the 'ObjectName', represented as a string, to use when registering the
-         *                  MBean.
+         * @param group      the group to which the {@link Metric} belongs
+         * @param type       the type to which the {@link Metric} belongs
+         * @param name       the name of the {@link Metric}
+         * @param scope      the scope of the {@link Metric}
+         * @param mBeanName  the 'ObjectName', represented as a string, to use when registering the MBean.
+         * @param systemViewName the name of the virtual table to which the {@link Metric} belongs.
          */
-        public MetricName(String group, String type, String name, String scope, String mBeanName)
+        public MetricName(String group, String type, String name, String scope, String mBeanName, String systemViewName)
         {
             if (group == null || type == null)
             {
@@ -935,6 +933,7 @@ public class CassandraMetricsRegistry extends MetricRegistry implements ReadOnly
             this.name = name;
             this.scope = scope;
             this.mBeanName = mBeanName;
+            this.systemViewName = systemViewName;
         }
 
         /**
@@ -1021,6 +1020,11 @@ public class CassandraMetricsRegistry extends MetricRegistry implements ReadOnly
                     throw new RuntimeException(e1);
                 }
             }
+        }
+
+        public String getSystemViewName()
+        {
+            return systemViewName;
         }
 
         @Override
@@ -1124,157 +1128,138 @@ public class CassandraMetricsRegistry extends MetricRegistry implements ReadOnly
         }
     }
 
-    private static class CassandraJmxMetricsExporter implements MetricRegistryListener
+    private static class CassandraVirtualTableMetricsExporter extends BaseMetricRegistryListener
+    {
+        // todo track all metrics related to the vt?
+        private final Map<String, AtomicInteger> registered = new ConcurrentHashMap<>();
+
+        @Override
+        protected void onMetricAdded(String name, Metric metric)
+        {
+            // New group name must be registered in the virtual keyspace registry.
+            Metrics.getAliases().get(name).forEach(alias ->
+                    registered.computeIfAbsent(alias.getSystemViewName(), tableName -> {
+                        VirtualKeyspaceRegistry.instance.updateUsingKeyspace(SystemViewsKeyspace.builder()
+                                .add(createMetricsVirtualTable(tableName))
+                                .build());
+                        return new AtomicInteger();
+                    }).incrementAndGet());
+        }
+
+        @Override
+        protected void onMetricRemove(String name)
+        {
+            // todo remove virtual table if no more metrics for it
+            // todo check the metric is the last one for the group
+            Metrics.getAliases().get(name).forEach(alias ->
+                    registered.computeIfPresent(alias.getSystemViewName(), (tableName, count) -> {
+                        if (count.decrementAndGet() == 0)
+                        {
+                            VirtualKeyspaceRegistry.instance.removeUsingKeyspace(SystemViewsKeyspace.builder()
+                                    .add(createMetricsVirtualTable(tableName))
+                                    .build());
+                        }
+                        return count;
+                    }));
+        }
+
+        private static VirtualTable createMetricsVirtualTable(String tableName)
+        {
+            return new VirtualTableSystemViewAdapter<>(
+                    SystemViewCollectionAdapter.create(tableName,
+                            "All metrics for \"" + tableName + "\" metric group",
+                            new MetricRowWalker(),
+                            () -> withAliases(Metrics.getMetrics(), m -> m.systemViewName.equals(tableName)),
+                            MetricRow::new),
+                    GROUP_NAME_MAPPER);
+        }
+    }
+
+    private static class CassandraJmxMetricsExporter extends BaseMetricRegistryListener
     {
         private final MBeanWrapper mBeanWrapper = MBeanWrapper.instance;
         private final Function<String, Iterable<MetricName>> aliases;
-        private final Consumer<String> removeHandler;
 
-        public CassandraJmxMetricsExporter(Function<String, Iterable<MetricName>> aliases, Consumer<String> removeHandler)
+        public CassandraJmxMetricsExporter(Function<String, Iterable<MetricName>> aliases)
         {
             this.aliases = aliases;
-            this.removeHandler = removeHandler;
         }
 
-        private void onAdded(String name, Metric metric)
+        protected void onMetricAdded(String name, Metric metric)
         {
             aliases.apply(name).forEach(m -> Metrics.registerMBean(metric, m.getMBeanName(), mBeanWrapper));
         }
 
-        private void onRemove(String name)
+        protected void onMetricRemove(String name)
         {
             aliases.apply(name).forEach(m -> Metrics.unregisterMBean(m.getMBeanName(), mBeanWrapper));
-            removeHandler.accept(name);
         }
+    }
+
+    private static abstract class BaseMetricRegistryListener implements MetricRegistryListener
+    {
+        protected void onMetricAdded(String name, Metric metric) {}
+
+        protected void onMetricRemove(String name) {}
 
         @Override
         public void onGaugeAdded(String metricName, Gauge<?> gauge)
         {
-            onAdded(metricName, gauge);
+            onMetricAdded(metricName, gauge);
         }
 
         @Override
         public void onGaugeRemoved(String metricName)
         {
-            onRemove(metricName);
+            onMetricRemove(metricName);
         }
 
         @Override
         public void onCounterAdded(String metricName, Counter counter)
         {
-            onAdded(metricName, counter);
+            onMetricAdded(metricName, counter);
         }
 
         @Override
         public void onCounterRemoved(String metricName)
         {
-            onRemove(metricName);
+            onMetricRemove(metricName);
         }
 
         @Override
         public void onHistogramAdded(String metricName, Histogram histogram)
         {
-            onAdded(metricName, histogram);
+            onMetricAdded(metricName, histogram);
         }
 
         @Override
         public void onHistogramRemoved(String metricName)
         {
-            onRemove(metricName);
+            onMetricRemove(metricName);
         }
 
         @Override
         public void onMeterAdded(String metricName, Meter meter)
         {
-            onAdded(metricName, meter);
+            onMetricAdded(metricName, meter);
         }
 
         @Override
         public void onMeterRemoved(String metricName)
         {
-            onRemove(metricName);
+            onMetricRemove(metricName);
         }
 
         @Override
         public void onTimerAdded(String metricName, Timer timer)
         {
-            onAdded(metricName, timer);
+            onMetricAdded(metricName, timer);
         }
 
         @Override
         public void onTimerRemoved(String metricName)
         {
-            onRemove(metricName);
-        }
-    }
-
-    private static class DelegateMetricsListener implements MetricRegistryListener
-    {
-        private final MetricRegistry delegate;
-
-        public DelegateMetricsListener(MetricRegistry delegate)
-        {
-            this.delegate = delegate;
-        }
-
-        @Override
-        public void onGaugeAdded(String name, Gauge<?> gauge)
-        {
-            delegate.gauge(name, () -> gauge);
-        }
-
-        @Override
-        public void onGaugeRemoved(String name)
-        {
-            delegate.remove(name);
-        }
-
-        @Override
-        public void onCounterAdded(String name, Counter counter)
-        {
-            delegate.counter(name, () -> counter);
-        }
-
-        @Override
-        public void onCounterRemoved(String name)
-        {
-            delegate.remove(name);
-        }
-
-        @Override
-        public void onHistogramAdded(String name, Histogram histogram)
-        {
-            delegate.histogram(name, () -> histogram);
-        }
-
-        @Override
-        public void onHistogramRemoved(String name)
-        {
-            delegate.remove(name);
-        }
-
-        @Override
-        public void onMeterAdded(String name, Meter meter)
-        {
-            delegate.meter(name, () -> meter);
-        }
-
-        @Override
-        public void onMeterRemoved(String name)
-        {
-            delegate.remove(name);
-        }
-
-        @Override
-        public void onTimerAdded(String name, Timer timer)
-        {
-            delegate.timer(name, () -> timer);
-        }
-
-        @Override
-        public void onTimerRemoved(String name)
-        {
-            delegate.remove(name);
+            onMetricRemove(metricName);
         }
     }
 
@@ -1293,12 +1278,6 @@ public class CassandraMetricsRegistry extends MetricRegistry implements ReadOnly
         public MetricName createMetricName(String metricName)
         {
             return handler.apply(delegate.createMetricName(metricName));
-        }
-
-        @Override
-        public String groupName()
-        {
-            return delegate.groupName();
         }
     }
 }

@@ -27,10 +27,4 @@ public interface MetricNameFactory
      * @return new String with given metric name.
      */
     CassandraMetricsRegistry.MetricName createMetricName(String metricName);
-
-    /** @return group name that will be used for all metrics created by this factory. */
-    default String groupName()
-    {
-        throw new UnsupportedOperationException();
-    }
 }

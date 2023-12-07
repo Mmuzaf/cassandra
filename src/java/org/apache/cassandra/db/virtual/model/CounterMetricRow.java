@@ -23,18 +23,18 @@ import org.apache.cassandra.db.virtual.proc.Column;
 
 import java.util.Map;
 
+import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.getMetricGroup;
+
 
 /**
  * Counter metric representation for a {@link org.apache.cassandra.db.virtual.sysview.SystemView}.
  */
 public class CounterMetricRow
 {
-    private final String group;
     private final Map.Entry<String, Counter> counterEntry;
 
-    public CounterMetricRow(String group, Map.Entry<String, Counter> counterEntry)
+    public CounterMetricRow(Map.Entry<String, Counter> counterEntry)
     {
-        this.group = group;
         this.counterEntry = counterEntry;
     }
 
@@ -47,7 +47,7 @@ public class CounterMetricRow
     @Column(index = 1)
     public String group()
     {
-        return group;
+        return getMetricGroup(counterEntry.getKey());
     }
 
     @Column(index = 2)

@@ -60,7 +60,7 @@ public abstract class MemtablePool
         this.onHeap = getSubPool(maxOnHeapMemory, cleanThreshold);
         this.offHeap = getSubPool(maxOffHeapMemory, cleanThreshold);
         this.cleaner = getCleaner(cleaner);
-        MetricNameFactory nameFactory = CassandraMetricsRegistry.Metrics.regsiterMetricFactory(new DefaultNameFactory("MemtablePool"), "MemtablePool metrics");
+        MetricNameFactory nameFactory = CassandraMetricsRegistry.Metrics.regsiterMetricFactory(new DefaultNameFactory("MemtablePool"));
         blockedOnAllocating = CassandraMetricsRegistry.Metrics.timer(nameFactory.createMetricName("BlockedOnAllocation"));
         numPendingTasks = CassandraMetricsRegistry.Metrics.register(nameFactory.createMetricName("PendingFlushTasks"),
                                                                     () -> (long) this.cleaner.numPendingTasks());

@@ -36,12 +36,6 @@ public class LatencyMetricsTest
         {
             return new CassandraMetricsRegistry.MetricName(TestMetricsNameFactory.class, metricName);
         }
-
-        @Override
-        public String groupName()
-        {
-            return "TestMetricsNameFactory";
-        }
     }
 
     /**

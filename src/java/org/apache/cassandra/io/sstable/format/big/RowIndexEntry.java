@@ -151,7 +151,7 @@ public class RowIndexEntry extends AbstractRowIndexEntry
     static final Histogram indexInfoReadsHistogram;
     static
     {
-        MetricNameFactory factory = Metrics.regsiterMetricFactory(new DefaultNameFactory("Index", "RowIndexEntry"), "RowIndexEntry metrics");
+        MetricNameFactory factory = Metrics.regsiterMetricFactory(new DefaultNameFactory("Index", "RowIndexEntry"));
         indexEntrySizeHistogram = Metrics.histogram(factory.createMetricName("IndexedEntrySize"), false);
         indexInfoCountHistogram = Metrics.histogram(factory.createMetricName("IndexInfoCount"), false);
         indexInfoGetsHistogram = Metrics.histogram(factory.createMetricName("IndexInfoGets"), false);

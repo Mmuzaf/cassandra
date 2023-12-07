@@ -30,7 +30,7 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
  */
 public class CIDRAuthorizerMetrics
 {
-    private static final MetricNameFactory factory = Metrics.regsiterMetricFactory(new DefaultNameFactory("CIDRAuthorizer"), "CIDR authorizer metrics specific to CIDR filtering");
+    private static final MetricNameFactory factory = Metrics.regsiterMetricFactory(new DefaultNameFactory("CIDRAuthorizer"));
 
     // Number of user accesses rejected by CIDR authorization
     public static final String CIDR_ACCESSES_REJECTED_COUNT_PREFIX = "CIDRAccessesRejectedCount - ";

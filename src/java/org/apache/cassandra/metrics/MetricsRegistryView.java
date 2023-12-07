@@ -28,21 +28,17 @@ import com.codahale.metrics.Timer;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.SortedSet;
 
 /**
  * Metrics registry that provides read-only access to the metrics.
  */
-public interface ReadOnlyMetricsRegistry extends MetricSet
+public interface MetricsRegistryView extends MetricSet
 {
-    /** @return The description of the registry. */
-    String getDescription();
-
     /** @return A map of metric name constructed by {@link com.codahale.metrics.MetricRegistry#name(String, String...)}
      * and all of its Cassandra aliases represented as MetricNames. */
     Map<String, Set<CassandraMetricsRegistry.MetricName>> getAliases();
-
-    /** @return A map of all the metric registries that are registered with this registry. */
-    SortedMap<String, ? extends ReadOnlyMetricsRegistry> getRegisters();
+    SortedSet<String> getNames();
     @SuppressWarnings("rawtypes")
     SortedMap<String, Gauge> getGauges();
     SortedMap<String, Counter> getCounters();

@@ -19,9 +19,6 @@
 package org.apache.cassandra.db.virtual.model;
 
 import org.apache.cassandra.db.virtual.proc.Column;
-import org.apache.cassandra.metrics.ReadOnlyMetricsRegistry;
-
-import java.util.Map;
 
 import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.GROUP_NAME_MAPPER;
 import static org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter.virtualTableNameStyle;
@@ -33,12 +30,10 @@ import static org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter.virt
 public class MetricGroupRow
 {
     private final String group;
-    private final String comment;
 
-    public MetricGroupRow(Map.Entry<String, ReadOnlyMetricsRegistry> group)
+    public MetricGroupRow(String group)
     {
-        this.group = group.getKey();
-        this.comment = group.getValue().getDescription();
+        this.group = group;
     }
 
     @Column(index = 0)
@@ -51,11 +46,5 @@ public class MetricGroupRow
     public String virtualTable()
     {
         return GROUP_NAME_MAPPER.apply(virtualTableNameStyle(group));
-    }
-
-    @Column(index = 2)
-    public String comment()
-    {
-        return comment;
     }
 }

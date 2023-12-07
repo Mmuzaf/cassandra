@@ -62,12 +62,6 @@ public class LatencyTrackingBench
         {
             return new CassandraMetricsRegistry.MetricName(BenchMetricsNameFactory.class, metricName);
         }
-
-        @Override
-        public String groupName()
-        {
-            return "BenchMetricsNameFactory";
-        }
     }
 
     @Setup(Level.Iteration)

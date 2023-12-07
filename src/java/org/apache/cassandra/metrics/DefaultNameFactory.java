@@ -23,8 +23,11 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 /**
  * MetricNameFactory that generates default MetricName of metrics.
  */
-public class DefaultNameFactory extends AbstractMetricNameFactory
+public class DefaultNameFactory implements MetricNameFactory
 {
+    public static final String GROUP_NAME = "org.apache.cassandra.metrics";
+
+    private final String type;
     private final String scope;
 
     public DefaultNameFactory(String type)
@@ -34,7 +37,7 @@ public class DefaultNameFactory extends AbstractMetricNameFactory
 
     public DefaultNameFactory(String type, String scope)
     {
-        super(type);
+        this.type = type;
         this.scope = scope;
     }
 
@@ -45,9 +48,7 @@ public class DefaultNameFactory extends AbstractMetricNameFactory
 
     public static CassandraMetricsRegistry.MetricName createMetricName(String type, String metricName, String scope)
     {
-        return Metrics.regsiterMetricFactory(new DefaultNameFactory(type, scope),
-                        "Metrics group for \"" + type + '"')
-                .createMetricName(metricName);
+        return Metrics.regsiterMetricFactory(new DefaultNameFactory(type, scope)).createMetricName(metricName);
     }
 
     protected static CassandraMetricsRegistry.MetricName createMetricNameLocal(String type, String metricName, String scope)

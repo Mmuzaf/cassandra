@@ -21,6 +21,7 @@ package org.apache.cassandra.metrics;
 import com.codahale.metrics.Counter;
 
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
+import static org.apache.cassandra.metrics.DefaultNameFactory.GROUP_NAME;
 
 public class TrieMemtableMetricsView
 {
@@ -45,7 +46,7 @@ public class TrieMemtableMetricsView
 
     public TrieMemtableMetricsView(String keyspace, String table)
     {
-        factory = Metrics.regsiterMetricFactory(new TrieMemtableMetricNameFactory(keyspace, table), "Metrics for TrieMemtable");
+        factory = Metrics.regsiterMetricFactory(new TrieMemtableMetricNameFactory(keyspace, table));
         
         uncontendedPuts = Metrics.counter(factory.createMetricName(UNCONTENDED_PUTS));
         contendedPuts = Metrics.counter(factory.createMetricName(CONTENDED_PUTS));
@@ -61,7 +62,7 @@ public class TrieMemtableMetricsView
         lastFlushShardDataSizes.release();
     }
 
-    static class TrieMemtableMetricNameFactory extends AbstractMetricNameFactory
+    static class TrieMemtableMetricNameFactory implements MetricNameFactory
     {
         private static final String TRIE_MEMTABLE = "TrieMemtable";
         private final String keyspace;
@@ -69,7 +70,6 @@ public class TrieMemtableMetricsView
 
         TrieMemtableMetricNameFactory(String keyspace, String table)
         {
-            super(TRIE_MEMTABLE);
             this.keyspace = keyspace;
             this.table = table;
         }

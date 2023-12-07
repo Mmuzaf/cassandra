@@ -37,7 +37,6 @@ public final class VirtualKeyspaceRegistry
 
     private VirtualKeyspaceRegistry()
     {
-        register(VirtualSchemaKeyspace.instance);
         register(SystemViewsKeyspace.builder().build());
     }
 
@@ -60,7 +59,7 @@ public final class VirtualKeyspaceRegistry
                     Map<String, VirtualTable> tables = oldKeyspace.tables()
                             .stream()
                             .collect(Collectors.toMap(VirtualTable::name, Function.identity()));
-                    keyspace.tables().forEach(t -> tables.remove(t.name(), t));
+                    keyspace.tables().forEach(t -> tables.remove(t.name()));
                     return new VirtualKeyspace(name, tables.values());
                 });
     }

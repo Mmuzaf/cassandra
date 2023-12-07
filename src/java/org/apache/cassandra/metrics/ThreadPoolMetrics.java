@@ -27,13 +27,13 @@ import org.apache.cassandra.metrics.CassandraMetricsRegistry.MetricName;
 import static java.lang.String.format;
 
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
+import static org.apache.cassandra.metrics.DefaultNameFactory.GROUP_NAME;
 
 /**
  * Metrics for {@link ThreadPoolExecutor}.
  */
 public class ThreadPoolMetrics
 {
-    public static final String THREAD_POOLS = "ThreadPools";
     public static final String ACTIVE_TASKS = "ActiveTasks";
     public static final String PENDING_TASKS = "PendingTasks";
     public static final String COMPLETED_TASKS = "CompletedTasks";
@@ -116,19 +116,18 @@ public class ThreadPoolMetrics
 
     private static MetricName makeMetricName(String path, String poolName, String metricName)
     {
-        MetricNameFactory factory = Metrics.regsiterMetricFactory(new ThreadPoolMetricNameFactory(path, poolName),
-                                                                  "Metrics of thread pools");
+        MetricNameFactory factory = Metrics.regsiterMetricFactory(new ThreadPoolMetricNameFactory(path, poolName));
         return factory.createMetricName(metricName);
     }
 
-    private static class ThreadPoolMetricNameFactory extends AbstractMetricNameFactory
+    private static class ThreadPoolMetricNameFactory implements MetricNameFactory
     {
+        private static final String THREAD_POOLS = "ThreadPools";
         private final String path;
         private final String poolName;
 
         ThreadPoolMetricNameFactory(String path, String poolName)
         {
-            super(THREAD_POOLS);
             this.path = path;
             this.poolName = poolName;
         }

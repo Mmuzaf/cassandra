@@ -23,18 +23,18 @@ import org.apache.cassandra.db.virtual.proc.Column;
 
 import java.util.Map;
 
+import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.getMetricGroup;
+
 
 /**
  * Meter metric representation for a {@link org.apache.cassandra.db.virtual.sysview.SystemView}.
  */
 public class MeterMetricRow
 {
-    private final String group;
     private final Map.Entry<String, Meter> meterEntry;
 
-    public MeterMetricRow(String group, Map.Entry<String, Meter> meterEntry)
+    public MeterMetricRow(Map.Entry<String, Meter> meterEntry)
     {
-        this.group = group;
         this.meterEntry = meterEntry;
     }
 
@@ -47,7 +47,7 @@ public class MeterMetricRow
     @Column(index = 1)
     public String group()
     {
-        return group;
+        return getMetricGroup(meterEntry.getKey());
     }
 
     @Column(index = 2)

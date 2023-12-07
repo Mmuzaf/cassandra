@@ -23,6 +23,8 @@ import org.apache.cassandra.db.virtual.proc.Column;
 
 import java.util.Map;
 
+import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.getMetricGroup;
+
 
 /**
  * Gauge metric representation for a {@link org.apache.cassandra.db.virtual.sysview.SystemView}.
@@ -30,12 +32,10 @@ import java.util.Map;
 @SuppressWarnings("rawtypes")
 public class GaugeMetricRow
 {
-    private final String group;
     private final Map.Entry<String, Gauge> gaugeEntry;
 
-    public GaugeMetricRow(String group, Map.Entry<String, Gauge> gaugeEntry)
+    public GaugeMetricRow(Map.Entry<String, Gauge> gaugeEntry)
     {
-        this.group = group;
         this.gaugeEntry = gaugeEntry;
     }
 
@@ -48,7 +48,7 @@ public class GaugeMetricRow
     @Column(index = 1)
     public String group()
     {
-        return group;
+        return getMetricGroup(gaugeEntry.getKey());
     }
 
     @Column(index = 2)
