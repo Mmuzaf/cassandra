@@ -28,9 +28,9 @@ import com.codahale.metrics.MetricRegistryListener;
 import com.codahale.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
-import org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter;
 import org.apache.cassandra.db.virtual.VirtualKeyspaceRegistry;
 import org.apache.cassandra.db.virtual.VirtualTable;
+import org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter;
 import org.apache.cassandra.db.virtual.model.MetricRow;
 import org.apache.cassandra.db.virtual.model.MetricRowWalker;
 import org.apache.cassandra.db.virtual.sysview.SystemViewCollectionAdapter;
@@ -46,6 +46,7 @@ import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
@@ -56,6 +57,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
@@ -94,7 +96,6 @@ public class CassandraMetricsRegistry extends MetricRegistry
     public static final CassandraMetricsRegistry Metrics = new CassandraMetricsRegistry();
     private final MetricRegistryListener jmxExporter = new CassandraJmxMetricsExporter(name ->
             ofNullable(this.getAliases().get(name)).orElse(Collections.emptySet()));
-    private final MetricRegistryListener virtualTableExporter = new CassandraVirtualTableMetricsExporter();
     /** We have to make sure that this metrics listener is called the last, so that it can clean up aliases. */
     private final MetricRegistryListener housekeepingListener = new BaseMetricRegistryListener()
     {
@@ -111,10 +112,10 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
     static
     {
-        // We have to initialize metric group names for now, because we can't register them dynamically
-        // as it is done for the jmx metrics. The virtual kespaces are immutable, drivers also rely on the
+        // We have to initialize metric group names like this for now, because we can't register them dynamically
+        // as it is done for the jmx metrics. So we have to be sure, that all these metric groups are initialized
+        // at the time #start() method is called. The virtual kespaces are immutable, drivers also rely on the
         // fact that virtual keyspaces are immutable, so they won't receive any updates if we change them.
-        // So we have to be aware of that and initialize all metric groups here.
         metricGroups = ImmutableSet.<String>builder()
                 .add(BatchMetrics.TYPE_NAME)
                 .add(BufferPoolMetrics.TYPE_NAME)
@@ -161,6 +162,9 @@ public class CassandraMetricsRegistry extends MetricRegistry
             return;
 
         assert listeners.isEmpty();
+
+        Set<String> groups = new HashSet<>(metricGroups);
+        MetricRegistryListener virtualTableExporter = new CassandraVirtualTableMetricsExporter(groups::remove);
         listeners.add(jmxExporter);
         listeners.add(virtualTableExporter);
         listeners.addLast(housekeepingListener);
@@ -169,6 +173,8 @@ public class CassandraMetricsRegistry extends MetricRegistry
         Metrics.addListener(jmxExporter);
         Metrics.addListener(virtualTableExporter);
         Metrics.addListener(housekeepingListener);
+
+        assert  groups.isEmpty() : "Not all metric groups are registered: " + groups;
     }
 
     public void stop()
@@ -1179,6 +1185,12 @@ public class CassandraMetricsRegistry extends MetricRegistry
     private static class CassandraVirtualTableMetricsExporter extends BaseMetricRegistryListener
     {
         private final Map<String, AtomicInteger> registered = new ConcurrentHashMap<>();
+        private final Consumer<String> tableAdded;
+
+        public CassandraVirtualTableMetricsExporter(Consumer<String> tableAdded)
+        {
+            this.tableAdded = tableAdded;
+        }
 
         @Override
         protected void onMetricAdded(String name, Metric metric)
@@ -1188,6 +1200,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
                     registered.computeIfAbsent(alias.getSystemViewName(), tableName -> {
                         VirtualKeyspaceRegistry.instance.addToKeyspace(VIRTUAL_VIEWS,
                                 Collections.singletonList(createMetricsVirtualTable(tableName)));
+                        tableAdded.accept(tableName);
                         return new AtomicInteger();
                     }).incrementAndGet());
         }
