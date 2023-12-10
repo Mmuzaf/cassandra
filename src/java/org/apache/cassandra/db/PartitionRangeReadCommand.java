@@ -571,16 +571,8 @@ public class PartitionRangeReadCommand extends ReadCommand implements PartitionR
         public UnfilteredPartitionIterator executeLocally(ReadExecutionController executionController)
         {
             VirtualTable view = VirtualKeyspaceRegistry.instance.getTableNullable(metadata().id);
-            try
-            {
-                UnfilteredPartitionIterator resultIterator = view.select(dataRange, columnFilter());
-                return limits().filter(rowFilter().filter(resultIterator, nowInSec()), nowInSec(), selectsFullPartition());
-            }
-            catch (Throwable t)
-            {
-                t.printStackTrace(System.err);
-                throw new RuntimeException(t);
-            }
+            UnfilteredPartitionIterator resultIterator = view.select(dataRange, columnFilter());
+            return limits().filter(rowFilter().filter(resultIterator, nowInSec()), nowInSec(), selectsFullPartition());
         }
 
         @Override
