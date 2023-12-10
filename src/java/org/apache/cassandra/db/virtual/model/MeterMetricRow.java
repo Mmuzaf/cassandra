@@ -38,14 +38,14 @@ public class MeterMetricRow
         this.meterEntry = meterEntry;
     }
 
-    @Column(index = 0)
+    @Column(index = 0, type = Column.Type.PARTITION_KEY)
     public String name()
     {
         return meterEntry.getKey();
     }
 
     @Column(index = 1)
-    public String group()
+    public String scope()
     {
         return getMetricGroup(meterEntry.getKey());
     }

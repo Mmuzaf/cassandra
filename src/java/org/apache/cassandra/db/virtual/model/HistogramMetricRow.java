@@ -39,12 +39,12 @@ public class HistogramMetricRow
     }
 
     @Column(index = 1)
-    public String group()
+    public String scope()
     {
         return getMetricGroup(histogramEntry.getKey());
     }
 
-    @Column(index = 0)
+    @Column(index = 0, type = Column.Type.PARTITION_KEY)
     public String name()
     {
         return histogramEntry.getKey();

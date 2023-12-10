@@ -17,12 +17,7 @@
  */
 package org.apache.cassandra.db.virtual;
 
-import java.util.Iterator;
-import java.util.NavigableMap;
-import java.util.function.Supplier;
-
 import com.google.common.collect.AbstractIterator;
-
 import org.apache.cassandra.db.DataRange;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.EmptyIterators;
@@ -31,12 +26,15 @@ import org.apache.cassandra.db.filter.ClusteringIndexFilter;
 import org.apache.cassandra.db.filter.ColumnFilter;
 import org.apache.cassandra.db.partitions.AbstractUnfilteredPartitionIterator;
 import org.apache.cassandra.db.partitions.PartitionUpdate;
-import org.apache.cassandra.db.partitions.SingletonUnfilteredPartitionIterator;
 import org.apache.cassandra.db.partitions.UnfilteredPartitionIterator;
 import org.apache.cassandra.db.rows.UnfilteredRowIterator;
 import org.apache.cassandra.dht.AbstractBounds;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.schema.TableMetadata;
+
+import java.util.Iterator;
+import java.util.NavigableMap;
+import java.util.function.Supplier;
 
 import static org.apache.cassandra.utils.Clock.Global.currentTimeMillis;
 
@@ -75,16 +73,15 @@ public abstract class AbstractVirtualTable implements VirtualTable
     }
 
     @Override
-    public final UnfilteredPartitionIterator select(DecoratedKey partitionKey, ClusteringIndexFilter clusteringIndexFilter, ColumnFilter columnFilter)
+    public final UnfilteredRowIterator selectKey(DecoratedKey partitionKey, ClusteringIndexFilter clusteringIndexFilter, ColumnFilter columnFilter)
     {
         Partition partition = data(partitionKey).getPartition(partitionKey);
 
         if (null == partition)
-            return EmptyIterators.unfilteredPartition(metadata);
+            return EmptyIterators.unfilteredRow(metadata, partitionKey, clusteringIndexFilter.isReversed());
 
         long now = currentTimeMillis();
-        UnfilteredRowIterator rowIterator = partition.toRowIterator(metadata(), clusteringIndexFilter, columnFilter, now);
-        return new SingletonUnfilteredPartitionIterator(rowIterator);
+        return partition.toRowIterator(metadata(), clusteringIndexFilter, columnFilter, now);
     }
 
     @Override

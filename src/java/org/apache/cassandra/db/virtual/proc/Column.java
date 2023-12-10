@@ -18,7 +18,6 @@
 
 package org.apache.cassandra.db.virtual.proc;
 
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -35,4 +34,17 @@ public @interface Column
      * @return Index of the column. {@code 0} value means that column is the partition key column.
      */
     int index();
+
+    Type type() default Type.REGULAR;
+
+    /** Be sure the order of the enum values is preserved. */
+    enum Type
+    {
+        /** The column is a partition key column. */
+        PARTITION_KEY,
+        /** The column is a clustering column. */
+        CLUSTERING,
+        /** The column is a regular column. */
+        REGULAR
+    }
 }

@@ -40,7 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.ObjIntConsumer;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -142,6 +143,7 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
         String packageName =  className.substring(0,  className.lastIndexOf('.'));
         String simpleClassName = className.substring(className.lastIndexOf('.') + 1);
 
+        addImport(imports, Column.class.getName());
         addImport(imports, RowWalker.class.getName());
         addImport(imports, className);
 
@@ -160,7 +162,7 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
         code.add(TAB + "@Override public void visitMeta(RowWalker.MetadataVisitor visitor)");
         code.add(TAB + '{');
 
-        forEachColumn(columns, (method, index) -> {
+        forEachColumn(columns, (method, annotation) -> {
             String name = method.getSimpleName().toString();
             String returnType = ((ExecutableType) method.asType()).getReturnType().toString();
 
@@ -168,7 +170,7 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
                 addImport(imports, returnType);
 
             String line = TAB + TAB +
-                    "visitor.accept(" + index + ", \"" + name + "\", " +
+                    "visitor.accept(" + annotation.index() + ", " + innerClassName(Column.Type.class.getName()) + '.' + annotation.type() + ", \"" + name + "\", " +
                     getPrimitiveWrapperClass(returnType) +
                     (isPrimitive(returnType) ? ".TYPE);" : ".class);");
 
@@ -181,11 +183,11 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
         code.add(TAB + "@Override public void visitRow(" + simpleClassName + " row, RowWalker.RowMetadataVisitor visitor)");
         code.add(TAB + '{');
 
-        forEachColumn(columns, (method, index) -> {
+        forEachColumn(columns, (method, annotation) -> {
             String name = method.getSimpleName().toString();
             String returnType = ((ExecutableType) method.asType()).getReturnType().toString();
             String line = TAB + TAB +
-                    "visitor.accept(" + index + ", \"" + name + "\", " +
+                    "visitor.accept(" + annotation.index() + ", " + innerClassName(Column.Type.class.getName()) + '.' + annotation.type() + ", \"" + name + "\", " +
                     getPrimitiveWrapperClass(returnType) +
                     (isPrimitive(returnType) ? ".TYPE, row." : ".class, row.") +
                     name + "());";
@@ -195,12 +197,19 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
         code.add(TAB + '}');
         code.add("");
 
-        final int[] cnt = {0};
-        forEachColumn(columns, (m, i) -> cnt[0]++);
+        Map<Column.Type, AtomicInteger> countsMap = Arrays.stream(Column.Type.values())
+                .collect(Collectors.toMap(e -> e, e -> new AtomicInteger()));
+        forEachColumn(columns, (method, annotation) -> countsMap.get(annotation.type()).incrementAndGet());
 
         code.add(TAB + "/** {@inheritDoc} */");
-        code.add(TAB + "@Override public int count() {");
-        code.add(TAB + TAB + "return " + cnt[0] + ';');
+        code.add(TAB + "@Override");
+        code.add(TAB + "public int count(" + innerClassName(Column.Type.class.getName()) + " type)");
+        code.add(TAB + '{');
+        code.add(TAB + TAB + "switch (type)");
+        code.add(TAB + TAB + '{');
+        countsMap.forEach((key, value) -> code.add(TAB + TAB + TAB + "case " + key + ": return " + value + ';'));
+        code.add(TAB + TAB + TAB +"default: throw new IllegalStateException(\"Unknown column type: \" + type);");
+        code.add(TAB + TAB + '}');
         code.add(TAB + '}');
         code.add("}");
 
@@ -209,6 +218,13 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
         addLicenseHeader(code);
 
         return code;
+    }
+
+    private static String innerClassName(String className)
+    {
+        String classNameDotted = DOLLAR_PATTERN.matcher(className).replaceAll(".");
+        String basicClassName = classNameDotted.substring(0, classNameDotted.lastIndexOf('.'));
+        return classNameDotted.substring(basicClassName.lastIndexOf('.') + 1);
     }
 
     private void addImport(Set<String> imports, String className)
@@ -243,11 +259,11 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
     /**
      * Iterates each over the {@code columns} and consumes {@code method} for it.
      */
-    private static void forEachColumn(List<Element> columns, ObjIntConsumer<Element> consumer)
+    private static void forEachColumn(List<Element> columns, BiConsumer<Element, Column> consumer)
     {
         columns.stream()
                 .sorted(Comparator.comparingInt(o -> o.getAnnotation(Column.class).index()))
-                .forEach(method -> consumer.accept(method, method.getAnnotation(Column.class).index()));
+                .forEach(method -> consumer.accept(method, method.getAnnotation(Column.class)));
     }
 
     public static boolean isPrimitive(String className)

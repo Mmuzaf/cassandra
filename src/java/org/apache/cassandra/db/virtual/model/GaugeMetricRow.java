@@ -39,14 +39,14 @@ public class GaugeMetricRow
         this.gaugeEntry = gaugeEntry;
     }
 
-    @Column(index = 0)
+    @Column(index = 0, type = Column.Type.PARTITION_KEY)
     public String name()
     {
         return gaugeEntry.getKey();
     }
 
     @Column(index = 1)
-    public String group()
+    public String scope()
     {
         return getMetricGroup(gaugeEntry.getKey());
     }

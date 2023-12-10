@@ -73,7 +73,7 @@ import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.GROUP_NAME_MAP
  * @see org.apache.cassandra.db.virtual.sysview.SystemView
  * @see org.apache.cassandra.db.virtual.SystemViewsKeyspace
  */
-public class CassandraMetricsRegistry extends MetricRegistry implements MetricsRegistryView
+public class CassandraMetricsRegistry extends MetricRegistry
 {
     /** A map of metric name constructed by {@link com.codahale.metrics.MetricRegistry#name(String, String...)} and
      * its full name in the way how it is represented in JMX. The map is used by {@link CassandraJmxMetricsExporter}
@@ -151,8 +151,6 @@ public class CassandraMetricsRegistry extends MetricRegistry implements MetricsR
         ALIASES.get(names[0].getMetricName()).addAll(Arrays.asList(names));
     }
 
-    /** {@inheritDoc} */
-    @Override
     public Map<String, Set<MetricName>> getAliases()
     {
         return Collections.unmodifiableMap(ALIASES);

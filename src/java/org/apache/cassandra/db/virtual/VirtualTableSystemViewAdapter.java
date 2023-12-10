@@ -29,9 +29,9 @@ import org.apache.cassandra.db.marshal.LongType;
 import org.apache.cassandra.db.marshal.ShortType;
 import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.db.marshal.UUIDType;
+import org.apache.cassandra.db.virtual.proc.Column;
 import org.apache.cassandra.db.virtual.proc.RowWalker;
 import org.apache.cassandra.db.virtual.sysview.SystemView;
-import org.apache.cassandra.dht.LocalPartitioner;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.utils.Pair;
 
@@ -113,15 +113,22 @@ public class VirtualTableSystemViewAdapter<R> extends AbstractVirtualTable
                 new RowWalker.MetadataVisitor()
                 {
                     @Override
-                    public <T> void accept(int index, String name, Class<T> clazz)
+                    public <T> void accept(int index, Column.Type type, String name, Class<T> clazz)
                     {
-                        if (index == 0)
+                        switch (type)
                         {
-                            builder.partitioner(new LocalPartitioner(converters.get(clazz)));
-                            builder.addPartitionKeyColumn(camelToSnake(name), converters.get(clazz));
+                            case PARTITION_KEY:
+                                builder.addPartitionKeyColumn(camelToSnake(name), converters.get(clazz));
+                                break;
+                            case CLUSTERING:
+                                builder.addClusteringColumn(camelToSnake(name), converters.get(clazz));
+                                break;
+                            case REGULAR:
+                                builder.addRegularColumn(camelToSnake(name), converters.get(clazz));
+                                break;
+                            default:
+                                throw new IllegalArgumentException("Unsupported column type: " + type);
                         }
-                        else
-                            builder.addRegularColumn(camelToSnake(name), converters.get(clazz));
                     }
                 });
 
@@ -137,12 +144,19 @@ public class VirtualTableSystemViewAdapter<R> extends AbstractVirtualTable
                 systemView.walker().visitRow(viewRow, new RowWalker.RowMetadataVisitor()
                 {
                     @Override
-                    public <T> void accept(int index, String name, Class<T> clazz, @Nullable T value)
+                    public <T> void accept(int index, Column.Type type, String name, Class<T> clazz, @Nullable T value)
                     {
-                        if (index == 0)
-                            result.row(value);
-                        else
-                            result.column(camelToSnake(name), value);
+                        switch(type)
+                        {
+                            case PARTITION_KEY:
+                                result.row(value);
+                                break;
+                            case REGULAR:
+                                result.column(camelToSnake(name), value);
+                                break;
+                            default:
+                                throw new IllegalArgumentException("Unsupported column type: " + type);
+                        }
                     }
                 }));
 

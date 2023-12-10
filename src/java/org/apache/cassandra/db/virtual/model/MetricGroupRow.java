@@ -36,7 +36,7 @@ public class MetricGroupRow
         this.group = group;
     }
 
-    @Column(index = 0)
+    @Column(index = 0, type = Column.Type.PARTITION_KEY)
     public String groupName()
     {
         return group;

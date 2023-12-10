@@ -42,7 +42,7 @@ public class MetricRow
         this.metricEntry = metricEntry;
     }
 
-    @Column(index = 0)
+    @Column(index = 0, type = Column.Type.PARTITION_KEY)
     public String name()
     {
         return metricEntry.getKey();

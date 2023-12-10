@@ -24,17 +24,17 @@ package org.apache.cassandra.db.virtual.proc;
  */
 public interface RowWalker<R>
 {
-    int count();
+    int count(Column.Type type);
     void visitMeta(MetadataVisitor visitor);
     void visitRow(R row, RowMetadataVisitor visitor);
 
     interface MetadataVisitor
     {
-        <T> void accept(int index, String name, Class<T> clazz);
+        <T> void accept(int index, Column.Type type, String name, Class<T> clazz);
     }
 
     interface RowMetadataVisitor
     {
-        <T> void accept(int index, String name, Class<T> clazz, T value);
+        <T> void accept(int index, Column.Type type, String name, Class<T> clazz, T value);
     }
 }

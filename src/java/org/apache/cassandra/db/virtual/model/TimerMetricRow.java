@@ -39,12 +39,12 @@ public class TimerMetricRow
     }
 
     @Column(index = 1)
-    public String group()
+    public String scope()
     {
         return getMetricGroup(timerEntry.getKey());
     }
 
-    @Column(index = 0)
+    @Column(index = 0, type = Column.Type.PARTITION_KEY)
     public String name()
     {
         return timerEntry.getKey();
