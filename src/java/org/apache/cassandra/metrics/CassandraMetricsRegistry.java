@@ -1200,7 +1200,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
                     registered.computeIfAbsent(alias.getSystemViewName(), tableName -> {
                         VirtualKeyspaceRegistry.instance.addToKeyspace(VIRTUAL_VIEWS,
                                 Collections.singletonList(createMetricsVirtualTable(tableName)));
-                        tableAdded.accept(tableName);
+                        tableAdded.accept(alias.getType());
                         return new AtomicInteger();
                     }).incrementAndGet());
         }
