@@ -77,6 +77,7 @@
     <property name="test.methods" value=""/>
     <property name="test.anttasks.src" value="${test.dir}/anttasks"/>
     <property name="test.unit.src" value="${test.dir}/unit"/>
+    <property name="test.gen-java" value="${test.dir}/gen-java"/>
     <property name="test.long.src" value="${test.dir}/long"/>
     <property name="test.burn.src" value="${test.dir}/burn"/>
     <property name="test.memory.src" value="${test.dir}/memory"/>
@@ -371,6 +372,7 @@
         <mkdir dir="${stress.test.classes}"/>
         <mkdir dir="${fqltool.test.classes}"/>
         <mkdir dir="${build.src.gen-java}"/>
+        <mkdir dir="${test.gen-java}"/>
         <mkdir dir="${build.dir.lib}"/>
         <mkdir dir="${jacoco.export.dir}"/>
         <mkdir dir="${jacoco.partials.dir}"/>
@@ -395,6 +397,7 @@
         <delete dir="${build.dir}/tmp" />
         <delete dir="${build.classes}" />
         <delete dir="${build.src.gen-java}" />
+        <delete dir="${test.gen-java}" />
         <delete dir="${version.properties.dir}" />
         <delete dir="${jacoco.export.dir}" />
         <delete dir="${jacoco.partials.dir}"/>
@@ -1045,6 +1048,11 @@
         <pathelement location="${fqltool.build.classes}"/>
      </classpath>
      <compilerarg value="-XDignore.symbol.file"/>
+     <compilerarg line="-processor"/>
+     <compilerarg line="org.apache.cassandra.db.virtual.proc.SystemViewAnnotationProcessor"/>
+     <compilerarg line="-s"/>
+     <compilerarg line="${test.gen-java}"/>
+     <compilerarg value="-XprintProcessorInfo"/>
      <!-- needed to compile org.apache.cassandra.utils.memory.BufferPoolTest -->
      <compilerarg line="${jdk11plus-javac-exports}"/>
      <src path="${test.anttasks.src}"/>
@@ -1054,6 +1062,7 @@
      <src path="${test.memory.src}"/>
      <src path="${test.microbench.src}"/>
      <src path="${test.distributed.src}"/>
+     <src path="${test.gen-java}"/>
      <src path="${test.simulator.src}"/>
      <src path="${test.simulator-asm.src}"/>
      <src path="${test.simulator-bootstrap.src}"/>
@@ -2003,6 +2012,7 @@
   <classpathentry kind="src" path="conf" including="hotspot_compiler"/>
   <classpathentry kind="src" output="${test.classes}" path="test/unit"/>
   <classpathentry kind="src" output="${test.classes}" path="test/long"/>
+  <classpathentry kind="src" output="${test.classes}" path="test/gen-java"/>
   <classpathentry kind="src" output="${test.classes}" path="test/microbench"/>
   <classpathentry kind="src" output="${test.classes}" path="test/memory"/>
   <classpathentry kind="src" output="${test.classes}" path="test/burn"/>

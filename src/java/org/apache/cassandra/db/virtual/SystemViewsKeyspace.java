@@ -64,7 +64,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                 .add(new SystemPropertiesTable(VIRTUAL_VIEWS))
                 .add(new SSTableTasksTable(VIRTUAL_VIEWS))
                 // Fully backward/forward compatible with the legace ThreadPoolsTable under the same "system_views.thread_pools" name.
-                .add(new AbstractIteratingTable<>(
+                .add(new VirtualTableSystemViewAdapter<>(
                         SystemViewCollectionAdapter.create("thread_pools",
                                 "Thread pool metrics for all thread pools",
                                 new ThreadPoolRowWalker(),
@@ -96,7 +96,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                 .addAll(StorageAttachedIndexTables.getAll(VIRTUAL_VIEWS))
                 // Register virtual tables for all known metric group names.
                 // todo this should be a view on the created virtual tables and descriptions
-                .add(new AbstractIteratingTable<>(
+                .add(new VirtualTableSystemViewAdapter<>(
                         SystemViewCollectionAdapter.create("all_group_names",
                                 "All metric group names",
                                 new MetricGroupRowWalker(),

@@ -18,10 +18,19 @@
 
 package org.apache.cassandra.db.virtual;
 
+import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
+import org.apache.cassandra.db.Clustering;
+import org.apache.cassandra.db.DataRange;
+import org.apache.cassandra.db.DecoratedKey;
+import org.apache.cassandra.db.DeletionInfo;
+import org.apache.cassandra.db.PartitionPosition;
+import org.apache.cassandra.db.filter.ClusteringIndexFilter;
+import org.apache.cassandra.db.filter.ColumnFilter;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.BooleanType;
 import org.apache.cassandra.db.marshal.ByteType;
+import org.apache.cassandra.db.marshal.CompositeType;
 import org.apache.cassandra.db.marshal.DoubleType;
 import org.apache.cassandra.db.marshal.FloatType;
 import org.apache.cassandra.db.marshal.Int32Type;
@@ -29,29 +38,67 @@ import org.apache.cassandra.db.marshal.LongType;
 import org.apache.cassandra.db.marshal.ShortType;
 import org.apache.cassandra.db.marshal.UTF8Type;
 import org.apache.cassandra.db.marshal.UUIDType;
+import org.apache.cassandra.db.partitions.AbstractUnfilteredPartitionIterator;
+import org.apache.cassandra.db.partitions.ImmutableBTreePartition;
+import org.apache.cassandra.db.partitions.PartitionUpdate;
+import org.apache.cassandra.db.partitions.UnfilteredPartitionIterator;
+import org.apache.cassandra.db.rows.BTreeRow;
+import org.apache.cassandra.db.rows.BufferCell;
+import org.apache.cassandra.db.rows.EncodingStats;
+import org.apache.cassandra.db.rows.Row;
+import org.apache.cassandra.db.rows.Rows;
+import org.apache.cassandra.db.rows.UnfilteredRowIterator;
 import org.apache.cassandra.db.virtual.proc.Column;
 import org.apache.cassandra.db.virtual.proc.RowWalker;
 import org.apache.cassandra.db.virtual.sysview.SystemView;
+import org.apache.cassandra.dht.AbstractBounds;
+import org.apache.cassandra.dht.LocalPartitioner;
+import org.apache.cassandra.dht.Token;
+import org.apache.cassandra.exceptions.InvalidRequestException;
+import org.apache.cassandra.index.sai.utils.TypeUtil;
+import org.apache.cassandra.schema.ColumnMetadata;
 import org.apache.cassandra.schema.TableMetadata;
+import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.Pair;
+import org.apache.cassandra.utils.btree.BTree;
 
-import javax.annotation.Nullable;
+import java.nio.ByteBuffer;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Objects;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
+import static java.util.Optional.ofNullable;
 import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;
+import static org.apache.cassandra.utils.Clock.Global.currentTimeMillis;
 import static org.apache.cassandra.utils.FBUtilities.camelToSnake;
 
-public class VirtualTableSystemViewAdapter<R> extends AbstractVirtualTable
+/**
+ * This is a virtual table that iteratively builds rows using a data set provided by {@link SystemView}.
+ * Some metric views might be too large to fit in memory, for example, virtual tables that contain metrics
+ * for all the keyspaces registered in the cluster. Such a technique is also facilitates keeping the low
+ * memory footprint of the virtual tables in general.
+ * <p>
+ * It doesn't require the input data set to be sorted, but it does require that the partition keys are
+ * provided in the order of the partitioner of the table metadata.
+ */
+public class VirtualTableSystemViewAdapter<R> implements VirtualTable
 {
     private static final Pattern ONLY_ALPHABET_PATTERN = Pattern.compile("[^a-zA-Z1-9]");
     private static final List<Pair<String, String>> knownAbbreviations = Arrays.asList(Pair.create("CAS", "Cas"),
             Pair.create("CIDR", "Cidr"));
-
     private static final Map<Class<?>, ? extends AbstractType<?>> converters = ImmutableMap.<Class<?>, AbstractType<?>>builder()
             .put(String.class, UTF8Type.instance)
             .put(Integer.class, Int32Type.instance)
@@ -71,10 +118,11 @@ public class VirtualTableSystemViewAdapter<R> extends AbstractVirtualTable
             .put(UUID.class, UUIDType.instance)
             .build();
     private final SystemView<R> systemView;
+    private final TableMetadata metadata;
 
     public VirtualTableSystemViewAdapter(SystemView<R> systemView, UnaryOperator<String> tableNameMapper)
     {
-        super(createMetadata(systemView, tableNameMapper));
+        this.metadata = createMetadata(systemView, tableNameMapper);
         this.systemView = systemView;
     }
 
@@ -109,6 +157,8 @@ public class VirtualTableSystemViewAdapter<R> extends AbstractVirtualTable
         TableMetadata.Builder builder = TableMetadata.builder(VIRTUAL_VIEWS, tableNameMapper.apply(virtualTableNameStyle(systemView.name())))
                 .comment(systemView.description())
                 .kind(TableMetadata.Kind.VIRTUAL);
+
+        List<AbstractType<?>> partitionKeyTypes = new ArrayList<>(systemView.walker().count(Column.Type.PARTITION_KEY));
         systemView.walker().visitMeta(
                 new RowWalker.MetadataVisitor()
                 {
@@ -118,6 +168,7 @@ public class VirtualTableSystemViewAdapter<R> extends AbstractVirtualTable
                         switch (type)
                         {
                             case PARTITION_KEY:
+                                partitionKeyTypes.add(converters.get(clazz));
                                 builder.addPartitionKeyColumn(camelToSnake(name), converters.get(clazz));
                                 break;
                             case CLUSTERING:
@@ -127,39 +178,212 @@ public class VirtualTableSystemViewAdapter<R> extends AbstractVirtualTable
                                 builder.addRegularColumn(camelToSnake(name), converters.get(clazz));
                                 break;
                             default:
-                                throw new IllegalArgumentException("Unsupported column type: " + type);
+                                throw new IllegalStateException("Unknown column type: " + type);
                         }
                     }
                 });
 
+        if (partitionKeyTypes.size() == 1)
+            builder.partitioner(new LocalPartitioner(partitionKeyTypes.get(0)));
+        else if (partitionKeyTypes.size() > 1)
+            builder.partitioner(new LocalPartitioner(CompositeType.getInstance(partitionKeyTypes)));
+
         return builder.build();
     }
 
+    /** {@inheritDoc} */
     @Override
-    public DataSet data()
+    public UnfilteredRowIterator selectKey(DecoratedKey partitionKey, ClusteringIndexFilter clusteringFilter, ColumnFilter columnFilter)
     {
-        SimpleDataSet result = new SimpleDataSet(metadata());
+        Object[] tree;
+        try (BTree.FastBuilder<Row> builder = BTree.fastBuilder())
+        {
+            StreamSupport.stream(systemView.spliterator(), true)
+                    .map(row -> makeRow(row, columnFilter))
+                    .filter(entry -> entry.getKey().equals(partitionKey))
+                    .filter(entry -> clusteringFilter.selects(entry.getValue().clustering()))
+                    .map(Map.Entry::getValue)
+                    .forEach(builder::add);
+            tree = clusteringFilter.isReversed() ? builder.buildReverse() : builder.build();
+        }
 
-        systemView.iterator().forEachRemaining(viewRow ->
-                systemView.walker().visitRow(viewRow, new RowWalker.RowMetadataVisitor()
+        return new ImmutableBTreePartition(metadata, partitionKey,
+                columnFilter.queriedColumns(), Rows.EMPTY_STATIC_ROW, tree, DeletionInfo.LIVE,
+                EncodingStats.NO_STATS).unfilteredIterator();
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public UnfilteredPartitionIterator select(DataRange dataRange, ColumnFilter columnFilter)
+    {
+        return createPartitionIterator(metadata, new AbstractIterator<>()
+        {
+            private final Iterator<DecoratedKey> iter = getpartitionKeys(dataRange).iterator();
+            private Token last = metadata.partitioner.getMinimumToken();
+
+            @Override
+            protected UnfilteredRowIterator computeNext()
+            {
+                if (iter.hasNext())
                 {
-                    @Override
-                    public <T> void accept(int index, Column.Type type, String name, Class<T> clazz, @Nullable T value)
-                    {
-                        switch(type)
-                        {
-                            case PARTITION_KEY:
-                                result.row(value);
-                                break;
-                            case REGULAR:
-                                result.column(camelToSnake(name), value);
-                                break;
-                            default:
-                                throw new IllegalArgumentException("Unsupported column type: " + type);
-                        }
-                    }
-                }));
+                    DecoratedKey partitionKey = iter.next();
+                    if (last.compareTo(partitionKey.getToken()) > 0)
+                        throw new IllegalStateException("Keys out of order");
 
-        return result;
+                    last = partitionKey.getToken();
+
+                    if (!dataRange.keyRange().contains(partitionKey))
+                        throw new IllegalStateException("Key " + partitionKey + " not contained given data range");
+
+                    return selectKey(partitionKey, dataRange.clusteringIndexFilter(partitionKey), columnFilter);
+                }
+                return endOfData();
+            }
+        });
+    }
+
+    private Map.Entry<DecoratedKey, Row> makeRow(R row, ColumnFilter columnFilter)
+    {
+        assert metadata.partitionKeyColumns().size() == systemView.walker().count(Column.Type.PARTITION_KEY) :
+                "Invalid number of partition key columns";
+        assert metadata.clusteringColumns().size() == systemView.walker().count(Column.Type.CLUSTERING) :
+                "Invalid number of clustering columns";
+
+        Map<Column.Type, Object[]> fiterable = new EnumMap<>(Column.Type.class);
+        fiterable.put(Column.Type.PARTITION_KEY, new Object[metadata.partitionKeyColumns().size()]);
+        if (systemView.walker().count(Column.Type.CLUSTERING) > 0)
+            fiterable.put(Column.Type.CLUSTERING, new Object[metadata.clusteringColumns().size()]);
+
+        Map<ColumnMetadata, Object> cells = new HashMap<>();
+
+        systemView.walker().visitRow(row, new RowWalker.RowMetadataVisitor()
+        {
+            private int pIdx, cIdx = 0;
+
+            @Override
+            public <T> void accept(int index, Column.Type type, String name, Class<T> clazz, T value)
+            {
+                switch (type)
+                {
+                    case PARTITION_KEY:
+                        fiterable.get(type)[pIdx++] = value;
+                        break;
+                    case CLUSTERING:
+                        fiterable.get(type)[cIdx++] = value;
+                        break;
+                    case REGULAR:
+                    {
+                        if (columnFilter.equals(ColumnFilter.NONE))
+                            break;
+
+                        // Push down the column filter to the walker, so we don't have to process the value if it's not queried
+                        ColumnMetadata cm = metadata.getColumn(ByteBufferUtil.bytes(camelToSnake(name)));
+                        if (columnFilter.queriedColumns().contains(cm) && Objects.nonNull(value))
+                            cells.put(cm, value);
+
+                        break;
+                    }
+                    default:
+                        throw new IllegalStateException("Unknown column type: " + type);
+                }
+            }
+        });
+
+        Row.Builder rowBuilder = BTreeRow.unsortedBuilder();
+        rowBuilder.newRow(makeRowClustering(metadata, fiterable.get(Column.Type.CLUSTERING)));
+        cells.forEach((column, value) -> rowBuilder.addCell(BufferCell.live(column, currentTimeMillis(), decompose(column.type, value))));
+
+        return new AbstractMap.SimpleEntry<>(makeRowKey(metadata, fiterable.get(Column.Type.PARTITION_KEY)),
+                rowBuilder.build());
+    }
+
+    private static Clustering<?> makeRowClustering(TableMetadata metadata, Object... clusteringValues)
+    {
+        if (clusteringValues == null || clusteringValues.length == 0)
+            return Clustering.EMPTY;
+
+        ByteBuffer[] clusteringByteBuffers = new ByteBuffer[clusteringValues.length];
+        for (int i = 0; i < clusteringValues.length; i++)
+            clusteringByteBuffers[i] = decompose(metadata.clusteringColumns().get(i).type, clusteringValues[i]);
+        return Clustering.make(clusteringByteBuffers);
+    }
+
+    /**
+     * @param table the table metadata
+     * @param partitionKeyValues the partition key values
+     * @return the decorated key
+     */
+    private static DecoratedKey makeRowKey(TableMetadata table, Object...partitionKeyValues)
+    {
+        ByteBuffer key;
+        if (TypeUtil.isComposite(table.partitionKeyType))
+            key = ((CompositeType)table.partitionKeyType).decompose(partitionKeyValues);
+        else
+            key = decompose(table.partitionKeyType, partitionKeyValues[0]);
+        return table.partitioner.decorateKey(key);
+    }
+
+    public Iterable<DecoratedKey> getpartitionKeys(DataRange dataRange)
+    {
+        NavigableMap<PartitionPosition, DecoratedKey> keys = StreamSupport.stream(systemView.spliterator(), false)
+                .map(row -> makeRow(row, ColumnFilter.NONE))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toMap(key -> key, value -> value, (a, b) -> a, TreeMap::new));
+
+        AbstractBounds<PartitionPosition> range = dataRange.keyRange();
+        PartitionPosition left = ofNullable(range.left).orElseGet(keys::firstKey);
+        PartitionPosition right = ofNullable(range.right).orElseGet(keys::lastKey);
+
+        left = left.isMinimum() ? keys.firstKey() : left;
+        right = right.isMinimum() ? keys.lastKey() : right;
+
+        return keys.subMap(left, range.isStartInclusive(), right, range.isEndInclusive()).values();
+    }
+
+    private static UnfilteredPartitionIterator createPartitionIterator(
+            TableMetadata metadata,
+            Iterator<UnfilteredRowIterator> partitions)
+    {
+        return new AbstractUnfilteredPartitionIterator()
+        {
+            public UnfilteredRowIterator next()
+            {
+                return partitions.next();
+            }
+
+            public boolean hasNext()
+            {
+                return partitions.hasNext();
+            }
+
+            public TableMetadata metadata()
+            {
+                return metadata;
+            }
+        };
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> ByteBuffer decompose(AbstractType<?> type, T value)
+    {
+        return ((AbstractType<T>) type).decompose(value);
+    }
+
+    @Override
+    public TableMetadata metadata()
+    {
+        return metadata;
+    }
+
+    @Override
+    public void apply(PartitionUpdate update)
+    {
+        throw new InvalidRequestException("Modification is not supported by table " + metadata);
+    }
+
+    @Override
+    public void truncate()
+    {
+        throw new InvalidRequestException("Truncate is not supported by table " + metadata);
     }
 }
