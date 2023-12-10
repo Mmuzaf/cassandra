@@ -72,13 +72,15 @@ import static org.apache.cassandra.utils.Clock.Global.nanoTime;
  */
 public class TableMetrics
 {
+    public static final String TYPE_NAME = "Table";
+    public static final String ALIAS_TYPE_NAME = "ColumnFamily";
     /**
      * stores metrics that will be rolled into a single global metric
      */
     private static final ConcurrentMap<String, Set<Metric>> ALL_TABLE_METRICS = Maps.newConcurrentMap();
     public static final long[] EMPTY = new long[0];
-    private static final MetricNameFactory GLOBAL_FACTORY = Metrics.regsiterMetricFactory(new AllTableMetricNameFactory("Table"));
-    private static final MetricNameFactory GLOBAL_ALIAS_FACTORY = Metrics.regsiterMetricFactory(new AllTableMetricNameFactory("ColumnFamily"));
+    private static final MetricNameFactory GLOBAL_FACTORY = Metrics.regsiterMetricFactory(new AllTableMetricNameFactory(TYPE_NAME));
+    private static final MetricNameFactory GLOBAL_ALIAS_FACTORY = Metrics.regsiterMetricFactory(new AllTableMetricNameFactory(ALIAS_TYPE_NAME));
 
     public final static LatencyMetrics GLOBAL_READ_LATENCY = new LatencyMetrics(GLOBAL_FACTORY, GLOBAL_ALIAS_FACTORY, "Read");
     public final static LatencyMetrics GLOBAL_WRITE_LATENCY = new LatencyMetrics(GLOBAL_FACTORY, GLOBAL_ALIAS_FACTORY, "Write");

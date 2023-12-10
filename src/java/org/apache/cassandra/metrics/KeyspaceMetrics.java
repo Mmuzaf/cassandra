@@ -43,7 +43,7 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
  */
 public class KeyspaceMetrics
 {
-    public static final String KEYSPACE_TYPE = "Keyspace";
+    public static final String TYPE_NAME = "Keyspace";
     /** Total amount of live data stored in the memtable, excluding any data structure overhead */
     public final Gauge<Long> memtableLiveDataSize;
     /** Total amount of data stored in the memtable that resides on-heap, including column related overhead and partitions overwritten. */
@@ -419,12 +419,12 @@ public class KeyspaceMetrics
 
             StringBuilder mbeanName = new StringBuilder();
             mbeanName.append(groupName).append(":");
-            mbeanName.append("type=").append(KEYSPACE_TYPE);
+            mbeanName.append("type=").append(TYPE_NAME);
             mbeanName.append(",keyspace=").append(keyspaceName);
             mbeanName.append(",name=").append(metricName);
 
-            return new MetricName(groupName, KEYSPACE_TYPE, metricName, keyspaceName, mbeanName.toString(),
-                    MetricRegistry.name(KEYSPACE_TYPE, keyspaceName));
+            return new MetricName(groupName, TYPE_NAME, metricName, keyspaceName, mbeanName.toString(),
+                    MetricRegistry.name(TYPE_NAME, keyspaceName));
         }
     }
 }

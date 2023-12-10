@@ -546,7 +546,7 @@ public class CassandraDaemon
     public void setupVirtualKeyspaces()
     {
         VirtualKeyspaceRegistry.instance.register(VirtualSchemaKeyspace.instance);
-        VirtualKeyspaceRegistry.instance.updateUsingKeyspace(SystemViewsKeyspace.defaults());
+        VirtualKeyspaceRegistry.instance.addToKeyspace(SystemViewsKeyspace.instance.name(), SystemViewsKeyspace.instance.tables());
 
         // flush log messages to system_views.system_logs virtual table as there were messages already logged
         // before that virtual table was instantiated

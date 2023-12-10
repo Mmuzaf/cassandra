@@ -18,6 +18,7 @@
 package org.apache.cassandra.db.virtual;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -30,6 +31,8 @@ import org.apache.cassandra.schema.KeyspaceMetadata;
 import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
 
+import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;
+
 public final class VirtualKeyspaceRegistry
 {
     private final Map<String, VirtualKeyspace> virtualKeyspaces = new ConcurrentHashMap<>();
@@ -37,30 +40,30 @@ public final class VirtualKeyspaceRegistry
 
     private VirtualKeyspaceRegistry()
     {
-        register(SystemViewsKeyspace.builder().build());
+        register(new VirtualKeyspace(VIRTUAL_VIEWS, Collections.emptyList()));
     }
 
-    public void updateUsingKeyspace(VirtualKeyspace newKeyspace)
+    public void addToKeyspace(String ksName, Collection<VirtualTable> tables)
     {
-        virtualKeyspaces.computeIfPresent(newKeyspace.name(),
+        virtualKeyspaces.computeIfPresent(ksName,
                 (name, oldKeyspace) -> {
-                    Map<String, VirtualTable> tables = oldKeyspace.tables()
+                    Map<String, VirtualTable> newTables = oldKeyspace.tables()
                             .stream()
                             .collect(Collectors.toMap(VirtualTable::name, Function.identity()));
-                    newKeyspace.tables().forEach(t -> tables.putIfAbsent(t.name(), t));
-                    return new VirtualKeyspace(name, tables.values());
+                    tables.forEach(t -> newTables.putIfAbsent(t.name(), t));
+                    return new VirtualKeyspace(name, newTables.values());
                 });
     }
 
-    public void removeUsingKeyspace(VirtualKeyspace keyspace)
+    public void removeFromKeyspace(String ksName, Collection<VirtualTable> tables)
     {
-        virtualKeyspaces.computeIfPresent(keyspace.name(),
+        virtualKeyspaces.computeIfPresent(ksName,
                 (name, oldKeyspace) -> {
-                    Map<String, VirtualTable> tables = oldKeyspace.tables()
+                    Map<String, VirtualTable> newTables = oldKeyspace.tables()
                             .stream()
                             .collect(Collectors.toMap(VirtualTable::name, Function.identity()));
-                    keyspace.tables().forEach(t -> tables.remove(t.name()));
-                    return new VirtualKeyspace(name, tables.values());
+                    tables.forEach(t -> newTables.remove(t.name()));
+                    return new VirtualKeyspace(name, newTables.values());
                 });
     }
 

@@ -25,6 +25,7 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 
 public class BufferPoolMetrics
 {
+    public static final String TYPE_NAME = "BufferPool";
     /** Total number of hits */
     public final Meter hits;
 

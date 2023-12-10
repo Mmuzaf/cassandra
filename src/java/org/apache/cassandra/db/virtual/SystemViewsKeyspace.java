@@ -17,6 +17,7 @@
  */
 package org.apache.cassandra.db.virtual;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.cassandra.db.virtual.model.CounterMetricRow;
 import org.apache.cassandra.db.virtual.model.CounterMetricRowWalker;
 import org.apache.cassandra.db.virtual.model.GaugeMetricRow;
@@ -36,9 +37,7 @@ import org.apache.cassandra.index.sai.virtual.StorageAttachedIndexTables;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.function.UnaryOperator;
 
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
@@ -49,53 +48,55 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
     public static final String METRICS_PREFIX = "metrics_";
     public static final UnaryOperator<String> GROUP_NAME_MAPPER = name -> METRICS_PREFIX + name;
     public static final UnaryOperator<String> TYPE_NAME_MAPPER = name -> METRICS_PREFIX + "type_" + name;
+    public static SystemViewsKeyspace instance = new SystemViewsKeyspace();
 
-    private SystemViewsKeyspace(Collection<VirtualTable> tables)
+    private SystemViewsKeyspace()
     {
-        super(VIRTUAL_VIEWS, tables);
+        super(VIRTUAL_VIEWS, new ImmutableList.Builder<VirtualTable>()
+                    .add(new CachesTable(VIRTUAL_VIEWS))
+                    .add(new ClientsTable(VIRTUAL_VIEWS))
+                    .add(new SettingsTable(VIRTUAL_VIEWS))
+                    .add(new SystemPropertiesTable(VIRTUAL_VIEWS))
+                    .add(new SSTableTasksTable(VIRTUAL_VIEWS))
+                    // Fully backward/forward compatible with the legace ThreadPoolsTable under the same "system_views.thread_pools" name.
+                    .add(new VirtualTableSystemViewAdapter<>(
+                            SystemViewCollectionAdapter.create("thread_pools",
+                                    "Thread pool metrics for all thread pools",
+                                    new ThreadPoolRowWalker(),
+                                    Metrics::allThreadPoolMetrics,
+                                    ThreadPoolRow::new),
+                            UnaryOperator.identity()
+                    ))
+                    .add(new InternodeOutboundTable(VIRTUAL_VIEWS))
+                    .add(new InternodeInboundTable(VIRTUAL_VIEWS))
+                    .add(new PendingHintsTable(VIRTUAL_VIEWS))
+                    .addAll(TableMetricTables.getAll(VIRTUAL_VIEWS))
+                    .add(new CredentialsCacheKeysTable(VIRTUAL_VIEWS))
+                    .add(new JmxPermissionsCacheKeysTable(VIRTUAL_VIEWS))
+                    .add(new NetworkPermissionsCacheKeysTable(VIRTUAL_VIEWS))
+                    .add(new PermissionsCacheKeysTable(VIRTUAL_VIEWS))
+                    .add(new RolesCacheKeysTable(VIRTUAL_VIEWS))
+                    .add(new CQLMetricsTable(VIRTUAL_VIEWS))
+                    .add(new BatchMetricsTable(VIRTUAL_VIEWS))
+                    .add(new StreamingVirtualTable(VIRTUAL_VIEWS))
+                    .add(new GossipInfoTable(VIRTUAL_VIEWS))
+                    .add(new QueriesTable(VIRTUAL_VIEWS))
+                    .add(new LogMessagesTable(VIRTUAL_VIEWS))
+                    .add(new SnapshotsTable(VIRTUAL_VIEWS))
+                    .add(new PeersTable(VIRTUAL_VIEWS))
+                    .add(new LocalTable(VIRTUAL_VIEWS))
+                    .add(new ClusterMetadataLogTable(VIRTUAL_VIEWS))
+                    .addAll(LocalRepairTables.getAll(VIRTUAL_VIEWS))
+                    .addAll(CIDRFilteringMetricsTable.getAll(VIRTUAL_VIEWS))
+                    .addAll(StorageAttachedIndexTables.getAll(VIRTUAL_VIEWS))
+                    .addAll(createMetricsVirtualTables())
+                    .build());
     }
 
-    public static SystemViewsKeyspace defaults()
+    private static List<VirtualTable> createMetricsVirtualTables()
     {
-        return builder()
-                .add(new CachesTable(VIRTUAL_VIEWS))
-                .add(new ClientsTable(VIRTUAL_VIEWS))
-                .add(new SettingsTable(VIRTUAL_VIEWS))
-                .add(new SystemPropertiesTable(VIRTUAL_VIEWS))
-                .add(new SSTableTasksTable(VIRTUAL_VIEWS))
-                // Fully backward/forward compatible with the legace ThreadPoolsTable under the same "system_views.thread_pools" name.
-                .add(new VirtualTableSystemViewAdapter<>(
-                        SystemViewCollectionAdapter.create("thread_pools",
-                                "Thread pool metrics for all thread pools",
-                                new ThreadPoolRowWalker(),
-                                Metrics::allThreadPoolMetrics,
-                                ThreadPoolRow::new),
-                        UnaryOperator.identity()
-                ))
-                .add(new InternodeOutboundTable(VIRTUAL_VIEWS))
-                .add(new InternodeInboundTable(VIRTUAL_VIEWS))
-                .add(new PendingHintsTable(VIRTUAL_VIEWS))
-                .addAll(TableMetricTables.getAll(VIRTUAL_VIEWS))
-                .add(new CredentialsCacheKeysTable(VIRTUAL_VIEWS))
-                .add(new JmxPermissionsCacheKeysTable(VIRTUAL_VIEWS))
-                .add(new NetworkPermissionsCacheKeysTable(VIRTUAL_VIEWS))
-                .add(new PermissionsCacheKeysTable(VIRTUAL_VIEWS))
-                .add(new RolesCacheKeysTable(VIRTUAL_VIEWS))
-                .add(new CQLMetricsTable(VIRTUAL_VIEWS))
-                .add(new BatchMetricsTable(VIRTUAL_VIEWS))
-                .add(new StreamingVirtualTable(VIRTUAL_VIEWS))
-                .add(new GossipInfoTable(VIRTUAL_VIEWS))
-                .add(new QueriesTable(VIRTUAL_VIEWS))
-                .add(new LogMessagesTable(VIRTUAL_VIEWS))
-                .add(new SnapshotsTable(VIRTUAL_VIEWS))
-                .add(new PeersTable(VIRTUAL_VIEWS))
-                .add(new LocalTable(VIRTUAL_VIEWS))
-                .add(new ClusterMetadataLogTable(VIRTUAL_VIEWS))
-                .addAll(LocalRepairTables.getAll(VIRTUAL_VIEWS))
-                .addAll(CIDRFilteringMetricsTable.getAll(VIRTUAL_VIEWS))
-                .addAll(StorageAttachedIndexTables.getAll(VIRTUAL_VIEWS))
-                // Register virtual tables for all known metric group names.
-                // todo this should be a view on the created virtual tables and descriptions
+        return ImmutableList.<VirtualTable>builder()
+                // Register virtual table of all known metric groups.
                 .add(new VirtualTableSystemViewAdapter<>(
                         SystemViewCollectionAdapter.create("all_group_names",
                                 "All metric group names",
@@ -109,7 +110,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                                         .iterator(),
                                 MetricGroupRow::new),
                         GROUP_NAME_MAPPER))
-                // Register virtual tables for all metrics types similar to the JMX MBean structure,
+                // Register virtual tables of all metrics types similar to the JMX MBean structure,
                 // e.g.: HistogramJmxMBean, MeterJmxMBean, etc.
                 .add(new VirtualTableSystemViewAdapter<>(
                         SystemViewCollectionAdapter.create("counter",
@@ -156,33 +157,5 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                 .map(CassandraMetricsRegistry.MetricName::getSystemViewName)
                 .findFirst()
                 .orElse("unknown");
-    }
-
-    public static Builder builder()
-    {
-        return new Builder();
-    }
-
-    public static class Builder
-    {
-        private final Map<String, VirtualTable> tables = new HashMap<>();
-
-        public Builder add(VirtualTable table)
-        {
-            VirtualTable vt = tables.put(table.name(), table);
-            assert vt == null : "Virtual table with name " + table.name() + " already exists";
-            return this;
-        }
-
-        public Builder addAll(Collection<VirtualTable> tables)
-        {
-            tables.forEach(this::add);
-            return this;
-        }
-
-        public SystemViewsKeyspace build()
-        {
-            return new SystemViewsKeyspace(Collections.unmodifiableCollection(tables.values()));
-        }
     }
 }

@@ -31,6 +31,7 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
  */
 public class CacheMetrics
 {
+    public static final String TYPE_NAME = "Cache";
     /** Cache capacity in bytes */
     public final Gauge<Long> capacity;
     /** Total size of cache, in bytes */
@@ -64,7 +65,7 @@ public class CacheMetrics
      */
     public CacheMetrics(String type, CacheSize cache)
     {
-        factory = Metrics.regsiterMetricFactory( new DefaultNameFactory("Cache", type));
+        factory = Metrics.regsiterMetricFactory( new DefaultNameFactory(TYPE_NAME, type));
 
         capacity = Metrics.register(factory.createMetricName("Capacity"), cache::capacity);
         size = Metrics.register(factory.createMetricName("Size"), cache::weightedSize);

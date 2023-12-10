@@ -34,6 +34,7 @@ import static org.apache.cassandra.metrics.DefaultNameFactory.GROUP_NAME;
  */
 public class ThreadPoolMetrics
 {
+    public static final String TYPE_NAME = "ThreadPools";
     public static final String ACTIVE_TASKS = "ActiveTasks";
     public static final String PENDING_TASKS = "PendingTasks";
     public static final String COMPLETED_TASKS = "CompletedTasks";
@@ -122,7 +123,6 @@ public class ThreadPoolMetrics
 
     private static class ThreadPoolMetricNameFactory implements MetricNameFactory
     {
-        private static final String THREAD_POOLS = "ThreadPools";
         private final String path;
         private final String poolName;
 
@@ -135,8 +135,8 @@ public class ThreadPoolMetrics
         public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
         {
             String mbeanName = format("%s:type=%s,path=%s,scope=%s,name=%s",
-                    GROUP_NAME, THREAD_POOLS, path, poolName, metricName);
-            return new CassandraMetricsRegistry.MetricName(GROUP_NAME, THREAD_POOLS, metricName, path + '.' + poolName, mbeanName);
+                    GROUP_NAME, TYPE_NAME, path, poolName, metricName);
+            return new CassandraMetricsRegistry.MetricName(GROUP_NAME, TYPE_NAME, metricName, path + '.' + poolName, mbeanName);
         }
     }
 }

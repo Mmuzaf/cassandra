@@ -25,6 +25,7 @@ import static org.apache.cassandra.metrics.DefaultNameFactory.GROUP_NAME;
 
 public class TrieMemtableMetricsView
 {
+    public static final String TYPE_NAME = "TrieMemtable";
     private static final String UNCONTENDED_PUTS = "Uncontended memtable puts";
     private static final String CONTENDED_PUTS = "Contended memtable puts";
     private static final String CONTENTION_TIME = "Contention time";
@@ -64,7 +65,6 @@ public class TrieMemtableMetricsView
 
     static class TrieMemtableMetricNameFactory implements MetricNameFactory
     {
-        private static final String TRIE_MEMTABLE = "TrieMemtable";
         private final String keyspace;
         private final String table;
 
@@ -78,12 +78,12 @@ public class TrieMemtableMetricsView
         {
             StringBuilder mbeanName = new StringBuilder();
             mbeanName.append(GROUP_NAME).append(":");
-            mbeanName.append("type=").append(TRIE_MEMTABLE);
+            mbeanName.append("type=").append(TYPE_NAME);
             mbeanName.append(",keyspace=").append(keyspace);
             mbeanName.append(",scope=").append(table);
             mbeanName.append(",name=").append(metricName);
 
-            return new CassandraMetricsRegistry.MetricName(GROUP_NAME, TRIE_MEMTABLE, metricName, keyspace + '.' + table, mbeanName.toString());
+            return new CassandraMetricsRegistry.MetricName(GROUP_NAME, TYPE_NAME, metricName, keyspace + '.' + table, mbeanName.toString());
         }
     }
 }

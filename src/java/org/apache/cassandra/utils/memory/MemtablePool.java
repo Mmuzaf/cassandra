@@ -42,6 +42,7 @@ import static org.apache.cassandra.utils.concurrent.WaitQueue.newWaitQueue;
  */
 public abstract class MemtablePool
 {
+    public static final String TYPE_NAME = "MemtablePool";
     final MemtableCleanerThread<?> cleaner;
 
     // the total memory used by this pool
@@ -60,7 +61,7 @@ public abstract class MemtablePool
         this.onHeap = getSubPool(maxOnHeapMemory, cleanThreshold);
         this.offHeap = getSubPool(maxOffHeapMemory, cleanThreshold);
         this.cleaner = getCleaner(cleaner);
-        MetricNameFactory nameFactory = CassandraMetricsRegistry.Metrics.regsiterMetricFactory(new DefaultNameFactory("MemtablePool"));
+        MetricNameFactory nameFactory = CassandraMetricsRegistry.Metrics.regsiterMetricFactory(new DefaultNameFactory(TYPE_NAME));
         blockedOnAllocating = CassandraMetricsRegistry.Metrics.timer(nameFactory.createMetricName("BlockedOnAllocation"));
         numPendingTasks = CassandraMetricsRegistry.Metrics.register(nameFactory.createMetricName("PendingFlushTasks"),
                                                                     () -> (long) this.cleaner.numPendingTasks());

@@ -27,14 +27,16 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.MetricRegistryListener;
 import com.codahale.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter;
-import org.apache.cassandra.db.virtual.SystemViewsKeyspace;
 import org.apache.cassandra.db.virtual.VirtualKeyspaceRegistry;
 import org.apache.cassandra.db.virtual.VirtualTable;
 import org.apache.cassandra.db.virtual.model.MetricRow;
 import org.apache.cassandra.db.virtual.model.MetricRowWalker;
 import org.apache.cassandra.db.virtual.sysview.SystemViewCollectionAdapter;
+import org.apache.cassandra.io.sstable.format.big.RowIndexEntry;
 import org.apache.cassandra.utils.MBeanWrapper;
+import org.apache.cassandra.utils.memory.MemtablePool;
 import org.apache.commons.lang3.ArrayUtils;
 
 import javax.management.MalformedObjectNameException;
@@ -61,6 +63,7 @@ import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.GROUP_NAME_MAPPER;
+import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;
 
 /**
  * Dropwizard metrics registry extension for Cassandra, as of for now uses the latest version of Dropwizard metrics
@@ -79,6 +82,8 @@ public class CassandraMetricsRegistry extends MetricRegistry
      * its full name in the way how it is represented in JMX. The map is used by {@link CassandraJmxMetricsExporter}
      * to export metrics to JMX. */
     private static final ConcurrentMap<String, Set<MetricName>> ALIASES = new ConcurrentHashMap<>();
+    /** A set of all known metric groups, used to validate metric groups that are statically defined in Cassandra. */
+    private static final Set<String> metricGroups;
 
     /**
      * Root metrics registry that is used by Cassandra to store all metrics.
@@ -104,6 +109,48 @@ public class CassandraMetricsRegistry extends MetricRegistry
     private final LinkedList<MetricRegistryListener> listeners = new LinkedList<>();
     public final static TimeUnit DEFAULT_TIMER_UNIT = TimeUnit.MICROSECONDS;
 
+    static
+    {
+        // We have to initialize metric group names for now, because we can't register them dynamically
+        // as it is done for the jmx metrics. The virtual kespaces are immutable, drivers also rely on the
+        // fact that virtual keyspaces are immutable, so they won't receive any updates if we change them.
+        // So we have to be aware of that and initialize all metric groups here.
+        metricGroups = ImmutableSet.<String>builder()
+                .add(BatchMetrics.TYPE_NAME)
+                .add(BufferPoolMetrics.TYPE_NAME)
+                .add(CIDRAuthorizerMetrics.TYPE_NAME)
+                .add(CQLMetrics.TYPE_NAME)
+                .add(CacheMetrics.TYPE_NAME)
+                .add(ChunkCacheMetrics.TYPE_NAME)
+                .add(ClientMessageSizeMetrics.TYPE)
+                .add(ClientMetrics.TYPE_NAME)
+                .add(ClientRequestMetrics.TYPE_NAME)
+                .add(ClientRequestSizeMetrics.TYPE)
+                .add(CommitLogMetrics.TYPE_NAME)
+                .add(CompactionMetrics.TYPE_NAME)
+                .add(DenylistMetrics.TYPE_NAME)
+                .add(DroppedMessageMetrics.TYPE)
+                .add(HintedHandoffMetrics.TYPE_NAME)
+                .add(HintsServiceMetrics.TYPE_NAME)
+                .add(InternodeInboundMetrics.TYPE_NAME)
+                .add(InternodeOutboundMetrics.TYPE_NAME)
+                .add(KeyspaceMetrics.TYPE_NAME)
+                .add(MemtablePool.TYPE_NAME)
+                .add(MessagingMetrics.TYPE_NAME)
+                .add(PaxosMetrics.TYPE_NAME)
+                .add(ReadRepairMetrics.TYPE_NAME)
+                .add(RepairMetrics.TYPE_NAME)
+                .add(RowIndexEntry.TYPE_NAME)
+                .add(StorageMetrics.TYPE_NAME)
+                .add(StreamingMetrics.TYPE_NAME)
+                .add(TCMMetrics.TYPE_NAME)
+                .add(TableMetrics.ALIAS_TYPE_NAME)
+                .add(TableMetrics.TYPE_NAME)
+                .add(ThreadPoolMetrics.TYPE_NAME)
+                .add(TrieMemtableMetricsView.TYPE_NAME)
+                .build();
+    }
+
     private CassandraMetricsRegistry()
     {
     }
@@ -118,6 +165,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
         listeners.add(virtualTableExporter);
         listeners.addLast(housekeepingListener);
 
+        // Adding listeners to the root registry, so that they can be notified about all metrics changes.
         Metrics.addListener(jmxExporter);
         Metrics.addListener(virtualTableExporter);
         Metrics.addListener(housekeepingListener);
@@ -133,6 +181,8 @@ public class CassandraMetricsRegistry extends MetricRegistry
     {
         return new MetricNameFactoryWrapper(factory,
                 newMetricName -> {
+                    if (!metricGroups.contains(newMetricName.getType()))
+                        throw new IllegalArgumentException("Unknown metric group: " + newMetricName.getType());
                     ALIASES.computeIfAbsent(newMetricName.getMetricName(), k -> ConcurrentHashMap.newKeySet()).add(newMetricName);
                     return newMetricName;
                 });
@@ -1128,7 +1178,6 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
     private static class CassandraVirtualTableMetricsExporter extends BaseMetricRegistryListener
     {
-        // todo track all metrics related to the vt?
         private final Map<String, AtomicInteger> registered = new ConcurrentHashMap<>();
 
         @Override
@@ -1137,9 +1186,8 @@ public class CassandraMetricsRegistry extends MetricRegistry
             // New group name must be registered in the virtual keyspace registry.
             Metrics.getAliases().get(name).forEach(alias ->
                     registered.computeIfAbsent(alias.getSystemViewName(), tableName -> {
-                        VirtualKeyspaceRegistry.instance.updateUsingKeyspace(SystemViewsKeyspace.builder()
-                                .add(createMetricsVirtualTable(tableName))
-                                .build());
+                        VirtualKeyspaceRegistry.instance.addToKeyspace(VIRTUAL_VIEWS,
+                                Collections.singletonList(createMetricsVirtualTable(tableName)));
                         return new AtomicInteger();
                     }).incrementAndGet());
         }
@@ -1147,15 +1195,12 @@ public class CassandraMetricsRegistry extends MetricRegistry
         @Override
         protected void onMetricRemove(String name)
         {
-            // todo remove virtual table if no more metrics for it
-            // todo check the metric is the last one for the group
             Metrics.getAliases().get(name).forEach(alias ->
                     registered.computeIfPresent(alias.getSystemViewName(), (tableName, count) -> {
                         if (count.decrementAndGet() == 0)
                         {
-                            VirtualKeyspaceRegistry.instance.removeUsingKeyspace(SystemViewsKeyspace.builder()
-                                    .add(createMetricsVirtualTable(tableName))
-                                    .build());
+                            VirtualKeyspaceRegistry.instance.removeFromKeyspace(VIRTUAL_VIEWS,
+                                    Collections.singletonList(createMetricsVirtualTable(tableName)));
                         }
                         return count;
                     }));

@@ -19,7 +19,6 @@
 package org.apache.cassandra.db.virtual.model;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.Meter;
 import org.apache.cassandra.db.virtual.proc.Column;
 
 import java.util.Map;
@@ -51,7 +50,7 @@ public class MeterMetricTestRow
         return getMetricGroup(meterEntry.getKey());
     }
 
-    @Column(index = 2)
+    @Column(index = 2, type = Column.Type.CLUSTERING)
     public String last()
     {
         return meterEntry.getKey().substring(meterEntry.getKey().lastIndexOf('.') + 1);
