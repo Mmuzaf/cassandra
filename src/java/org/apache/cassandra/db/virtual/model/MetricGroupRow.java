@@ -21,11 +21,11 @@ package org.apache.cassandra.db.virtual.model;
 import org.apache.cassandra.db.virtual.proc.Column;
 
 import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.GROUP_NAME_MAPPER;
-import static org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter.virtualTableNameStyle;
+import static org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter.virtualTableNameStyle;
 
 
 /**
- * Metric group row representation for a {@link org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter}.
+ * Metric group row representation for a {@link org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter}.
  */
 public class MetricGroupRow
 {

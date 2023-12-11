@@ -58,7 +58,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                     .add(new SystemPropertiesTable(VIRTUAL_VIEWS))
                     .add(new SSTableTasksTable(VIRTUAL_VIEWS))
                     // Fully backward/forward compatible with the legace ThreadPoolsTable under the same "system_views.thread_pools" name.
-                    .add(VirtualTableSystemViewAdapter.create("thread_pools",
+                    .add(CollectionVirtualTableAdapter.create("thread_pools",
                             "Thread pool metrics for all thread pools",
                             new ThreadPoolRowWalker(),
                             Metrics::allThreadPoolMetrics,
@@ -95,7 +95,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
     {
         return ImmutableList.<VirtualTable>builder()
                 // Register virtual table of all known metric groups.
-                .add(VirtualTableSystemViewAdapter.create("all_group_names",
+                .add(CollectionVirtualTableAdapter.create("all_group_names",
                         "All metric group names",
                         new MetricGroupRowWalker(),
                         () -> () -> Metrics.getAliases()
@@ -109,31 +109,31 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                         GROUP_NAME_MAPPER))
                 // Register virtual tables of all metrics types similar to the JMX MBean structure,
                 // e.g.: HistogramJmxMBean, MeterJmxMBean, etc.
-                .add(VirtualTableSystemViewAdapter.create("counter",
+                .add(CollectionVirtualTableAdapter.create("counter",
                         "All metrics with type \"Counter\"",
                         new CounterMetricRowWalker(),
                         () -> Metrics.getCounters().entrySet(),
                         CounterMetricRow::new,
                         TYPE_NAME_MAPPER))
-                .add(VirtualTableSystemViewAdapter.create("gauge",
+                .add(CollectionVirtualTableAdapter.create("gauge",
                         "All metrics with type \"Gauge\"",
                         new GaugeMetricRowWalker(),
                         () -> Metrics.getGauges().entrySet(),
                         GaugeMetricRow::new,
                         TYPE_NAME_MAPPER))
-                .add(VirtualTableSystemViewAdapter.create("histogram",
+                .add(CollectionVirtualTableAdapter.create("histogram",
                         "All metrics with type \"Histogram\"",
                         new HistogramMetricRowWalker(),
                         () -> Metrics.getHistograms().entrySet(),
                         HistogramMetricRow::new,
                         TYPE_NAME_MAPPER))
-                .add(VirtualTableSystemViewAdapter.create("meter",
+                .add(CollectionVirtualTableAdapter.create("meter",
                         "All metrics with type \"Meter\"",
                         new MeterMetricRowWalker(),
                         () -> Metrics.getMeters().entrySet(),
                         MeterMetricRow::new,
                         TYPE_NAME_MAPPER))
-                .add(VirtualTableSystemViewAdapter.create("timer",
+                .add(CollectionVirtualTableAdapter.create("timer",
                         "All metrics with type \"Timer\"",
                         new TimerMetricRowWalker(),
                         () -> Metrics.getTimers().entrySet(),

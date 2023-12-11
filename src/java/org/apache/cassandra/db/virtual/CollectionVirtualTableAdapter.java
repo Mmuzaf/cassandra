@@ -20,10 +20,12 @@ package org.apache.cassandra.db.virtual;
 
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterators;
 import org.apache.cassandra.db.Clustering;
 import org.apache.cassandra.db.DataRange;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.DeletionInfo;
+import org.apache.cassandra.db.EmptyIterators;
 import org.apache.cassandra.db.PartitionPosition;
 import org.apache.cassandra.db.filter.ClusteringIndexFilter;
 import org.apache.cassandra.db.filter.ColumnFilter;
@@ -65,6 +67,7 @@ import java.nio.ByteBuffer;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -95,7 +98,7 @@ import static org.apache.cassandra.utils.FBUtilities.camelToSnake;
  * It doesn't require the input data set to be sorted, but it does require that the partition keys are
  * provided in the order of the partitioner of the table metadata.
  */
-public class VirtualTableSystemViewAdapter<R> implements VirtualTable
+public class CollectionVirtualTableAdapter<R> implements VirtualTable
 {
     private static final Pattern ONLY_ALPHABET_PATTERN = Pattern.compile("[^a-zA-Z1-9]");
     private static final List<Pair<String, String>> knownAbbreviations = Arrays.asList(Pair.create("CAS", "Cas"),
@@ -122,7 +125,7 @@ public class VirtualTableSystemViewAdapter<R> implements VirtualTable
     private final Iterable<R> data;
     private final TableMetadata metadata;
 
-    public VirtualTableSystemViewAdapter(String tableName,
+    private CollectionVirtualTableAdapter(String tableName,
                                          String description,
                                          RowWalker<R> walker,
                                          Iterable<R> data)
@@ -132,7 +135,7 @@ public class VirtualTableSystemViewAdapter<R> implements VirtualTable
         this.metadata = buildMetadata(tableName, description, walker);
     }
 
-    public static <C, R> VirtualTableSystemViewAdapter<R> create(
+    public static <C, R> CollectionVirtualTableAdapter<R> create(
             String rawName,
             String description,
             RowWalker<R> walker,
@@ -140,7 +143,7 @@ public class VirtualTableSystemViewAdapter<R> implements VirtualTable
             Function<C, R> rowFunc,
             UnaryOperator<String> nameMapper)
     {
-        return new VirtualTableSystemViewAdapter<>(nameMapper.apply(virtualTableNameStyle(rawName)),
+        return new CollectionVirtualTableAdapter<>(nameMapper.apply(virtualTableNameStyle(rawName)),
                 description,
                 walker,
                 () -> StreamSupport.stream(container.get().spliterator(), false)
@@ -153,7 +156,7 @@ public class VirtualTableSystemViewAdapter<R> implements VirtualTable
         // For example: "ClientRequest.Write-EACH_QUORUM" will be converted to "client_request_write_each_quorum".
         String[] subNames = ONLY_ALPHABET_PATTERN.matcher(camel).replaceAll(".").split("\\.");
         return Arrays.stream(subNames)
-                .map(VirtualTableSystemViewAdapter::camelToSnakeWithAbbreviations)
+                .map(CollectionVirtualTableAdapter::camelToSnakeWithAbbreviations)
                 .reduce((a, b) -> a + '_' + b)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid table name: " + camel));
     }
@@ -216,6 +219,9 @@ public class VirtualTableSystemViewAdapter<R> implements VirtualTable
     @Override
     public UnfilteredRowIterator selectKey(DecoratedKey partitionKey, ClusteringIndexFilter clusteringFilter, ColumnFilter columnFilter)
     {
+        if (Iterators.size(data.iterator()) == 0)
+            return EmptyIterators.unfilteredRow(metadata, partitionKey, clusteringFilter.isReversed());
+
         Object[] tree;
         try (BTree.FastBuilder<Row> builder = BTree.fastBuilder())
         {
@@ -346,6 +352,9 @@ public class VirtualTableSystemViewAdapter<R> implements VirtualTable
 
     public Iterable<DecoratedKey> getpartitionKeys(DataRange dataRange)
     {
+        if (Iterators.size(data.iterator()) == 0)
+            return Collections.emptyList();
+
         NavigableMap<PartitionPosition, DecoratedKey> keys = StreamSupport.stream(data.spliterator(), false)
                 .map(row -> makeRow(row, ColumnFilter.NONE))
                 .map(Map.Entry::getKey)

@@ -23,7 +23,7 @@ import org.apache.cassandra.metrics.ThreadPoolMetrics;
 
 
 /**
- * Thread pool metrics representation for a {@link org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter}.
+ * Thread pool metrics representation for a {@link org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter}.
  */
 public class ThreadPoolRow
 {

@@ -18,47 +18,48 @@
 
 package org.apache.cassandra.db.virtual.model;
 
-import com.codahale.metrics.Counter;
 import org.apache.cassandra.db.virtual.proc.Column;
-
-import java.util.Map;
-
-import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.getMetricGroup;
 
 
 /**
- * Test meter metric test representation for a {@link org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter}.
+ * Test meter metric test representation for a {@link org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter}.
  */
-public class MeterMetricTestRow
+public class CollectionEntryTestRow
 {
-    private final Map.Entry<String, Counter> meterEntry;
+    private final CollectionEntry collectionEntry;
 
-    public MeterMetricTestRow(Map.Entry<String, Counter> meterEntry)
+    public CollectionEntryTestRow(CollectionEntry collectionEntry)
     {
-        this.meterEntry = meterEntry;
+        this.collectionEntry = collectionEntry;
     }
 
     @Column(index = 0, type = Column.Type.PARTITION_KEY)
-    public String name()
+    public String primaryKey()
     {
-        return meterEntry.getKey();
+        return collectionEntry.getPrimaryKey();
     }
 
     @Column(index = 1, type = Column.Type.PARTITION_KEY)
-    public String scope()
+    public String secondaryKey()
     {
-        return getMetricGroup(meterEntry.getKey());
+        return collectionEntry.getSecondaryKey();
     }
 
     @Column(index = 2, type = Column.Type.CLUSTERING)
-    public String last()
+    public long orderedKey()
     {
-        return meterEntry.getKey().substring(meterEntry.getKey().lastIndexOf('.') + 1);
+        return collectionEntry.getOrderedKey();
     }
 
     @Column(index = 3)
-    public long count()
+    public long longValue()
     {
-        return meterEntry.getValue().getCount();
+        return collectionEntry.getLongValue();
+    }
+
+    @Column(index = 4)
+    public long intValue()
+    {
+        return collectionEntry.getIntValue();
     }
 }

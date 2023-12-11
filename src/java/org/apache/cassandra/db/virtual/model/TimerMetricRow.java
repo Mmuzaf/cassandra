@@ -27,7 +27,7 @@ import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.getMetricGroup
 
 
 /**
- * Timer metric representation for a {@link org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter}.
+ * Timer metric representation for a {@link org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter}.
  */
 public class TimerMetricRow
 {

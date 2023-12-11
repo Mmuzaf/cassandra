@@ -27,7 +27,7 @@ import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.getMetricGroup
 
 
 /**
- * Historgam metric representation for a {@link org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter}.
+ * Historgam metric representation for a {@link org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter}.
  */
 public class HistogramMetricRow
 {

@@ -30,7 +30,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import org.apache.cassandra.db.virtual.VirtualKeyspaceRegistry;
 import org.apache.cassandra.db.virtual.VirtualTable;
-import org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter;
+import org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter;
 import org.apache.cassandra.db.virtual.model.MetricRow;
 import org.apache.cassandra.db.virtual.model.MetricRowWalker;
 import org.apache.cassandra.io.sstable.format.big.RowIndexEntry;
@@ -74,7 +74,7 @@ import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;
  * the Cassandra-specific metric groups, which are used to expose metrics in that way.
  *
  * @see org.apache.cassandra.db.virtual.VirtualTable
- * @see org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter
+ * @see org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter
  * @see org.apache.cassandra.db.virtual.SystemViewsKeyspace
  */
 public class CassandraMetricsRegistry extends MetricRegistry
@@ -1220,7 +1220,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
         private static VirtualTable createMetricsVirtualTable(String tableName)
         {
-            return VirtualTableSystemViewAdapter.create(tableName,
+            return CollectionVirtualTableAdapter.create(tableName,
                     "All metrics for \"" + tableName + "\" metric group",
                     new MetricRowWalker(),
                     () -> withAliases(Metrics.getMetrics(), m -> m.systemViewName.equals(tableName)),
