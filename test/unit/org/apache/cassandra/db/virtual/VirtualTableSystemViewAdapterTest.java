@@ -22,7 +22,6 @@ import com.datastax.driver.core.ResultSet;
 import org.apache.cassandra.cql3.CQLTester;
 import org.apache.cassandra.db.virtual.model.MeterMetricTestRow;
 import org.apache.cassandra.db.virtual.model.MeterMetricTestRowWalker;
-import org.apache.cassandra.db.virtual.sysview.SystemViewCollectionAdapter;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,13 +44,12 @@ public class VirtualTableSystemViewAdapterTest extends CQLTester
     @Before
     public void config() throws Exception
     {
-        tables.add(new VirtualTableSystemViewAdapter<>(
-                SystemViewCollectionAdapter.create(
-                        "meter.metrics",
-                        "Description of meter.metrics",
-                        new MeterMetricTestRowWalker(),
-                        () -> CassandraMetricsRegistry.Metrics.getCounters().entrySet(),
-                        MeterMetricTestRow::new),
+        tables.add(VirtualTableSystemViewAdapter.create(
+                "meter.metrics",
+                "Description of meter.metrics",
+                new MeterMetricTestRowWalker(),
+                () -> CassandraMetricsRegistry.Metrics.getCounters().entrySet(),
+                MeterMetricTestRow::new,
                 UnaryOperator.identity()));
         VirtualKeyspaceRegistry.instance.register(new VirtualKeyspace(KS_NAME, tables));
         startJMXServer();

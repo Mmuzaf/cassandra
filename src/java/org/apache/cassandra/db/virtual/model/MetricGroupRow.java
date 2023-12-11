@@ -25,7 +25,7 @@ import static org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter.virt
 
 
 /**
- * Metric group row representation for a {@link org.apache.cassandra.db.virtual.sysview.SystemView}.
+ * Metric group row representation for a {@link org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter}.
  */
 public class MetricGroupRow
 {

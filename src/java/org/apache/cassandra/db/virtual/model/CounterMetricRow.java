@@ -27,7 +27,7 @@ import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.getMetricGroup
 
 
 /**
- * Counter metric representation for a {@link org.apache.cassandra.db.virtual.sysview.SystemView}.
+ * Counter metric representation for a {@link org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter}.
  */
 public class CounterMetricRow
 {

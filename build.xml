@@ -461,7 +461,7 @@
         </exec>
     </target>
 
-    <!-- Include annotation processor for SystemView -->
+    <!-- Include annotation processor for VirtualTable -->
     <property name="processor.build.classes" value="${build.classes}/processor" />
     <property name="processor.manifest" value="${processor.build.classes}/MANIFEST.MF" />
 

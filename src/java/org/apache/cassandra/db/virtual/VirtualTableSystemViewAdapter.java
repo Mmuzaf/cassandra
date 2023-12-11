@@ -50,7 +50,6 @@ import org.apache.cassandra.db.rows.Rows;
 import org.apache.cassandra.db.rows.UnfilteredRowIterator;
 import org.apache.cassandra.db.virtual.proc.Column;
 import org.apache.cassandra.db.virtual.proc.RowWalker;
-import org.apache.cassandra.db.virtual.sysview.SystemView;
 import org.apache.cassandra.dht.AbstractBounds;
 import org.apache.cassandra.dht.LocalPartitioner;
 import org.apache.cassandra.dht.Token;
@@ -75,6 +74,8 @@ import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -86,7 +87,7 @@ import static org.apache.cassandra.utils.Clock.Global.currentTimeMillis;
 import static org.apache.cassandra.utils.FBUtilities.camelToSnake;
 
 /**
- * This is a virtual table that iteratively builds rows using a data set provided by {@link SystemView}.
+ * This is a virtual table that iteratively builds rows using a data set provided by internal collection.
  * Some metric views might be too large to fit in memory, for example, virtual tables that contain metrics
  * for all the keyspaces registered in the cluster. Such a technique is also facilitates keeping the low
  * memory footprint of the virtual tables in general.
@@ -117,13 +118,33 @@ public class VirtualTableSystemViewAdapter<R> implements VirtualTable
             .put(Short.TYPE, ShortType.instance)
             .put(UUID.class, UUIDType.instance)
             .build();
-    private final SystemView<R> systemView;
+    private final RowWalker<R> walker;
+    private final Iterable<R> data;
     private final TableMetadata metadata;
 
-    public VirtualTableSystemViewAdapter(SystemView<R> systemView, UnaryOperator<String> tableNameMapper)
+    public VirtualTableSystemViewAdapter(String tableName,
+                                         String description,
+                                         RowWalker<R> walker,
+                                         Iterable<R> data)
     {
-        this.metadata = createMetadata(systemView, tableNameMapper);
-        this.systemView = systemView;
+        this.walker = walker;
+        this.data = data;
+        this.metadata = buildMetadata(tableName, description, walker);
+    }
+
+    public static <C, R> VirtualTableSystemViewAdapter<R> create(
+            String rawName,
+            String description,
+            RowWalker<R> walker,
+            Supplier<Iterable<C>> container,
+            Function<C, R> rowFunc,
+            UnaryOperator<String> nameMapper)
+    {
+        return new VirtualTableSystemViewAdapter<>(nameMapper.apply(virtualTableNameStyle(rawName)),
+                description,
+                walker,
+                () -> StreamSupport.stream(container.get().spliterator(), false)
+                        .map(rowFunc).iterator());
     }
 
     public static String virtualTableNameStyle(String camel)
@@ -152,14 +173,14 @@ public class VirtualTableSystemViewAdapter<R> implements VirtualTable
         return camelToSnake(modifiedCamel);
     }
 
-    private static TableMetadata createMetadata(SystemView<?> systemView, UnaryOperator<String> tableNameMapper)
+    private TableMetadata buildMetadata(String tableName, String description, RowWalker<R> walker)
     {
-        TableMetadata.Builder builder = TableMetadata.builder(VIRTUAL_VIEWS, tableNameMapper.apply(virtualTableNameStyle(systemView.name())))
-                .comment(systemView.description())
+        TableMetadata.Builder builder = TableMetadata.builder(VIRTUAL_VIEWS, tableName)
+                .comment(description)
                 .kind(TableMetadata.Kind.VIRTUAL);
 
-        List<AbstractType<?>> partitionKeyTypes = new ArrayList<>(systemView.walker().count(Column.Type.PARTITION_KEY));
-        systemView.walker().visitMeta(
+        List<AbstractType<?>> partitionKeyTypes = new ArrayList<>(walker.count(Column.Type.PARTITION_KEY));
+        walker.visitMeta(
                 new RowWalker.MetadataVisitor()
                 {
                     @Override
@@ -198,7 +219,7 @@ public class VirtualTableSystemViewAdapter<R> implements VirtualTable
         Object[] tree;
         try (BTree.FastBuilder<Row> builder = BTree.fastBuilder())
         {
-            StreamSupport.stream(systemView.spliterator(), true)
+            StreamSupport.stream(data.spliterator(), true)
                     .map(row -> makeRow(row, columnFilter))
                     .filter(entry -> entry.getKey().equals(partitionKey))
                     .filter(entry -> clusteringFilter.selects(entry.getValue().clustering()))
@@ -244,19 +265,19 @@ public class VirtualTableSystemViewAdapter<R> implements VirtualTable
 
     private Map.Entry<DecoratedKey, Row> makeRow(R row, ColumnFilter columnFilter)
     {
-        assert metadata.partitionKeyColumns().size() == systemView.walker().count(Column.Type.PARTITION_KEY) :
+        assert metadata.partitionKeyColumns().size() == walker.count(Column.Type.PARTITION_KEY) :
                 "Invalid number of partition key columns";
-        assert metadata.clusteringColumns().size() == systemView.walker().count(Column.Type.CLUSTERING) :
+        assert metadata.clusteringColumns().size() == walker.count(Column.Type.CLUSTERING) :
                 "Invalid number of clustering columns";
 
         Map<Column.Type, Object[]> fiterable = new EnumMap<>(Column.Type.class);
         fiterable.put(Column.Type.PARTITION_KEY, new Object[metadata.partitionKeyColumns().size()]);
-        if (systemView.walker().count(Column.Type.CLUSTERING) > 0)
+        if (walker.count(Column.Type.CLUSTERING) > 0)
             fiterable.put(Column.Type.CLUSTERING, new Object[metadata.clusteringColumns().size()]);
 
         Map<ColumnMetadata, Object> cells = new HashMap<>();
 
-        systemView.walker().visitRow(row, new RowWalker.RowMetadataVisitor()
+        walker.visitRow(row, new RowWalker.RowMetadataVisitor()
         {
             private int pIdx, cIdx = 0;
 
@@ -325,7 +346,7 @@ public class VirtualTableSystemViewAdapter<R> implements VirtualTable
 
     public Iterable<DecoratedKey> getpartitionKeys(DataRange dataRange)
     {
-        NavigableMap<PartitionPosition, DecoratedKey> keys = StreamSupport.stream(systemView.spliterator(), false)
+        NavigableMap<PartitionPosition, DecoratedKey> keys = StreamSupport.stream(data.spliterator(), false)
                 .map(row -> makeRow(row, ColumnFilter.NONE))
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toMap(key -> key, value -> value, (a, b) -> a, TreeMap::new));

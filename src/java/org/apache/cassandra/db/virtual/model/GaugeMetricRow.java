@@ -27,7 +27,7 @@ import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.getMetricGroup
 
 
 /**
- * Gauge metric representation for a {@link org.apache.cassandra.db.virtual.sysview.SystemView}.
+ * Gauge metric representation for a {@link org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter}.
  */
 @SuppressWarnings("rawtypes")
 public class GaugeMetricRow

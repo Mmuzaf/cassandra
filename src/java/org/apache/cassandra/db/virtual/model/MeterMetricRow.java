@@ -27,7 +27,7 @@ import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.getMetricGroup
 
 
 /**
- * Meter metric representation for a {@link org.apache.cassandra.db.virtual.sysview.SystemView}.
+ * Meter metric representation for a {@link org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter}.
  */
 public class MeterMetricRow
 {

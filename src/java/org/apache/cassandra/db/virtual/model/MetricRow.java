@@ -31,7 +31,7 @@ import java.util.Map;
 import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.getMetricGroup;
 
 /**
- * Metric row representation for a {@link org.apache.cassandra.db.virtual.sysview.SystemView}.
+ * Metric row representation for a {@link org.apache.cassandra.db.virtual.VirtualTableSystemViewAdapter}.
  */
 public class MetricRow
 {
