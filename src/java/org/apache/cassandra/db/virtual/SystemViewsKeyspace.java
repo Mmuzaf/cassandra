@@ -141,13 +141,4 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                         TYPE_NAME_MAPPER))
                 .build();
     }
-
-    public static String getMetricGroup(String metricName)
-    {
-        return Metrics.getAliases().get(metricName)
-                .stream()
-                .map(CassandraMetricsRegistry.MetricName::getSystemViewName)
-                .findFirst()
-                .orElse("unknown");
-    }
 }

@@ -23,7 +23,7 @@ import org.apache.cassandra.db.virtual.proc.Column;
 
 import java.util.Map;
 
-import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.getMetricGroup;
+import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 
 
 /**
@@ -41,7 +41,7 @@ public class HistogramMetricRow
     @Column(index = 1)
     public String scope()
     {
-        return getMetricGroup(histogramEntry.getKey());
+        return Metrics.getMetricScope(histogramEntry.getKey());
     }
 
     @Column(index = 0, type = Column.Type.PARTITION_KEY)

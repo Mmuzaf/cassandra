@@ -28,7 +28,7 @@ import org.apache.cassandra.db.virtual.proc.Column;
 
 import java.util.Map;
 
-import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.getMetricGroup;
+import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 
 /**
  * Metric row representation for a {@link org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter}.
@@ -51,7 +51,7 @@ public class MetricRow
     @Column(index = 1)
     public String scope()
     {
-        return getMetricGroup(metricEntry.getKey());
+        return Metrics.getMetricScope(metricEntry.getKey());
     }
 
     @Column(index = 2)

@@ -219,6 +219,16 @@ public class CassandraMetricsRegistry extends MetricRegistry
         ALIASES.get(names[0].getMetricName()).addAll(Arrays.asList(names));
     }
 
+    public String getMetricScope(String metricName)
+    {
+        return getAliases()
+                .get(metricName)
+                .stream()
+                .findFirst()
+                .map(MetricName::getScope)
+                .orElse("unknown");
+    }
+
     public Map<String, Set<MetricName>> getAliases()
     {
         return Collections.unmodifiableMap(ALIASES);

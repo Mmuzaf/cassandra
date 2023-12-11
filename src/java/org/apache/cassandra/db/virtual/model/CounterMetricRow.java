@@ -23,7 +23,7 @@ import org.apache.cassandra.db.virtual.proc.Column;
 
 import java.util.Map;
 
-import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.getMetricGroup;
+import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 
 
 /**
@@ -47,7 +47,7 @@ public class CounterMetricRow
     @Column(index = 1)
     public String scope()
     {
-        return getMetricGroup(counterEntry.getKey());
+        return Metrics.getMetricScope(counterEntry.getKey());
     }
 
     @Column(index = 2)
