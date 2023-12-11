@@ -21,7 +21,6 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
@@ -423,8 +422,7 @@ public class KeyspaceMetrics
             mbeanName.append(",keyspace=").append(keyspaceName);
             mbeanName.append(",name=").append(metricName);
 
-            return new MetricName(groupName, TYPE_NAME, metricName, keyspaceName, mbeanName.toString(),
-                    MetricRegistry.name(TYPE_NAME, keyspaceName));
+            return new MetricName(groupName, TYPE_NAME, metricName, keyspaceName, mbeanName.toString(), TYPE_NAME);
         }
     }
 }

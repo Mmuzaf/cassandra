@@ -28,9 +28,8 @@ import com.codahale.metrics.MetricRegistryListener;
 import com.codahale.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
-import org.apache.cassandra.db.virtual.VirtualKeyspaceRegistry;
-import org.apache.cassandra.db.virtual.VirtualTable;
 import org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter;
+import org.apache.cassandra.db.virtual.VirtualKeyspaceRegistry;
 import org.apache.cassandra.db.virtual.model.MetricRow;
 import org.apache.cassandra.db.virtual.model.MetricRowWalker;
 import org.apache.cassandra.io.sstable.format.big.RowIndexEntry;
@@ -45,7 +44,6 @@ import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
@@ -55,8 +53,7 @@ import java.util.SortedMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
@@ -90,7 +87,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
      * Root metrics registry that is used by Cassandra to store all metrics.
      * All modifications to the registry are delegated to the corresponding listeners as well.
      * Metrics from the root registry are exported to JMX by {@link CassandraJmxMetricsExporter} and to virtual tables
-     * by {@link CassandraVirtualTableMetricsExporter}.
+     * via {@link #start()}.
      */
     public static final CassandraMetricsRegistry Metrics = new CassandraMetricsRegistry();
     private final MetricRegistryListener jmxExporter = new CassandraJmxMetricsExporter(name ->
@@ -162,8 +159,24 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
         assert listeners.isEmpty();
 
-        Set<String> groups = new HashSet<>(metricGroups);
-        MetricRegistryListener virtualTableExporter = new CassandraVirtualTableMetricsExporter(groups::remove);
+        MetricRegistryListener virtualTableExporter = new BaseMetricRegistryListener()
+        {
+            private final AtomicBoolean registered = new AtomicBoolean();
+            protected void onMetricAdded(String name, Metric metric)
+            {
+                if (!registered.compareAndSet(false, true))
+                    return;
+
+                metricGroups.forEach(groupName ->
+                        VirtualKeyspaceRegistry.instance.addToKeyspace(VIRTUAL_VIEWS,
+                                Collections.singletonList(CollectionVirtualTableAdapter.create(groupName,
+                                        "All metrics for \"" + groupName + "\" metric group",
+                                        new MetricRowWalker(),
+                                        () -> withAliases(Metrics.getMetrics(), m -> m.systemViewName.equals(groupName)),
+                                        MetricRow::new,
+                                        GROUP_NAME_MAPPER))));
+            }
+        };
         listeners.add(jmxExporter);
         listeners.add(virtualTableExporter);
         listeners.addLast(housekeepingListener);
@@ -172,8 +185,6 @@ public class CassandraMetricsRegistry extends MetricRegistry
         Metrics.addListener(jmxExporter);
         Metrics.addListener(virtualTableExporter);
         Metrics.addListener(housekeepingListener);
-
-        assert  groups.isEmpty() : "Not all metric groups are registered: " + groups;
     }
 
     public void stop()
@@ -188,6 +199,8 @@ public class CassandraMetricsRegistry extends MetricRegistry
                 newMetricName -> {
                     if (!metricGroups.contains(newMetricName.getType()))
                         throw new IllegalArgumentException("Unknown metric group: " + newMetricName.getType());
+                    if (!metricGroups.contains(newMetricName.getSystemViewName()))
+                        throw new IllegalArgumentException("Metric view name must match statically registered groups: " + newMetricName.getSystemViewName());
                     ALIASES.computeIfAbsent(newMetricName.getMetricName(), k -> ConcurrentHashMap.newKeySet()).add(newMetricName);
                     return newMetricName;
                 });
@@ -1178,54 +1191,6 @@ public class CassandraMetricsRegistry extends MetricRegistry
                 name = method.getName();
             }
             return name;
-        }
-    }
-
-    private static class CassandraVirtualTableMetricsExporter extends BaseMetricRegistryListener
-    {
-        private final Map<String, AtomicInteger> registered = new ConcurrentHashMap<>();
-        private final Consumer<String> tableAdded;
-
-        public CassandraVirtualTableMetricsExporter(Consumer<String> tableAdded)
-        {
-            this.tableAdded = tableAdded;
-        }
-
-        @Override
-        protected void onMetricAdded(String name, Metric metric)
-        {
-            // New group name must be registered in the virtual keyspace registry.
-            Metrics.getAliases().get(name).forEach(alias ->
-                    registered.computeIfAbsent(alias.getSystemViewName(), tableName -> {
-                        VirtualKeyspaceRegistry.instance.addToKeyspace(VIRTUAL_VIEWS,
-                                Collections.singletonList(createMetricsVirtualTable(tableName)));
-                        tableAdded.accept(alias.getType());
-                        return new AtomicInteger();
-                    }).incrementAndGet());
-        }
-
-        @Override
-        protected void onMetricRemove(String name)
-        {
-            Metrics.getAliases().get(name).forEach(alias ->
-                    registered.computeIfPresent(alias.getSystemViewName(), (tableName, count) -> {
-                        if (count.decrementAndGet() == 0)
-                        {
-                            VirtualKeyspaceRegistry.instance.removeFromKeyspace(VIRTUAL_VIEWS,
-                                    Collections.singletonList(createMetricsVirtualTable(tableName)));
-                        }
-                        return count;
-                    }));
-        }
-
-        private static VirtualTable createMetricsVirtualTable(String tableName)
-        {
-            return CollectionVirtualTableAdapter.create(tableName,
-                    "All metrics for \"" + tableName + "\" metric group",
-                    new MetricRowWalker(),
-                    () -> withAliases(Metrics.getMetrics(), m -> m.systemViewName.equals(tableName)),
-                    MetricRow::new,
-                    GROUP_NAME_MAPPER);
         }
     }
 
