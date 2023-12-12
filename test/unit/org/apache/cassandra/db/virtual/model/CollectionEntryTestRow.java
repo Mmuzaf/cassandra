@@ -58,8 +58,38 @@ public class CollectionEntryTestRow
     }
 
     @Column(index = 4)
-    public long intValue()
+    public int intValue()
     {
         return collectionEntry.getIntValue();
+    }
+
+    @Column(index = 5)
+    public short shortValue()
+    {
+        return collectionEntry.getShortValue();
+    }
+
+    @Column(index = 6)
+    public byte byteValue()
+    {
+        return collectionEntry.getByteValue();
+    }
+
+    @Column(index = 7)
+    public double doubleValue()
+    {
+        return collectionEntry.getDoubleValue();
+    }
+
+    @Column(index = 8)
+    public String value()
+    {
+        return collectionEntry.getValue();
+    }
+
+    @Column(index = 9)
+    public boolean booleanValue()
+    {
+        return collectionEntry.getBooleanValue();
     }
 }

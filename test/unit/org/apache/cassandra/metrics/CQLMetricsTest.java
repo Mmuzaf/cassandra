@@ -20,6 +20,7 @@ package org.apache.cassandra.metrics;
 
 import java.io.IOException;
 
+import com.datastax.driver.core.ResultSet;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -112,6 +113,15 @@ public class CQLMetricsTest
 
         assertEquals(0, QueryProcessor.metrics.preparedStatementsExecuted.getCount());
         assertEquals(10, QueryProcessor.metrics.regularStatementsExecuted.getCount());
+
+        ResultSet resultSet = session.execute("SELECT * FROM system_views.metrics_cql");
+
+        resultSet.forEach(row -> {
+            if (row.getString("name").endsWith("prepared_statements_count"))
+                assertEquals((Long) QueryProcessor.metrics.preparedStatementsExecuted.getCount(), Long.valueOf(row.getString("value")));
+            if (row.getString("name").endsWith("regular_statements_count"))
+                assertEquals((Long) QueryProcessor.metrics.regularStatementsExecuted.getCount(), Long.valueOf(row.getString("value")));
+        });
     }
 
     @Test

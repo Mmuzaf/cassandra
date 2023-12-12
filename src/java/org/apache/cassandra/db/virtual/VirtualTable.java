@@ -22,9 +22,7 @@ import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.filter.ClusteringIndexFilter;
 import org.apache.cassandra.db.filter.ColumnFilter;
 import org.apache.cassandra.db.partitions.PartitionUpdate;
-import org.apache.cassandra.db.partitions.SingletonUnfilteredPartitionIterator;
 import org.apache.cassandra.db.partitions.UnfilteredPartitionIterator;
-import org.apache.cassandra.db.rows.UnfilteredRowIterator;
 import org.apache.cassandra.schema.TableMetadata;
 
 /**
@@ -63,12 +61,7 @@ public interface VirtualTable
      * @param columnFilter the selected columns
      * @return the rows corresponding to the requested data.
      */
-    default UnfilteredPartitionIterator select(DecoratedKey partitionKey, ClusteringIndexFilter clusteringIndexFilter, ColumnFilter columnFilter)
-    {
-        return new SingletonUnfilteredPartitionIterator(selectKey(partitionKey, clusteringIndexFilter, columnFilter));
-    }
-
-    UnfilteredRowIterator selectKey(DecoratedKey partitionKey, ClusteringIndexFilter clusteringIndexFilter, ColumnFilter columnFilter);
+    UnfilteredPartitionIterator select(DecoratedKey partitionKey, ClusteringIndexFilter clusteringIndexFilter, ColumnFilter columnFilter);
 
     /**
      * Selects the rows from a range of partitions.

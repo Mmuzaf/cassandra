@@ -206,6 +206,23 @@ public class CassandraMetricsRegistry extends MetricRegistry
                 });
     }
 
+    @SuppressWarnings("rawtypes")
+    public static String getValueAsString(Metric metric)
+    {
+        if (metric instanceof Counter)
+            return Long.toString(((Counter) metric).getCount());
+        else if (metric instanceof Gauge)
+            return ((Gauge) metric).getValue().toString();
+        else if (metric instanceof Histogram)
+            return Double.toString(((Histogram) metric).getSnapshot().getMedian());
+        else if (metric instanceof Meter)
+            return Long.toString(((Meter) metric).getCount());
+        else if (metric instanceof Timer)
+            return Long.toString(((Timer) metric).getCount());
+        else
+            throw new IllegalStateException("Unknown metric type: " + metric.getClass().getName());
+    }
+
     private static void assertKnownMetric(MetricName name)
     {
         Set<MetricName> known = ALIASES.get(name.getMetricName());

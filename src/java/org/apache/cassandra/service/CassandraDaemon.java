@@ -415,8 +415,10 @@ public class CassandraDaemon
         else
             logger.info("Prewarming of auth caches is disabled");
 
-        PaxosState.startAutoRepairs();
+        logger.info("Cassandra start metrics service...");
         CassandraMetricsRegistry.Metrics.start();
+
+        PaxosState.startAutoRepairs();
 
         completeSetup();
     }

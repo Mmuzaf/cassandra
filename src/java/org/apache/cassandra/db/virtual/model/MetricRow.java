@@ -25,6 +25,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.Timer;
 import org.apache.cassandra.db.virtual.proc.Column;
+import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 
 import java.util.Map;
 
@@ -75,19 +76,6 @@ public class MetricRow
     @Column(index = 3)
     public String value()
     {
-        Metric metric = metricEntry.getValue();
-
-        if (metric instanceof Counter)
-            return Long.toString(((Counter) metric).getCount());
-        else if (metric instanceof Gauge)
-            return ((Gauge) metric).getValue().toString();
-        else if (metric instanceof Histogram)
-            return Double.toString(((Histogram) metric).getSnapshot().getMedian());
-        else if (metric instanceof Meter)
-            return Long.toString(((Meter) metric).getCount());
-        else if (metric instanceof Timer)
-            return Long.toString(((Timer) metric).getCount());
-        else
-            throw new IllegalStateException("Unknown metric type: " + metric.getClass().getName());
+        return CassandraMetricsRegistry.getValueAsString(metricEntry.getValue());
     }
 }

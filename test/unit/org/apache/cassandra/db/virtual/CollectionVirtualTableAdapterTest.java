@@ -94,34 +94,19 @@ public class CollectionVirtualTableAdapterTest extends CQLTester
         int index = 0;
         for (Row row : result)
         {
-            assertEquals(collection.get(index).getPrimaryKey(), row.getString("primaryKey"));
-            assertEquals(collection.get(index).getSecondaryKey(), row.getString("secondaryKey"));
-            assertEquals(collection.get(index).getOrderedKey(), row.getLong("orderedKey"));
-            assertEquals(collection.get(index).getIntValue(), row.getInt("intValue"));
-            assertEquals(collection.get(index).getLongValue(), row.getLong("longValue"));
+            assertEquals(collection.get(index).getPrimaryKey(), row.getString("primary_key"));
+            assertEquals(collection.get(index).getSecondaryKey(), row.getString("secondary_key"));
+            assertEquals(collection.get(index).getOrderedKey(), row.getLong("ordered_key"));
+            assertEquals(collection.get(index).getIntValue(), row.getInt("int_value"));
+            assertEquals(collection.get(index).getLongValue(), row.getLong("long_value"));
             assertEquals(collection.get(index).getValue(), row.getString("value"));
-            assertEquals(collection.get(index).getDoubleValue(), row.getDouble("doubleValue"), 0.0);
-            assertEquals(collection.get(index).getShortValue(), row.getShort("shortValue"));
-            assertEquals(collection.get(index).getByteValue(), row.getByte("byteValue"));
-            assertEquals(collection.get(index).getBooleanValue(), row.getBool("booleanValue"));
+            assertEquals(collection.get(index).getDoubleValue(), row.getDouble("double_value"), 0.0);
+            assertEquals(collection.get(index).getShortValue(), row.getShort("short_value"));
+            assertEquals(collection.get(index).getByteValue(), row.getByte("byte_value"));
+            assertEquals(collection.get(index).getBooleanValue(), row.getBool("boolean_value"));
             index++;
         }
-    }
-
-    @Test
-    public void testSelectClusteringOrder()
-    {
-        addSinglePartitionData(collection);
-        Collections.shuffle(collection);
-        ResultSet result = executeNet(String.format("SELECT * FROM %s.%s", KS_NAME, VT_NAME));
-        int index = 0;
-        long last = Long.MIN_VALUE;
-        for (Row row : result)
-        {
-            assertTrue(last <= row.getLong("orderedKey"));
-            assertEquals(collection.get(index++).getOrderedKey(), row.getLong("orderedKey"));
-            last = row.getLong("orderedKey");
-        }
+        assertEquals(collection.size(), index);
     }
 
     @Test

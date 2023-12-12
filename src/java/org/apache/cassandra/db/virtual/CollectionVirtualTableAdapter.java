@@ -20,13 +20,11 @@ package org.apache.cassandra.db.virtual;
 
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
 import org.apache.cassandra.db.Clustering;
 import org.apache.cassandra.db.DataRange;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.DeletionInfo;
 import org.apache.cassandra.db.EmptyIterators;
-import org.apache.cassandra.db.PartitionPosition;
 import org.apache.cassandra.db.filter.ClusteringIndexFilter;
 import org.apache.cassandra.db.filter.ColumnFilter;
 import org.apache.cassandra.db.marshal.AbstractType;
@@ -43,6 +41,7 @@ import org.apache.cassandra.db.marshal.UUIDType;
 import org.apache.cassandra.db.partitions.AbstractUnfilteredPartitionIterator;
 import org.apache.cassandra.db.partitions.ImmutableBTreePartition;
 import org.apache.cassandra.db.partitions.PartitionUpdate;
+import org.apache.cassandra.db.partitions.SingletonUnfilteredPartitionIterator;
 import org.apache.cassandra.db.partitions.UnfilteredPartitionIterator;
 import org.apache.cassandra.db.rows.BTreeRow;
 import org.apache.cassandra.db.rows.BufferCell;
@@ -52,9 +51,7 @@ import org.apache.cassandra.db.rows.Rows;
 import org.apache.cassandra.db.rows.UnfilteredRowIterator;
 import org.apache.cassandra.db.virtual.proc.Column;
 import org.apache.cassandra.db.virtual.proc.RowWalker;
-import org.apache.cassandra.dht.AbstractBounds;
 import org.apache.cassandra.dht.LocalPartitioner;
-import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.index.sai.utils.TypeUtil;
 import org.apache.cassandra.schema.ColumnMetadata;
@@ -67,7 +64,6 @@ import java.nio.ByteBuffer;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -77,6 +73,7 @@ import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -84,9 +81,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static java.util.Optional.ofNullable;
+import static org.apache.cassandra.db.rows.Cell.NO_DELETION_TIME;
 import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;
-import static org.apache.cassandra.utils.Clock.Global.currentTimeMillis;
 import static org.apache.cassandra.utils.FBUtilities.camelToSnake;
 
 /**
@@ -217,10 +213,10 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
 
     /** {@inheritDoc} */
     @Override
-    public UnfilteredRowIterator selectKey(DecoratedKey partitionKey, ClusteringIndexFilter clusteringFilter, ColumnFilter columnFilter)
+    public UnfilteredPartitionIterator select(DecoratedKey partitionKey, ClusteringIndexFilter clusteringFilter, ColumnFilter columnFilter)
     {
-        if (Iterators.size(data.iterator()) == 0)
-            return EmptyIterators.unfilteredRow(metadata, partitionKey, clusteringFilter.isReversed());
+        if (!data.iterator().hasNext())
+            return EmptyIterators.unfilteredPartition(metadata);
 
         Object[] tree;
         try (BTree.FastBuilder<Row> builder = BTree.fastBuilder())
@@ -234,9 +230,9 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
             tree = clusteringFilter.isReversed() ? builder.buildReverse() : builder.build();
         }
 
-        return new ImmutableBTreePartition(metadata, partitionKey,
+        return new SingletonUnfilteredPartitionIterator(new ImmutableBTreePartition(metadata, partitionKey,
                 columnFilter.queriedColumns(), Rows.EMPTY_STATIC_ROW, tree, DeletionInfo.LIVE,
-                EncodingStats.NO_STATS).unfilteredIterator();
+                EncodingStats.NO_STATS).unfilteredIterator());
     }
 
     /** {@inheritDoc} */
@@ -245,26 +241,41 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
     {
         return createPartitionIterator(metadata, new AbstractIterator<>()
         {
-            private final Iterator<DecoratedKey> iter = getpartitionKeys(dataRange).iterator();
-            private Token last = metadata.partitioner.getMinimumToken();
+            private final Iterator<Map.Entry<DecoratedKey, UnfilteredRowIterator>> partitions = buildDataRange(dataRange, columnFilter).entrySet().iterator();
 
             @Override
             protected UnfilteredRowIterator computeNext()
             {
-                if (iter.hasNext())
+                return partitions.hasNext() ? partitions.next().getValue() : endOfData();
+            }
+
+            private NavigableMap<DecoratedKey, UnfilteredRowIterator> buildDataRange(DataRange dataRange, ColumnFilter columnFilter)
+            {
+                Map<DecoratedKey, BTree.FastBuilder<Row>> buildTree = new ConcurrentHashMap<>();
+                try
                 {
-                    DecoratedKey partitionKey = iter.next();
-                    if (last.compareTo(partitionKey.getToken()) > 0)
-                        throw new IllegalStateException("Keys out of order");
+                    StreamSupport.stream(data.spliterator(), true)
+                            .map(row -> makeRow(row, columnFilter))
+                            .filter(entry -> dataRange.keyRange().contains(entry.getKey()))
+                            .forEach(entry -> buildTree.computeIfAbsent(entry.getKey(), key -> BTree.fastBuilder())
+                                    .add(entry.getValue()));
 
-                    last = partitionKey.getToken();
-
-                    if (!dataRange.keyRange().contains(partitionKey))
-                        throw new IllegalStateException("Key " + partitionKey + " not contained given data range");
-
-                    return selectKey(partitionKey, dataRange.clusteringIndexFilter(partitionKey), columnFilter);
+                    return buildTree.entrySet()
+                            .stream()
+                            .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey(),
+                                    new ImmutableBTreePartition(metadata,
+                                            entry.getKey(),
+                                            columnFilter.queriedColumns(),
+                                            Rows.EMPTY_STATIC_ROW,
+                                            dataRange.clusteringIndexFilter(entry.getKey()).isReversed() ? entry.getValue().buildReverse() : entry.getValue().build(),
+                                            DeletionInfo.LIVE,
+                                            EncodingStats.NO_STATS).unfilteredIterator()))
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, TreeMap::new));
                 }
-                return endOfData();
+                finally
+                {
+                    buildTree.forEach((key, builder) -> builder.close());
+                }
             }
         });
     }
@@ -318,7 +329,7 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
 
         Row.Builder rowBuilder = BTreeRow.unsortedBuilder();
         rowBuilder.newRow(makeRowClustering(metadata, fiterable.get(Column.Type.CLUSTERING)));
-        cells.forEach((column, value) -> rowBuilder.addCell(BufferCell.live(column, currentTimeMillis(), decompose(column.type, value))));
+        cells.forEach((column, value) -> rowBuilder.addCell(BufferCell.live(column, NO_DELETION_TIME, decompose(column.type, value))));
 
         return new AbstractMap.SimpleEntry<>(makeRowKey(metadata, fiterable.get(Column.Type.PARTITION_KEY)),
                 rowBuilder.build());
@@ -348,26 +359,6 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
         else
             key = decompose(table.partitionKeyType, partitionKeyValues[0]);
         return table.partitioner.decorateKey(key);
-    }
-
-    public Iterable<DecoratedKey> getpartitionKeys(DataRange dataRange)
-    {
-        if (Iterators.size(data.iterator()) == 0)
-            return Collections.emptyList();
-
-        NavigableMap<PartitionPosition, DecoratedKey> keys = StreamSupport.stream(data.spliterator(), false)
-                .map(row -> makeRow(row, ColumnFilter.NONE))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toMap(key -> key, value -> value, (a, b) -> a, TreeMap::new));
-
-        AbstractBounds<PartitionPosition> range = dataRange.keyRange();
-        PartitionPosition left = ofNullable(range.left).orElseGet(keys::firstKey);
-        PartitionPosition right = ofNullable(range.right).orElseGet(keys::lastKey);
-
-        left = left.isMinimum() ? keys.firstKey() : left;
-        right = right.isMinimum() ? keys.lastKey() : right;
-
-        return keys.subMap(left, range.isStartInclusive(), right, range.isEndInclusive()).values();
     }
 
     private static UnfilteredPartitionIterator createPartitionIterator(
