@@ -57,6 +57,7 @@ public class LatencyTrackingBench
 
     class BenchMetricsNameFactory implements MetricNameFactory
     {
+
         @Override
         public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
         {
