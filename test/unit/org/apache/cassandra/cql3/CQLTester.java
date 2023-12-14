@@ -50,7 +50,9 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
@@ -1484,7 +1486,7 @@ public abstract class CQLTester
         return sessions.computeIfAbsent(Pair.create(user, protocolVersion), userProto -> cluster.connect());
     }
 
-    private Cluster getCluster(ProtocolVersion protocolVersion)
+    protected Cluster getCluster(ProtocolVersion protocolVersion)
     {
         return clusters.computeIfAbsent(Pair.create(user, protocolVersion), userProto -> initClientCluster(userProto.left, userProto.right));
     }
@@ -1668,6 +1670,84 @@ public abstract class CQLTester
 
         Assert.assertTrue(String.format("Got %s rows than expected. Expected %d but got %d (using protocol version %s)",
                                         rows.length>i ? "less" : "more", rows.length, i, protocolVersion), i == rows.length);
+    }
+
+    public void assertRowsContains(ResultSet result, Object[]... rows)
+    {
+        assertRowsContains(getCluster(getDefaultVersion()), result, rows);
+    }
+
+    public static void assertRowsContains(Cluster cluster, ResultSet result, Object[]... rows)
+    {
+        if (result == null && (rows == null || rows.length == 0))
+            return;
+        assertNotNull(String.format("No rows returned by query but %d expected", rows.length), result);
+        assertTrue(Iterables.size(result) > 0);
+
+        // It is necessary that all rows match the column definitions
+        for (Object[] row : rows)
+        {
+            if (row == null || row.length == 0)
+                Assert.fail("Rows must not be null or empty");
+
+            if (result.getColumnDefinitions().size() == row.length)
+                continue;
+
+            Assert.fail(String.format("Rows do not match column definitions. Expected %d columns but got %d",
+                    row.length, result.getColumnDefinitions().size()));
+        }
+
+        int size = result.getColumnDefinitions().size();
+        List<ByteBuffer[]> resultSetValues = StreamSupport.stream(result.spliterator(), false)
+                .map(row -> IntStream.range(0, result.getColumnDefinitions().size())
+                                .mapToObj(row::getBytesUnsafe)
+                                .toArray(ByteBuffer[]::new))
+                .collect(Collectors.toList());
+
+        AtomicInteger columnCounter = new AtomicInteger();
+        com.datastax.driver.core.ProtocolVersion version = com.datastax.driver.core.ProtocolVersion.fromInt(getDefaultVersion().asInt());
+        List<ByteBuffer[]> expectedRowsValues = Stream.of(rows)
+                .map(row -> Stream.of(row)
+                        .map(cell -> {
+                            int index = columnCounter.getAndIncrement() % size;
+                            return cell == null ? null :
+                                    cell instanceof ByteBuffer ? (ByteBuffer) cell :
+                                            cluster.getConfiguration()
+                                                    .getCodecRegistry()
+                                                    .codecFor(result.getColumnDefinitions().getType(index))
+                                                    .serialize(cell, version);
+                        })
+                        .toArray(ByteBuffer[]::new))
+                .collect(Collectors.toList());
+
+        int found = 0;
+        for (ByteBuffer[] expected : expectedRowsValues)
+            for (ByteBuffer[] actual : resultSetValues)
+                if (Arrays.equals(expected, actual))
+                    found++;
+
+        if (found == expectedRowsValues.size())
+            return;
+
+        Assert.fail(String.format("Result set does not contain expected rows. Result set %s doesn't contain %s",
+                resultSetValues.stream().map(e -> deserializeCells(e, cluster.getConfiguration().getCodecRegistry(),
+                        result.getColumnDefinitions(), version)).collect(Collectors.joining(", ")),
+                expectedRowsValues.stream().map(e -> deserializeCells(e, cluster.getConfiguration().getCodecRegistry(),
+                        result.getColumnDefinitions(), version)).collect(Collectors.joining(", "))));
+    }
+
+    private static String deserializeCells(ByteBuffer[] row,
+                                           com.datastax.driver.core.CodecRegistry codecRegistry,
+                                           ColumnDefinitions columnDefinitions,
+                                           com.datastax.driver.core.ProtocolVersion version)
+    {
+        AtomicInteger index = new AtomicInteger();
+        int size = columnDefinitions.size();
+        return Stream.of(row)
+                .map(b -> codecRegistry.codecFor(columnDefinitions.getType(index.getAndIncrement() % size))
+                        .format(codecRegistry.codecFor(columnDefinitions.getType(index.get() % size))
+                                .deserialize(b, version)))
+                .collect(Collectors.joining(", ", "[", "]"));
     }
 
     private static String safeToString(Supplier<String> fn)

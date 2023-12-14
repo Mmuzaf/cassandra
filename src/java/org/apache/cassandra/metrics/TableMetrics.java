@@ -73,7 +73,9 @@ import static org.apache.cassandra.utils.Clock.Global.nanoTime;
 public class TableMetrics
 {
     public static final String TYPE_NAME = "Table";
+    public static final String INDEX_TYPE_NAME = "IndexTable";
     public static final String ALIAS_TYPE_NAME = "ColumnFamily";
+    public static final String INDEX_ALIAS_TYPE_NAME = "IndexColumnFamily";
     /**
      * stores metrics that will be rolled into a single global metric
      */
@@ -403,8 +405,8 @@ public class TableMetrics
      */
     public TableMetrics(final ColumnFamilyStore cfs, ReleasableMetric memtableMetrics)
     {
-        factory = Metrics.regsiterMetricFactory(new TableMetricNameFactory(cfs, "Table"));
-        aliasFactory = Metrics.regsiterMetricFactory(new TableMetricNameFactory(cfs, "ColumnFamily"));
+        factory = Metrics.regsiterMetricFactory(new TableMetricNameFactory(cfs, cfs.isIndex() ? INDEX_TYPE_NAME : TYPE_NAME));
+        aliasFactory = Metrics.regsiterMetricFactory(new TableMetricNameFactory(cfs, cfs.isIndex() ? INDEX_ALIAS_TYPE_NAME : ALIAS_TYPE_NAME));
 
         if (memtableMetrics != null)
         {
@@ -1247,21 +1249,18 @@ public class TableMetrics
     {
         private final String keyspaceName;
         private final String tableName;
-        private final boolean isIndex;
         private final String type;
 
         TableMetricNameFactory(ColumnFamilyStore cfs, String type)
         {
             this.keyspaceName = cfs.getKeyspaceName();
             this.tableName = cfs.name;
-            this.isIndex = cfs.isIndex();
             this.type = type;
         }
 
         public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
         {
             String groupName = TableMetrics.class.getPackage().getName();
-            String type = isIndex ? "Index" + this.type : this.type;
 
             StringBuilder mbeanName = new StringBuilder();
             mbeanName.append(groupName).append(":");

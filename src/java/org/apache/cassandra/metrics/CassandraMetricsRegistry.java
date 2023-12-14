@@ -143,6 +143,8 @@ public class CassandraMetricsRegistry extends MetricRegistry
                 .add(TCMMetrics.TYPE_NAME)
                 .add(TableMetrics.ALIAS_TYPE_NAME)
                 .add(TableMetrics.TYPE_NAME)
+                .add(TableMetrics.INDEX_TYPE_NAME)
+                .add(TableMetrics.INDEX_ALIAS_TYPE_NAME)
                 .add(ThreadPoolMetrics.TYPE_NAME)
                 .add(TrieMemtableMetricsView.TYPE_NAME)
                 .build();
@@ -390,6 +392,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
                         .stream()
                         .filter(filer)
                         .map(alias -> new AbstractMap.SimpleEntry<>(alias.getMetricName(), e.getValue())))
+                .distinct()
                 .sorted(Map.Entry.comparingByKey())
                 .iterator();
     }
@@ -401,6 +404,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
                 .flatMap(e -> ALIASES.get(e.getKey())
                         .stream()
                         .map(alias -> new AbstractMap.SimpleEntry<>(alias.getMetricName(), e.getValue())))
+                .distinct()
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
                         (e1, e2) -> e1, java.util.TreeMap::new));
     }
