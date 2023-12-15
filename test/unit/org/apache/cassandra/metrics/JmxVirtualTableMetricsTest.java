@@ -1,0 +1,337 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.apache.cassandra.metrics;
+
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Timer;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Session;
+import org.apache.cassandra.ServerTestUtils;
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.cql3.CQLTester;
+import org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter;
+import org.apache.cassandra.service.EmbeddedCassandraService;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import javax.management.JMX;
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectName;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import static java.util.Objects.requireNonNull;
+import static org.apache.cassandra.cql3.CQLTester.assertRowsContains;
+import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;
+import static org.junit.Assert.assertEquals;
+
+/**
+ * Test comparing JMX metrics to virtual table metrics representation, basically metric values must be equal.
+ */
+public class JmxVirtualTableMetricsTest
+{
+    private static Cluster cluster;
+    private static Session session;
+    private static EmbeddedCassandraService cassandra;
+    private static MBeanServerConnection jmxConnection;
+    private final Map<MetricType, Metric> metricToNameMap = new EnumMap<>(MetricType.class);
+    private final AtomicInteger gaugeValue = new AtomicInteger(0);
+
+    @BeforeClass
+    public static void setup() throws Exception
+    {
+        cassandra = ServerTestUtils.startEmbeddedCassandraService();
+        cluster = Cluster.builder().addContactPoint("127.0.0.1").withPort(DatabaseDescriptor.getNativeTransportPort()).build();
+        session = cluster.connect();
+        CQLTester.startJMXServer();
+        CQLTester.createMBeanServerConnection();
+        jmxConnection = CQLTester.getJmxConnection();
+    }
+
+    @AfterClass
+    public static void tearDown()
+    {
+        if (cluster != null)
+            cluster.close();
+        if (cassandra != null)
+            cassandra.stop();
+    }
+
+    @Before
+    public void beforeTest()
+    {
+        metricToNameMap.clear();
+        MetricRegistry registry = new MetricRegistry();
+
+        metricToNameMap.put(MetricType.METER, registry.meter("meter"));
+        metricToNameMap.put(MetricType.COUNTER, registry.counter("counter"));
+        metricToNameMap.put(MetricType.HISTOGRAM, registry.histogram("histogram"));
+        metricToNameMap.put(MetricType.TIMER, registry.timer("timer"));
+        metricToNameMap.put(MetricType.GAUGE, registry.gauge("gauge", () -> () -> gaugeValue.get()));
+
+        CassandraMetricsRegistry.metricGroups.forEach(group -> {
+            MetricNameFactory factory = CassandraMetricsRegistry.Metrics.regsiterMetricFactory(new DefaultNameFactory(group, "jmx.virtual"));
+            CassandraMetricsRegistry.Metrics.register(factory.createMetricName(MetricType.METER.metricName), metricToNameMap.get(MetricType.METER));
+            CassandraMetricsRegistry.Metrics.register(factory.createMetricName(MetricType.COUNTER.metricName), metricToNameMap.get(MetricType.COUNTER));
+            CassandraMetricsRegistry.Metrics.register(factory.createMetricName(MetricType.HISTOGRAM.metricName), metricToNameMap.get(MetricType.HISTOGRAM));
+            CassandraMetricsRegistry.Metrics.register(factory.createMetricName(MetricType.TIMER.metricName), metricToNameMap.get(MetricType.TIMER));
+            CassandraMetricsRegistry.Metrics.register(factory.createMetricName(MetricType.GAUGE.metricName), metricToNameMap.get(MetricType.GAUGE));
+        });
+    }
+
+    @Test
+    public void testJmxEqualVirtualTableByMetricGroup() throws Exception
+    {
+        randomizeMetricValues(metricToNameMap, gaugeValue);
+        Map<String, List<ObjectName>> mbeanByMetricGroup = jmxConnection.queryNames(null, null)
+                .stream()
+                .filter(this::isLocalMetric)
+                .collect(Collectors.groupingBy(on -> requireNonNull(on.getKeyPropertyList().get("type"))));
+
+        for (Map.Entry<String, List<ObjectName>> e : mbeanByMetricGroup.entrySet())
+        {
+            assertRowsContains(cluster,
+                    session.execute(String.format("SELECT * FROM %s.metrics_%s", VIRTUAL_VIEWS,
+                            CollectionVirtualTableAdapter.virtualTableNameStyle(e.getKey()))),
+                    e.getValue().stream().map(this::makeMetricRow).collect(Collectors.toList()));
+        }
+    }
+
+    @Test
+    public void testJmxEqualVirtualTableByMetricType() throws Exception
+    {
+        randomizeMetricValues(metricToNameMap, gaugeValue);
+        Map<MetricType, List<ObjectName>> mbeanByMetricGroup = jmxConnection.queryNames(null, null)
+                .stream()
+                .filter(this::isLocalMetric)
+                .collect(Collectors.groupingBy(on -> MetricType.find(on.getKeyPropertyList().get("name"))
+                        .orElseThrow()));
+
+        for (Map.Entry<MetricType, List<ObjectName>> e : mbeanByMetricGroup.entrySet())
+        {
+            switch (e.getKey())
+            {
+                case METER:
+                    assertRowsContains(cluster,
+                            session.execute(String.format("SELECT * FROM %s.metrics_type_meter", VIRTUAL_VIEWS)),
+                            e.getValue().stream().map(this::makeMeterRow).collect(Collectors.toList()));
+                    break;
+                case COUNTER:
+                    assertRowsContains(cluster,
+                            session.execute(String.format("SELECT * FROM %s.metrics_type_counter", VIRTUAL_VIEWS)),
+                            e.getValue().stream().map(this::makeCounterRow).collect(Collectors.toList()));
+                    break;
+                case HISTOGRAM:
+                    assertRowsContains(cluster,
+                            session.execute(String.format("SELECT * FROM %s.metrics_type_histogram", VIRTUAL_VIEWS)),
+                            e.getValue().stream().map(this::makeHistogramRow).collect(Collectors.toList()));
+                    break;
+                case TIMER:
+                    assertRowsContains(cluster,
+                            session.execute(String.format("SELECT * FROM %s.metrics_type_timer", VIRTUAL_VIEWS)),
+                            e.getValue().stream().map(this::makeTimerRow).collect(Collectors.toList()));
+                    break;
+                case GAUGE:
+                    assertRowsContains(cluster,
+                            session.execute(String.format("SELECT * FROM %s.metrics_type_gauge", VIRTUAL_VIEWS)),
+                            e.getValue().stream().map(this::makeGaugeRow).collect(Collectors.toList()));
+                    break;
+            }
+        }
+    }
+
+    private static void randomizeMetricValues(Map<MetricType, Metric> map, AtomicInteger gaugeValue)
+    {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        ((Meter) map.get(MetricType.METER)).mark(random.nextInt(0, 1234));
+        ((com.codahale.metrics.Counter) map.get(MetricType.COUNTER)).inc(random.nextInt(0, 5432));
+        ((Histogram) map.get(MetricType.HISTOGRAM)).update(random.nextInt(0, 1235));
+        ((Timer) map.get(MetricType.TIMER)).update(random.nextInt(0, 2463), TimeUnit.MILLISECONDS);
+        gaugeValue.set(random.nextInt(0, 7345));
+    }
+
+    private Object[] makeMetricRow(ObjectName objectName)
+    {
+        MetricType type = MetricType.find(objectName.getKeyPropertyList().get("name")).orElseThrow();
+        String jmxValue;
+        switch (type)
+        {
+            case METER:
+                jmxValue = String.valueOf(JMX.newMBeanProxy(jmxConnection,
+                        objectName,
+                        CassandraMetricsRegistry.JmxMeterMBean.class).getCount());
+                break;
+            case COUNTER:
+                jmxValue = String.valueOf(JMX.newMBeanProxy(jmxConnection,
+                        objectName,
+                        CassandraMetricsRegistry.JmxCounterMBean.class).getCount());
+                break;
+            case HISTOGRAM:
+                jmxValue = String.valueOf(JMX.newMBeanProxy(jmxConnection,
+                        objectName,
+                        CassandraMetricsRegistry.JmxHistogramMBean.class).get50thPercentile());
+                break;
+            case TIMER:
+                jmxValue = String.valueOf(JMX.newMBeanProxy(jmxConnection,
+                        objectName,
+                        CassandraMetricsRegistry.JmxTimerMBean.class).getCount());
+                break;
+            case GAUGE:
+                jmxValue = String.valueOf(JMX.newMBeanProxy(jmxConnection,
+                        objectName,
+                        CassandraMetricsRegistry.JmxGaugeMBean.class).getValue());
+                break;
+            default:
+                throw new RuntimeException("Unknown metric type: " + objectName.getKeyPropertyList().get("name"));
+        }
+        return CQLTester.row(getFullMetricName(objectName),
+                requireNonNull(objectName.getKeyPropertyList().get("scope")),
+                MetricType.find(objectName.getKeyPropertyList().get("name"))
+                        .map(MetricType::name)
+                        .map(String::toLowerCase)
+                        .orElseThrow(),
+                jmxValue);
+    }
+
+    private Object[] makeMeterRow(ObjectName objectName)
+    {
+        assertEquals(MetricType.METER.metricName, objectName.getKeyPropertyList().get("name"));
+        CassandraMetricsRegistry.JmxMeterMBean bean = JMX.newMBeanProxy(jmxConnection,
+                objectName,
+                CassandraMetricsRegistry.JmxMeterMBean.class);
+
+        return CQLTester.row(getFullMetricName(objectName),
+                bean.getCount(),
+                bean.getFifteenMinuteRate(),
+                bean.getFiveMinuteRate(),
+                bean.getMeanRate(),
+                bean.getOneMinuteRate(),
+                requireNonNull(objectName.getKeyPropertyList().get("scope")));
+    }
+
+    private Object[] makeCounterRow(ObjectName objectName)
+    {
+        assertEquals(MetricType.COUNTER.metricName, objectName.getKeyPropertyList().get("name"));
+        CassandraMetricsRegistry.JmxCounterMBean bean = JMX.newMBeanProxy(jmxConnection,
+                objectName,
+                CassandraMetricsRegistry.JmxCounterMBean.class);
+
+        return CQLTester.row(getFullMetricName(objectName),
+                requireNonNull(objectName.getKeyPropertyList().get("scope")),
+                bean.getCount());
+    }
+
+    private Object[] makeHistogramRow(ObjectName objectName)
+    {
+        assertEquals(MetricType.HISTOGRAM.metricName, objectName.getKeyPropertyList().get("name"));
+        CassandraMetricsRegistry.JmxHistogramMBean bean = JMX.newMBeanProxy(jmxConnection,
+                objectName,
+                CassandraMetricsRegistry.JmxHistogramMBean.class);
+
+        return CQLTester.row(getFullMetricName(objectName),
+                bean.getMax(),
+                bean.getMean(),
+                bean.getMin(),
+                bean.get75thPercentile(),
+                bean.get95thPercentile(),
+                bean.get98thPercentile(),
+                bean.get999thPercentile(),
+                bean.get99thPercentile(),
+                requireNonNull(objectName.getKeyPropertyList().get("scope")));
+    }
+
+    private Object[] makeTimerRow(ObjectName objectName)
+    {
+        assertEquals(MetricType.TIMER.metricName, objectName.getKeyPropertyList().get("name"));
+        CassandraMetricsRegistry.JmxTimerMBean bean = JMX.newMBeanProxy(jmxConnection,
+                objectName,
+                CassandraMetricsRegistry.JmxTimerMBean.class);
+
+        return CQLTester.row(getFullMetricName(objectName),
+                bean.getCount(),
+                bean.getFifteenMinuteRate(),
+                bean.getFiveMinuteRate(),
+                bean.getMeanRate(),
+                bean.getOneMinuteRate(),
+                requireNonNull(objectName.getKeyPropertyList().get("scope")));
+    }
+
+    private Object[] makeGaugeRow(ObjectName objectName)
+    {
+        assertEquals(MetricType.GAUGE.metricName, objectName.getKeyPropertyList().get("name"));
+        String jmxValue = String.valueOf(JMX.newMBeanProxy(jmxConnection,
+                objectName,
+                CassandraMetricsRegistry.JmxGaugeMBean.class).getValue());
+
+        return CQLTester.row(getFullMetricName(objectName),
+                requireNonNull(objectName.getKeyPropertyList().get("scope")),
+                jmxValue);
+    }
+
+    private boolean isLocalMetric(ObjectName mBean)
+    {
+        MetricType type = MetricType.find(mBean.getKeyPropertyList().get("name")).orElse(null);
+        return mBean.toString().startsWith(DefaultNameFactory.GROUP_NAME) && metricToNameMap.containsKey(type);
+    }
+
+    private static String getFullMetricName(ObjectName objectName)
+    {
+        Map<String, String> props = objectName.getKeyPropertyList();
+        return new CassandraMetricsRegistry.MetricName(DefaultNameFactory.GROUP_NAME, requireNonNull(props.get("type")),
+                requireNonNull(props.get("name")), requireNonNull(props.get("scope")))
+                .getMetricName();
+    }
+
+    private enum MetricType
+    {
+        METER("MeterTestMetric"),
+        COUNTER("CounterTestMetric"),
+        HISTOGRAM("HistogramTestMetric"),
+        TIMER("TimerTestMetric"),
+        GAUGE("GaugeTestMetric");
+
+        private final String metricName;
+
+        MetricType(String metricName)
+        {
+            this.metricName = metricName;
+        }
+
+        public static Optional<MetricType> find(String metricName)
+        {
+            for (MetricType type : values())
+                if (type.metricName.equals(metricName))
+                    return Optional.of(type);
+
+            return Optional.empty();
+        }
+
+    }
+}

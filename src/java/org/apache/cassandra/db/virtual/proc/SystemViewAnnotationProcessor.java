@@ -37,6 +37,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -170,7 +171,7 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
                 addImport(imports, returnType);
 
             String line = TAB + TAB +
-                    "visitor.accept(" + annotation.index() + ", " + innerClassName(Column.Type.class.getName()) + '.' + annotation.type() + ", \"" + name + "\", " +
+                    "visitor.accept(" + innerClassName(Column.Type.class.getName()) + '.' + annotation.type() + ", \"" + name + "\", " +
                     getPrimitiveWrapperClass(returnType) +
                     (isPrimitive(returnType) ? ".TYPE);" : ".class);");
 
@@ -187,7 +188,7 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
             String name = method.getSimpleName().toString();
             String returnType = ((ExecutableType) method.asType()).getReturnType().toString();
             String line = TAB + TAB +
-                    "visitor.accept(" + annotation.index() + ", " + innerClassName(Column.Type.class.getName()) + '.' + annotation.type() + ", \"" + name + "\", " +
+                    "visitor.accept(" + innerClassName(Column.Type.class.getName()) + '.' + annotation.type() + ", \"" + name + "\", " +
                     getPrimitiveWrapperClass(returnType) +
                     (isPrimitive(returnType) ? ".TYPE, row." : ".class, row.") +
                     name + "());";
@@ -261,9 +262,32 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
      */
     private static void forEachColumn(List<Element> columns, BiConsumer<Element, Column> consumer)
     {
+        // sort columns by type (partition key, clustering, regular) and then by column name
         columns.stream()
-                .sorted(Comparator.comparingInt(o -> o.getAnnotation(Column.class).index()))
+                .sorted(new ColumnAnnotationComparator())
                 .forEach(method -> consumer.accept(method, method.getAnnotation(Column.class)));
+    }
+
+    private static class ColumnAnnotationComparator implements Comparator<Element> {
+        @Override
+        public int compare(Element m1, Element m2) {
+            Column.Type type1 = getColumnType(m1);
+            Column.Type type2 = getColumnType(m2);
+
+            if (type1 == type2)
+                return methodName(m1).compareTo(methodName(m2));
+
+            return type1.compareTo(type2);
+        }
+
+        private static String methodName(Element method)
+        {
+            return method.getSimpleName().toString().toLowerCase(Locale.US);
+        }
+
+        private static Column.Type getColumnType(Element method) {
+            return method.getAnnotation(Column.class).type();
+        }
     }
 
     public static boolean isPrimitive(String className)

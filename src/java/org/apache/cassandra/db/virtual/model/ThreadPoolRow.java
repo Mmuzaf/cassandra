@@ -34,43 +34,43 @@ public class ThreadPoolRow
         this.entry = entry;
     }
 
-    @Column(index = 0, type = Column.Type.PARTITION_KEY)
+    @Column(type = Column.Type.PARTITION_KEY)
     public String name()
     {
         return entry.poolName;
     }
 
-    @Column(index = 1)
+    @Column
     public Integer activeTasks()
     {
         return entry.activeTasks.getValue();
     }
 
-    @Column(index = 2)
+    @Column
     public Integer activeTasksLimit()
     {
         return entry.maxPoolSize.getValue();
     }
 
-    @Column(index = 3)
+    @Column
     public Integer pendingTasks()
     {
         return entry.pendingTasks.getValue();
     }
 
-    @Column(index = 4)
+    @Column
     public Long completedTasks()
     {
         return entry.completedTasks.getValue();
     }
 
-    @Column(index = 5)
+    @Column
     public long blockedTasks()
     {
         return entry.currentBlocked.getCount();
     }
 
-    @Column(index = 6)
+    @Column
     public long blockedTasksAllTime()
     {
         return entry.totalBlocked.getCount();

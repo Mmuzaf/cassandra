@@ -43,19 +43,19 @@ public class MetricRow
         this.metricEntry = metricEntry;
     }
 
-    @Column(index = 0, type = Column.Type.PARTITION_KEY)
+    @Column(type = Column.Type.PARTITION_KEY)
     public String name()
     {
         return metricEntry.getKey();
     }
 
-    @Column(index = 1)
+    @Column
     public String scope()
     {
         return Metrics.getMetricScope(metricEntry.getKey());
     }
 
-    @Column(index = 2)
+    @Column
     public String type()
     {
         Class<?> clazz = metricEntry.getValue().getClass();
@@ -73,7 +73,7 @@ public class MetricRow
             throw new IllegalStateException("Unknown metric type: " + metricEntry.getValue().getClass());
     }
 
-    @Column(index = 3)
+    @Column
     public String value()
     {
         return CassandraMetricsRegistry.getValueAsString(metricEntry.getValue());

@@ -36,13 +36,13 @@ public class MetricGroupRow
         this.group = group;
     }
 
-    @Column(index = 0, type = Column.Type.PARTITION_KEY)
+    @Column(type = Column.Type.PARTITION_KEY)
     public String groupName()
     {
         return group;
     }
 
-    @Column(index = 1)
+    @Column
     public String virtualTable()
     {
         return GROUP_NAME_MAPPER.apply(virtualTableNameStyle(group));

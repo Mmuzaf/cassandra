@@ -38,43 +38,43 @@ public class TimerMetricRow
         this.timerEntry = timerEntry;
     }
 
-    @Column(index = 1)
+    @Column
     public String scope()
     {
         return Metrics.getMetricScope(timerEntry.getKey());
     }
 
-    @Column(index = 0, type = Column.Type.PARTITION_KEY)
+    @Column(type = Column.Type.PARTITION_KEY)
     public String name()
     {
         return timerEntry.getKey();
     }
 
-    @Column(index = 2)
+    @Column
     public long count()
     {
         return timerEntry.getValue().getCount();
     }
 
-    @Column(index = 3)
+    @Column
     public double fifteenMinuteRate()
     {
         return timerEntry.getValue().getFifteenMinuteRate();
     }
 
-    @Column(index = 4)
+    @Column
     public double fiveMinuteRate()
     {
         return timerEntry.getValue().getFiveMinuteRate();
     }
 
-    @Column(index = 5)
+    @Column
     public double meanRate()
     {
         return timerEntry.getValue().getMeanRate();
     }
 
-    @Column(index = 6)
+    @Column
     public double oneMinuteRate()
     {
         return timerEntry.getValue().getOneMinuteRate();

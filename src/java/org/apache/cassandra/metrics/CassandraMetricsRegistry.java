@@ -81,7 +81,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
      * to export metrics to JMX. */
     private static final ConcurrentMap<String, Set<MetricName>> ALIASES = new ConcurrentHashMap<>();
     /** A set of all known metric groups, used to validate metric groups that are statically defined in Cassandra. */
-    private static final Set<String> metricGroups;
+    static final Set<String> metricGroups;
 
     /**
      * Root metrics registry that is used by Cassandra to store all metrics.
@@ -285,6 +285,13 @@ public class CassandraMetricsRegistry extends MetricRegistry
     public Timer timer(MetricName name)
     {
         return timer(name, DEFAULT_TIMER_UNIT);
+    }
+
+    @SuppressWarnings("rawtypes")
+    public <T extends Gauge> T gauge(MetricName name, MetricSupplier<T> gauge)
+    {
+        assertKnownMetric(name);
+        return super.gauge(name.getMetricName(), gauge);
     }
 
     public SnapshottingTimer timer(MetricName name, MetricName alias)

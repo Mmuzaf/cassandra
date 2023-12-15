@@ -183,7 +183,7 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
                 new RowWalker.MetadataVisitor()
                 {
                     @Override
-                    public <T> void accept(int index, Column.Type type, String name, Class<T> clazz)
+                    public <T> void accept(Column.Type type, String name, Class<T> clazz)
                     {
                         switch (type)
                         {
@@ -299,7 +299,7 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
             private int pIdx, cIdx = 0;
 
             @Override
-            public <T> void accept(int index, Column.Type type, String name, Class<T> clazz, T value)
+            public <T> void accept(Column.Type type, String name, Class<T> clazz, T value)
             {
                 switch (type)
                 {

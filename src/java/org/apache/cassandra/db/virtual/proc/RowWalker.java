@@ -30,11 +30,11 @@ public interface RowWalker<R>
 
     interface MetadataVisitor
     {
-        <T> void accept(int index, Column.Type type, String name, Class<T> clazz);
+        <T> void accept(Column.Type type, String name, Class<T> clazz);
     }
 
     interface RowMetadataVisitor
     {
-        <T> void accept(int index, Column.Type type, String name, Class<T> clazz, T value);
+        <T> void accept(Column.Type type, String name, Class<T> clazz, T value);
     }
 }

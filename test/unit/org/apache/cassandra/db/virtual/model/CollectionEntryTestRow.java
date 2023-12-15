@@ -33,61 +33,61 @@ public class CollectionEntryTestRow
         this.collectionEntry = collectionEntry;
     }
 
-    @Column(index = 0, type = Column.Type.PARTITION_KEY)
+    @Column(type = Column.Type.PARTITION_KEY)
     public String primaryKey()
     {
         return collectionEntry.getPrimaryKey();
     }
 
-    @Column(index = 1, type = Column.Type.PARTITION_KEY)
+    @Column(type = Column.Type.PARTITION_KEY)
     public String secondaryKey()
     {
         return collectionEntry.getSecondaryKey();
     }
 
-    @Column(index = 2, type = Column.Type.CLUSTERING)
+    @Column(type = Column.Type.CLUSTERING)
     public long orderedKey()
     {
         return collectionEntry.getOrderedKey();
     }
 
-    @Column(index = 3)
+    @Column
     public long longValue()
     {
         return collectionEntry.getLongValue();
     }
 
-    @Column(index = 4)
+    @Column
     public int intValue()
     {
         return collectionEntry.getIntValue();
     }
 
-    @Column(index = 5)
+    @Column
     public short shortValue()
     {
         return collectionEntry.getShortValue();
     }
 
-    @Column(index = 6)
+    @Column
     public byte byteValue()
     {
         return collectionEntry.getByteValue();
     }
 
-    @Column(index = 7)
+    @Column
     public double doubleValue()
     {
         return collectionEntry.getDoubleValue();
     }
 
-    @Column(index = 8)
+    @Column
     public String value()
     {
         return collectionEntry.getValue();
     }
 
-    @Column(index = 9)
+    @Column
     public boolean booleanValue()
     {
         return collectionEntry.getBooleanValue();

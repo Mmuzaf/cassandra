@@ -38,19 +38,19 @@ public class CounterMetricRow
         this.counterEntry = counterEntry;
     }
 
-    @Column(index = 0, type = Column.Type.PARTITION_KEY)
+    @Column(type = Column.Type.PARTITION_KEY)
     public String name()
     {
         return counterEntry.getKey();
     }
 
-    @Column(index = 1)
+    @Column
     public String scope()
     {
         return Metrics.getMetricScope(counterEntry.getKey());
     }
 
-    @Column(index = 2)
+    @Column
     public long value()
     {
         return counterEntry.getValue().getCount();

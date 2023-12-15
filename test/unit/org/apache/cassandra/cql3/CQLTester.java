@@ -27,6 +27,7 @@ import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.rmi.server.RMISocketFactory;
 import java.util.AbstractList;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -372,6 +373,11 @@ public abstract class CQLTester
         env.put("com.sun.jndi.rmi.factory.socket", RMISocketFactory.getDefaultSocketFactory());
         JMXConnector jmxc = JMXConnectorFactory.connect(getJMXServiceURL(), env);
         jmxConnection =  jmxc.getMBeanServerConnection();
+    }
+
+    public static MBeanServerConnection getJmxConnection()
+    {
+        return jmxConnection;
     }
 
     public static JMXServiceURL getJMXServiceURL() throws MalformedURLException
@@ -1679,10 +1685,15 @@ public abstract class CQLTester
 
     public static void assertRowsContains(Cluster cluster, ResultSet result, Object[]... rows)
     {
-        if (result == null && (rows == null || rows.length == 0))
+        assertRowsContains(cluster, result, rows == null ? Collections.emptyList() : Arrays.asList(rows));
+    }
+
+    public static void assertRowsContains(Cluster cluster, ResultSet result, List<Object[]> rows)
+    {
+        if (result == null && rows.isEmpty())
             return;
-        assertNotNull(String.format("No rows returned by query but %d expected", rows.length), result);
-        assertTrue(Iterables.size(result) > 0);
+        assertNotNull(String.format("No rows returned by query but %d expected", rows.size()), result);
+        assertTrue(result.iterator().hasNext());
 
         // It is necessary that all rows match the column definitions
         for (Object[] row : rows)
@@ -1694,28 +1705,28 @@ public abstract class CQLTester
                 continue;
 
             Assert.fail(String.format("Rows do not match column definitions. Expected %d columns but got %d",
-                    row.length, result.getColumnDefinitions().size()));
+                    result.getColumnDefinitions().size(), row.length));
         }
 
-        int size = result.getColumnDefinitions().size();
+        ColumnDefinitions defs = result.getColumnDefinitions();
+        int size = defs.size();
         List<ByteBuffer[]> resultSetValues = StreamSupport.stream(result.spliterator(), false)
-                .map(row -> IntStream.range(0, result.getColumnDefinitions().size())
+                .map(row -> IntStream.range(0, size)
                                 .mapToObj(row::getBytesUnsafe)
                                 .toArray(ByteBuffer[]::new))
                 .collect(Collectors.toList());
 
         AtomicInteger columnCounter = new AtomicInteger();
         com.datastax.driver.core.ProtocolVersion version = com.datastax.driver.core.ProtocolVersion.fromInt(getDefaultVersion().asInt());
-        List<ByteBuffer[]> expectedRowsValues = Stream.of(rows)
+        List<ByteBuffer[]> expectedRowsValues = rows.stream()
                 .map(row -> Stream.of(row)
                         .map(cell -> {
                             int index = columnCounter.getAndIncrement() % size;
-                            return cell == null ? null :
-                                    cell instanceof ByteBuffer ? (ByteBuffer) cell :
-                                            cluster.getConfiguration()
-                                                    .getCodecRegistry()
-                                                    .codecFor(result.getColumnDefinitions().getType(index))
-                                                    .serialize(cell, version);
+                            return cell instanceof ByteBuffer ? (ByteBuffer) cell :
+                                    cluster.getConfiguration()
+                                            .getCodecRegistry()
+                                            .codecFor(defs.getType(index))
+                                            .serialize(cell, version);
                         })
                         .toArray(ByteBuffer[]::new))
                 .collect(Collectors.toList());

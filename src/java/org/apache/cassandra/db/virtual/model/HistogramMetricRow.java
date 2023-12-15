@@ -38,68 +38,62 @@ public class HistogramMetricRow
         this.histogramEntry = histogramEntry;
     }
 
-    @Column(index = 1)
+    @Column
     public String scope()
     {
         return Metrics.getMetricScope(histogramEntry.getKey());
     }
 
-    @Column(index = 0, type = Column.Type.PARTITION_KEY)
+    @Column(type = Column.Type.PARTITION_KEY)
     public String name()
     {
         return histogramEntry.getKey();
     }
 
-    @Column(index = 3)
-    public int size()
-    {
-        return histogramEntry.getValue().getSnapshot().size();
-    }
-
-    @Column(index = 4)
+    @Column
     public double p75th()
     {
         return histogramEntry.getValue().getSnapshot().get75thPercentile();
     }
 
-    @Column(index = 5)
+    @Column
     public double p95th()
     {
         return histogramEntry.getValue().getSnapshot().get95thPercentile();
     }
 
-    @Column(index = 6)
+    @Column
     public double p98th()
     {
         return histogramEntry.getValue().getSnapshot().get98thPercentile();
     }
 
-    @Column(index = 7)
+    @Column
     public double p99th()
     {
         return histogramEntry.getValue().getSnapshot().get99thPercentile();
     }
 
-    @Column(index = 8)
+    @Column
     public double p999th()
     {
         return histogramEntry.getValue().getSnapshot().get999thPercentile();
     }
 
-    @Column(index = 9)
-    public double max()
+    @Column
+    public long max()
     {
         return histogramEntry.getValue().getSnapshot().getMax();
     }
 
-    @Column(index = 10)
+    @Column
     public double mean()
     {
         return histogramEntry.getValue().getSnapshot().getMean();
     }
 
-    @Column(index = 11)
-    public double min()
+    @Column
+    public long min()
     {
         return histogramEntry.getValue().getSnapshot().getMin();
     }

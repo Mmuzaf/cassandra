@@ -38,43 +38,43 @@ public class MeterMetricRow
         this.meterEntry = meterEntry;
     }
 
-    @Column(index = 0, type = Column.Type.PARTITION_KEY)
+    @Column(type = Column.Type.PARTITION_KEY)
     public String name()
     {
         return meterEntry.getKey();
     }
 
-    @Column(index = 1)
+    @Column
     public String scope()
     {
         return Metrics.getMetricScope(meterEntry.getKey());
     }
 
-    @Column(index = 2)
+    @Column
     public long count()
     {
         return meterEntry.getValue().getCount();
     }
 
-    @Column(index = 3)
+    @Column
     public double fifteenMinuteRate()
     {
         return meterEntry.getValue().getFifteenMinuteRate();
     }
 
-    @Column(index = 4)
+    @Column
     public double fiveMinuteRate()
     {
         return meterEntry.getValue().getFiveMinuteRate();
     }
 
-    @Column(index = 5)
+    @Column
     public double meanRate()
     {
         return meterEntry.getValue().getMeanRate();
     }
 
-    @Column(index = 6)
+    @Column
     public double oneMinuteRate()
     {
         return meterEntry.getValue().getOneMinuteRate();

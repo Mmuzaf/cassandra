@@ -39,19 +39,19 @@ public class GaugeMetricRow
         this.gaugeEntry = gaugeEntry;
     }
 
-    @Column(index = 0, type = Column.Type.PARTITION_KEY)
+    @Column(type = Column.Type.PARTITION_KEY)
     public String name()
     {
         return gaugeEntry.getKey();
     }
 
-    @Column(index = 1)
+    @Column
     public String scope()
     {
         return Metrics.getMetricScope(gaugeEntry.getKey());
     }
 
-    @Column(index = 2)
+    @Column
     public String value()
     {
         return gaugeEntry.getValue().getValue().toString();

@@ -24,20 +24,20 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to mark a walk order for a {@link RowWalker}.
+ * Annotation to mark a walk order for a {@link RowWalker}. Annotation is used on a method that returns a value and
+ * represents a column value for a row. The columns order is defined by the column type and the column name
+ * in lexicographical order (case-insensitive) and the same way as in CQL (partition key columns first,
+ * then clustering columns, then regular columns).
+ *
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.METHOD)
 public @interface Column
 {
-    /**
-     * @return Index of the column. {@code 0} value means that column is the partition key column.
-     */
-    int index();
-
+    /** The type of the column */
     Type type() default Type.REGULAR;
 
-    /** Be sure the order of the enum values is preserved. */
+    /** Be sure the order of the enum values is preserved as they are used in ordinal comparisons for the virtual tables. */
     enum Type
     {
         /** The column is a partition key column. */
