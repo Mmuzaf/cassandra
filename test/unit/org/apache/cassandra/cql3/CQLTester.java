@@ -1684,6 +1684,11 @@ public abstract class CQLTester
         assertRowsContains(getCluster(getDefaultVersion()), result, rows);
     }
 
+    public void assertRowsContains(ResultSet result, List<Object[]> rows)
+    {
+        assertRowsContains(getCluster(getDefaultVersion()), result, rows);
+    }
+
     public static void assertRowsContains(Cluster cluster, ResultSet result, Object[]... rows)
     {
         assertRowsContains(cluster, result, rows == null ? Collections.emptyList() : Arrays.asList(rows));

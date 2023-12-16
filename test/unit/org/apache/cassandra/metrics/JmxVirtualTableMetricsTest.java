@@ -20,20 +20,13 @@ package org.apache.cassandra.metrics;
 
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
-import org.apache.cassandra.ServerTestUtils;
-import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.CQLTester;
 import org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter;
-import org.apache.cassandra.service.EmbeddedCassandraService;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.management.JMX;
-import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import java.util.EnumMap;
 import java.util.List;
@@ -43,40 +36,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
-import static org.apache.cassandra.cql3.CQLTester.assertRowsContains;
 import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Test comparing JMX metrics to virtual table metrics representation, basically metric values must be equal.
+ * Test compares JMX metrics to virtual table metrics values, basically all metric values must be equal and
+ * have the same representation in both places.
  */
-public class JmxVirtualTableMetricsTest
+public class JmxVirtualTableMetricsTest extends CQLTester
 {
-    private static Cluster cluster;
-    private static Session session;
-    private static EmbeddedCassandraService cassandra;
-    private static MBeanServerConnection jmxConnection;
     private final Map<MetricType, Metric> metricToNameMap = new EnumMap<>(MetricType.class);
     private final AtomicInteger gaugeValue = new AtomicInteger(123);
 
     @BeforeClass
     public static void setup() throws Exception
     {
-        cassandra = ServerTestUtils.startEmbeddedCassandraService();
-        cluster = Cluster.builder().addContactPoint("127.0.0.1").withPort(DatabaseDescriptor.getNativeTransportPort()).build();
-        session = cluster.connect();
         CQLTester.startJMXServer();
         CQLTester.createMBeanServerConnection();
-        jmxConnection = CQLTester.getJmxConnection();
-    }
-
-    @AfterClass
-    public static void tearDown()
-    {
-        if (cluster != null)
-            cluster.close();
-        if (cassandra != null)
-            cassandra.stop();
     }
 
     @Before
@@ -111,8 +87,7 @@ public class JmxVirtualTableMetricsTest
 
         for (Map.Entry<String, List<ObjectName>> e : mbeanByMetricGroup.entrySet())
         {
-            assertRowsContains(cluster,
-                    session.execute(String.format("SELECT * FROM %s.metrics_%s", VIRTUAL_VIEWS,
+            assertRowsContains(executeNet(String.format("SELECT * FROM %s.metrics_%s", VIRTUAL_VIEWS,
                             CollectionVirtualTableAdapter.virtualTableNameStyle(e.getKey()))),
                     e.getValue().stream().map(this::makeMetricRow).collect(Collectors.toList()));
         }
@@ -132,28 +107,23 @@ public class JmxVirtualTableMetricsTest
             switch (e.getKey())
             {
                 case METER:
-                    assertRowsContains(cluster,
-                            session.execute(String.format("SELECT * FROM %s.metrics_type_meter", VIRTUAL_VIEWS)),
+                    assertRowsContains(executeNet(String.format("SELECT * FROM %s.metrics_type_meter", VIRTUAL_VIEWS)),
                             e.getValue().stream().map(this::makeMeterRow).collect(Collectors.toList()));
                     break;
                 case COUNTER:
-                    assertRowsContains(cluster,
-                            session.execute(String.format("SELECT * FROM %s.metrics_type_counter", VIRTUAL_VIEWS)),
+                    assertRowsContains(executeNet(String.format("SELECT * FROM %s.metrics_type_counter", VIRTUAL_VIEWS)),
                             e.getValue().stream().map(this::makeCounterRow).collect(Collectors.toList()));
                     break;
                 case HISTOGRAM:
-                    assertRowsContains(cluster,
-                            session.execute(String.format("SELECT * FROM %s.metrics_type_histogram", VIRTUAL_VIEWS)),
+                    assertRowsContains(executeNet(String.format("SELECT * FROM %s.metrics_type_histogram", VIRTUAL_VIEWS)),
                             e.getValue().stream().map(this::makeHistogramRow).collect(Collectors.toList()));
                     break;
                 case TIMER:
-                    assertRowsContains(cluster,
-                            session.execute(String.format("SELECT * FROM %s.metrics_type_timer", VIRTUAL_VIEWS)),
+                    assertRowsContains(executeNet(String.format("SELECT * FROM %s.metrics_type_timer", VIRTUAL_VIEWS)),
                             e.getValue().stream().map(this::makeTimerRow).collect(Collectors.toList()));
                     break;
                 case GAUGE:
-                    assertRowsContains(cluster,
-                            session.execute(String.format("SELECT * FROM %s.metrics_type_gauge", VIRTUAL_VIEWS)),
+                    assertRowsContains(executeNet(String.format("SELECT * FROM %s.metrics_type_gauge", VIRTUAL_VIEWS)),
                             e.getValue().stream().map(this::makeGaugeRow).collect(Collectors.toList()));
                     break;
             }
