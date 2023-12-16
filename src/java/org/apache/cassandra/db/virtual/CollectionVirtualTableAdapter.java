@@ -76,7 +76,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -136,10 +135,9 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
             String description,
             RowWalker<R> walker,
             Supplier<Iterable<C>> container,
-            Function<C, R> rowFunc,
-            UnaryOperator<String> nameMapper)
+            Function<C, R> rowFunc)
     {
-        return new CollectionVirtualTableAdapter<>(nameMapper.apply(virtualTableNameStyle(rawName)),
+        return new CollectionVirtualTableAdapter<>(virtualTableNameStyle(rawName),
                 description,
                 walker,
                 () -> StreamSupport.stream(container.get().spliterator(), false)

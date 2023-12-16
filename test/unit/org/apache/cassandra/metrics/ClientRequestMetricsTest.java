@@ -190,7 +190,7 @@ public class ClientRequestMetricsTest
 
     private void assertMetricsVirtualTable(ClientRequestMetricsContainer writeMetricsContainer, ClientRequestMetricsContainer readMetricsContainer)
     {
-        assertRowsContains(cluster, session.execute("SELECT * FROM system_views.metrics_client_request"),
+        assertRowsContains(cluster, session.execute("SELECT * FROM system_metrics.client_request"),
                 row("org.apache.cassandra.metrics.ClientRequest.LocalRequests.Read", "Read", "meter",
                         String.valueOf(readMetricsContainer.getMetrics().localRequests.getCount())),
                 row("org.apache.cassandra.metrics.ClientRequest.LocalRequests.Write", "Write", "meter",

@@ -72,8 +72,7 @@ public class CollectionVirtualTableAdapterTest extends CQLTester
                 "The collection virtual table",
                 new CollectionEntryTestRowWalker(),
                 () -> collection,
-                CollectionEntryTestRow::new,
-                UnaryOperator.identity()));
+                CollectionEntryTestRow::new));
         VirtualKeyspaceRegistry.instance.register(new VirtualKeyspace(KS_NAME, tables));
     }
 

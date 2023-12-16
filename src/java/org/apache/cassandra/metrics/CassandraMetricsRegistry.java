@@ -27,11 +27,26 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.MetricRegistryListener;
 import com.codahale.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter;
+import org.apache.cassandra.db.virtual.VirtualKeyspace;
 import org.apache.cassandra.db.virtual.VirtualKeyspaceRegistry;
+import org.apache.cassandra.db.virtual.VirtualTable;
+import org.apache.cassandra.db.virtual.model.CounterMetricRow;
+import org.apache.cassandra.db.virtual.model.CounterMetricRowWalker;
+import org.apache.cassandra.db.virtual.model.GaugeMetricRow;
+import org.apache.cassandra.db.virtual.model.GaugeMetricRowWalker;
+import org.apache.cassandra.db.virtual.model.HistogramMetricRow;
+import org.apache.cassandra.db.virtual.model.HistogramMetricRowWalker;
+import org.apache.cassandra.db.virtual.model.MeterMetricRow;
+import org.apache.cassandra.db.virtual.model.MeterMetricRowWalker;
+import org.apache.cassandra.db.virtual.model.MetricGroupRow;
+import org.apache.cassandra.db.virtual.model.MetricGroupRowWalker;
 import org.apache.cassandra.db.virtual.model.MetricRow;
 import org.apache.cassandra.db.virtual.model.MetricRowWalker;
+import org.apache.cassandra.db.virtual.model.TimerMetricRow;
+import org.apache.cassandra.db.virtual.model.TimerMetricRowWalker;
 import org.apache.cassandra.io.sstable.format.big.RowIndexEntry;
 import org.apache.cassandra.utils.MBeanWrapper;
 import org.apache.cassandra.utils.memory.MemtablePool;
@@ -45,6 +60,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -53,15 +69,13 @@ import java.util.SortedMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
-import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.GROUP_NAME_MAPPER;
-import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;
+import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_METRICS;
 
 /**
  * Dropwizard metrics registry extension for Cassandra, as of for now uses the latest version of Dropwizard metrics
@@ -72,7 +86,6 @@ import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;
  *
  * @see org.apache.cassandra.db.virtual.VirtualTable
  * @see org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter
- * @see org.apache.cassandra.db.virtual.SystemViewsKeyspace
  */
 public class CassandraMetricsRegistry extends MetricRegistry
 {
@@ -161,31 +174,12 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
         assert listeners.isEmpty();
 
-        MetricRegistryListener virtualTableExporter = new BaseMetricRegistryListener()
-        {
-            private final AtomicBoolean registered = new AtomicBoolean();
-            protected void onMetricAdded(String name, Metric metric)
-            {
-                if (!registered.compareAndSet(false, true))
-                    return;
-
-                metricGroups.forEach(groupName ->
-                        VirtualKeyspaceRegistry.instance.addToKeyspace(VIRTUAL_VIEWS,
-                                Collections.singletonList(CollectionVirtualTableAdapter.create(groupName,
-                                        "All metrics for \"" + groupName + "\" metric group",
-                                        new MetricRowWalker(),
-                                        () -> withAliases(Metrics.getMetrics(), m -> m.systemViewName.equals(groupName)),
-                                        MetricRow::new,
-                                        GROUP_NAME_MAPPER))));
-            }
-        };
+        VirtualKeyspaceRegistry.instance.register(new VirtualKeyspace(VIRTUAL_METRICS, createVirtualKeyspace()));
         listeners.add(jmxExporter);
-        listeners.add(virtualTableExporter);
         listeners.addLast(housekeepingListener);
 
         // Adding listeners to the root registry, so that they can be notified about all metrics changes.
         Metrics.addListener(jmxExporter);
-        Metrics.addListener(virtualTableExporter);
         Metrics.addListener(housekeepingListener);
     }
 
@@ -223,6 +217,56 @@ public class CassandraMetricsRegistry extends MetricRegistry
             return Long.toString(((Timer) metric).getCount());
         else
             throw new IllegalStateException("Unknown metric type: " + metric.getClass().getName());
+    }
+
+    private List<VirtualTable> createVirtualKeyspace()
+    {
+        ImmutableList.Builder<VirtualTable> builder = ImmutableList.builder();
+        metricGroups.forEach(groupName -> builder.add(CollectionVirtualTableAdapter.create(groupName,
+                "All metrics for \"" + groupName + "\" metric group",
+                new MetricRowWalker(),
+                () -> withAliases(Metrics.getMetrics(), m -> m.systemViewName.equals(groupName)),
+                MetricRow::new)));
+        // Register virtual table of all known metric groups.
+        builder.add(CollectionVirtualTableAdapter.create("all_group_names",
+                        "All metric group names",
+                        new MetricGroupRowWalker(),
+                        () -> () -> Metrics.getAliases()
+                                .values()
+                                .stream()
+                                .flatMap(Collection::stream)
+                                .map(CassandraMetricsRegistry.MetricName::getSystemViewName)
+                                .distinct()
+                                .iterator(),
+                        MetricGroupRow::new))
+                // Register virtual tables of all metrics types similar to the JMX MBean structure,
+                // e.g.: HistogramJmxMBean, MeterJmxMBean, etc.
+                .add(CollectionVirtualTableAdapter.create("type_counter",
+                        "All metrics with type \"Counter\"",
+                        new CounterMetricRowWalker(),
+                        () -> Metrics.getCounters().entrySet(),
+                        CounterMetricRow::new))
+                .add(CollectionVirtualTableAdapter.create("type_gauge",
+                        "All metrics with type \"Gauge\"",
+                        new GaugeMetricRowWalker(),
+                        () -> Metrics.getGauges().entrySet(),
+                        GaugeMetricRow::new))
+                .add(CollectionVirtualTableAdapter.create("type_histogram",
+                        "All metrics with type \"Histogram\"",
+                        new HistogramMetricRowWalker(),
+                        () -> Metrics.getHistograms().entrySet(),
+                        HistogramMetricRow::new))
+                .add(CollectionVirtualTableAdapter.create("type_meter",
+                        "All metrics with type \"Meter\"",
+                        new MeterMetricRowWalker(),
+                        () -> Metrics.getMeters().entrySet(),
+                        MeterMetricRow::new))
+                .add(CollectionVirtualTableAdapter.create("type_timer",
+                        "All metrics with type \"Timer\"",
+                        new TimerMetricRowWalker(),
+                        () -> Metrics.getTimers().entrySet(),
+                        TimerMetricRow::new));
+        return builder.build();
     }
 
     private static void assertKnownMetric(MetricName name)

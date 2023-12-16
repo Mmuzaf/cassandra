@@ -17,12 +17,8 @@
  */
 package org.apache.cassandra.db.virtual;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 import com.google.common.collect.Iterables;
@@ -31,45 +27,24 @@ import org.apache.cassandra.schema.KeyspaceMetadata;
 import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
 
-import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;
-
 public final class VirtualKeyspaceRegistry
 {
-    private final Map<String, VirtualKeyspace> virtualKeyspaces = new ConcurrentHashMap<>();
     public static final VirtualKeyspaceRegistry instance = new VirtualKeyspaceRegistry();
+
+    private final Map<String, VirtualKeyspace> virtualKeyspaces = new ConcurrentHashMap<>();
+    private final Map<TableId, VirtualTable> virtualTables = new ConcurrentHashMap<>();
 
     private VirtualKeyspaceRegistry()
     {
-        register(new VirtualKeyspace(VIRTUAL_VIEWS, Collections.emptyList()));
-    }
-
-    public void addToKeyspace(String ksName, Collection<VirtualTable> tables)
-    {
-        virtualKeyspaces.computeIfPresent(ksName,
-                (name, oldKeyspace) -> {
-                    Map<String, VirtualTable> newTables = oldKeyspace.tables()
-                            .stream()
-                            .collect(Collectors.toMap(VirtualTable::name, Function.identity()));
-                    tables.forEach(t -> newTables.putIfAbsent(t.name(), t));
-                    return new VirtualKeyspace(name, newTables.values());
-                });
-    }
-
-    public void removeFromKeyspace(String ksName, Collection<VirtualTable> tables)
-    {
-        virtualKeyspaces.computeIfPresent(ksName,
-                (name, oldKeyspace) -> {
-                    Map<String, VirtualTable> newTables = oldKeyspace.tables()
-                            .stream()
-                            .collect(Collectors.toMap(VirtualTable::name, Function.identity()));
-                    tables.forEach(t -> newTables.remove(t.name()));
-                    return new VirtualKeyspace(name, newTables.values());
-                });
     }
 
     public void register(VirtualKeyspace keyspace)
     {
-        virtualKeyspaces.put(keyspace.name(), keyspace);
+        VirtualKeyspace previous = virtualKeyspaces.put(keyspace.name(), keyspace);
+        // some tests choose to replace the keyspace, if so make sure to cleanup tables as well
+        if (previous != null)
+            previous.tables().forEach(t -> virtualTables.remove(t));
+        keyspace.tables().forEach(t -> virtualTables.put(t.metadata().id, t));
     }
 
     @Nullable
@@ -81,7 +56,7 @@ public final class VirtualKeyspaceRegistry
     @Nullable
     public VirtualTable getTableNullable(TableId id)
     {
-        return getTable(id);
+        return virtualTables.get(id);
     }
 
     @Nullable
@@ -94,22 +69,12 @@ public final class VirtualKeyspaceRegistry
     @Nullable
     public TableMetadata getTableMetadataNullable(TableId id)
     {
-        VirtualTable table = getTable(id);
+        VirtualTable table = virtualTables.get(id);
         return null != table ? table.metadata() : null;
     }
 
     public Iterable<KeyspaceMetadata> virtualKeyspacesMetadata()
     {
         return Iterables.transform(virtualKeyspaces.values(), VirtualKeyspace::metadata);
-    }
-
-    private VirtualTable getTable(TableId id)
-    {
-        return virtualKeyspaces.values().stream()
-                .map(VirtualKeyspace::tables)
-                .flatMap(Collection::stream)
-                .filter(t -> t.metadata().id.equals(id))
-                .findFirst()
-                .orElse(null);
     }
 }

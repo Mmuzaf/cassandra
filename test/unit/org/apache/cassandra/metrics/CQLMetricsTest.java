@@ -87,7 +87,7 @@ public class CQLMetricsTest
             DatabaseDescriptor.setUseStatementsEnabled(true);
         }
 
-        assertRowsContains(cluster, session.execute("SELECT * FROM system_views.metrics_cql"),
+        assertRowsContains(cluster, session.execute("SELECT * FROM system_metrics.cql"),
                 row("org.apache.cassandra.metrics.CQL.UseStatementsExecuted", "unknown", "counter",
                         String.valueOf(useCountBefore)));
     }
@@ -102,7 +102,7 @@ public class CQLMetricsTest
         session.prepare("SELECT * FROM junit.metricstest WHERE id = ?");
         assertEquals(n+2, (int) QueryProcessor.metrics.preparedStatementsCount.getValue());
 
-        assertRowsContains(cluster, session.execute("SELECT * FROM system_views.metrics_cql"),
+        assertRowsContains(cluster, session.execute("SELECT * FROM system_metrics.cql"),
                 row("org.apache.cassandra.metrics.CQL.PreparedStatementsCount", "unknown", "gauge",
                         String.valueOf(QueryProcessor.metrics.preparedStatementsCount.getValue())));
     }
@@ -138,7 +138,7 @@ public class CQLMetricsTest
         assertEquals(10, QueryProcessor.metrics.preparedStatementsExecuted.getCount());
         assertEquals(0, QueryProcessor.metrics.regularStatementsExecuted.getCount());
 
-        assertRowsContains(cluster, session.execute("SELECT * FROM system_views.metrics_cql"),
+        assertRowsContains(cluster, session.execute("SELECT * FROM system_metrics.cql"),
                 row("org.apache.cassandra.metrics.CQL.RegularStatementsExecuted", "unknown", "counter",
                         String.valueOf(QueryProcessor.metrics.regularStatementsExecuted.getCount())),
                 row("org.apache.cassandra.metrics.CQL.PreparedStatementsExecuted", "unknown", "counter",
@@ -161,7 +161,7 @@ public class CQLMetricsTest
             session.execute(String.format("INSERT INTO junit.metricstest (id, val) VALUES (%d, '%s')", i, "val" + i));
         assertEquals(0.5, QueryProcessor.metrics.preparedStatementsRatio.getValue(), 0.0);
 
-        assertRowsContains(cluster, session.execute("SELECT * FROM system_views.metrics_cql"),
+        assertRowsContains(cluster, session.execute("SELECT * FROM system_metrics.cql"),
                 row("org.apache.cassandra.metrics.CQL.PreparedStatementsRatio", "unknown", "gauge",
                         String.valueOf(QueryProcessor.metrics.preparedStatementsRatio.getValue())));
     }

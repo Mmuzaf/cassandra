@@ -74,7 +74,7 @@ public class ClientRequestRowAndColumnMetricsTest extends CQLTester
         assertEquals(2, ClientRequestSizeMetrics.totalRowsRead.getCount());
         // The partition key is provided by the client in the request, so we don't consider those columns as read.
         assertEquals(4, ClientRequestSizeMetrics.totalColumnsRead.getCount());
-        assertRowsContains(executeNet("SELECT * FROM system_views.metrics_client_request_size"),
+        assertRowsContains(executeNet("SELECT * FROM system_metrics.client_request_size"),
                 row("org.apache.cassandra.metrics.ClientRequestSize.RowsRead", "unknown", "counter",
                         String.valueOf(ClientRequestSizeMetrics.totalRowsRead.getCount())),
                 row("org.apache.cassandra.metrics.ClientRequestSize.ColumnsRead", "unknown", "counter",

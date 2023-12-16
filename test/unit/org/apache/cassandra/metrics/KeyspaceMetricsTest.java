@@ -82,7 +82,7 @@ public class KeyspaceMetricsTest
         session.execute(String.format("CREATE KEYSPACE %s WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };", keyspace));
 
         assertTrue(CassandraMetricsRegistry.Metrics.getNames().stream().anyMatch(m -> m.endsWith(keyspace)));
-        ResultSet resultSet = session.execute("SELECT * FROM system_views.metrics_keyspace WHERE scope = '" + keyspace + "';");
+        ResultSet resultSet = session.execute("SELECT * FROM system_metrics.keyspace WHERE scope = '" + keyspace + "';");
 
         int count = 0;
         for (Row row : resultSet)

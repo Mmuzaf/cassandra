@@ -166,7 +166,7 @@ public class BatchMetricsTest
             assertEquals(expectedPartitionsPerLoggedBatchCount, metrics.partitionsPerLoggedBatch.getCount());
             assertEquals(expectedPartitionsPerCounterBatchCount, metrics.partitionsPerCounterBatch.getCount());
 
-            assertRowsContains(cluster, session.execute("SELECT * FROM system_views.metrics_batch"),
+            assertRowsContains(cluster, session.execute("SELECT * FROM system_metrics.batch"),
                     row("org.apache.cassandra.metrics.Batch.PartitionsPerUnloggedBatch",
                             "unknown", "histogram", String.valueOf(metrics.partitionsPerUnloggedBatch.getSnapshot().getMedian())),
                     row("org.apache.cassandra.metrics.Batch.PartitionsPerLoggedBatch",

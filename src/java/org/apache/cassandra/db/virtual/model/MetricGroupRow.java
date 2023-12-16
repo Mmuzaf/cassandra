@@ -20,7 +20,6 @@ package org.apache.cassandra.db.virtual.model;
 
 import org.apache.cassandra.db.virtual.proc.Column;
 
-import static org.apache.cassandra.db.virtual.SystemViewsKeyspace.GROUP_NAME_MAPPER;
 import static org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter.virtualTableNameStyle;
 
 
@@ -45,6 +44,6 @@ public class MetricGroupRow
     @Column
     public String virtualTable()
     {
-        return GROUP_NAME_MAPPER.apply(virtualTableNameStyle(group));
+        return virtualTableNameStyle(group);
     }
 }
