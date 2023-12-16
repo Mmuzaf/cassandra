@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.UnaryOperator;
 
 import static org.junit.Assert.assertEquals;
 
@@ -68,6 +67,7 @@ public class CollectionVirtualTableAdapterTest extends CQLTester
     public void config() throws Exception
     {
         tables.add(CollectionVirtualTableAdapter.create(
+                KS_NAME,
                 VT_NAME,
                 "The collection virtual table",
                 new CollectionEntryTestRowWalker(),

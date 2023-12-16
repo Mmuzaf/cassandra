@@ -174,7 +174,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
         assert listeners.isEmpty();
 
-        VirtualKeyspaceRegistry.instance.register(new VirtualKeyspace(VIRTUAL_METRICS, createVirtualKeyspace()));
+        VirtualKeyspaceRegistry.instance.register(new VirtualKeyspace(VIRTUAL_METRICS, createMetricsKeyspaceTables()));
         listeners.add(jmxExporter);
         listeners.addLast(housekeepingListener);
 
@@ -219,16 +219,18 @@ public class CassandraMetricsRegistry extends MetricRegistry
             throw new IllegalStateException("Unknown metric type: " + metric.getClass().getName());
     }
 
-    private List<VirtualTable> createVirtualKeyspace()
+    private List<VirtualTable> createMetricsKeyspaceTables()
     {
         ImmutableList.Builder<VirtualTable> builder = ImmutableList.builder();
-        metricGroups.forEach(groupName -> builder.add(CollectionVirtualTableAdapter.create(groupName,
+        metricGroups.forEach(groupName -> builder.add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
+                groupName,
                 "All metrics for \"" + groupName + "\" metric group",
                 new MetricRowWalker(),
                 () -> withAliases(Metrics.getMetrics(), m -> m.systemViewName.equals(groupName)),
                 MetricRow::new)));
         // Register virtual table of all known metric groups.
-        builder.add(CollectionVirtualTableAdapter.create("all_group_names",
+        builder.add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
+                        "all_group_names",
                         "All metric group names",
                         new MetricGroupRowWalker(),
                         () -> () -> Metrics.getAliases()
@@ -241,27 +243,32 @@ public class CassandraMetricsRegistry extends MetricRegistry
                         MetricGroupRow::new))
                 // Register virtual tables of all metrics types similar to the JMX MBean structure,
                 // e.g.: HistogramJmxMBean, MeterJmxMBean, etc.
-                .add(CollectionVirtualTableAdapter.create("type_counter",
+                .add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
+                        "type_counter",
                         "All metrics with type \"Counter\"",
                         new CounterMetricRowWalker(),
                         () -> Metrics.getCounters().entrySet(),
                         CounterMetricRow::new))
-                .add(CollectionVirtualTableAdapter.create("type_gauge",
+                .add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
+                        "type_gauge",
                         "All metrics with type \"Gauge\"",
                         new GaugeMetricRowWalker(),
                         () -> Metrics.getGauges().entrySet(),
                         GaugeMetricRow::new))
-                .add(CollectionVirtualTableAdapter.create("type_histogram",
+                .add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
+                        "type_histogram",
                         "All metrics with type \"Histogram\"",
                         new HistogramMetricRowWalker(),
                         () -> Metrics.getHistograms().entrySet(),
                         HistogramMetricRow::new))
-                .add(CollectionVirtualTableAdapter.create("type_meter",
+                .add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
+                        "type_meter",
                         "All metrics with type \"Meter\"",
                         new MeterMetricRowWalker(),
                         () -> Metrics.getMeters().entrySet(),
                         MeterMetricRow::new))
-                .add(CollectionVirtualTableAdapter.create("type_timer",
+                .add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
+                        "type_timer",
                         "All metrics with type \"Timer\"",
                         new TimerMetricRowWalker(),
                         () -> Metrics.getTimers().entrySet(),

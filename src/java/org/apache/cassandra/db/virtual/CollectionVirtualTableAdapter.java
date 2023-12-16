@@ -81,7 +81,6 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static org.apache.cassandra.db.rows.Cell.NO_DELETION_TIME;
-import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;
 import static org.apache.cassandra.utils.FBUtilities.camelToSnake;
 
 /**
@@ -120,24 +119,27 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
     private final Iterable<R> data;
     private final TableMetadata metadata;
 
-    private CollectionVirtualTableAdapter(String tableName,
-                                         String description,
-                                         RowWalker<R> walker,
-                                         Iterable<R> data)
+    private CollectionVirtualTableAdapter(String keySpaceName,
+                                          String tableName,
+                                          String description,
+                                          RowWalker<R> walker,
+                                          Iterable<R> data)
     {
         this.walker = walker;
         this.data = data;
-        this.metadata = buildMetadata(tableName, description, walker);
+        this.metadata = buildMetadata(keySpaceName, tableName, description, walker);
     }
 
     public static <C, R> CollectionVirtualTableAdapter<R> create(
-            String rawName,
+            String keySpaceName,
+            String rawTableName,
             String description,
             RowWalker<R> walker,
             Supplier<Iterable<C>> container,
             Function<C, R> rowFunc)
     {
-        return new CollectionVirtualTableAdapter<>(virtualTableNameStyle(rawName),
+        return new CollectionVirtualTableAdapter<>(keySpaceName,
+                virtualTableNameStyle(rawTableName),
                 description,
                 walker,
                 () -> StreamSupport.stream(container.get().spliterator(), false)
@@ -170,9 +172,9 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
         return camelToSnake(modifiedCamel);
     }
 
-    private TableMetadata buildMetadata(String tableName, String description, RowWalker<R> walker)
+    private TableMetadata buildMetadata(String keyspaceName, String tableName, String description, RowWalker<R> walker)
     {
-        TableMetadata.Builder builder = TableMetadata.builder(VIRTUAL_VIEWS, tableName)
+        TableMetadata.Builder builder = TableMetadata.builder(keyspaceName, tableName)
                 .comment(description)
                 .kind(TableMetadata.Kind.VIRTUAL);
 
