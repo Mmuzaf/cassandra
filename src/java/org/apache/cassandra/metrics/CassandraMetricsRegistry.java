@@ -89,6 +89,7 @@ import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_METRICS;
  */
 public class CassandraMetricsRegistry extends MetricRegistry
 {
+    public static final String METRICS_GROUP_POSTFIX = "_group";
     /** A map of metric name constructed by {@link com.codahale.metrics.MetricRegistry#name(String, String...)} and
      * its full name in the way how it is represented in JMX. The map is used by {@link CassandraJmxMetricsExporter}
      * to export metrics to JMX. */
@@ -223,23 +224,17 @@ public class CassandraMetricsRegistry extends MetricRegistry
     {
         ImmutableList.Builder<VirtualTable> builder = ImmutableList.builder();
         metricGroups.forEach(groupName -> builder.add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
-                groupName,
+                groupName + METRICS_GROUP_POSTFIX,
                 "All metrics for \"" + groupName + "\" metric group",
                 new MetricRowWalker(),
                 () -> withAliases(Metrics.getMetrics(), m -> m.systemViewName.equals(groupName)),
                 MetricRow::new)));
         // Register virtual table of all known metric groups.
         builder.add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
-                        "all_group_names",
+                        "all_groups",
                         "All metric group names",
                         new MetricGroupRowWalker(),
-                        () -> () -> Metrics.getAliases()
-                                .values()
-                                .stream()
-                                .flatMap(Collection::stream)
-                                .map(CassandraMetricsRegistry.MetricName::getSystemViewName)
-                                .distinct()
-                                .iterator(),
+                        () -> metricGroups,
                         MetricGroupRow::new))
                 // Register virtual tables of all metrics types similar to the JMX MBean structure,
                 // e.g.: HistogramJmxMBean, MeterJmxMBean, etc.

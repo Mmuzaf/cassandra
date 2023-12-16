@@ -36,7 +36,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
-import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;
+import static org.apache.cassandra.metrics.CassandraMetricsRegistry.METRICS_GROUP_POSTFIX;
+import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_METRICS;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -87,7 +88,7 @@ public class JmxVirtualTableMetricsTest extends CQLTester
 
         for (Map.Entry<String, List<ObjectName>> e : mbeanByMetricGroup.entrySet())
         {
-            assertRowsContains(executeNet(String.format("SELECT * FROM %s.metrics_%s", VIRTUAL_VIEWS,
+            assertRowsContains(executeNet(String.format("SELECT * FROM %s.%s" + METRICS_GROUP_POSTFIX, VIRTUAL_METRICS,
                             CollectionVirtualTableAdapter.virtualTableNameStyle(e.getKey()))),
                     e.getValue().stream().map(this::makeMetricRow).collect(Collectors.toList()));
         }
@@ -107,23 +108,23 @@ public class JmxVirtualTableMetricsTest extends CQLTester
             switch (e.getKey())
             {
                 case METER:
-                    assertRowsContains(executeNet(String.format("SELECT * FROM %s.metrics_type_meter", VIRTUAL_VIEWS)),
+                    assertRowsContains(executeNet(String.format("SELECT * FROM %s.type_meter", VIRTUAL_METRICS)),
                             e.getValue().stream().map(this::makeMeterRow).collect(Collectors.toList()));
                     break;
                 case COUNTER:
-                    assertRowsContains(executeNet(String.format("SELECT * FROM %s.metrics_type_counter", VIRTUAL_VIEWS)),
+                    assertRowsContains(executeNet(String.format("SELECT * FROM %s.type_counter", VIRTUAL_METRICS)),
                             e.getValue().stream().map(this::makeCounterRow).collect(Collectors.toList()));
                     break;
                 case HISTOGRAM:
-                    assertRowsContains(executeNet(String.format("SELECT * FROM %s.metrics_type_histogram", VIRTUAL_VIEWS)),
+                    assertRowsContains(executeNet(String.format("SELECT * FROM %s.type_histogram", VIRTUAL_METRICS)),
                             e.getValue().stream().map(this::makeHistogramRow).collect(Collectors.toList()));
                     break;
                 case TIMER:
-                    assertRowsContains(executeNet(String.format("SELECT * FROM %s.metrics_type_timer", VIRTUAL_VIEWS)),
+                    assertRowsContains(executeNet(String.format("SELECT * FROM %s.type_timer", VIRTUAL_METRICS)),
                             e.getValue().stream().map(this::makeTimerRow).collect(Collectors.toList()));
                     break;
                 case GAUGE:
-                    assertRowsContains(executeNet(String.format("SELECT * FROM %s.metrics_type_gauge", VIRTUAL_VIEWS)),
+                    assertRowsContains(executeNet(String.format("SELECT * FROM %s.type_gauge", VIRTUAL_METRICS)),
                             e.getValue().stream().map(this::makeGaugeRow).collect(Collectors.toList()));
                     break;
             }
