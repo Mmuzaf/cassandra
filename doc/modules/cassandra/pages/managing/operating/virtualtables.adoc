@@ -24,7 +24,7 @@ Since a virtual table is not replicated the partitioner sorts in order of partit
 
 == Virtual Keyspaces
 
-Apache Cassandra 4.0 has added two new keyspaces for virtual tables:
+Apache Cassandra has the following virtual keyspaces:
 
 * `system_virtual_schema`
 * `system_views`
@@ -37,7 +37,9 @@ It is used by Cassandra internally and a user should not access it directly.
 
 The `system_views` keyspace contains the actual virtual tables.
 
-The `system_metrics` keyspace contains the virtual tables of all the metrics available in Cassandra.
+The `system_metrics` keyspace contains the virtual tables of all the metrics available in Apache Cassandra
+which can be used to monitor the health of the cluster. These metrics are split into several tables each
+containing a different set of metrics corresponding to the type of metric or the component of the system.
 
 == Virtual Table Limitations
 
@@ -57,6 +59,57 @@ Conditional batch statements cannot include mutations for virtual tables, nor ca
 In fact, mutations for virtual and regular tables cannot occur in the same batch table.
 
 == Virtual Tables
+
+=== Virtual Tables _system_metrics_ Keyspace
+
+The `system_metrics` virtual keyspace contains the virtual tables of all the metrics available in Apache Cassandra.
+Currently, the `system_metrics` keyspace contains the following virtual tables (subject to change), which can be found
+in the `system_metrics.all_groups` virtual table:
+
+[source, console]
+----
+cqlsh> select * from system_metrics.all_groups ;
+
+ group_name        | virtual_table
+-------------------+---------------------
+             Batch |               batch
+        BufferPool |         buffer_pool
+    CIDRAuthorizer |     cidr_authorizer
+               CQL |                 cql
+             Cache |               cache
+        ChunkCache |         chunk_cache
+            Client |              client
+ ClientMessageSize | client_message_size
+     ClientRequest |      client_request
+ ClientRequestSize | client_request_size
+      ColumnFamily |       column_family
+         CommitLog |          commit_log
+        Compaction |          compaction
+        Connection |          connection
+    DroppedMessage |     dropped_message
+      HintsService |       hints_service
+             Index |               index
+ IndexColumnFamily | index_column_family
+        IndexTable |         index_table
+  InternodeInbound |   internode_inbound
+          Keyspace |            keyspace
+      MemtablePool |       memtable_pool
+         Messaging |           messaging
+             Paxos |               paxos
+        ReadRepair |         read_repair
+            Repair |              repair
+           Storage |             storage
+      StorageProxy |       storage_proxy
+         Streaming |           streaming
+               TCM |                 tcm
+             Table |               table
+       ThreadPools |        thread_pools
+      TrieMemtable |       trie_memtable
+
+(33 rows)
+----
+
+=== Virtual Tables _system_views_ Keyspace
 
 Each of the virtual tables in the `system_views` virtual keyspace contain different information.
 

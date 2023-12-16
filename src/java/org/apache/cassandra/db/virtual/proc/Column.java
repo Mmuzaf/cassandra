@@ -28,7 +28,11 @@ import java.lang.annotation.Target;
  * represents a column value for a row. The columns order is defined by the column type and the column name
  * in lexicographical order (case-insensitive) and the same way as in CQL (partition key columns first,
  * then clustering columns, then regular columns).
- *
+ * <p>
+ * The column {@link org.apache.cassandra.db.virtual.proc.Column.Type} type is the same as the existing CQL
+ * {@code ColumnMetadata.Kind} and is used to define the column types for the virtual tables. All the classes
+ * in the {@link org.apache.cassandra.db.virtual.proc} package are used by annotation processor to generate
+ * {@link RowWalker} implementations, so they should hove zero dependencies on the rest of the codebase.
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.METHOD)
