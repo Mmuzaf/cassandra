@@ -62,6 +62,7 @@ import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXServiceURL;
 import javax.management.remote.rmi.RMIConnectorServer;
 
+import com.datastax.driver.core.TypeCodec;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
@@ -1755,9 +1756,11 @@ public abstract class CQLTester
         AtomicInteger index = new AtomicInteger();
         int size = columnDefinitions.size();
         return Stream.of(row)
-                .map(b -> codecRegistry.codecFor(columnDefinitions.getType(index.getAndIncrement() % size))
-                        .format(codecRegistry.codecFor(columnDefinitions.getType(index.get() % size))
-                                .deserialize(b, version)))
+                .map(b -> {
+                    int idx = index.getAndIncrement() % size;
+                    TypeCodec<Object> codec = codecRegistry.codecFor(columnDefinitions.getType(idx));
+                    return codec.format(codec.deserialize(b, version));
+                })
                 .collect(Collectors.joining(", ", "[", "]"));
     }
 

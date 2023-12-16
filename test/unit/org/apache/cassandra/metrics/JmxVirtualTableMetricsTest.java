@@ -18,11 +18,8 @@
 
 package org.apache.cassandra.metrics;
 
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import org.apache.cassandra.ServerTestUtils;
@@ -42,8 +39,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -62,7 +57,7 @@ public class JmxVirtualTableMetricsTest
     private static EmbeddedCassandraService cassandra;
     private static MBeanServerConnection jmxConnection;
     private final Map<MetricType, Metric> metricToNameMap = new EnumMap<>(MetricType.class);
-    private final AtomicInteger gaugeValue = new AtomicInteger(0);
+    private final AtomicInteger gaugeValue = new AtomicInteger(123);
 
     @BeforeClass
     public static void setup() throws Exception
@@ -94,7 +89,7 @@ public class JmxVirtualTableMetricsTest
         metricToNameMap.put(MetricType.COUNTER, registry.counter("counter"));
         metricToNameMap.put(MetricType.HISTOGRAM, registry.histogram("histogram"));
         metricToNameMap.put(MetricType.TIMER, registry.timer("timer"));
-        metricToNameMap.put(MetricType.GAUGE, registry.gauge("gauge", () -> () -> gaugeValue.get()));
+        metricToNameMap.put(MetricType.GAUGE, registry.gauge("gauge", () -> gaugeValue::get));
 
         CassandraMetricsRegistry.metricGroups.forEach(group -> {
             MetricNameFactory factory = CassandraMetricsRegistry.Metrics.regsiterMetricFactory(new DefaultNameFactory(group, "jmx.virtual"));
@@ -109,7 +104,6 @@ public class JmxVirtualTableMetricsTest
     @Test
     public void testJmxEqualVirtualTableByMetricGroup() throws Exception
     {
-        randomizeMetricValues(metricToNameMap, gaugeValue);
         Map<String, List<ObjectName>> mbeanByMetricGroup = jmxConnection.queryNames(null, null)
                 .stream()
                 .filter(this::isLocalMetric)
@@ -127,7 +121,6 @@ public class JmxVirtualTableMetricsTest
     @Test
     public void testJmxEqualVirtualTableByMetricType() throws Exception
     {
-        randomizeMetricValues(metricToNameMap, gaugeValue);
         Map<MetricType, List<ObjectName>> mbeanByMetricGroup = jmxConnection.queryNames(null, null)
                 .stream()
                 .filter(this::isLocalMetric)
@@ -165,16 +158,6 @@ public class JmxVirtualTableMetricsTest
                     break;
             }
         }
-    }
-
-    private static void randomizeMetricValues(Map<MetricType, Metric> map, AtomicInteger gaugeValue)
-    {
-        ThreadLocalRandom random = ThreadLocalRandom.current();
-        ((Meter) map.get(MetricType.METER)).mark(random.nextInt(0, 1234));
-        ((com.codahale.metrics.Counter) map.get(MetricType.COUNTER)).inc(random.nextInt(0, 5432));
-        ((Histogram) map.get(MetricType.HISTOGRAM)).update(random.nextInt(0, 1235));
-        ((Timer) map.get(MetricType.TIMER)).update(random.nextInt(0, 2463), TimeUnit.MILLISECONDS);
-        gaugeValue.set(random.nextInt(0, 7345));
     }
 
     private Object[] makeMetricRow(ObjectName objectName)
