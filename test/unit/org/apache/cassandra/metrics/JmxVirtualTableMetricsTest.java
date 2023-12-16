@@ -88,8 +88,8 @@ public class JmxVirtualTableMetricsTest extends CQLTester
 
         for (Map.Entry<String, List<ObjectName>> e : mbeanByMetricGroup.entrySet())
         {
-            assertRowsContains(executeNet(String.format("SELECT * FROM %s.%s" + METRICS_GROUP_POSTFIX, VIRTUAL_METRICS,
-                            CollectionVirtualTableAdapter.virtualTableNameStyle(e.getKey()))),
+            assertRowsContains(executeNet(String.format("SELECT * FROM %s.%s", VIRTUAL_METRICS,
+                            METRICS_GROUP_POSTFIX.apply(CollectionVirtualTableAdapter.virtualTableNameStyle(e.getKey())))),
                     e.getValue().stream().map(this::makeMetricRow).collect(Collectors.toList()));
         }
     }

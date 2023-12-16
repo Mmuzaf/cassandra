@@ -89,7 +89,7 @@ import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_METRICS;
  */
 public class CassandraMetricsRegistry extends MetricRegistry
 {
-    public static final String METRICS_GROUP_POSTFIX = "_group";
+    public static final UnaryOperator<String> METRICS_GROUP_POSTFIX = name -> name + "_group";
     /** A map of metric name constructed by {@link com.codahale.metrics.MetricRegistry#name(String, String...)} and
      * its full name in the way how it is represented in JMX. The map is used by {@link CassandraJmxMetricsExporter}
      * to export metrics to JMX. */
@@ -224,7 +224,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
     {
         ImmutableList.Builder<VirtualTable> builder = ImmutableList.builder();
         metricGroups.forEach(groupName -> builder.add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
-                groupName + METRICS_GROUP_POSTFIX,
+                METRICS_GROUP_POSTFIX.apply(groupName),
                 "All metrics for \"" + groupName + "\" metric group",
                 new MetricRowWalker(),
                 () -> withAliases(Metrics.getMetrics(), m -> m.systemViewName.equals(groupName)),

@@ -21,6 +21,7 @@ package org.apache.cassandra.db.virtual.model;
 import org.apache.cassandra.db.virtual.proc.Column;
 
 import static org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter.virtualTableNameStyle;
+import static org.apache.cassandra.metrics.CassandraMetricsRegistry.METRICS_GROUP_POSTFIX;
 
 
 /**
@@ -44,6 +45,6 @@ public class MetricGroupRow
     @Column
     public String virtualTable()
     {
-        return virtualTableNameStyle(group);
+        return METRICS_GROUP_POSTFIX.apply(virtualTableNameStyle(group));
     }
 }
