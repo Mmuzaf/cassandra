@@ -68,43 +68,43 @@ in the `system_metrics.all_groups` virtual table:
 
 [source, console]
 ----
-cqlsh> select * from system_metrics.all_groups ;
+cqlsh> select * from system_metrics.all_groups  ;
 
  group_name        | virtual_table
--------------------+---------------------
-             Batch |               batch
-        BufferPool |         buffer_pool
-    CIDRAuthorizer |     cidr_authorizer
-               CQL |                 cql
-             Cache |               cache
-        ChunkCache |         chunk_cache
-            Client |              client
- ClientMessageSize | client_message_size
-     ClientRequest |      client_request
- ClientRequestSize | client_request_size
-      ColumnFamily |       column_family
-         CommitLog |          commit_log
-        Compaction |          compaction
-        Connection |          connection
-    DroppedMessage |     dropped_message
-      HintsService |       hints_service
-             Index |               index
- IndexColumnFamily | index_column_family
-        IndexTable |         index_table
-  InternodeInbound |   internode_inbound
-          Keyspace |            keyspace
-      MemtablePool |       memtable_pool
-         Messaging |           messaging
-             Paxos |               paxos
-        ReadRepair |         read_repair
-            Repair |              repair
-           Storage |             storage
-      StorageProxy |       storage_proxy
-         Streaming |           streaming
-               TCM |                 tcm
-             Table |               table
-       ThreadPools |        thread_pools
-      TrieMemtable |       trie_memtable
+-------------------+---------------------------
+             Batch |               batch_group
+        BufferPool |         buffer_pool_group
+    CIDRAuthorizer |     cidr_authorizer_group
+               CQL |                 cql_group
+             Cache |               cache_group
+        ChunkCache |         chunk_cache_group
+            Client |              client_group
+ ClientMessageSize | client_message_size_group
+     ClientRequest |      client_request_group
+ ClientRequestSize | client_request_size_group
+      ColumnFamily |       column_family_group
+         CommitLog |          commit_log_group
+        Compaction |          compaction_group
+        Connection |          connection_group
+    DroppedMessage |     dropped_message_group
+      HintsService |       hints_service_group
+             Index |               index_group
+ IndexColumnFamily | index_column_family_group
+        IndexTable |         index_table_group
+  InternodeInbound |   internode_inbound_group
+          Keyspace |            keyspace_group
+      MemtablePool |       memtable_pool_group
+         Messaging |           messaging_group
+             Paxos |               paxos_group
+        ReadRepair |         read_repair_group
+            Repair |              repair_group
+           Storage |             storage_group
+      StorageProxy |       storage_proxy_group
+         Streaming |           streaming_group
+               TCM |                 tcm_group
+             Table |               table_group
+       ThreadPools |        thread_pools_group
+      TrieMemtable |       trie_memtable_group
 
 (33 rows)
 ----
