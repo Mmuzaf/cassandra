@@ -53,7 +53,6 @@ import org.apache.cassandra.db.virtual.proc.Column;
 import org.apache.cassandra.db.virtual.proc.RowWalker;
 import org.apache.cassandra.dht.LocalPartitioner;
 import org.apache.cassandra.exceptions.InvalidRequestException;
-import org.apache.cassandra.index.sai.utils.TypeUtil;
 import org.apache.cassandra.schema.ColumnMetadata;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.utils.ByteBufferUtil;
@@ -354,7 +353,7 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
     private static DecoratedKey makeRowKey(TableMetadata table, Object...partitionKeyValues)
     {
         ByteBuffer key;
-        if (TypeUtil.isComposite(table.partitionKeyType))
+        if (partitionKeyValues.length > 1)
             key = ((CompositeType)table.partitionKeyType).decompose(partitionKeyValues);
         else
             key = decompose(table.partitionKeyType, partitionKeyValues[0]);

@@ -20,8 +20,6 @@ package org.apache.cassandra.db.virtual.proc;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -34,6 +32,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -48,8 +47,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /** Generates {@link RowWalker} implementations for {@link Column} annotated class methods. */
-@SupportedAnnotationTypes("org.apache.cassandra.db.virtual.proc.Column")
-@SupportedSourceVersion(SourceVersion.RELEASE_11)
 public class SystemViewAnnotationProcessor extends AbstractProcessor
 {
     private static final Set<String> SYS_METHODS = new HashSet<>(Arrays.asList("equals", "hashCode", "toString",
@@ -301,5 +298,17 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
     {
         return isPrimitive(className) ?
                 primitiveWrapperMap.get(namePrimitiveMap.get(className)).getSimpleName() : className;
+    }
+
+    @Override
+    public SourceVersion getSupportedSourceVersion()
+    {
+        return SourceVersion.latest();
+    }
+
+    @Override
+    public Set<String> getSupportedAnnotationTypes()
+    {
+        return Collections.singleton("org.apache.cassandra.db.virtual.proc.Column");
     }
 }
