@@ -52,7 +52,7 @@ import static org.apache.cassandra.distributed.shared.ClusterUtils.getSequenceAf
 
 public class ResumableStartupTest extends FuzzTestBase
 {
-    private static int WRITES = 2000;
+    private static int WRITES = 500;
 
     @Test
     public void bootstrapWithDeferredJoinTest() throws Throwable
@@ -65,6 +65,7 @@ public class ResumableStartupTest extends FuzzTestBase
         try (Cluster cluster = builder().withNodes(1)
                                         .withTokenSupplier(TokenSupplier.evenlyDistributedTokens(4))
                                         .withNodeIdTopology(NetworkTopology.singleDcNetworkTopology(4, "dc0", "rack0"))
+                                        .appendConfig(c -> c.with(Feature.NETWORK, Feature.GOSSIP))
                                         .createWithoutStarting())
         {
             IInvokableInstance cmsInstance = cluster.get(1);

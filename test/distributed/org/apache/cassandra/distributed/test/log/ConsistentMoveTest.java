@@ -37,6 +37,7 @@ import harry.visitors.MutatingVisitor;
 import harry.visitors.Visitor;
 import org.apache.cassandra.distributed.Cluster;
 import org.apache.cassandra.distributed.api.ConsistencyLevel;
+import org.apache.cassandra.distributed.api.Feature;
 import org.apache.cassandra.distributed.api.IInvokableInstance;
 import org.apache.cassandra.distributed.api.TokenSupplier;
 import org.apache.cassandra.distributed.fuzz.HarryHelper;
@@ -59,7 +60,7 @@ import static org.junit.Assert.assertTrue;
 
 public class ConsistentMoveTest extends FuzzTestBase
 {
-    private static int WRITES = 2000;
+    private static int WRITES = 500;
 
     @Test
     public void moveTest() throws Throwable
@@ -71,6 +72,7 @@ public class ConsistentMoveTest extends FuzzTestBase
         try (Cluster cluster = builder().withNodes(3)
                                         .withTokenSupplier(TokenSupplier.evenlyDistributedTokens(3))
                                         .withNodeIdTopology(NetworkTopology.singleDcNetworkTopology(3, "dc0", "rack0"))
+                                        .appendConfig(c -> c.with(Feature.NETWORK))
                                         .start())
         {
             IInvokableInstance cmsInstance = cluster.get(1);

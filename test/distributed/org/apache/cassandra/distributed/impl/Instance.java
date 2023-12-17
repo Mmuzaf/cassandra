@@ -164,6 +164,8 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.apache.cassandra.concurrent.ExecutorFactory.Global.executorFactory;
 import static org.apache.cassandra.config.CassandraRelevantProperties.CONSISTENT_RANGE_MOVEMENT;
 import static org.apache.cassandra.config.CassandraRelevantProperties.CONSISTENT_SIMULTANEOUS_MOVES_ALLOW;
+import static org.apache.cassandra.config.CassandraRelevantProperties.GOSSIP_SETTLE_MIN_WAIT_MS;
+import static org.apache.cassandra.config.CassandraRelevantProperties.GOSSIP_SETTLE_POLL_INTERVAL_MS;
 import static org.apache.cassandra.config.CassandraRelevantProperties.RING_DELAY;
 import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_CASSANDRA_SUITENAME;
 import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_CASSANDRA_TESTTAG;
@@ -678,6 +680,8 @@ public class Instance extends IsolatedExecutor implements IInvokableInstance
         {
             // TODO: hacky
             RING_DELAY.setLong(15000);
+            GOSSIP_SETTLE_MIN_WAIT_MS.setLong(1000);
+            GOSSIP_SETTLE_POLL_INTERVAL_MS.setLong(300);
             CONSISTENT_RANGE_MOVEMENT.setBoolean(false);
             CONSISTENT_SIMULTANEOUS_MOVES_ALLOW.setBoolean(true);
         }
@@ -705,7 +709,6 @@ public class Instance extends IsolatedExecutor implements IInvokableInstance
         {
             propagateMessagingVersions(cluster); // fake messaging needs to know messaging version for filters
         }
-        internodeMessagingStarted = true;
 
         CassandraDaemon.disableAutoCompaction(Schema.instance.localKeyspaces().names());
         Startup.initialize(DatabaseDescriptor.getSeeds(),
@@ -713,14 +716,7 @@ public class Instance extends IsolatedExecutor implements IInvokableInstance
                            () -> {
                                 if (config.has(NETWORK))
                                 {
-                                    try
-                                    {
-                                        MessagingService.instance().waitUntilListening();
-                                    }
-                                    catch (InterruptedException e)
-                                    {
-                                        throw new RuntimeException(e);
-                                    }
+                                    MessagingService.instance().waitUntilListeningUnchecked();
                                 }
                                 else
                                 {
@@ -728,6 +724,7 @@ public class Instance extends IsolatedExecutor implements IInvokableInstance
                                     // instance here so that we start the static event loop state
                                      registerMockMessaging(cluster);
                                 }
+                                internodeMessagingStarted = true;
                                 registerInboundFilter(cluster);
                                 registerOutboundFilter(cluster);
         });

@@ -481,9 +481,7 @@ public class CassandraDaemon
                     try (Stream<Path> keyspaceChildren = Files.list(keyspaceDirectory))
                     {
                         Path[] tableDirectories = keyspaceChildren.filter(Files::isDirectory)
-                                                                  .filter(p -> !SystemKeyspace.TABLES_SPLIT_ACROSS_MULTIPLE_DISKS
-                                                                                              .contains(p.getFileName()
-                                                                                                         .toString()))
+                                                                  .filter(p -> SystemKeyspace.TABLES_SPLIT_ACROSS_MULTIPLE_DISKS.stream().noneMatch(t -> p.getFileName().toString().startsWith(t + '-')))
                                                                   .toArray(Path[]::new);
 
                         for (Path tableDirectory : tableDirectories)
@@ -847,7 +845,6 @@ public class CassandraDaemon
     {
         if (nativeTransportService != null)
         {
-            StorageService.instance.setRpcReady(false);
             nativeTransportService.stop();
         }
     }

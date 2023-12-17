@@ -42,8 +42,6 @@ import org.apache.cassandra.distributed.test.TestBaseImpl;
 import org.apache.cassandra.locator.ReplicationFactor;
 
 import static harry.model.SelectHelper.resultSetToRow;
-import static org.apache.cassandra.distributed.api.Feature.GOSSIP;
-import static org.apache.cassandra.distributed.api.Feature.NETWORK;
 
 public class FuzzTestBase extends TestBaseImpl
 {
@@ -57,10 +55,11 @@ public class FuzzTestBase extends TestBaseImpl
     @Override
     public Cluster.Builder builder() {
         return super.builder()
-                    .withConfig(cfg -> cfg.with(GOSSIP, NETWORK)
+                    .withConfig(cfg -> cfg.set("cms_default_max_retries", Integer.MAX_VALUE)
+                                          .set("cms_default_retry_backoff", "1000ms")
                                           // Since we'll be pausing the commit request, it may happen that it won't get
                                           // unpaused before event expiration.
-                               .set("request_timeout", String.format("%dms", TimeUnit.MINUTES.toMillis(10))));
+                                          .set("cms_await_timeout", String.format("%dms", TimeUnit.MINUTES.toMillis(10))));
     }
 
     public static IIsolatedExecutor.SerializableRunnable toRunnable(ExecUtil.ThrowingSerializableRunnable runnable)

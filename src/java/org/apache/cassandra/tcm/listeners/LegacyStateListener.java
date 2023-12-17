@@ -43,6 +43,7 @@ import org.apache.cassandra.tcm.membership.Directory;
 import org.apache.cassandra.tcm.membership.NodeId;
 import org.apache.cassandra.tcm.membership.NodeState;
 import org.apache.cassandra.tcm.sequences.BootstrapAndReplace;
+import org.apache.cassandra.utils.FBUtilities;
 
 import static org.apache.cassandra.gms.ApplicationState.SCHEMA;
 import static org.apache.cassandra.tcm.membership.NodeState.BOOTSTRAPPING;
@@ -112,6 +113,7 @@ public class LegacyStateListener implements ChangeListener.Async
                 Gossiper.instance.addLocalApplicationState(SCHEMA, StorageService.instance.valueFactory.schema(next.schema.getVersion()));
             }
 
+
             if (next.directory.peerState(change) == LEFT)
             {
                 Gossiper.instance.mergeNodeToGossip(change, next, prev.tokenMap.tokens(change));
@@ -119,8 +121,16 @@ public class LegacyStateListener implements ChangeListener.Async
                 if (endpoint != null)
                 {
                     PeersTable.updateLegacyPeerTable(change, prev, next);
-                    GossipHelper.removeFromGossip(endpoint);
+                    if (!endpoint.equals(FBUtilities.getBroadcastAddressAndPort()))
+                        GossipHelper.removeFromGossip(endpoint);
                 }
+            }
+            else if(next.directory.peerState(change) == MOVING)
+            {
+                // legacy log messages for tests
+                logger.debug("Node {} state MOVING, tokens {}", next.directory.endpoint(change), prev.tokenMap.tokens(change));
+                Gossiper.instance.mergeNodeToGossip(change, next);
+                PeersTable.updateLegacyPeerTable(change, prev, next);
             }
             else if (NodeState.isBootstrap(next.directory.peerState(change)))
             {

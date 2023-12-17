@@ -271,6 +271,15 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
     public static final int INDEFINITE = -1;
     public static final int RING_DELAY_MILLIS = getRingDelay(); // delay after which we assume ring has stablized
 
+    {
+        PathUtils.setDeletionListener(path -> {
+            if (isDaemonSetupCompleted())
+                PathUtils.setDeletionListener(ignore -> {});
+            else
+                logger.trace("Deleting file during startup: {}", path);
+        });
+    }
+
     private final JMXProgressSupport progressSupport = new JMXProgressSupport(this);
     private final AtomicReference<BootStrapper> ongoingBootstrap = new AtomicReference<>();
 
@@ -730,14 +739,6 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
         Schema.instance.saveSystemKeyspace();
         DatabaseDescriptor.getInternodeAuthenticator().setupInternode();
-        try
-        {
-            MessagingService.instance().waitUntilListening();
-        }
-        catch (InterruptedException e)
-        {
-            throw new RuntimeException("Could not finish waiting until listening", e);
-        }
 
         if (ClusterMetadataService.state() == ClusterMetadataService.State.GOSSIP)
         {
@@ -792,7 +793,16 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
 
         if (ClusterMetadataService.state() == ClusterMetadataService.State.REMOTE)
             Gossiper.instance.triggerRoundWithCMS();
-
+        // Has to be called after the host id has potentially changed
+        try
+        {
+            CacheService.instance.counterCache.loadSavedAsync().get();
+        }
+        catch (Throwable t)
+        {
+            JVMStabilityInspector.inspectThrowable(t);
+            logger.warn("Error loading counter cache", t);
+        }
         Gossiper.waitToSettle();
 
         NodeId self;
