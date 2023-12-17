@@ -20,7 +20,8 @@ package org.apache.cassandra.db.virtual.proc;
 
 /**
  * Utility class for quick iteration over row attributes and row values.
- * Walk order is defined by {@link org.apache.cassandra.db.virtual.proc.Column} annotations and walks from a lower to higher index.
+ * Walk order is defined by {@link org.apache.cassandra.db.virtual.proc.Column} annotations and is the same as
+ * in CQL (partition key columns first, then clustering columns, then regular columns).
  */
 public interface RowWalker<R>
 {

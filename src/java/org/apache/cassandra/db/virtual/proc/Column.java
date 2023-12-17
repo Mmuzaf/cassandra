@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * The column {@link org.apache.cassandra.db.virtual.proc.Column.Type} type is the same as the existing CQL
  * {@code ColumnMetadata.Kind} and is used to define the column types for the virtual tables. All the classes
  * in the {@link org.apache.cassandra.db.virtual.proc} package are used by annotation processor to generate
- * {@link RowWalker} implementations, so they should hove zero dependencies on the rest of the codebase.
+ * {@link RowWalker} implementations, so they should have zero dependencies on the rest of the codebase.
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.METHOD)

@@ -63,9 +63,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -227,7 +229,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
                 METRICS_GROUP_POSTFIX.apply(groupName),
                 "All metrics for \"" + groupName + "\" metric group",
                 new MetricRowWalker(),
-                () -> withAliases(Metrics.getMetrics(), m -> m.systemViewName.equals(groupName)),
+                () -> withAliases(Metrics.getMetrics(), m -> m.systemViewName.equals(groupName)).entrySet(),
                 MetricRow::new)));
         // Register virtual table of all known metric groups.
         builder.add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
@@ -392,9 +394,15 @@ public class CassandraMetricsRegistry extends MetricRegistry
     }
 
     @Override
-    public SortedMap<String, Metric> getMetrics()
+    public SortedSet<String> getNames()
     {
-        return withAliases(super.getMetrics());
+        return getMetrics().navigableKeySet();
+    }
+
+    @Override
+    public NavigableMap<String, Metric> getMetrics()
+    {
+        return withAliases(super.getMetrics(), m -> true);
     }
 
     /** {@inheritDoc} */
@@ -402,60 +410,48 @@ public class CassandraMetricsRegistry extends MetricRegistry
     @SuppressWarnings("rawtypes")
     public SortedMap<String, Gauge> getGauges()
     {
-        return withAliases(super.getGauges());
+        return withAliases(super.getGauges(), m -> true);
     }
 
     /** {@inheritDoc} */
     @Override
     public SortedMap<String, Counter> getCounters()
     {
-        return withAliases(super.getCounters());
+        return withAliases(super.getCounters(), m -> true);
     }
 
     /** {@inheritDoc} */
     @Override
     public SortedMap<String, Histogram> getHistograms()
     {
-        return withAliases(super.getHistograms());
+        return withAliases(super.getHistograms(), m -> true);
     }
 
     /** {@inheritDoc} */
     @Override
     public SortedMap<String, Meter> getMeters()
     {
-        return withAliases(super.getMeters());
+        return withAliases(super.getMeters(), m -> true);
     }
 
     /** {@inheritDoc} */
     @Override
     public SortedMap<String, Timer> getTimers()
     {
-        return withAliases(super.getTimers());
+        return withAliases(super.getTimers(), m -> true);
     }
 
     /**
-     * Returns an iterable of all metrics with their known aliases. If filter is provided, only metrics that match
-     * the filter will be returned.
+     * Returns a map of all metrics with their known aliases. If filter is provided,
+     * only metrics that match the filter will be returned.
      */
-    public static <T extends Metric> Iterable<AbstractMap.SimpleEntry<String, T>> withAliases(Map<String, T> map, Predicate<MetricName> filer)
-    {
-        return () -> map.entrySet()
-                .stream()
-                .flatMap(e -> ALIASES.get(e.getKey())
-                        .stream()
-                        .filter(filer)
-                        .map(alias -> new AbstractMap.SimpleEntry<>(alias.getMetricName(), e.getValue())))
-                .distinct()
-                .sorted(Map.Entry.comparingByKey())
-                .iterator();
-    }
-
-    private static <T extends Metric> SortedMap<String, T> withAliases(Map<String, T> map)
+    private static <T extends Metric> NavigableMap<String, T> withAliases(Map<String, T> map, Predicate<MetricName> filer)
     {
         return map.entrySet()
                 .stream()
                 .flatMap(e -> ALIASES.get(e.getKey())
                         .stream()
+                        .filter(filer)
                         .map(alias -> new AbstractMap.SimpleEntry<>(alias.getMetricName(), e.getValue())))
                 .distinct()
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,

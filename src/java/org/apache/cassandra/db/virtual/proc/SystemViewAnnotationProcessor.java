@@ -26,6 +26,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ExecutableType;
+import javax.lang.model.type.TypeKind;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.IOException;
@@ -46,6 +47,7 @@ import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/** Generates {@link RowWalker} implementations for {@link Column} annotated class methods. */
 @SupportedAnnotationTypes("org.apache.cassandra.db.virtual.proc.Column")
 @SupportedSourceVersion(SourceVersion.RELEASE_11)
 public class SystemViewAnnotationProcessor extends AbstractProcessor
@@ -87,22 +89,22 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
         {
             Set<? extends Element> annotatedElements = roundEnv.getElementsAnnotatedWith(annotation);
 
-//                .filter(m -> !m.getModifiers().contains(Modifier.STATIC)))
-//                .filter(m -> !SYS_METHODS.contains(m.getName()))
-//                .filter(m -> m.getReturnType() != void.class)
-            Map<Boolean, List<Element>> annotatedMethods = annotatedElements.stream()
-                    .collect(Collectors.partitioningBy(element ->
-                            (((ExecutableType) element.asType()).getParameterTypes().size() > 0) ||
-                                    ((ExecutableType) element.asType()).getReturnType().toString().equals("void")));
-
-            List<Element> otherMethods = annotatedMethods.get(true);
-            List<Element> getters = annotatedMethods.get(false);
-
-            otherMethods.forEach(element -> processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
-                    "@Column must be applied to a method without an argument and can't have void type", element));
+            List<Element> getters = annotatedElements.stream()
+                    .filter(element -> !SYS_METHODS.contains(element.getSimpleName().toString()))
+                    .filter(element -> element.getModifiers().contains(javax.lang.model.element.Modifier.PUBLIC))
+                    .filter(element -> ((ExecutableType) element.asType()).getReturnType().getKind() != TypeKind.VOID)
+                    .filter(element -> ((ExecutableType) element.asType()).getParameterTypes().isEmpty())
+                    .collect(Collectors.toList());
 
             if (getters.isEmpty())
                 continue;
+
+            if (getters.size() != annotatedElements.size())
+            {
+                processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+                        "@Column must be applied to a method without an argument and can't have void type");
+                return false;
+            }
 
             Map<String, List<Element>> gettersByClass = getters.stream()
                     .collect(Collectors.groupingBy(element -> ((TypeElement) element.getEnclosingElement()).getQualifiedName().toString()));

@@ -20,21 +20,24 @@
  */
 package org.apache.cassandra.metrics;
 
-import static org.junit.Assert.*;
-
-import java.lang.management.ManagementFactory;
-import java.util.Collection;
-import java.util.concurrent.TimeUnit;
-
 import com.codahale.metrics.Timer;
-import org.apache.cassandra.metrics.CassandraMetricsRegistry.MetricName;
-
-import org.junit.Test;
-
 import com.codahale.metrics.jvm.BufferPoolMetricSet;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
+import org.apache.cassandra.metrics.CassandraMetricsRegistry.MetricName;
 import org.apache.cassandra.utils.EstimatedHistogram;
+import org.junit.Test;
+
+import java.lang.management.ManagementFactory;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 
 public class CassandraMetricsRegistryTest
@@ -154,6 +157,46 @@ public class CassandraMetricsRegistryTest
         assertEquals("42 and 100 nanos should both be put in the first bucket",
                             2, counts[0]);
         assertEquals(expectedBucketsWithValues, bucketsWithValues);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMetricFactoryRegistration()
+    {
+        MetricNameFactory factory = new DefaultNameFactory("Table", "MetricsTestScope");
+        CassandraMetricsRegistry registry = CassandraMetricsRegistry.Metrics;
+        registry.meter(factory.createMetricName("TestMeter"));
+    }
+
+    @Test
+    public void testMetricAliasesRegistration()
+    {
+        CassandraMetricsRegistry registry = CassandraMetricsRegistry.Metrics;
+        MetricNameFactory factory = registry.regsiterMetricFactory(new DefaultNameFactory("Table", "MetricsTestScope"));
+        MetricNameFactory aliasFactory = registry.regsiterMetricFactory(new DefaultNameFactory("Table", "MetricsTestAliasScope"));
+
+        MetricName meter = factory.createMetricName("TestMeter");
+        MetricName meterAlias = aliasFactory.createMetricName("TestMeterAlias");
+        registry.meter(meter, meterAlias);
+
+        MetricName histogram = factory.createMetricName("TestHistogram");
+        MetricName histogramAlias = aliasFactory.createMetricName("TestHistogramAlias");
+        registry.histogram(histogram, histogramAlias, false);
+
+        MetricName counter = factory.createMetricName("TestCounter");
+        MetricName counterAlias = aliasFactory.createMetricName("TestCounterAlias");
+        registry.counter(counter, counterAlias);
+
+        MetricName timer = factory.createMetricName("TestTimer");
+        MetricName timerAlias = aliasFactory.createMetricName("TestTimerAlias");
+        registry.timer(timer, timerAlias);
+
+        Set<String> aliases = new HashSet<>(Arrays.asList(meter.getMetricName(), meterAlias.getMetricName(),
+                histogram.getMetricName(), histogramAlias.getMetricName(),
+                counter.getMetricName(), counterAlias.getMetricName(),
+                timer.getMetricName(), timerAlias.getMetricName()));
+
+        assertTrue(registry.getMetrics().keySet().containsAll(aliases));
+        assertTrue(registry.getNames().containsAll(aliases));
     }
 
     private boolean inRange(long anchor, long input, double range)
