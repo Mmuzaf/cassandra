@@ -71,7 +71,7 @@ public class JmxVirtualTableMetricsTest extends CQLTester
         metricToNameMap.put(MetricType.GAUGE, registry.gauge("gauge", () -> gaugeValue::get));
 
         CassandraMetricsRegistry.metricGroups.forEach(group -> {
-            MetricNameFactory factory = CassandraMetricsRegistry.Metrics.registerMetricFactory(new DefaultNameFactory(group, "jmx.virtual"));
+            MetricNameFactory factory = new DefaultNameFactory(group, "jmx.virtual");
             CassandraMetricsRegistry.Metrics.register(factory.createMetricName(MetricType.METER.metricName), metricToNameMap.get(MetricType.METER));
             CassandraMetricsRegistry.Metrics.register(factory.createMetricName(MetricType.COUNTER.metricName), metricToNameMap.get(MetricType.COUNTER));
             CassandraMetricsRegistry.Metrics.register(factory.createMetricName(MetricType.HISTOGRAM.metricName), metricToNameMap.get(MetricType.HISTOGRAM));
@@ -137,8 +137,8 @@ public class JmxVirtualTableMetricsTest extends CQLTester
     public void testAliasesWithJmxVirtualTables() throws Exception
     {
         CassandraMetricsRegistry registry =  CassandraMetricsRegistry.Metrics;
-        MetricNameFactory factory = registry.registerMetricFactory(new DefaultNameFactory("Table", "AliasTestScopeFirst"));
-        MetricNameFactory aliasFactory = registry.registerMetricFactory(new DefaultNameFactory("Index", "AliasTestScopeSecond"));
+        MetricNameFactory factory = new DefaultNameFactory("Table", "AliasTestScopeFirst");
+        MetricNameFactory aliasFactory = new DefaultNameFactory("Index", "AliasTestScopeSecond");
 
         CassandraMetricsRegistry.MetricName meter = factory.createMetricName("TestMeter");
         CassandraMetricsRegistry.MetricName meterAlias = aliasFactory.createMetricName("TestMeterAlias");

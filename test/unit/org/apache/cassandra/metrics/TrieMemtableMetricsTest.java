@@ -116,7 +116,7 @@ public class TrieMemtableMetricsTest extends SchemaLoader
 
         long allPuts = metrics.contendedPuts.getCount() + metrics.uncontendedPuts.getCount();
         assertEquals(10, allPuts);
-        assertRowsContains(cluster, session.execute("SELECT * FROM system_metrics.trie_memtable"),
+        assertRowsContains(cluster, session.execute("SELECT * FROM system_metrics.trie_memtable_group"),
                 row("org.apache.cassandra.metrics.TrieMemtable.Contended memtable puts.triememtable.metricstest",
                         "triememtable.metricstest", "counter", String.valueOf(metrics.contendedPuts.getCount())),
                 row("org.apache.cassandra.metrics.TrieMemtable.Uncontended memtable puts.triememtable.metricstest",
@@ -162,7 +162,7 @@ public class TrieMemtableMetricsTest extends SchemaLoader
         assertEquals(100, metrics.contendedPuts.getCount() + metrics.uncontendedPuts.getCount());
         assertThat(metrics.contendedPuts.getCount(), greaterThan(0L));
         assertThat(metrics.contentionTime.totalLatency.getCount(), greaterThan(0L));
-        assertRowsContains(cluster, session.execute("SELECT * FROM system_metrics.trie_memtable"),
+        assertRowsContains(cluster, session.execute("SELECT * FROM system_metrics.trie_memtable_group"),
                 row("org.apache.cassandra.metrics.TrieMemtable.Contention timeTotalLatency.triememtable.metricstest",
                         "triememtable.metricstest", "counter", String.valueOf(metrics.contentionTime.totalLatency.getCount())));
     }

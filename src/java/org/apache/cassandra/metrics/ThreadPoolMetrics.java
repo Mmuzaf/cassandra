@@ -27,7 +27,6 @@ import org.apache.cassandra.metrics.CassandraMetricsRegistry.MetricName;
 import static java.lang.String.format;
 
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
-import static org.apache.cassandra.metrics.DefaultNameFactory.GROUP_NAME;
 
 /**
  * Metrics for {@link ThreadPoolExecutor}.
@@ -117,26 +116,11 @@ public class ThreadPoolMetrics
 
     private static MetricName makeMetricName(String path, String poolName, String metricName)
     {
-        MetricNameFactory factory = Metrics.registerMetricFactory(new ThreadPoolMetricNameFactory(path, poolName));
-        return factory.createMetricName(metricName);
-    }
-
-    private static class ThreadPoolMetricNameFactory implements MetricNameFactory
-    {
-        private final String path;
-        private final String poolName;
-
-        ThreadPoolMetricNameFactory(String path, String poolName)
-        {
-            this.path = path;
-            this.poolName = poolName;
-        }
-
-        public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
-        {
-            String mbeanName = format("%s:type=%s,path=%s,scope=%s,name=%s",
-                    GROUP_NAME, TYPE_NAME, path, poolName, metricName);
-            return new CassandraMetricsRegistry.MetricName(GROUP_NAME, TYPE_NAME, metricName, path + '.' + poolName, mbeanName);
-        }
+        return new MetricName("org.apache.cassandra.metrics",
+                              TYPE_NAME,
+                              metricName,
+                              path + '.' + poolName,
+                              format("org.apache.cassandra.metrics:type=%s,path=%s,scope=%s,name=%s",
+                                     TYPE_NAME, path, poolName, metricName));
     }
 }

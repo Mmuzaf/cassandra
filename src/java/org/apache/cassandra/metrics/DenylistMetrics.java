@@ -32,7 +32,7 @@ public class DenylistMetrics
 
     public DenylistMetrics()
     {
-        final MetricNameFactory factory = Metrics.registerMetricFactory(new DefaultNameFactory(TYPE_NAME, "PartitionDenylist"));
+        final MetricNameFactory factory = new DefaultNameFactory(TYPE_NAME, "PartitionDenylist");
         writesRejected = Metrics.meter(factory.createMetricName("WriteRejected"));
         readsRejected = Metrics.meter(factory.createMetricName("ReadRejected"));
         rangeReadsRejected = Metrics.meter(factory.createMetricName("RangeReadRejected"));

@@ -78,7 +78,7 @@ public abstract class AbstractMetrics
         CassandraMetricsRegistry.MetricName metricName = new CassandraMetricsRegistry.MetricName(DefaultNameFactory.GROUP_NAME,
                                                                                                  TYPE, name, metricScope, createMBeanName(name, scope));
         tracked.add(metricName);
-        return Metrics.registerMetricFactory(n -> metricName).createMetricName(name);
+        return metricName;
     }
 
     private String createMBeanName(String name, String scope)

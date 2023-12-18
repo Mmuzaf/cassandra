@@ -43,11 +43,11 @@ public class TrieMemtableMetricsView
     // shard sizes distribution
     public final MinMaxAvgMetric lastFlushShardDataSizes;
 
-    private final MetricNameFactory factory;
+    private final TrieMemtableMetricNameFactory factory;
 
     public TrieMemtableMetricsView(String keyspace, String table)
     {
-        factory = Metrics.registerMetricFactory(new TrieMemtableMetricNameFactory(keyspace, table));
+        factory = new TrieMemtableMetricNameFactory(keyspace, table);
         
         uncontendedPuts = Metrics.counter(factory.createMetricName(UNCONTENDED_PUTS));
         contendedPuts = Metrics.counter(factory.createMetricName(CONTENDED_PUTS));

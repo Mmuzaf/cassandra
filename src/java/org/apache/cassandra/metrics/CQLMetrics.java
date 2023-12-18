@@ -27,7 +27,7 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 public class CQLMetrics
 {
     public static final String TYPE_NAME = "CQL";
-    private static final MetricNameFactory factory = Metrics.registerMetricFactory(new DefaultNameFactory(TYPE_NAME));
+    private static final MetricNameFactory factory = new DefaultNameFactory(TYPE_NAME);
 
     public final Counter regularStatementsExecuted;
     public final Counter preparedStatementsExecuted;

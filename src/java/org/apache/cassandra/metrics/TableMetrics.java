@@ -81,8 +81,8 @@ public class TableMetrics
      */
     private static final ConcurrentMap<String, Set<Metric>> ALL_TABLE_METRICS = Maps.newConcurrentMap();
     public static final long[] EMPTY = new long[0];
-    private static final MetricNameFactory GLOBAL_FACTORY = Metrics.registerMetricFactory(new AllTableMetricNameFactory(TYPE_NAME));
-    private static final MetricNameFactory GLOBAL_ALIAS_FACTORY = Metrics.registerMetricFactory(new AllTableMetricNameFactory(ALIAS_TYPE_NAME));
+    private static final MetricNameFactory GLOBAL_FACTORY = new AllTableMetricNameFactory(TYPE_NAME);
+    private static final MetricNameFactory GLOBAL_ALIAS_FACTORY = new AllTableMetricNameFactory(ALIAS_TYPE_NAME);
 
     public final static LatencyMetrics GLOBAL_READ_LATENCY = new LatencyMetrics(GLOBAL_FACTORY, GLOBAL_ALIAS_FACTORY, "Read");
     public final static LatencyMetrics GLOBAL_WRITE_LATENCY = new LatencyMetrics(GLOBAL_FACTORY, GLOBAL_ALIAS_FACTORY, "Write");
@@ -405,8 +405,8 @@ public class TableMetrics
      */
     public TableMetrics(final ColumnFamilyStore cfs, ReleasableMetric memtableMetrics)
     {
-        factory = Metrics.registerMetricFactory(new TableMetricNameFactory(cfs, cfs.isIndex() ? INDEX_TYPE_NAME : TYPE_NAME));
-        aliasFactory = Metrics.registerMetricFactory(new TableMetricNameFactory(cfs, cfs.isIndex() ? INDEX_ALIAS_TYPE_NAME : ALIAS_TYPE_NAME));
+        factory = new TableMetricNameFactory(cfs, cfs.isIndex() ? INDEX_TYPE_NAME : TYPE_NAME);
+        aliasFactory = new TableMetricNameFactory(cfs, cfs.isIndex() ? INDEX_ALIAS_TYPE_NAME : ALIAS_TYPE_NAME);
 
         if (memtableMetrics != null)
         {

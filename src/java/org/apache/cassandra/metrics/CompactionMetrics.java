@@ -40,7 +40,7 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 public class CompactionMetrics
 {
     public static final String TYPE_NAME = "Compaction";
-    public static final MetricNameFactory factory = Metrics.registerMetricFactory(new DefaultNameFactory(TYPE_NAME));
+    public static final MetricNameFactory factory = new DefaultNameFactory(TYPE_NAME);
 
     /** Estimated number of compactions remaining to perform */
     public final Gauge<Integer> pendingTasks;

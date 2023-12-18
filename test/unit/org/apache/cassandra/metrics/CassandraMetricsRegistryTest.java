@@ -93,6 +93,14 @@ public class CassandraMetricsRegistryTest
         }
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testMetricSetRegistration()
+    {
+        CassandraMetricsRegistry registry = CassandraMetricsRegistry.Metrics;
+        DefaultNameFactory factory = new DefaultNameFactory("ThreadPools", "TestMetricSetRegistration");
+        registry.register(factory.createMetricName("jvm.buffers"), new BufferPoolMetricSet(ManagementFactory.getPlatformMBeanServer()));
+    }
+
     @Test
     public void testDeltaBaseCase()
     {
@@ -159,20 +167,12 @@ public class CassandraMetricsRegistryTest
         assertEquals(expectedBucketsWithValues, bucketsWithValues);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testMetricFactoryRegistration()
-    {
-        MetricNameFactory factory = new DefaultNameFactory("Table", "MetricsTestScope");
-        CassandraMetricsRegistry registry = CassandraMetricsRegistry.Metrics;
-        registry.meter(factory.createMetricName("TestMeter"));
-    }
-
     @Test
     public void testMetricAliasesRegistration()
     {
         CassandraMetricsRegistry registry = CassandraMetricsRegistry.Metrics;
-        MetricNameFactory factory = registry.registerMetricFactory(new DefaultNameFactory("Table", "MetricsTestScope"));
-        MetricNameFactory aliasFactory = registry.registerMetricFactory(new DefaultNameFactory("Table", "MetricsTestAliasScope"));
+        MetricNameFactory factory = new DefaultNameFactory("Table", "MetricsTestScope");
+        MetricNameFactory aliasFactory = new DefaultNameFactory("Table", "MetricsTestAliasScope");
 
         MetricName meter = factory.createMetricName("TestMeter");
         MetricName meterAlias = aliasFactory.createMetricName("TestMeterAlias");

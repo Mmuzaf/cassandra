@@ -31,7 +31,7 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 public class CommitLogMetrics
 {
     public static final String TYPE_NAME = "CommitLog";
-    public static final MetricNameFactory factory = Metrics.registerMetricFactory(new DefaultNameFactory(TYPE_NAME));
+    public static final MetricNameFactory factory = new DefaultNameFactory(TYPE_NAME);
 
     /** Number of completed tasks */
     public Gauge<Long> completedTasks;

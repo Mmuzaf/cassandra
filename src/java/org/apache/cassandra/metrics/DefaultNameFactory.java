@@ -18,8 +18,6 @@
 package org.apache.cassandra.metrics;
 
 
-import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
-
 /**
  * MetricNameFactory that generates default MetricName of metrics.
  */
@@ -43,15 +41,10 @@ public class DefaultNameFactory implements MetricNameFactory
 
     public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
     {
-        return createMetricNameLocal(type, metricName, scope);
+        return createMetricName(type, metricName, scope);
     }
 
     public static CassandraMetricsRegistry.MetricName createMetricName(String type, String metricName, String scope)
-    {
-        return Metrics.registerMetricFactory(new DefaultNameFactory(type, scope)).createMetricName(metricName);
-    }
-
-    protected static CassandraMetricsRegistry.MetricName createMetricNameLocal(String type, String metricName, String scope)
     {
         return new CassandraMetricsRegistry.MetricName(GROUP_NAME, type, metricName, scope, createDefaultMBeanName(type, metricName, scope));
     }

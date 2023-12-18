@@ -25,6 +25,7 @@ import com.codahale.metrics.Metered;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.MetricRegistryListener;
+import com.codahale.metrics.MetricSet;
 import com.codahale.metrics.Timer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -69,13 +70,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
 
 import static java.util.Optional.ofNullable;
 import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_METRICS;
@@ -194,19 +195,6 @@ public class CassandraMetricsRegistry extends MetricRegistry
         listeners.clear();
     }
 
-    public MetricNameFactory registerMetricFactory(MetricNameFactory factory)
-    {
-        return new MetricNameFactoryWrapper(factory,
-                newMetricName -> {
-                    if (!metricGroups.contains(newMetricName.getType()))
-                        throw new IllegalArgumentException("Unknown metric group: " + newMetricName.getType());
-                    if (!metricGroups.contains(newMetricName.getSystemViewName()))
-                        throw new IllegalArgumentException("Metric view name must match statically registered groups: " + newMetricName.getSystemViewName());
-                    ALIASES.computeIfAbsent(newMetricName.getMetricName(), k -> ConcurrentHashMap.newKeySet()).add(newMetricName);
-                    return newMetricName;
-                });
-    }
-
     @SuppressWarnings("rawtypes")
     public static String getValueAsString(Metric metric)
     {
@@ -231,7 +219,13 @@ public class CassandraMetricsRegistry extends MetricRegistry
                 METRICS_GROUP_POSTFIX.apply(groupName),
                 "All metrics for \"" + groupName + "\" metric group",
                 new MetricRowWalker(),
-                () -> withAliases(Metrics.getMetrics(), m -> m.systemViewName.equals(groupName)).entrySet(),
+                () -> () -> Metrics.getMetrics().entrySet()
+                        .stream()
+                        .flatMap(e -> ALIASES.getOrDefault(e.getKey(), Collections.emptySet())
+                                .stream()
+                                .filter(m -> m.systemViewName.equals(groupName))
+                                .map(m -> new AbstractMap.SimpleEntry<>(m.getMetricName(), e.getValue())))
+                        .iterator(),
                 MetricRow::new)));
         // Register virtual table of all known metric groups.
         builder.add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
@@ -275,16 +269,19 @@ public class CassandraMetricsRegistry extends MetricRegistry
         return builder.build();
     }
 
-    private static void assertKnownMetric(MetricName name)
+    private static void addUnknownMetric(MetricName newMetricName)
     {
-        Set<MetricName> known = ALIASES.get(name.getMetricName());
-        if (known == null || !known.contains(name))
-            throw new IllegalArgumentException(name + " must be registered by the factory that is known to the registry");
+        if (!metricGroups.contains(newMetricName.getType()))
+            throw new IllegalStateException("Unknown metric group: " + newMetricName.getType());
+        if (!metricGroups.contains(newMetricName.getSystemViewName()))
+            throw new IllegalStateException("Metric view name must match statically registered groups: " + newMetricName.getSystemViewName());
+
+        ALIASES.computeIfAbsent(newMetricName.getMetricName(), k -> ConcurrentHashMap.newKeySet()).add(newMetricName);
     }
 
     private static void setAliases(MetricName... names)
     {
-        Arrays.asList(names).forEach(CassandraMetricsRegistry::assertKnownMetric);
+        Arrays.asList(names).forEach(CassandraMetricsRegistry::addUnknownMetric);
         ALIASES.get(names[0].getMetricName()).addAll(Arrays.asList(names));
     }
 
@@ -311,7 +308,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
     public Meter meter(MetricName name)
     {
-        assertKnownMetric(name);
+        addUnknownMetric(name);
         return meter(name.getMetricName());
     }
 
@@ -338,9 +335,16 @@ public class CassandraMetricsRegistry extends MetricRegistry
     }
 
     @SuppressWarnings("rawtypes")
+    public <T extends Gauge> T gauge(MetricName name, MetricName alias, MetricSupplier<T> gauge)
+    {
+        setAliases(name, alias);
+        return super.gauge(name.getMetricName(), gauge);
+    }
+
+    @SuppressWarnings("rawtypes")
     public <T extends Gauge> T gauge(MetricName name, MetricSupplier<T> gauge)
     {
-        assertKnownMetric(name);
+        addUnknownMetric(name);
         return super.gauge(name.getMetricName(), gauge);
     }
 
@@ -383,9 +387,12 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
     public <T extends Metric> T register(MetricName name, T metric)
     {
+        if (metric instanceof MetricSet)
+            throw new IllegalArgumentException("MetricSet registration using MetricName is not supported");
+
         try
         {
-            assertKnownMetric(name);
+            addUnknownMetric(name);
             return super.register(name.getMetricName(), metric);
         }
         catch (IllegalArgumentException e)
@@ -404,7 +411,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
     @Override
     public NavigableMap<String, Metric> getMetrics()
     {
-        return withAliases(super.getMetrics(), m -> true);
+        return withAliases(super.getMetrics());
     }
 
     /** {@inheritDoc} */
@@ -412,52 +419,51 @@ public class CassandraMetricsRegistry extends MetricRegistry
     @SuppressWarnings("rawtypes")
     public SortedMap<String, Gauge> getGauges()
     {
-        return withAliases(super.getGauges(), m -> true);
+        return withAliases(super.getGauges());
     }
 
     /** {@inheritDoc} */
     @Override
     public SortedMap<String, Counter> getCounters()
     {
-        return withAliases(super.getCounters(), m -> true);
+        return withAliases(super.getCounters());
     }
 
     /** {@inheritDoc} */
     @Override
     public SortedMap<String, Histogram> getHistograms()
     {
-        return withAliases(super.getHistograms(), m -> true);
+        return withAliases(super.getHistograms());
     }
 
     /** {@inheritDoc} */
     @Override
     public SortedMap<String, Meter> getMeters()
     {
-        return withAliases(super.getMeters(), m -> true);
+        return withAliases(super.getMeters());
     }
 
     /** {@inheritDoc} */
     @Override
     public SortedMap<String, Timer> getTimers()
     {
-        return withAliases(super.getTimers(), m -> true);
+        return withAliases(super.getTimers());
     }
 
     /**
      * Returns a map of all metrics with their known aliases. If filter is provided,
      * only metrics that match the filter will be returned.
      */
-    private static <T extends Metric> NavigableMap<String, T> withAliases(Map<String, T> map, Predicate<MetricName> filer)
+    private static <T extends Metric> NavigableMap<String, T> withAliases(Map<String, T> map)
     {
-        return map.entrySet()
-                .stream()
-                .flatMap(e -> ALIASES.get(e.getKey())
-                        .stream()
-                        .filter(filer)
-                        .map(alias -> new AbstractMap.SimpleEntry<>(alias.getMetricName(), e.getValue())))
-                .distinct()
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-                        (e1, e2) -> e1, java.util.TreeMap::new));
+        NavigableMap<String, T> result = new TreeMap<>();
+        for (Map.Entry<String, T> e : map.entrySet())
+        {
+            result.put(e.getKey(), e.getValue());
+            ALIASES.getOrDefault(e.getKey(), Collections.emptySet())
+                    .forEach(alias -> result.put(alias.getMetricName(), e.getValue()));
+        }
+        return result;
     }
 
     public Collection<ThreadPoolMetrics> allThreadPoolMetrics()
@@ -497,7 +503,6 @@ public class CassandraMetricsRegistry extends MetricRegistry
     public boolean remove(MetricName name)
     {
         // Aliases are removed in onMetricRemoved by metrics listener.
-        assertKnownMetric(name);
         return super.remove(name.getMetricName());
     }
 

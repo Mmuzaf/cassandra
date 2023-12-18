@@ -27,7 +27,7 @@ import static org.junit.Assert.assertFalse;
 
 public class LatencyMetricsTest
 {
-    private final MetricNameFactory factory = CassandraMetricsRegistry.Metrics.registerMetricFactory(new TestMetricsNameFactory());
+    private final MetricNameFactory factory = new TestMetricsNameFactory();
 
     private static class TestMetricsNameFactory implements MetricNameFactory
     {

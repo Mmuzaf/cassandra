@@ -69,7 +69,7 @@ public class LatencyMetrics
      */
     public LatencyMetrics(String type, String namePrefix, String scope)
     {
-        this(Metrics.registerMetricFactory(new DefaultNameFactory(type, scope)), namePrefix);
+        this(new DefaultNameFactory(type, scope), namePrefix);
     }
 
     /**

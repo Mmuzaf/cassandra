@@ -41,7 +41,7 @@ public class HintedHandoffMetrics
     public static final String TYPE_NAME = "HintsService";
     private static final Logger logger = LoggerFactory.getLogger(HintedHandoffMetrics.class);
 
-    private static final MetricNameFactory factory = Metrics.registerMetricFactory(new DefaultNameFactory(TYPE_NAME));
+    private static final MetricNameFactory factory = new DefaultNameFactory(TYPE_NAME);
 
     /** Total number of hints which are not stored, This is not a cache. */
     private final LoadingCache<InetAddressAndPort, DifferencingCounter> notStored = Caffeine.newBuilder()
