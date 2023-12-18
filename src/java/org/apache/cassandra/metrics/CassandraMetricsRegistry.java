@@ -222,6 +222,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
                                 .stream()
                                 .filter(m -> m.systemViewName.equals(groupName))
                                 .map(m -> new AbstractMap.SimpleEntry<>(m.getMetricName(), e.getValue())))
+                        .distinct()
                         .iterator(),
                 MetricRow::new)));
         // Register virtual table of all known metric groups.
@@ -428,6 +429,8 @@ public class CassandraMetricsRegistry extends MetricRegistry
     public boolean remove(MetricName name)
     {
         // Aliases are removed in onMetricRemoved by metrics listener.
+        for (MetricName alias : ALIASES.getOrDefault(name.getMetricName(), Collections.emptySet()))
+            super.remove(alias.getMetricName());
         return super.remove(name.getMetricName());
     }
 
