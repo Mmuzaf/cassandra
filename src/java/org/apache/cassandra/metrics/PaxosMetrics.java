@@ -26,7 +26,7 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 public class PaxosMetrics
 {
     public static final String TYPE_NAME = "Paxos";
-    private static final MetricNameFactory factory = Metrics.regsiterMetricFactory(new DefaultNameFactory(TYPE_NAME));
+    private static final MetricNameFactory factory = Metrics.registerMetricFactory(new DefaultNameFactory(TYPE_NAME));
     public static final Counter linearizabilityViolations = Metrics.counter(factory.createMetricName("LinearizabilityViolations"));
     public static final Meter repairPaxosTopologyRetries = Metrics.meter(factory.createMetricName("RepairPaxosTopologyRetries"));
 

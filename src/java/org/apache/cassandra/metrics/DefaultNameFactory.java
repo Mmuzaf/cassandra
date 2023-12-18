@@ -48,7 +48,7 @@ public class DefaultNameFactory implements MetricNameFactory
 
     public static CassandraMetricsRegistry.MetricName createMetricName(String type, String metricName, String scope)
     {
-        return Metrics.regsiterMetricFactory(new DefaultNameFactory(type, scope)).createMetricName(metricName);
+        return Metrics.registerMetricFactory(new DefaultNameFactory(type, scope)).createMetricName(metricName);
     }
 
     protected static CassandraMetricsRegistry.MetricName createMetricNameLocal(String type, String metricName, String scope)

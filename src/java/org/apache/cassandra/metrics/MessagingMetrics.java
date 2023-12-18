@@ -50,7 +50,7 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 public class MessagingMetrics implements InboundMessageHandlers.GlobalMetricCallbacks
 {
     public static final String TYPE_NAME = "Messaging";
-    private static final MetricNameFactory factory = Metrics.regsiterMetricFactory(new DefaultNameFactory(TYPE_NAME));
+    private static final MetricNameFactory factory = Metrics.registerMetricFactory(new DefaultNameFactory(TYPE_NAME));
     private static final Logger logger = LoggerFactory.getLogger(MessagingMetrics.class);
     private static final int LOG_DROPPED_INTERVAL_IN_MS = 5000;
     

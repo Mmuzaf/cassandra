@@ -47,6 +47,7 @@ import org.apache.cassandra.db.virtual.model.MetricRow;
 import org.apache.cassandra.db.virtual.model.MetricRowWalker;
 import org.apache.cassandra.db.virtual.model.TimerMetricRow;
 import org.apache.cassandra.db.virtual.model.TimerMetricRowWalker;
+import org.apache.cassandra.index.sai.metrics.AbstractMetrics;
 import org.apache.cassandra.io.sstable.format.big.RowIndexEntry;
 import org.apache.cassandra.utils.MBeanWrapper;
 import org.apache.cassandra.utils.memory.MemtablePool;
@@ -129,6 +130,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
         // at the time #start() method is called. The virtual kespaces are immutable, drivers also rely on the
         // fact that virtual keyspaces are immutable, so they won't receive any updates if we change them.
         metricGroups = ImmutableSet.<String>builder()
+                .add(AbstractMetrics.TYPE)
                 .add(BatchMetrics.TYPE_NAME)
                 .add(BufferPoolMetrics.TYPE_NAME)
                 .add(CIDRAuthorizerMetrics.TYPE_NAME)
@@ -192,7 +194,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
         listeners.clear();
     }
 
-    public MetricNameFactory regsiterMetricFactory(MetricNameFactory factory)
+    public MetricNameFactory registerMetricFactory(MetricNameFactory factory)
     {
         return new MetricNameFactoryWrapper(factory,
                 newMetricName -> {
@@ -497,6 +499,14 @@ public class CassandraMetricsRegistry extends MetricRegistry
         // Aliases are removed in onMetricRemoved by metrics listener.
         assertKnownMetric(name);
         return super.remove(name.getMetricName());
+    }
+
+    public void removeIf(Predicate<MetricName> filter)
+    {
+        ALIASES.values().stream()
+                .flatMap(Collection::stream)
+                .filter(filter)
+                .forEach(this::remove);
     }
 
     private void registerMBean(Metric metric, ObjectName name, MBeanWrapper mBeanServer)

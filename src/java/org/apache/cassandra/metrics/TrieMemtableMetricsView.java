@@ -47,7 +47,7 @@ public class TrieMemtableMetricsView
 
     public TrieMemtableMetricsView(String keyspace, String table)
     {
-        factory = Metrics.regsiterMetricFactory(new TrieMemtableMetricNameFactory(keyspace, table));
+        factory = Metrics.registerMetricFactory(new TrieMemtableMetricNameFactory(keyspace, table));
         
         uncontendedPuts = Metrics.counter(factory.createMetricName(UNCONTENDED_PUTS));
         contendedPuts = Metrics.counter(factory.createMetricName(CONTENDED_PUTS));

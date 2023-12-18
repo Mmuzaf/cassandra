@@ -50,7 +50,7 @@ public class BufferPoolMetrics
 
     public BufferPoolMetrics(String scope, BufferPool bufferPool)
     {
-        MetricNameFactory factory = Metrics.regsiterMetricFactory(new DefaultNameFactory("BufferPool", scope));
+        MetricNameFactory factory = Metrics.registerMetricFactory(new DefaultNameFactory("BufferPool", scope));
 
         hits = Metrics.meter(factory.createMetricName("Hits"));
 

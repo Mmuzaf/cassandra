@@ -171,8 +171,8 @@ public class CassandraMetricsRegistryTest
     public void testMetricAliasesRegistration()
     {
         CassandraMetricsRegistry registry = CassandraMetricsRegistry.Metrics;
-        MetricNameFactory factory = registry.regsiterMetricFactory(new DefaultNameFactory("Table", "MetricsTestScope"));
-        MetricNameFactory aliasFactory = registry.regsiterMetricFactory(new DefaultNameFactory("Table", "MetricsTestAliasScope"));
+        MetricNameFactory factory = registry.registerMetricFactory(new DefaultNameFactory("Table", "MetricsTestScope"));
+        MetricNameFactory aliasFactory = registry.registerMetricFactory(new DefaultNameFactory("Table", "MetricsTestAliasScope"));
 
         MetricName meter = factory.createMetricName("TestMeter");
         MetricName meterAlias = aliasFactory.createMetricName("TestMeterAlias");

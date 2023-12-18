@@ -34,7 +34,7 @@ public final class ClientMetrics
     public static final String TYPE_NAME = "Client";
     public static final ClientMetrics instance = new ClientMetrics();
 
-    private static final MetricNameFactory factory = Metrics.regsiterMetricFactory(new DefaultNameFactory(TYPE_NAME));
+    private static final MetricNameFactory factory = Metrics.registerMetricFactory(new DefaultNameFactory(TYPE_NAME));
 
     private volatile boolean initialized = false;
     private Collection<Server> servers = Collections.emptyList();

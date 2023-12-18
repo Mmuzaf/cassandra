@@ -117,7 +117,7 @@ public class ThreadPoolMetrics
 
     private static MetricName makeMetricName(String path, String poolName, String metricName)
     {
-        MetricNameFactory factory = Metrics.regsiterMetricFactory(new ThreadPoolMetricNameFactory(path, poolName));
+        MetricNameFactory factory = Metrics.registerMetricFactory(new ThreadPoolMetricNameFactory(path, poolName));
         return factory.createMetricName(metricName);
     }
 

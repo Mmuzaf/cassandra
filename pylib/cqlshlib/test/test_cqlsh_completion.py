@@ -991,7 +991,7 @@ class TestCqlshCompletion(CqlshCompletionCase):
                                                      'dynamic_columns',
                                                      'twenty_rows_composite_table',
                                                      'utf8_with_special_chars',
-                                                     'system_traces.', 'songs', 'system_views.', 'system_metrics',
+                                                     'system_traces.', 'songs', 'system_views.', 'system_metrics.',
                                                      'system_virtual_schema.',
                                                      'system_schema.', 'system_distributed.',
                                                      'system_cluster_metadata.',

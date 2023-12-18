@@ -23,6 +23,7 @@ import java.util.List;
 import org.apache.cassandra.index.sai.utils.IndexIdentifier;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 import org.apache.cassandra.metrics.DefaultNameFactory;
+import org.apache.cassandra.metrics.MetricNameFactory;
 
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 
@@ -57,7 +58,7 @@ public abstract class AbstractMetrics
 
     public void release()
     {
-        tracked.forEach(Metrics::remove);
+        Metrics.removeIf(tracked::contains);
         tracked.clear();
     }
 
@@ -78,7 +79,7 @@ public abstract class AbstractMetrics
         CassandraMetricsRegistry.MetricName metricName = new CassandraMetricsRegistry.MetricName(DefaultNameFactory.GROUP_NAME,
                                                                                                  TYPE, name, metricScope, createMBeanName(name, scope));
         tracked.add(metricName);
-        return metricName;
+        return Metrics.registerMetricFactory(n -> metricName).createMetricName(name);
     }
 
     private String createMBeanName(String name, String scope)
