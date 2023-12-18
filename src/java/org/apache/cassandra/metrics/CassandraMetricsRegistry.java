@@ -65,18 +65,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.SortedSet;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
 import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_METRICS;
@@ -109,7 +106,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
      */
     public static final CassandraMetricsRegistry Metrics = new CassandraMetricsRegistry();
     private final MetricRegistryListener jmxExporter = new CassandraJmxMetricsExporter(name ->
-            ofNullable(this.getAliases().get(name)).orElse(Collections.emptySet()));
+            ofNullable(this.getAliases().get(name)).map(s -> s.iterator().next()).orElseThrow());
     /** We have to make sure that this metrics listener is called the last, so that it can clean up aliases. */
     private final MetricRegistryListener housekeepingListener = new BaseMetricRegistryListener()
     {
@@ -303,19 +300,17 @@ public class CassandraMetricsRegistry extends MetricRegistry
     public Counter counter(MetricName... name)
     {
         setAliases(name);
-        return super.counter(name[0].getMetricName());
+        Counter counter = super.counter(name[0].getMetricName());
+        Stream.of(name).skip(1).forEach(n -> register(n, counter));
+        return counter;
     }
 
-    public Meter meter(MetricName name)
+    public Meter meter(MetricName... name)
     {
-        addUnknownMetric(name);
-        return meter(name.getMetricName());
-    }
-
-    public Meter meter(MetricName name, MetricName alias)
-    {
-        setAliases(name, alias);
-        return meter(name);
+        setAliases(name);
+        Meter meter = super.meter(name[0].getMetricName());
+        Stream.of(name).skip(1).forEach(n -> register(n, meter));
+        return meter;
     }
 
     public Histogram histogram(MetricName name, boolean considerZeroes)
@@ -326,26 +321,23 @@ public class CassandraMetricsRegistry extends MetricRegistry
     public Histogram histogram(MetricName name, MetricName alias, boolean considerZeroes)
     {
         setAliases(name, alias);
-        return histogram(name, considerZeroes);
+        Histogram histogram = histogram(name, considerZeroes);
+        register(alias, histogram);
+        return histogram;
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public <T extends Gauge> T gauge(MetricName name, MetricName alias, MetricSupplier<T> gauge)
+    {
+        setAliases(name, alias);
+        Gauge gaugeLoc = super.gauge(name.getMetricName(), gauge);
+        register(alias, gaugeLoc);
+        return (T) gaugeLoc;
     }
 
     public Timer timer(MetricName name)
     {
         return timer(name, DEFAULT_TIMER_UNIT);
-    }
-
-    @SuppressWarnings("rawtypes")
-    public <T extends Gauge> T gauge(MetricName name, MetricName alias, MetricSupplier<T> gauge)
-    {
-        setAliases(name, alias);
-        return super.gauge(name.getMetricName(), gauge);
-    }
-
-    @SuppressWarnings("rawtypes")
-    public <T extends Gauge> T gauge(MetricName name, MetricSupplier<T> gauge)
-    {
-        addUnknownMetric(name);
-        return super.gauge(name.getMetricName(), gauge);
     }
 
     public SnapshottingTimer timer(MetricName name, MetricName alias)
@@ -361,7 +353,9 @@ public class CassandraMetricsRegistry extends MetricRegistry
     public SnapshottingTimer timer(MetricName name, MetricName alias, TimeUnit durationUnit)
     {
         setAliases(name, alias);
-        return timer(name, durationUnit);
+        SnapshottingTimer timer = timer(name, durationUnit);
+        register(alias, timer);
+        return timer;
     }
 
     public static SnapshottingReservoir createReservoir(TimeUnit durationUnit)
@@ -402,70 +396,6 @@ public class CassandraMetricsRegistry extends MetricRegistry
         }
     }
 
-    @Override
-    public SortedSet<String> getNames()
-    {
-        return getMetrics().navigableKeySet();
-    }
-
-    @Override
-    public NavigableMap<String, Metric> getMetrics()
-    {
-        return withAliases(super.getMetrics());
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    @SuppressWarnings("rawtypes")
-    public SortedMap<String, Gauge> getGauges()
-    {
-        return withAliases(super.getGauges());
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public SortedMap<String, Counter> getCounters()
-    {
-        return withAliases(super.getCounters());
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public SortedMap<String, Histogram> getHistograms()
-    {
-        return withAliases(super.getHistograms());
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public SortedMap<String, Meter> getMeters()
-    {
-        return withAliases(super.getMeters());
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public SortedMap<String, Timer> getTimers()
-    {
-        return withAliases(super.getTimers());
-    }
-
-    /**
-     * Returns a map of all metrics with their known aliases. If filter is provided,
-     * only metrics that match the filter will be returned.
-     */
-    private static <T extends Metric> NavigableMap<String, T> withAliases(Map<String, T> map)
-    {
-        NavigableMap<String, T> result = new TreeMap<>();
-        for (Map.Entry<String, T> e : map.entrySet())
-        {
-            result.put(e.getKey(), e.getValue());
-            ALIASES.getOrDefault(e.getKey(), Collections.emptySet())
-                    .forEach(alias -> result.put(alias.getMetricName(), e.getValue()));
-        }
-        return result;
-    }
-
     public Collection<ThreadPoolMetrics> allThreadPoolMetrics()
     {
         return Collections.unmodifiableCollection(threadPoolMetrics.values());
@@ -487,17 +417,12 @@ public class CassandraMetricsRegistry extends MetricRegistry
         threadPoolMetrics.remove(metrics.poolName, metrics);
     }
 
-    public <T extends Metric> T register(MetricName name, MetricName aliasName, T metric)
-    {
-        setAliases(name, aliasName);
-        return this.register(name, metric);
-    }
-
     public <T extends Metric> T register(MetricName name, T metric, MetricName... aliases)
     {
-
         setAliases(ArrayUtils.addAll(new MetricName[]{name}, aliases));
-        return register(name, metric);
+        T metricLoc = register(name, metric);
+        Stream.of(aliases).forEach(n -> register(n, metricLoc));
+        return metricLoc;
     }
 
     public boolean remove(MetricName name)
@@ -1292,21 +1217,21 @@ public class CassandraMetricsRegistry extends MetricRegistry
     private static class CassandraJmxMetricsExporter extends BaseMetricRegistryListener
     {
         private final MBeanWrapper mBeanWrapper = MBeanWrapper.instance;
-        private final Function<String, Iterable<MetricName>> aliases;
+        private final Function<String, MetricName> fullMetricNameFunc;
 
-        public CassandraJmxMetricsExporter(Function<String, Iterable<MetricName>> aliases)
+        public CassandraJmxMetricsExporter(Function<String, MetricName> fullMetricNameFunc)
         {
-            this.aliases = aliases;
+            this.fullMetricNameFunc = fullMetricNameFunc;
         }
 
         protected void onMetricAdded(String name, Metric metric)
         {
-            aliases.apply(name).forEach(m -> Metrics.registerMBean(metric, m.getMBeanName(), mBeanWrapper));
+            Metrics.registerMBean(metric, fullMetricNameFunc.apply(name).getMBeanName(), mBeanWrapper);
         }
 
         protected void onMetricRemove(String name)
         {
-            aliases.apply(name).forEach(m -> Metrics.unregisterMBean(m.getMBeanName(), mBeanWrapper));
+            Metrics.unregisterMBean(fullMetricNameFunc.apply(name).getMBeanName(), mBeanWrapper);
         }
     }
 

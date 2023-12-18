@@ -931,10 +931,10 @@ public class TableMetrics
 
     protected <G,T> Gauge<T> createTableGauge(String name, String alias, Gauge<T> gauge, Gauge<G> globalGauge)
     {
-        Gauge<T> cfGauge = Metrics.register(factory.createMetricName(name), aliasFactory.createMetricName(alias), gauge);
+        Gauge<T> cfGauge = Metrics.register(factory.createMetricName(name), gauge, aliasFactory.createMetricName(alias));
         if (register(name, alias, cfGauge) && globalGauge != null)
         {
-            Metrics.register(GLOBAL_FACTORY.createMetricName(name), GLOBAL_ALIAS_FACTORY.createMetricName(alias), globalGauge);
+            Metrics.register(GLOBAL_FACTORY.createMetricName(name), globalGauge, GLOBAL_ALIAS_FACTORY.createMetricName(alias));
         }
         return cfGauge;
     }
@@ -983,19 +983,14 @@ public class TableMetrics
         if (register(name, alias, cfCounter))
         {
             Metrics.register(GLOBAL_FACTORY.createMetricName(name),
-                             GLOBAL_ALIAS_FACTORY.createMetricName(alias),
-                             new Gauge<Long>()
-            {
-                public Long getValue()
-                {
-                    long total = 0;
-                    for (Metric cfGauge : ALL_TABLE_METRICS.get(name))
+                    (Gauge<Long>) () ->
                     {
-                        total += ((Counter) cfGauge).getCount();
-                    }
-                    return total;
-                }
-            });
+                        long total = 0;
+                        for (Metric cfGauge : ALL_TABLE_METRICS.get(name))
+                            total += ((Counter) cfGauge).getCount();
+                        return total;
+                    },
+                    GLOBAL_ALIAS_FACTORY.createMetricName(alias));
         }
         return cfCounter;
     }

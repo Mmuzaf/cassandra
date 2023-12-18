@@ -99,8 +99,8 @@ public class LatencyMetrics
         }
         else
         {
-            latency = Metrics.register(factory.createMetricName(namePrefix + "Latency"), aliasFactory.createMetricName(namePrefix + "Latency"), timer);
-            totalLatency = Metrics.register(factory.createMetricName(namePrefix + "TotalLatency"), aliasFactory.createMetricName(namePrefix + "TotalLatency"), counter);
+            latency = Metrics.register(factory.createMetricName(namePrefix + "Latency"), timer, aliasFactory.createMetricName(namePrefix + "Latency"));
+            totalLatency = Metrics.register(factory.createMetricName(namePrefix + "TotalLatency"), counter, aliasFactory.createMetricName(namePrefix + "TotalLatency"));
         }
     }
     
