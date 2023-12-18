@@ -23,7 +23,6 @@ import java.util.List;
 import org.apache.cassandra.index.sai.utils.IndexIdentifier;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 import org.apache.cassandra.metrics.DefaultNameFactory;
-import org.apache.cassandra.metrics.MetricNameFactory;
 
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 
