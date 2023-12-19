@@ -61,6 +61,7 @@ public class TrieMemtableMetricsTest extends SchemaLoader
     private static final Logger logger = LoggerFactory.getLogger(TrieMemtableMetricsTest.class);
     private static Session session;
     private static Cluster cluster;
+    private static EmbeddedCassandraService cassandra;
 
     private static final String KEYSPACE = "triememtable";
     private static final String TABLE = "metricstest";
@@ -80,7 +81,7 @@ public class TrieMemtableMetricsTest extends SchemaLoader
         });
         MEMTABLE_SHARD_COUNT.setInt(NUM_SHARDS);
 
-        EmbeddedCassandraService cassandra = new EmbeddedCassandraService();
+        cassandra = new EmbeddedCassandraService();
         cassandra.start();
 
         cluster = Cluster.builder().addContactPoint("127.0.0.1").withPort(DatabaseDescriptor.getNativeTransportPort()).build();
@@ -213,6 +214,9 @@ public class TrieMemtableMetricsTest extends SchemaLoader
     @AfterClass
     public static void teardown()
     {
-        session.close();
+        if (cluster != null)
+            cluster.close();
+        if (cassandra != null)
+            cassandra.stop();
     }
 }

@@ -53,8 +53,9 @@ public class JmxVirtualTableMetricsTest extends CQLTester
     @BeforeClass
     public static void setup() throws Exception
     {
-        CQLTester.startJMXServer();
-        CQLTester.createMBeanServerConnection();
+        startJMXServer();
+        createMBeanServerConnection();
+        addMetricsKeyspace();
     }
 
     @Before
@@ -319,6 +320,5 @@ public class JmxVirtualTableMetricsTest extends CQLTester
 
             return Optional.empty();
         }
-
     }
 }

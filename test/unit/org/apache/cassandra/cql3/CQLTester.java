@@ -410,8 +410,6 @@ public abstract class CQLTester
         StorageService.instance.setPartitionerUnsafe(Murmur3Partitioner.instance);
         // Once per-JVM is enough
         prepareServer();
-        VirtualKeyspaceRegistry.instance.register(new VirtualKeyspace(VIRTUAL_METRICS,
-                CassandraMetricsRegistry.createMetricsKeyspaceTables()));
     }
 
     @AfterClass
@@ -465,6 +463,12 @@ public abstract class CQLTester
         functions = null;
         aggregates = null;
         user = null;
+    }
+
+    protected static void addMetricsKeyspace()
+    {
+        VirtualKeyspaceRegistry.instance.register(new VirtualKeyspace(VIRTUAL_METRICS,
+                CassandraMetricsRegistry.createMetricsKeyspaceTables()));
     }
 
     protected void resetSchema() throws Throwable
