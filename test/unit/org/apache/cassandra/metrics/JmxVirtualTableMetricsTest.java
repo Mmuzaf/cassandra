@@ -55,7 +55,6 @@ public class JmxVirtualTableMetricsTest extends CQLTester
     {
         CQLTester.startJMXServer();
         CQLTester.createMBeanServerConnection();
-        CassandraMetricsRegistry.Metrics.start();
     }
 
     @Before

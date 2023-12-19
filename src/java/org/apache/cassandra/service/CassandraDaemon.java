@@ -37,6 +37,7 @@ import javax.management.remote.JMXConnectorServer;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import org.apache.cassandra.db.virtual.VirtualKeyspace;
 import org.apache.cassandra.db.virtual.VirtualSchemaKeyspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,6 +100,7 @@ import static org.apache.cassandra.config.CassandraRelevantProperties.JAVA_VERSI
 import static org.apache.cassandra.config.CassandraRelevantProperties.JAVA_VM_NAME;
 import static org.apache.cassandra.config.CassandraRelevantProperties.SIZE_RECORDER_INTERVAL;
 import static org.apache.cassandra.config.CassandraRelevantProperties.START_NATIVE_TRANSPORT;
+import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_METRICS;
 
 /**
  * The <code>CassandraDaemon</code> is an abstraction for a Cassandra daemon
@@ -415,9 +417,6 @@ public class CassandraDaemon
         else
             logger.info("Prewarming of auth caches is disabled");
 
-        logger.info("Cassandra start metrics service...");
-        CassandraMetricsRegistry.Metrics.start();
-
         PaxosState.startAutoRepairs();
 
         completeSetup();
@@ -547,6 +546,7 @@ public class CassandraDaemon
     {
         VirtualKeyspaceRegistry.instance.register(VirtualSchemaKeyspace.instance);
         VirtualKeyspaceRegistry.instance.register(SystemViewsKeyspace.instance);
+        VirtualKeyspaceRegistry.instance.register(new VirtualKeyspace(VIRTUAL_METRICS, CassandraMetricsRegistry.createMetricsKeyspaceTables()));
 
         // flush log messages to system_views.system_logs virtual table as there were messages already logged
         // before that virtual table was instantiated
@@ -695,7 +695,6 @@ public class CassandraDaemon
                 logger.error("Error shutting down local JMX server: ", e);
             }
         }
-        CassandraMetricsRegistry.Metrics.stop();
     }
 
     @VisibleForTesting

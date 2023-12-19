@@ -31,8 +31,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter;
-import org.apache.cassandra.db.virtual.VirtualKeyspace;
-import org.apache.cassandra.db.virtual.VirtualKeyspaceRegistry;
 import org.apache.cassandra.db.virtual.VirtualTable;
 import org.apache.cassandra.db.virtual.model.CounterMetricRow;
 import org.apache.cassandra.db.virtual.model.CounterMetricRowWalker;
@@ -61,6 +59,7 @@ import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -70,7 +69,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
@@ -102,11 +100,10 @@ public class CassandraMetricsRegistry extends MetricRegistry
      * Root metrics registry that is used by Cassandra to store all metrics.
      * All modifications to the registry are delegated to the corresponding listeners as well.
      * Metrics from the root registry are exported to JMX by {@link CassandraJmxMetricsExporter} and to virtual tables
-     * via {@link #start()}.
+     * via {@link #createMetricsKeyspaceTables()}.
      */
-    public static final CassandraMetricsRegistry Metrics = new CassandraMetricsRegistry();
-    private final MetricRegistryListener jmxExporter = new CassandraJmxMetricsExporter(name ->
-            ofNullable(this.getAliases().get(name)).map(s -> s.iterator().next()).orElseThrow());
+    public static final CassandraMetricsRegistry Metrics = init();
+    private final MetricRegistryListener jmxExporter = new CassandraJmxMetricsExporter(Collections.unmodifiableMap(ALIASES));
     /** We have to make sure that this metrics listener is called the last, so that it can clean up aliases. */
     private final MetricRegistryListener housekeepingListener = new BaseMetricRegistryListener()
     {
@@ -170,26 +167,21 @@ public class CassandraMetricsRegistry extends MetricRegistry
     {
     }
 
-    public void start()
+    private static CassandraMetricsRegistry init()
     {
-        if (listeners.contains(housekeepingListener))
-            return;
+        CassandraMetricsRegistry registry = new CassandraMetricsRegistry();
+        if (registry.listeners.contains(registry.housekeepingListener))
+            return registry;
 
-        assert listeners.isEmpty();
-
-        VirtualKeyspaceRegistry.instance.register(new VirtualKeyspace(VIRTUAL_METRICS, createMetricsKeyspaceTables()));
-        listeners.add(jmxExporter);
-        listeners.addLast(housekeepingListener);
+        assert registry.listeners.isEmpty();
+        registry.listeners.add(registry.jmxExporter);
+        registry.listeners.addLast(registry.housekeepingListener);
 
         // Adding listeners to the root registry, so that they can be notified about all metrics changes.
-        Metrics.addListener(jmxExporter);
-        Metrics.addListener(housekeepingListener);
-    }
+        registry.addListener(registry.jmxExporter);
+        registry.addListener(registry.housekeepingListener);
 
-    public void stop()
-    {
-        listeners.forEach(Metrics::removeListener);
-        listeners.clear();
+        return registry;
     }
 
     @SuppressWarnings("rawtypes")
@@ -209,7 +201,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
             throw new IllegalStateException("Unknown metric type: " + metric.getClass().getName());
     }
 
-    private List<VirtualTable> createMetricsKeyspaceTables()
+    public static List<VirtualTable> createMetricsKeyspaceTables()
     {
         ImmutableList.Builder<VirtualTable> builder = ImmutableList.builder();
         metricGroups.forEach(groupName -> builder.add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
@@ -274,7 +266,8 @@ public class CassandraMetricsRegistry extends MetricRegistry
         if (!metricGroups.contains(newMetricName.getSystemViewName()))
             throw new IllegalStateException("Metric view name must match statically registered groups: " + newMetricName.getSystemViewName());
 
-        ALIASES.computeIfAbsent(newMetricName.getMetricName(), k -> ConcurrentHashMap.newKeySet()).add(newMetricName);
+        // We have to be sure that aliases are registered the same order as they are added to the registry.
+        ALIASES.computeIfAbsent(newMetricName.getMetricName(), k -> new LinkedHashSet<>()).add(newMetricName);
     }
 
     private static void setAliases(MetricName... names)
@@ -1220,21 +1213,31 @@ public class CassandraMetricsRegistry extends MetricRegistry
     private static class CassandraJmxMetricsExporter extends BaseMetricRegistryListener
     {
         private final MBeanWrapper mBeanWrapper = MBeanWrapper.instance;
-        private final Function<String, MetricName> fullMetricNameFunc;
+        private final Map<String, Set<MetricName>> aliases;
 
-        public CassandraJmxMetricsExporter(Function<String, MetricName> fullMetricNameFunc)
+        public CassandraJmxMetricsExporter(Map<String, Set<MetricName>> aliases)
         {
-            this.fullMetricNameFunc = fullMetricNameFunc;
+            this.aliases = aliases;
         }
 
         protected void onMetricAdded(String name, Metric metric)
         {
-            Metrics.registerMBean(metric, fullMetricNameFunc.apply(name).getMBeanName(), mBeanWrapper);
+            MetricName metricName = aliases.getOrDefault(name, Collections.emptySet()).stream().findFirst().orElse(null);
+            if (metricName == null)
+                return;
+
+            assert metricName.getMetricName().equals(name);
+            Metrics.registerMBean(metric, metricName.getMBeanName(), mBeanWrapper);
         }
 
         protected void onMetricRemove(String name)
         {
-            Metrics.unregisterMBean(fullMetricNameFunc.apply(name).getMBeanName(), mBeanWrapper);
+            MetricName metricName = aliases.getOrDefault(name, Collections.emptySet()).stream().findFirst().orElse(null);
+            if (metricName == null)
+                return;
+
+            assert metricName.getMetricName().equals(name);
+            Metrics.unregisterMBean(metricName.getMBeanName(), mBeanWrapper);
         }
     }
 

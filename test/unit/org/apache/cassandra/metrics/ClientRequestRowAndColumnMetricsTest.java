@@ -48,7 +48,6 @@ public class ClientRequestRowAndColumnMetricsTest extends CQLTester
     public static void setup()
     {
         requireNetwork();
-        CassandraMetricsRegistry.Metrics.start();
     }
 
     @Before

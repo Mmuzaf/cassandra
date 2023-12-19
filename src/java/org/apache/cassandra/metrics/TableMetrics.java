@@ -64,7 +64,6 @@ import org.apache.cassandra.utils.Pair;
 
 import static java.util.concurrent.TimeUnit.MICROSECONDS;
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
-import static org.apache.cassandra.metrics.DefaultNameFactory.GROUP_NAME;
 import static org.apache.cassandra.utils.Clock.Global.nanoTime;
 
 /**
@@ -1278,8 +1277,12 @@ public class TableMetrics
 
         public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
         {
-            String mbeanName = GROUP_NAME + ':' + "type=" + type + ",name=" + metricName;
-            return new CassandraMetricsRegistry.MetricName(GROUP_NAME, type, metricName, "all", mbeanName);
+            String groupName = TableMetrics.class.getPackage().getName();
+            StringBuilder mbeanName = new StringBuilder();
+            mbeanName.append(groupName).append(":");
+            mbeanName.append("type=").append(type);
+            mbeanName.append(",name=").append(metricName);
+            return new CassandraMetricsRegistry.MetricName(groupName, type, metricName, "all", mbeanName.toString());
         }
     }
 

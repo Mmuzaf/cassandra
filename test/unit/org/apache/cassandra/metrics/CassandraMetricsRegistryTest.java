@@ -20,6 +20,7 @@
  */
 package org.apache.cassandra.metrics;
 
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.jvm.BufferPoolMetricSet;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
@@ -32,11 +33,17 @@ import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 
@@ -165,6 +172,30 @@ public class CassandraMetricsRegistryTest
         assertEquals("42 and 100 nanos should both be put in the first bucket",
                             2, counts[0]);
         assertEquals(expectedBucketsWithValues, bucketsWithValues);
+    }
+
+    @Test
+    public void testMetricAliasesOrder()
+    {
+        LinkedHashSet<MetricName> aliases = new LinkedHashSet<>();
+        int size = ThreadLocalRandom.current().nextInt(10, 1000);
+        MetricName first = DefaultNameFactory.createMetricName("Table", "FirstTestMetricAliasesOrder", "FirstScope");
+        for (int i = 0; i < size; i++)
+            aliases.add(DefaultNameFactory.createMetricName("Table", UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+
+        Meter metric = CassandraMetricsRegistry.Metrics.meter("first");
+        CassandraMetricsRegistry.Metrics.register(first, metric, aliases.toArray(new MetricName[size]));
+        Set<MetricName> all = CassandraMetricsRegistry.Metrics.getAliases().get(first.getMetricName());
+
+        assertNotNull(all);
+        assertEquals(size + 1, all.size());
+
+        Iterator<MetricName> it = all.iterator();
+        assertEquals(first, it.next());
+        for (MetricName alias : aliases)
+            assertEquals(alias, it.next());
+
+        assertFalse(it.hasNext());
     }
 
     @Test
