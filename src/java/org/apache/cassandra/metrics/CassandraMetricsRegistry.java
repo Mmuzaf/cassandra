@@ -59,7 +59,7 @@ import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -69,8 +69,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
@@ -92,7 +92,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
     /** A map of metric name constructed by {@link com.codahale.metrics.MetricRegistry#name(String, String...)} and
      * its full name in the way how it is represented in JMX. The map is used by {@link CassandraJmxMetricsExporter}
      * to export metrics to JMX. */
-    private static final ConcurrentMap<String, Set<MetricName>> ALIASES = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, List<MetricName>> ALIASES = new ConcurrentHashMap<>();
     /** A set of all known metric groups, used to validate metric groups that are statically defined in Cassandra. */
     static final Set<String> metricGroups;
 
@@ -210,7 +210,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
                 new MetricRowWalker(),
                 () -> () -> Metrics.getMetrics().entrySet()
                         .stream()
-                        .flatMap(e -> ALIASES.getOrDefault(e.getKey(), Collections.emptySet())
+                        .flatMap(e -> ALIASES.getOrDefault(e.getKey(), Collections.emptyList())
                                 .stream()
                                 .filter(m -> m.systemViewName.equals(groupName))
                                 .map(m -> new AbstractMap.SimpleEntry<>(m.getMetricName(), e.getValue())))
@@ -267,7 +267,8 @@ public class CassandraMetricsRegistry extends MetricRegistry
             throw new IllegalStateException("Metric view name must match statically registered groups: " + newMetricName.getSystemViewName());
 
         // We have to be sure that aliases are registered the same order as they are added to the registry.
-        ALIASES.computeIfAbsent(newMetricName.getMetricName(), k -> new LinkedHashSet<>()).add(newMetricName);
+        ALIASES.computeIfAbsent(newMetricName.getMetricName(), k -> Collections.synchronizedList(new LinkedList<>()))
+                .add(newMetricName);
     }
 
     private static void setAliases(MetricName... names)
@@ -278,17 +279,11 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
     public String getMetricScope(String metricName)
     {
-        return getAliases()
-                .get(metricName)
+        return ALIASES.getOrDefault(metricName, Collections.emptyList())
                 .stream()
                 .findFirst()
                 .map(MetricName::getScope)
                 .orElse("unknown");
-    }
-
-    public Map<String, Set<MetricName>> getAliases()
-    {
-        return Collections.unmodifiableMap(ALIASES);
     }
 
     public Counter counter(MetricName... name)
@@ -419,20 +414,24 @@ public class CassandraMetricsRegistry extends MetricRegistry
         return metricLoc;
     }
 
-    public boolean remove(MetricName name)
+    public void remove(MetricName name)
     {
         // Aliases are removed in onMetricRemoved by metrics listener.
-        for (MetricName alias : ALIASES.getOrDefault(name.getMetricName(), Collections.emptySet()))
-            super.remove(alias.getMetricName());
-        return super.remove(name.getMetricName());
+        remove(name.getMetricName());
     }
 
-    public void removeIf(Predicate<MetricName> filter)
+    public boolean remove(String name)
     {
-        ALIASES.values().stream()
-                .flatMap(Collection::stream)
-                .filter(filter)
-                .forEach(this::remove);
+        LinkedList<String> delete = ofNullable(ALIASES.get(name))
+                .map(s -> s.stream().map(MetricName::getMetricName)
+                        .collect(Collectors.toCollection(LinkedList::new)))
+                .orElse(new LinkedList<>(Collections.singletonList(name)));
+        // Aliases are removed in onMetricRemoved by metrics listener.
+        Iterator<String> iter = delete.descendingIterator();
+        boolean removed = true;
+        while (iter.hasNext())
+            removed &= super.remove(iter.next());
+        return removed;
     }
 
     private void registerMBean(Metric metric, ObjectName name, MBeanWrapper mBeanServer)
@@ -1213,16 +1212,16 @@ public class CassandraMetricsRegistry extends MetricRegistry
     private static class CassandraJmxMetricsExporter extends BaseMetricRegistryListener
     {
         private final MBeanWrapper mBeanWrapper = MBeanWrapper.instance;
-        private final Map<String, Set<MetricName>> aliases;
+        private final Map<String, List<MetricName>> aliases;
 
-        public CassandraJmxMetricsExporter(Map<String, Set<MetricName>> aliases)
+        public CassandraJmxMetricsExporter(Map<String, List<MetricName>> aliases)
         {
             this.aliases = aliases;
         }
 
         protected void onMetricAdded(String name, Metric metric)
         {
-            MetricName metricName = aliases.getOrDefault(name, Collections.emptySet()).stream().findFirst().orElse(null);
+            MetricName metricName = aliases.getOrDefault(name, Collections.emptyList()).stream().findFirst().orElse(null);
             if (metricName == null)
                 return;
 
@@ -1232,7 +1231,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
         protected void onMetricRemove(String name)
         {
-            MetricName metricName = aliases.getOrDefault(name, Collections.emptySet()).stream().findFirst().orElse(null);
+            MetricName metricName = aliases.getOrDefault(name, Collections.emptyList()).stream().findFirst().orElse(null);
             if (metricName == null)
                 return;
 

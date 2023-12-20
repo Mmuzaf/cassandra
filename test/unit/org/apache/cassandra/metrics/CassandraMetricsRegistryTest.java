@@ -21,28 +21,32 @@
 package org.apache.cassandra.metrics;
 
 import com.codahale.metrics.Meter;
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.MetricRegistryListener;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.jvm.BufferPoolMetricSet;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry.MetricName;
 import org.apache.cassandra.utils.EstimatedHistogram;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -52,6 +56,12 @@ public class CassandraMetricsRegistryTest
     // A class with a name ending in '$'
     private static class StrangeName$
     {
+    }
+
+    @Before
+    public void prepare()
+    {
+        CassandraMetricsRegistry.Metrics.getNames().forEach(CassandraMetricsRegistry.Metrics::remove);
     }
 
     @Test
@@ -177,25 +187,46 @@ public class CassandraMetricsRegistryTest
     @Test
     public void testMetricAliasesOrder()
     {
-        LinkedHashSet<MetricName> aliases = new LinkedHashSet<>();
+        String dummy = "defaultName";
+        LinkedList<MetricName> aliases = new LinkedList<>();
         int size = ThreadLocalRandom.current().nextInt(10, 1000);
         MetricName first = DefaultNameFactory.createMetricName("Table", "FirstTestMetricAliasesOrder", "FirstScope");
         for (int i = 0; i < size; i++)
-            aliases.add(DefaultNameFactory.createMetricName("Table", UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+            aliases.add(DefaultNameFactory.createMetricName("Table", "FirstTestMetricAliasesOrder" + UUID.randomUUID(), UUID.randomUUID().toString()));
 
-        Meter metric = CassandraMetricsRegistry.Metrics.meter("first");
+        Meter metric = CassandraMetricsRegistry.Metrics.meter(dummy);
+        LinkedList<MetricName> verify = new LinkedList<>(aliases);
+        verify.addFirst(first);
+        MetricRegistryListener listener;
+        CassandraMetricsRegistry.Metrics.addListener(listener = new MetricRegistryListener.Base()
+        {
+            @Override
+            public void onMeterAdded(String name, Meter meter)
+            {
+                if (dummy.equals(name))
+                    return;
+
+                assertEquals(verify.removeFirst().getMetricName(), name);
+            }
+        });
         CassandraMetricsRegistry.Metrics.register(first, metric, aliases.toArray(new MetricName[size]));
-        Set<MetricName> all = CassandraMetricsRegistry.Metrics.getAliases().get(first.getMetricName());
+        CassandraMetricsRegistry.Metrics.removeListener(listener);
+
+        List<String> all = CassandraMetricsRegistry.Metrics.getMetrics().keySet().
+                stream()
+                .filter(m -> m.contains("FirstTestMetricAliasesOrder"))
+                .collect(Collectors.toList());
 
         assertNotNull(all);
         assertEquals(size + 1, all.size());
 
-        Iterator<MetricName> it = all.iterator();
-        assertEquals(first, it.next());
-        for (MetricName alias : aliases)
-            assertEquals(alias, it.next());
+        CassandraMetricsRegistry.Metrics.remove(first.getMetricName());
+        Map<String, Metric> metrics = CassandraMetricsRegistry.Metrics.getMetrics();
+        assertEquals(1, metrics.size());
+        assertEquals(dummy, metrics.keySet().iterator().next());
 
-        assertFalse(it.hasNext());
+        CassandraMetricsRegistry.Metrics.remove(dummy);
+        assertTrue(CassandraMetricsRegistry.Metrics.getMetrics().isEmpty());
     }
 
     @Test
