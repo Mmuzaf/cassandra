@@ -56,6 +56,7 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
     private static final Pattern DOLLAR_PATTERN = Pattern.compile("\\$");
     private static final Map<String, Class<?>> namePrimitiveMap = new HashMap<>();
     private static final Map<Class<?>, Class<?>> primitiveWrapperMap = new HashMap<>();
+    private static final Pattern CAMEL_SNAKE_PATTERN = Pattern.compile("\\B([A-Z])");
 
     static
     {
@@ -300,24 +301,9 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
                 primitiveWrapperMap.get(namePrimitiveMap.get(className)).getSimpleName() : className;
     }
 
-    private static String camelToSnake(String camel)
+    private static String camelToSnake(String camelCase)
     {
-        StringBuilder sb = new StringBuilder(camel.length());
-        for (char c : camel.toCharArray())
-        {
-            if (Character.isUpperCase(c))
-            {
-                // if first char is uppercase, then avoid adding the _ prefix
-                if (sb.length() > 0)
-                    sb.append('_');
-                sb.append(Character.toLowerCase(c));
-            }
-            else
-            {
-                sb.append(c);
-            }
-        }
-        return sb.toString();
+        return CAMEL_SNAKE_PATTERN.matcher(camelCase).replaceAll("_$1").toLowerCase();
     }
 
     @Override
