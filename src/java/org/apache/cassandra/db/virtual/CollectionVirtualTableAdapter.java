@@ -114,6 +114,8 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
             .put(Short.TYPE, ShortType.instance)
             .put(UUID.class, UUIDType.instance)
             .build();
+    /** The map is used to avoid getting column metadata for each regular column for each row. */
+    private final ConcurrentHashMap<String, ColumnMetadata> columnMetas = new ConcurrentHashMap<>();
     private final RowWalker<R> walker;
     private final Iterable<R> data;
     private final TableMetadata metadata;
@@ -182,19 +184,19 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
                 new RowWalker.MetadataVisitor()
                 {
                     @Override
-                    public <T> void accept(Column.Type type, String name, Class<T> clazz)
+                    public <T> void accept(Column.Type type, String columnName, Class<T> clazz)
                     {
                         switch (type)
                         {
                             case PARTITION_KEY:
                                 partitionKeyTypes.add(converters.get(clazz));
-                                builder.addPartitionKeyColumn(camelToSnake(name), converters.get(clazz));
+                                builder.addPartitionKeyColumn(columnName, converters.get(clazz));
                                 break;
                             case CLUSTERING:
-                                builder.addClusteringColumn(camelToSnake(name), converters.get(clazz));
+                                builder.addClusteringColumn(columnName, converters.get(clazz));
                                 break;
                             case REGULAR:
-                                builder.addRegularColumn(camelToSnake(name), converters.get(clazz));
+                                builder.addRegularColumn(columnName, converters.get(clazz));
                                 break;
                             default:
                                 throw new IllegalStateException("Unknown column type: " + type);
@@ -298,7 +300,7 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
             private int pIdx, cIdx = 0;
 
             @Override
-            public <T> void accept(Column.Type type, String name, Class<T> clazz, T value)
+            public <T> void accept(Column.Type type, String columnName, Class<T> clazz, T value)
             {
                 switch (type)
                 {
@@ -314,7 +316,7 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
                             break;
 
                         // Push down the column filter to the walker, so we don't have to process the value if it's not queried
-                        ColumnMetadata cm = metadata.getColumn(ByteBufferUtil.bytes(camelToSnake(name)));
+                        ColumnMetadata cm = columnMetas.computeIfAbsent(columnName, name -> metadata.getColumn(ByteBufferUtil.bytes(name)));
                         if (columnFilter.queriedColumns().contains(cm) && Objects.nonNull(value))
                             cells.put(cm, value);
 

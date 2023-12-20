@@ -170,7 +170,7 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
                 addImport(imports, returnType);
 
             String line = TAB + TAB +
-                    "visitor.accept(" + innerClassName(Column.Type.class.getName()) + '.' + annotation.type() + ", \"" + name + "\", " +
+                    "visitor.accept(" + innerClassName(Column.Type.class.getName()) + '.' + annotation.type() + ", \"" + camelToSnake(name) + "\", " +
                     getPrimitiveWrapperClass(returnType) +
                     (isPrimitive(returnType) ? ".TYPE);" : ".class);");
 
@@ -187,7 +187,7 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
             String name = method.getSimpleName().toString();
             String returnType = ((ExecutableType) method.asType()).getReturnType().toString();
             String line = TAB + TAB +
-                    "visitor.accept(" + innerClassName(Column.Type.class.getName()) + '.' + annotation.type() + ", \"" + name + "\", " +
+                    "visitor.accept(" + innerClassName(Column.Type.class.getName()) + '.' + annotation.type() + ", \"" + camelToSnake(name) + "\", " +
                     getPrimitiveWrapperClass(returnType) +
                     (isPrimitive(returnType) ? ".TYPE, row." : ".class, row.") +
                     name + "());";
@@ -298,6 +298,26 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
     {
         return isPrimitive(className) ?
                 primitiveWrapperMap.get(namePrimitiveMap.get(className)).getSimpleName() : className;
+    }
+
+    private static String camelToSnake(String camel)
+    {
+        StringBuilder sb = new StringBuilder(camel.length());
+        for (char c : camel.toCharArray())
+        {
+            if (Character.isUpperCase(c))
+            {
+                // if first char is uppercase, then avoid adding the _ prefix
+                if (sb.length() > 0)
+                    sb.append('_');
+                sb.append(Character.toLowerCase(c));
+            }
+            else
+            {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 
     @Override
