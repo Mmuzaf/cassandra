@@ -55,10 +55,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.lang.reflect.Method;
-import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -67,6 +67,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.UnaryOperator;
@@ -92,7 +93,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
     /** A map of metric name constructed by {@link com.codahale.metrics.MetricRegistry#name(String, String...)} and
      * its full name in the way how it is represented in JMX. The map is used by {@link CassandraJmxMetricsExporter}
      * to export metrics to JMX. */
-    private static final ConcurrentMap<String, List<MetricName>> ALIASES = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, Deque<MetricName>> ALIASES = new ConcurrentHashMap<>();
     /** A set of all known metric groups, used to validate metric groups that are statically defined in Cassandra. */
     static final Set<String> metricGroups;
 
@@ -103,7 +104,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
      * via {@link #createMetricsKeyspaceTables()}.
      */
     public static final CassandraMetricsRegistry Metrics = init();
-    private final MetricRegistryListener jmxExporter = new CassandraJmxMetricsExporter(Collections.unmodifiableMap(ALIASES));
+    private final MetricRegistryListener jmxExporter = new CassandraJmxMetricsExporter(ALIASES);
     /** We have to make sure that this metrics listener is called the last, so that it can clean up aliases. */
     private final MetricRegistryListener housekeepingListener = new BaseMetricRegistryListener()
     {
@@ -201,6 +202,12 @@ public class CassandraMetricsRegistry extends MetricRegistry
             throw new IllegalStateException("Unknown metric type: " + metric.getClass().getName());
     }
 
+    private static boolean isGroupMetric(String name, String group)
+    {
+        Deque<MetricName> deque = ALIASES.get(name);
+        return deque != null && deque.getFirst().getSystemViewName().equals(group);
+    }
+
     public static List<VirtualTable> createMetricsKeyspaceTables()
     {
         ImmutableList.Builder<VirtualTable> builder = ImmutableList.builder();
@@ -210,11 +217,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
                 new MetricRowWalker(),
                 () -> () -> Metrics.getMetrics().entrySet()
                         .stream()
-                        .flatMap(e -> ALIASES.getOrDefault(e.getKey(), Collections.emptyList())
-                                .stream()
-                                .filter(m -> m.systemViewName.equals(groupName))
-                                .map(m -> new AbstractMap.SimpleEntry<>(m.getMetricName(), e.getValue())))
-                        .distinct()
+                        .filter(e -> isGroupMetric(e.getKey(), groupName))
                         .iterator(),
                 MetricRow::new)));
         // Register virtual table of all known metric groups.
@@ -267,7 +270,7 @@ public class CassandraMetricsRegistry extends MetricRegistry
             throw new IllegalStateException("Metric view name must match statically registered groups: " + newMetricName.getSystemViewName());
 
         // We have to be sure that aliases are registered the same order as they are added to the registry.
-        ALIASES.computeIfAbsent(newMetricName.getMetricName(), k -> Collections.synchronizedList(new LinkedList<>()))
+        ALIASES.computeIfAbsent(newMetricName.getMetricName(), k -> new ConcurrentLinkedDeque<>())
                 .add(newMetricName);
     }
 
@@ -279,11 +282,8 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
     public String getMetricScope(String metricName)
     {
-        return ALIASES.getOrDefault(metricName, Collections.emptyList())
-                .stream()
-                .findFirst()
-                .map(MetricName::getScope)
-                .orElse("unknown");
+        Deque<MetricName> deque = ALIASES.get(metricName);
+        return deque == null ? "unknown" : deque.stream().findFirst().map(MetricName::getScope).orElse("unknown");
     }
 
     public Counter counter(MetricName... name)
@@ -1212,31 +1212,31 @@ public class CassandraMetricsRegistry extends MetricRegistry
     private static class CassandraJmxMetricsExporter extends BaseMetricRegistryListener
     {
         private final MBeanWrapper mBeanWrapper = MBeanWrapper.instance;
-        private final Map<String, List<MetricName>> aliases;
+        private final Map<String, Deque<MetricName>> aliases;
 
-        public CassandraJmxMetricsExporter(Map<String, List<MetricName>> aliases)
+        public CassandraJmxMetricsExporter(Map<String, Deque<MetricName>> aliases)
         {
             this.aliases = aliases;
         }
 
         protected void onMetricAdded(String name, Metric metric)
         {
-            MetricName metricName = aliases.getOrDefault(name, Collections.emptyList()).stream().findFirst().orElse(null);
-            if (metricName == null)
+            Deque<MetricName> deque = aliases.get(name);
+            if (deque == null)
                 return;
 
-            assert metricName.getMetricName().equals(name);
-            Metrics.registerMBean(metric, metricName.getMBeanName(), mBeanWrapper);
+            assert deque.getFirst().getMetricName().equals(name);
+            Metrics.registerMBean(metric, deque.getFirst().getMBeanName(), mBeanWrapper);
         }
 
         protected void onMetricRemove(String name)
         {
-            MetricName metricName = aliases.getOrDefault(name, Collections.emptyList()).stream().findFirst().orElse(null);
-            if (metricName == null)
+            Deque<MetricName> deque = aliases.get(name);
+            if (deque == null)
                 return;
 
-            assert metricName.getMetricName().equals(name);
-            Metrics.unregisterMBean(metricName.getMBeanName(), mBeanWrapper);
+            assert deque.getFirst().getMetricName().equals(name);
+            Metrics.unregisterMBean(deque.getFirst().getMBeanName(), mBeanWrapper);
         }
     }
 
