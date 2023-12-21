@@ -98,4 +98,21 @@ public class CollectionEntry
     {
         return booleanValue;
     }
+
+    @Override
+    public String toString()
+    {
+        return "CollectionEntry{" +
+                "primaryKey='" + primaryKey + '\'' +
+                ", secondaryKey='" + secondaryKey + '\'' +
+                ", orderedKey=" + orderedKey +
+                ", value='" + value + '\'' +
+                ", intValue=" + intValue +
+                ", longValue=" + longValue +
+                ", doubleValue=" + doubleValue +
+                ", shortValue=" + shortValue +
+                ", byteValue=" + byteValue +
+                ", booleanValue=" + booleanValue +
+                '}';
+    }
 }

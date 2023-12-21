@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -86,24 +87,26 @@ public class CollectionVirtualTableAdapterTest extends CQLTester
     public void testSelectAll()
     {
         addSinglePartitionData(collection);
+        List<CollectionEntry> sortedClustering = new ArrayList<>(collection);
+        sortedClustering.sort(Comparator.comparingLong(CollectionEntry::getOrderedKey));
         ResultSet result = executeNet(String.format("SELECT * FROM %s.%s", KS_NAME, VT_NAME));
 
         int index = 0;
         for (Row row : result)
         {
-            assertEquals(collection.get(index).getPrimaryKey(), row.getString("primary_key"));
-            assertEquals(collection.get(index).getSecondaryKey(), row.getString("secondary_key"));
-            assertEquals(collection.get(index).getOrderedKey(), row.getLong("ordered_key"));
-            assertEquals(collection.get(index).getIntValue(), row.getInt("int_value"));
-            assertEquals(collection.get(index).getLongValue(), row.getLong("long_value"));
-            assertEquals(collection.get(index).getValue(), row.getString("value"));
-            assertEquals(collection.get(index).getDoubleValue(), row.getDouble("double_value"), 0.0);
-            assertEquals(collection.get(index).getShortValue(), row.getShort("short_value"));
-            assertEquals(collection.get(index).getByteValue(), row.getByte("byte_value"));
-            assertEquals(collection.get(index).getBooleanValue(), row.getBool("boolean_value"));
+            assertEquals(sortedClustering.get(index).getPrimaryKey(), row.getString("primary_key"));
+            assertEquals(sortedClustering.get(index).getSecondaryKey(), row.getString("secondary_key"));
+            assertEquals(sortedClustering.get(index).getOrderedKey(), row.getLong("ordered_key"));
+            assertEquals(sortedClustering.get(index).getIntValue(), row.getInt("int_value"));
+            assertEquals(sortedClustering.get(index).getLongValue(), row.getLong("long_value"));
+            assertEquals(sortedClustering.get(index).getValue(), row.getString("value"));
+            assertEquals(sortedClustering.get(index).getDoubleValue(), row.getDouble("double_value"), 0.0);
+            assertEquals(sortedClustering.get(index).getShortValue(), row.getShort("short_value"));
+            assertEquals(sortedClustering.get(index).getByteValue(), row.getByte("byte_value"));
+            assertEquals(sortedClustering.get(index).getBooleanValue(), row.getBool("boolean_value"));
             index++;
         }
-        assertEquals(collection.size(), index);
+        assertEquals(sortedClustering.size(), index);
     }
 
     @Test
