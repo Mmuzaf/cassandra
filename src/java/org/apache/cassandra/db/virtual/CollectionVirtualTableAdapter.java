@@ -217,8 +217,16 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
         if (!data.iterator().hasNext())
             return EmptyIterators.unfilteredPartition(metadata);
 
-        NavigableMap<Clustering<?>, Row> rows = new ConcurrentSkipListMap<>(metadata.comparator);
-        StreamSupport.stream(data.spliterator(), true)
+        // As other option, we could use a ConcurrentSkipListMap along with a parallel stream, however, this is not
+        // a good idea in general, because the parallel stream will split the data set into multiple partitions,
+        // which will require to merge them back into a single partition.
+        // The benchmark shows that if we continuously read the data from the virtual table e.g. by metric name,
+        // then the parallel stream is slightly faster to get the first result, however for continuous reads it
+        // gives us higher GC pressure. The sequential stream is slightly slower to get the first result,
+        // but having the same throughput as the parallel one, and it gives us less GC pressure.
+        // See the details in the benchmark: https://gist.github.com/Mmuzaf/80c73b7f9441ff21f6d22efe5746541a
+        NavigableMap<Clustering<?>, Row> rows = new TreeMap<>(metadata.comparator);
+        StreamSupport.stream(data.spliterator(), false)
                 .map(row -> makeRow(row, columnFilter))
                 .filter(cr -> cr.key.equals(partitionKey))
                 .filter(cr -> clusteringFilter.selects(cr.clustering))
