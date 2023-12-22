@@ -115,7 +115,6 @@ public class CassandraMetricsRegistry extends MetricRegistry
     };
 
     private final Map<String, ThreadPoolMetrics> threadPoolMetrics = new ConcurrentHashMap<>();
-    private final LinkedList<MetricRegistryListener> listeners = new LinkedList<>();
     public final static TimeUnit DEFAULT_TIMER_UNIT = TimeUnit.MICROSECONDS;
 
     static
@@ -170,17 +169,9 @@ public class CassandraMetricsRegistry extends MetricRegistry
     private static CassandraMetricsRegistry init()
     {
         CassandraMetricsRegistry registry = new CassandraMetricsRegistry();
-        if (registry.listeners.contains(registry.housekeepingListener))
-            return registry;
-
-        assert registry.listeners.isEmpty();
-        registry.listeners.add(registry.jmxExporter);
-        registry.listeners.addLast(registry.housekeepingListener);
-
         // Adding listeners to the root registry, so that they can be notified about all metrics changes.
         registry.addListener(registry.jmxExporter);
         registry.addListener(registry.housekeepingListener);
-
         return registry;
     }
 
