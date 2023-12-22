@@ -60,7 +60,6 @@ import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.Pair;
 
 import java.nio.ByteBuffer;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -69,7 +68,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.Objects;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -222,9 +220,9 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
         NavigableMap<Clustering<?>, Row> rows = new ConcurrentSkipListMap<>(metadata.comparator);
         StreamSupport.stream(data.spliterator(), true)
                 .map(row -> makeRow(row, columnFilter))
-                .filter(entry -> entry.getKey().equals(partitionKey))
-                .filter(entry -> clusteringFilter.selects(entry.getValue().clustering()))
-                .forEach(entry -> rows.put(entry.getValue().clustering(), entry.getValue()));
+                .filter(cr -> cr.key.equals(partitionKey))
+                .filter(cr -> clusteringFilter.selects(cr.clustering))
+                .forEach(cr -> rows.put(cr.clustering, cr.rowSup.get()));
 
         return new SingletonUnfilteredPartitionIterator(new DataRowUnfilteredIterator(partitionKey,
                 clusteringFilter,
@@ -251,9 +249,9 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
                 NavigableMap<DecoratedKey, NavigableMap<Clustering<?>, Row>> partitionMap = new ConcurrentSkipListMap<>(DecoratedKey.comparator);
                 StreamSupport.stream(data.spliterator(), true)
                         .map(row -> makeRow(row, columnFilter))
-                        .filter(entry -> dataRange.keyRange().contains(entry.getKey()))
-                        .forEach(entry -> partitionMap.computeIfAbsent(entry.getKey(), key -> new TreeMap<>(metadata.comparator))
-                                .put(entry.getValue().clustering(), entry.getValue()));
+                        .filter(cr -> dataRange.keyRange().contains(cr.key))
+                        .forEach(cr -> partitionMap.computeIfAbsent(cr.key, key -> new TreeMap<>(metadata.comparator))
+                                .put(cr.clustering, cr.rowSup.get()));
                 return partitionMap.entrySet()
                         .stream()
                         .map(entry -> new DataRowUnfilteredIterator(entry.getKey(),
@@ -291,7 +289,7 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
         }
     }
 
-    private Map.Entry<DecoratedKey, Row> makeRow(R row, ColumnFilter columnFilter)
+    private CollectionRow makeRow(R row, ColumnFilter columnFilter)
     {
         assert metadata.partitionKeyColumns().size() == walker.count(Column.Type.PARTITION_KEY) :
                 "Invalid number of partition key columns";
@@ -303,22 +301,22 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
         if (walker.count(Column.Type.CLUSTERING) > 0)
             fiterable.put(Column.Type.CLUSTERING, new Object[metadata.clusteringColumns().size()]);
 
-        Map<ColumnMetadata, Object> cells = new HashMap<>();
+        Map<ColumnMetadata, Supplier<?>> cells = new HashMap<>();
 
         walker.visitRow(row, new RowWalker.RowMetadataVisitor()
         {
             private int pIdx, cIdx = 0;
 
             @Override
-            public <T> void accept(Column.Type type, String columnName, Class<T> clazz, T value)
+            public <T> void accept(Column.Type type, String columnName, Class<T> clazz, Supplier<T> value)
             {
                 switch (type)
                 {
                     case PARTITION_KEY:
-                        fiterable.get(type)[pIdx++] = value;
+                        fiterable.get(type)[pIdx++] = value.get();
                         break;
                     case CLUSTERING:
-                        fiterable.get(type)[cIdx++] = value;
+                        fiterable.get(type)[cIdx++] = value.get();
                         break;
                     case REGULAR:
                     {
@@ -327,7 +325,7 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
 
                         // Push down the column filter to the walker, so we don't have to process the value if it's not queried
                         ColumnMetadata cm = columnMetas.computeIfAbsent(columnName, name -> metadata.getColumn(ByteBufferUtil.bytes(name)));
-                        if (columnFilter.queriedColumns().contains(cm) && Objects.nonNull(value))
+                        if (columnFilter.queriedColumns().contains(cm))
                             cells.put(cm, value);
 
                         break;
@@ -338,12 +336,34 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
             }
         });
 
-        Row.Builder rowBuilder = BTreeRow.unsortedBuilder();
-        rowBuilder.newRow(makeRowClustering(metadata, fiterable.get(Column.Type.CLUSTERING)));
-        cells.forEach((column, value) -> rowBuilder.addCell(BufferCell.live(column, NO_DELETION_TIME, decompose(column.type, value))));
+        return new CollectionRow(makeRowKey(metadata, fiterable.get(Column.Type.PARTITION_KEY)),
+                makeRowClustering(metadata, fiterable.get(Column.Type.CLUSTERING)),
+                (clustering) ->
+                {
+                    Row.Builder rowBuilder = BTreeRow.unsortedBuilder();
+                    rowBuilder.newRow(clustering);
+                    cells.forEach((column, value) ->  {
+                        Object valueObj = value.get();
+                        if (valueObj == null)
+                            return;
+                        rowBuilder.addCell(BufferCell.live(column, NO_DELETION_TIME, decompose(column.type, valueObj)));
+                    });
+                    return rowBuilder.build();
+                });
+    }
 
-        return new AbstractMap.SimpleEntry<>(makeRowKey(metadata, fiterable.get(Column.Type.PARTITION_KEY)),
-                rowBuilder.build());
+    private static class CollectionRow
+    {
+        private final DecoratedKey key;
+        private final Clustering<?> clustering;
+        private final Supplier<Row> rowSup;
+
+        public CollectionRow(DecoratedKey key, Clustering<?> clustering, Function<Clustering<?>, Row> rowSup)
+        {
+            this.key = key;
+            this.clustering = clustering;
+            this.rowSup = () -> rowSup.apply(clustering);
+        }
     }
 
     private static Clustering<?> makeRowClustering(TableMetadata metadata, Object... clusteringValues)

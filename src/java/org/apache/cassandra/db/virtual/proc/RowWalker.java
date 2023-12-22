@@ -18,6 +18,8 @@
 
 package org.apache.cassandra.db.virtual.proc;
 
+import java.util.function.Supplier;
+
 /**
  * Utility class for quick iteration over row attributes and row values.
  * Walk order is defined by {@link org.apache.cassandra.db.virtual.proc.Column} annotations and is the same as
@@ -36,6 +38,6 @@ public interface RowWalker<R>
 
     interface RowMetadataVisitor
     {
-        <T> void accept(Column.Type type, String name, Class<T> clazz, T value);
+        <T> void accept(Column.Type type, String name, Class<T> clazz, Supplier<T> value);
     }
 }
