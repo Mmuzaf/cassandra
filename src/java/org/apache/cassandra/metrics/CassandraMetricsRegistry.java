@@ -67,7 +67,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.UnaryOperator;
@@ -202,24 +201,23 @@ public class CassandraMetricsRegistry extends MetricRegistry
             throw new IllegalStateException("Unknown metric type: " + metric.getClass().getName());
     }
 
-    private static boolean isGroupMetric(String name, String group)
-    {
-        Deque<MetricName> deque = ALIASES.get(name);
-        return deque != null && deque.getFirst().getSystemViewName().equals(group);
-    }
-
     public static List<VirtualTable> createMetricsKeyspaceTables()
     {
         ImmutableList.Builder<VirtualTable> builder = ImmutableList.builder();
-        metricGroups.forEach(groupName -> builder.add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
-                METRICS_GROUP_POSTFIX.apply(groupName),
-                "All metrics for \"" + groupName + "\" metric group",
-                new MetricRowWalker(),
-                () -> () -> Metrics.getMetrics().entrySet()
-                        .stream()
-                        .filter(e -> isGroupMetric(e.getKey(), groupName))
-                        .iterator(),
-                MetricRow::new)));
+        metricGroups.forEach(groupName -> {
+            // This is a very efficient way to filter metrics by group name, so make sure that metrics group name
+            // and metric type following the same order as it constructed in MetricName class.
+            final String groupPrefix = DefaultNameFactory.GROUP_NAME + '.' + groupName + '.';
+            builder.add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
+                    METRICS_GROUP_POSTFIX.apply(groupName),
+                    "All metrics for \"" + groupName + "\" metric group",
+                    new MetricRowWalker(),
+                    () -> () -> Metrics.getMetrics().entrySet()
+                            .stream()
+                            .filter(e -> e.getKey().startsWith(groupPrefix))
+                            .iterator(),
+                    MetricRow::new));
+        });
         // Register virtual table of all known metric groups.
         builder.add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
                         "all_groups",
@@ -264,13 +262,16 @@ public class CassandraMetricsRegistry extends MetricRegistry
 
     private static void addUnknownMetric(MetricName newMetricName)
     {
+        String type = newMetricName.getType();
+        if (type.indexOf('.') >= 0)
+            throw new IllegalStateException("Metric type must not contain '.' character as it results in the efficiency of the metric collection traversal: " + type);
         if (!metricGroups.contains(newMetricName.getType()))
             throw new IllegalStateException("Unknown metric group: " + newMetricName.getType());
         if (!metricGroups.contains(newMetricName.getSystemViewName()))
             throw new IllegalStateException("Metric view name must match statically registered groups: " + newMetricName.getSystemViewName());
 
         // We have to be sure that aliases are registered the same order as they are added to the registry.
-        ALIASES.computeIfAbsent(newMetricName.getMetricName(), k -> new ConcurrentLinkedDeque<>())
+        ALIASES.computeIfAbsent(newMetricName.getMetricName(), k -> new LinkedList<>())
                 .add(newMetricName);
     }
 
