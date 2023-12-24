@@ -19,6 +19,7 @@
 package org.apache.cassandra.db.virtual.model;
 
 import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Metric;
 import org.apache.cassandra.db.virtual.proc.Column;
 
 import java.util.Map;
@@ -32,28 +33,30 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 @SuppressWarnings("rawtypes")
 public class GaugeMetricRow
 {
-    private final Map.Entry<String, Gauge> gaugeEntry;
+    private final String key;
+    private final Gauge<?> value;
 
-    public GaugeMetricRow(Map.Entry<String, Gauge> gaugeEntry)
+    public GaugeMetricRow(Map.Entry<String, Metric> gaugeEntry)
     {
-        this.gaugeEntry = gaugeEntry;
+        this.key = gaugeEntry.getKey();
+        this.value = (Gauge<?>) gaugeEntry.getValue();
     }
 
     @Column(type = Column.Type.PARTITION_KEY)
     public String name()
     {
-        return gaugeEntry.getKey();
+        return key;
     }
 
     @Column
     public String scope()
     {
-        return Metrics.getMetricScope(gaugeEntry.getKey());
+        return Metrics.getMetricScope(key);
     }
 
     @Column
     public String value()
     {
-        return gaugeEntry.getValue().getValue().toString();
+        return value.getValue().toString();
     }
 }

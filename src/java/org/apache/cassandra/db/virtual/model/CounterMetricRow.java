@@ -19,6 +19,7 @@
 package org.apache.cassandra.db.virtual.model;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Metric;
 import org.apache.cassandra.db.virtual.proc.Column;
 
 import java.util.Map;
@@ -31,28 +32,30 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
  */
 public class CounterMetricRow
 {
-    private final Map.Entry<String, Counter> counterEntry;
+    private final String key;
+    private final Counter value;
 
-    public CounterMetricRow(Map.Entry<String, Counter> counterEntry)
+    public CounterMetricRow(Map.Entry<String, Metric> counterEntry)
     {
-        this.counterEntry = counterEntry;
+        this.key = counterEntry.getKey();
+        this.value = (Counter) counterEntry.getValue();
     }
 
     @Column(type = Column.Type.PARTITION_KEY)
     public String name()
     {
-        return counterEntry.getKey();
+        return key;
     }
 
     @Column
     public String scope()
     {
-        return Metrics.getMetricScope(counterEntry.getKey());
+        return Metrics.getMetricScope(key);
     }
 
     @Column
     public long value()
     {
-        return counterEntry.getValue().getCount();
+        return value.getCount();
     }
 }

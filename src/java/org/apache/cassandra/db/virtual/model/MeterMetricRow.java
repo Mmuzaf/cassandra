@@ -19,6 +19,7 @@
 package org.apache.cassandra.db.virtual.model;
 
 import com.codahale.metrics.Meter;
+import com.codahale.metrics.Metric;
 import org.apache.cassandra.db.virtual.proc.Column;
 
 import java.util.Map;
@@ -31,52 +32,54 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
  */
 public class MeterMetricRow
 {
-    private final Map.Entry<String, Meter> meterEntry;
+    private final String key;
+    private final Meter value;
 
-    public MeterMetricRow(Map.Entry<String, Meter> meterEntry)
+    public MeterMetricRow(Map.Entry<String, Metric> meterEntry)
     {
-        this.meterEntry = meterEntry;
+        this.key = meterEntry.getKey();
+        this.value = (Meter) meterEntry.getValue();
     }
 
     @Column(type = Column.Type.PARTITION_KEY)
     public String name()
     {
-        return meterEntry.getKey();
+        return key;
     }
 
     @Column
     public String scope()
     {
-        return Metrics.getMetricScope(meterEntry.getKey());
+        return Metrics.getMetricScope(key);
     }
 
     @Column
     public long count()
     {
-        return meterEntry.getValue().getCount();
+        return value.getCount();
     }
 
     @Column
     public double fifteenMinuteRate()
     {
-        return meterEntry.getValue().getFifteenMinuteRate();
+        return value.getFifteenMinuteRate();
     }
 
     @Column
     public double fiveMinuteRate()
     {
-        return meterEntry.getValue().getFiveMinuteRate();
+        return value.getFiveMinuteRate();
     }
 
     @Column
     public double meanRate()
     {
-        return meterEntry.getValue().getMeanRate();
+        return value.getMeanRate();
     }
 
     @Column
     public double oneMinuteRate()
     {
-        return meterEntry.getValue().getOneMinuteRate();
+        return value.getOneMinuteRate();
     }
 }

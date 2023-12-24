@@ -222,31 +222,46 @@ public class CassandraMetricsRegistry extends MetricRegistry
                         "type_counter",
                         "All metrics with type \"Counter\"",
                         new CounterMetricRowWalker(),
-                        () -> Metrics.getCounters().entrySet(),
+                        () -> () -> Metrics.getMetrics().entrySet()
+                                .stream()
+                                .filter(e -> e.getValue() instanceof Counter)
+                                .iterator(),
                         CounterMetricRow::new))
                 .add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
                         "type_gauge",
                         "All metrics with type \"Gauge\"",
                         new GaugeMetricRowWalker(),
-                        () -> Metrics.getGauges().entrySet(),
+                        () -> () -> Metrics.getMetrics().entrySet()
+                                .stream()
+                                .filter(e -> e.getValue() instanceof Gauge)
+                                .iterator(),
                         GaugeMetricRow::new))
                 .add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
                         "type_histogram",
                         "All metrics with type \"Histogram\"",
                         new HistogramMetricRowWalker(),
-                        () -> Metrics.getHistograms().entrySet(),
+                        () -> () -> Metrics.getMetrics().entrySet()
+                                .stream()
+                                .filter(e -> e.getValue() instanceof Histogram)
+                                .iterator(),
                         HistogramMetricRow::new))
                 .add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
                         "type_meter",
                         "All metrics with type \"Meter\"",
                         new MeterMetricRowWalker(),
-                        () -> Metrics.getMeters().entrySet(),
+                        () -> () -> Metrics.getMetrics().entrySet()
+                                .stream()
+                                .filter(e -> e.getValue() instanceof Meter)
+                                .iterator(),
                         MeterMetricRow::new))
                 .add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
                         "type_timer",
                         "All metrics with type \"Timer\"",
                         new TimerMetricRowWalker(),
-                        () -> Metrics.getTimers().entrySet(),
+                        () -> () -> Metrics.getMetrics().entrySet()
+                                .stream()
+                                .filter(e -> e.getValue() instanceof Timer)
+                                .iterator(),
                         TimerMetricRow::new));
         return builder.build();
     }

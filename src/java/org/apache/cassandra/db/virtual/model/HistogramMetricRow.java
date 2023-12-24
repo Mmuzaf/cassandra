@@ -19,6 +19,8 @@
 package org.apache.cassandra.db.virtual.model;
 
 import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Metric;
+import com.codahale.metrics.Snapshot;
 import org.apache.cassandra.db.virtual.proc.Column;
 
 import java.util.Map;
@@ -31,70 +33,72 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
  */
 public class HistogramMetricRow
 {
-    private final Map.Entry<String, Histogram> histogramEntry;
+    private final String key;
+    private final Snapshot value;
 
-    public HistogramMetricRow(Map.Entry<String, Histogram> histogramEntry)
+    public HistogramMetricRow(Map.Entry<String, Metric> histogramEntry)
     {
-        this.histogramEntry = histogramEntry;
+        this.key = histogramEntry.getKey();
+        this.value = ((Histogram) histogramEntry.getValue()).getSnapshot();
     }
 
     @Column
     public String scope()
     {
-        return Metrics.getMetricScope(histogramEntry.getKey());
+        return Metrics.getMetricScope(key);
     }
 
     @Column(type = Column.Type.PARTITION_KEY)
     public String name()
     {
-        return histogramEntry.getKey();
+        return key;
     }
 
     @Column
     public double p75th()
     {
-        return histogramEntry.getValue().getSnapshot().get75thPercentile();
+        return value.get75thPercentile();
     }
 
     @Column
     public double p95th()
     {
-        return histogramEntry.getValue().getSnapshot().get95thPercentile();
+        return value.get95thPercentile();
     }
 
     @Column
     public double p98th()
     {
-        return histogramEntry.getValue().getSnapshot().get98thPercentile();
+        return value.get98thPercentile();
     }
 
     @Column
     public double p99th()
     {
-        return histogramEntry.getValue().getSnapshot().get99thPercentile();
+        return value.get99thPercentile();
     }
 
     @Column
     public double p999th()
     {
-        return histogramEntry.getValue().getSnapshot().get999thPercentile();
+        return value.get999thPercentile();
     }
 
     @Column
     public long max()
     {
-        return histogramEntry.getValue().getSnapshot().getMax();
+        return value.getMax();
     }
 
     @Column
     public double mean()
     {
-        return histogramEntry.getValue().getSnapshot().getMean();
+        return value.getMean();
     }
 
     @Column
     public long min()
     {
-        return histogramEntry.getValue().getSnapshot().getMin();
+        return value.getMin();
     }
 }
