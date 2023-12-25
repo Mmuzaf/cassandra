@@ -75,6 +75,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static org.apache.cassandra.db.rows.Cell.NO_DELETION_TIME;
@@ -226,11 +227,17 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
         // same throughput as the parallel stream, and it gives us less GC pressure.
         // See the details in the benchmark: https://gist.github.com/Mmuzaf/80c73b7f9441ff21f6d22efe5746541a
         NavigableMap<Clustering<?>, Row> rows = new TreeMap<>(metadata.comparator);
-        StreamSupport.stream(data.spliterator(), false)
+        Stream<CollectionRow> stream = StreamSupport.stream(data.spliterator(), false)
                 .map(row -> makeRow(row, columnFilter))
                 .filter(cr -> cr.key.equals(partitionKey))
-                .filter(cr -> clusteringFilter.selects(cr.clustering))
-                .forEach(cr -> rows.put(cr.clustering, cr.rowSup.get()));
+                .filter(cr -> clusteringFilter.selects(cr.clustering));
+
+        // If there are no clustering columns, we've found a unique partition that matches the partition key,
+        // so we can stop the stream without looping through all the rows.
+        if (walker.count(Column.Type.CLUSTERING) == 0)
+            stream.findFirst().ifPresent(cr -> rows.put(cr.clustering, cr.rowSup.get()));
+        else
+            stream.forEach(cr -> rows.put(cr.clustering, cr.rowSup.get()));
 
         return new SingletonUnfilteredPartitionIterator(new DataRowUnfilteredIterator(partitionKey,
                 clusteringFilter,
