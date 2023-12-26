@@ -27,8 +27,6 @@ import com.codahale.metrics.Timer;
 import org.apache.cassandra.db.virtual.proc.Column;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 
-import java.util.Map;
-
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 
 /**
@@ -36,29 +34,31 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
  */
 public class MetricRow
 {
-    private final Map.Entry<String, Metric> metricEntry;
+    private final String key;
+    private final Metric metricEntry;
 
-    public MetricRow(Map.Entry<String, Metric> metricEntry)
+    public MetricRow(String key, Metric metricEntry)
     {
+        this.key = key;
         this.metricEntry = metricEntry;
     }
 
     @Column(type = Column.Type.PARTITION_KEY)
     public String name()
     {
-        return metricEntry.getKey();
+        return key;
     }
 
     @Column
     public String scope()
     {
-        return Metrics.getMetricScope(metricEntry.getKey());
+        return Metrics.getMetricScope(key);
     }
 
     @Column
     public String type()
     {
-        Class<?> clazz = metricEntry.getValue().getClass();
+        Class<?> clazz = metricEntry.getClass();
         if (Counter.class.isAssignableFrom(clazz))
             return "counter";
         else if (Gauge.class.isAssignableFrom(clazz))
@@ -70,12 +70,12 @@ public class MetricRow
         else if (Timer.class.isAssignableFrom(clazz))
             return "timer";
         else
-            throw new IllegalStateException("Unknown metric type: " + metricEntry.getValue().getClass());
+            throw new IllegalStateException("Unknown metric type: " + metricEntry.getClass());
     }
 
     @Column
     public String value()
     {
-        return CassandraMetricsRegistry.getValueAsString(metricEntry.getValue());
+        return CassandraMetricsRegistry.getValueAsString(metricEntry);
     }
 }

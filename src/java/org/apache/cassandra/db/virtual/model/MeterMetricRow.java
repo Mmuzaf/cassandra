@@ -22,8 +22,6 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import org.apache.cassandra.db.virtual.proc.Column;
 
-import java.util.Map;
-
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 
 
@@ -35,10 +33,10 @@ public class MeterMetricRow
     private final String key;
     private final Meter value;
 
-    public MeterMetricRow(Map.Entry<String, Metric> meterEntry)
+    public MeterMetricRow(String key, Metric value)
     {
-        this.key = meterEntry.getKey();
-        this.value = (Meter) meterEntry.getValue();
+        this.key = key;
+        this.value = (Meter) value;
     }
 
     @Column(type = Column.Type.PARTITION_KEY)

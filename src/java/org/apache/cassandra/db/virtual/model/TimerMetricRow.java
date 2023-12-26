@@ -22,8 +22,6 @@ import com.codahale.metrics.Metric;
 import com.codahale.metrics.Timer;
 import org.apache.cassandra.db.virtual.proc.Column;
 
-import java.util.Map;
-
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 
 
@@ -35,10 +33,10 @@ public class TimerMetricRow
     private final String key;
     private final Timer value;
 
-    public TimerMetricRow(Map.Entry<String, Metric> timerEntry)
+    public TimerMetricRow(String key, Metric value)
     {
-        this.key = timerEntry.getKey();
-        this.value = (Timer) timerEntry.getValue();
+        this.key = key;
+        this.value = (Timer) value;
     }
 
     @Column

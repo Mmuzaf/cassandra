@@ -22,24 +22,21 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Metric;
 import org.apache.cassandra.db.virtual.proc.Column;
 
-import java.util.Map;
-
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 
 
 /**
  * Gauge metric representation for a {@link org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter}.
  */
-@SuppressWarnings("rawtypes")
 public class GaugeMetricRow
 {
     private final String key;
     private final Gauge<?> value;
 
-    public GaugeMetricRow(Map.Entry<String, Metric> gaugeEntry)
+    public GaugeMetricRow(String key, Metric value)
     {
-        this.key = gaugeEntry.getKey();
-        this.value = (Gauge<?>) gaugeEntry.getValue();
+        this.key = key;
+        this.value = (Gauge<?>) value;
     }
 
     @Column(type = Column.Type.PARTITION_KEY)

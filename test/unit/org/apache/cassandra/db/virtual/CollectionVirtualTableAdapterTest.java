@@ -24,6 +24,8 @@ import org.apache.cassandra.cql3.CQLTester;
 import org.apache.cassandra.db.virtual.model.CollectionEntry;
 import org.apache.cassandra.db.virtual.model.CollectionEntryTestRow;
 import org.apache.cassandra.db.virtual.model.CollectionEntryTestRowWalker;
+import org.apache.cassandra.db.virtual.model.PartitionEntryTestRow;
+import org.apache.cassandra.db.virtual.model.PartitionEntryTestRowWalker;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +33,9 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
@@ -40,8 +44,11 @@ public class CollectionVirtualTableAdapterTest extends CQLTester
 {
     private static final String KS_NAME = "vts";
     private static final String VT_NAME = "collection_virtual_table";
+    private static final String VT_NAME_1 = "map_key_filter_virtual_table";
+    private static final String VT_NAME_2 = "map_value_filter_virtual_table";
     private final List<VirtualTable> tables = new ArrayList<>();
-    private final List<CollectionEntry> collection = new ArrayList<>();
+    private final List<CollectionEntry> internalTestCollection = new ArrayList<>();
+    private final Map<String, CollectionEntry> internalTestMap = new HashMap<>();
 
     private static void addSinglePartitionData(Collection<CollectionEntry> list)
     {
@@ -72,22 +79,39 @@ public class CollectionVirtualTableAdapterTest extends CQLTester
                 VT_NAME,
                 "The collection virtual table",
                 new CollectionEntryTestRowWalker(),
-                () -> collection,
+                internalTestCollection,
                 CollectionEntryTestRow::new));
+        tables.add(CollectionVirtualTableAdapter.createSinglePartitionedKeyFiltered(
+                KS_NAME,
+                VT_NAME_1,
+                "The partition key filtered virtual table",
+                new PartitionEntryTestRowWalker(),
+                internalTestMap,
+                internalTestMap::containsKey,
+                PartitionEntryTestRow::new));
+        tables.add(CollectionVirtualTableAdapter.createSinglePartitionedValueFiltered(
+                KS_NAME,
+                VT_NAME_2,
+                "The partition value filtered virtual table",
+                new PartitionEntryTestRowWalker(),
+                internalTestMap,
+                value -> value instanceof CollectionEntryExt,
+                PartitionEntryTestRow::new));
         VirtualKeyspaceRegistry.instance.register(new VirtualKeyspace(KS_NAME, tables));
     }
 
     @After
     public void postCleanup()
     {
-        collection.clear();
+        internalTestCollection.clear();
+        internalTestMap.clear();
     }
 
     @Test
     public void testSelectAll()
     {
-        addSinglePartitionData(collection);
-        List<CollectionEntry> sortedClustering = new ArrayList<>(collection);
+        addSinglePartitionData(internalTestCollection);
+        List<CollectionEntry> sortedClustering = new ArrayList<>(internalTestCollection);
         sortedClustering.sort(Comparator.comparingLong(CollectionEntry::getOrderedKey));
         ResultSet result = executeNet(String.format("SELECT * FROM %s.%s", KS_NAME, VT_NAME));
 
@@ -112,30 +136,90 @@ public class CollectionVirtualTableAdapterTest extends CQLTester
     @Test
     public void testSelectPartition()
     {
-        addMultiPartitionData(collection);
+        addMultiPartitionData(internalTestCollection);
         ResultSet result =  executeNet(String.format("SELECT * FROM %s.%s WHERE primary_key = ? AND secondary_key = ?", KS_NAME, VT_NAME),
                 "1984", "key");
 
-        AtomicInteger size = new AtomicInteger();
+        AtomicInteger size = new AtomicInteger(3);
         result.forEach(row -> {
             assertEquals("1984", row.getString("primary_key"));
             assertEquals("key", row.getString("secondary_key"));
-            size.incrementAndGet();
+            size.decrementAndGet();
         });
-        assertEquals(3, size.get());
+        assertEquals(0, size.get());
+    }
+
+    @Test
+    public void testSelectPartitionMap()
+    {
+        internalTestMap.put("1984", new CollectionEntry("primary", "key", 3, "value",
+                1, 1, 1, (short) 1, (byte) 1, true));
+        ResultSet result =  executeNet(String.format("SELECT * FROM %s.%s WHERE key = ?", KS_NAME, VT_NAME_1),
+                "1984");
+
+        AtomicInteger size = new AtomicInteger(1);
+        result.forEach(row -> {
+            assertEquals("1984", row.getString("key"));
+            assertEquals("primary", row.getString("primary_key"));
+            assertEquals("key", row.getString("secondary_key"));
+            size.decrementAndGet();
+        });
+        assertEquals(0, size.get());
+    }
+
+    @Test
+    public void testSelectPartitionUnknownKey()
+    {
+        internalTestMap.put("1984", new CollectionEntry("primary", "key", 3, "value",
+                1, 1, 1, (short) 1, (byte) 1, true));
+        ResultSet first =  executeNet(String.format("SELECT * FROM %s.%s WHERE key = ?", KS_NAME, VT_NAME_1),
+                "unknown");
+        assertEquals(0, first.all().size());
+
+        addSinglePartitionData(internalTestCollection);
+        ResultSet second =  executeNet(String.format("SELECT * FROM %s.%s WHERE primary_key = ? AND secondary_key = ?", KS_NAME, VT_NAME),
+                "unknown", "key");
+        assertEquals(0, second.all().size());
+    }
+
+    @Test
+    public void testSelectPartitionValueFitered()
+    {
+        internalTestMap.put("1984", new CollectionEntry("primary", "key", 3, "value",
+                1, 1, 1, (short) 1, (byte) 1, true));
+        internalTestMap.put("1985", new CollectionEntryExt("primary", "key", 3, "value",
+                1, 1, 1, (short) 1, (byte) 1, true, "extra"));
+
+        ResultSet first =  executeNet(String.format("SELECT * FROM %s.%s WHERE key = ?", KS_NAME, VT_NAME_2),
+                "1984");
+        assertEquals(0, first.all().size());
+
+        ResultSet second =  executeNet(String.format("SELECT * FROM %s.%s WHERE key = ?", KS_NAME, VT_NAME_2),
+                "1985");
+        assertEquals(1, second.all().size());
     }
 
     @Test
     public void testSelectEmptyPartition()
     {
-        addSinglePartitionData(collection);
+        addSinglePartitionData(internalTestCollection);
         assertRowsNet(executeNet(String.format("SELECT * FROM %s.%s WHERE primary_key = 'EMPTY'", KS_NAME, VT_NAME)));
     }
 
     @Test
     public void testSelectEmptyCollection()
     {
-        collection.clear();
+        internalTestCollection.clear();
         assertRowsNet(executeNet(String.format("SELECT * FROM %s.%s", KS_NAME, VT_NAME)));
+    }
+
+    private static class CollectionEntryExt extends CollectionEntry
+    {
+        public CollectionEntryExt(String primaryKey, String secondaryKey, long orderedKey, String value, int intValue,
+                                  long longValue, double doubleValue, short shortValue, byte byteValue, boolean booleanValue,
+                                  String extraColumn)
+        {
+            super(primaryKey, secondaryKey, orderedKey, value, intValue, longValue, doubleValue, shortValue, byteValue, booleanValue);
+        }
     }
 }

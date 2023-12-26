@@ -42,7 +42,7 @@ public final class SystemViewsKeyspace extends VirtualKeyspace
                             "thread_pools",
                             "Thread pool metrics for all thread pools",
                             new ThreadPoolRowWalker(),
-                            Metrics::allThreadPoolMetrics,
+                            Metrics.allThreadPoolMetrics(),
                             ThreadPoolRow::new))
                     .add(new InternodeOutboundTable(VIRTUAL_VIEWS))
                     .add(new InternodeInboundTable(VIRTUAL_VIEWS))

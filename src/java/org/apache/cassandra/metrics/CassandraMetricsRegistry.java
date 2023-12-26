@@ -199,14 +199,12 @@ public class CassandraMetricsRegistry extends MetricRegistry
             // This is a very efficient way to filter metrics by group name, so make sure that metrics group name
             // and metric type following the same order as it constructed in MetricName class.
             final String groupPrefix = DefaultNameFactory.GROUP_NAME + '.' + groupName + '.';
-            builder.add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
+            builder.add(CollectionVirtualTableAdapter.createSinglePartitionedKeyFiltered(VIRTUAL_METRICS,
                     METRICS_GROUP_POSTFIX.apply(groupName),
                     "All metrics for \"" + groupName + "\" metric group",
                     new MetricRowWalker(),
-                    () -> () -> Metrics.getMetrics().entrySet()
-                            .stream()
-                            .filter(e -> e.getKey().startsWith(groupPrefix))
-                            .iterator(),
+                    Metrics.getMetrics(),
+                    key -> key.startsWith(groupPrefix),
                     MetricRow::new));
         });
         // Register virtual table of all known metric groups.
@@ -214,54 +212,44 @@ public class CassandraMetricsRegistry extends MetricRegistry
                         "all_groups",
                         "All metric group names",
                         new MetricGroupRowWalker(),
-                        () -> metricGroups,
+                        metricGroups,
                         MetricGroupRow::new))
                 // Register virtual tables of all metrics types similar to the JMX MBean structure,
                 // e.g.: HistogramJmxMBean, MeterJmxMBean, etc.
-                .add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
+                .add(CollectionVirtualTableAdapter.createSinglePartitionedValueFiltered(VIRTUAL_METRICS,
                         "type_counter",
                         "All metrics with type \"Counter\"",
                         new CounterMetricRowWalker(),
-                        () -> () -> Metrics.getMetrics().entrySet()
-                                .stream()
-                                .filter(e -> e.getValue() instanceof Counter)
-                                .iterator(),
+                        Metrics.getMetrics(),
+                        value -> value instanceof Counter,
                         CounterMetricRow::new))
-                .add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
+                .add(CollectionVirtualTableAdapter.createSinglePartitionedValueFiltered(VIRTUAL_METRICS,
                         "type_gauge",
                         "All metrics with type \"Gauge\"",
                         new GaugeMetricRowWalker(),
-                        () -> () -> Metrics.getMetrics().entrySet()
-                                .stream()
-                                .filter(e -> e.getValue() instanceof Gauge)
-                                .iterator(),
+                        Metrics.getMetrics(),
+                        value -> value instanceof Gauge,
                         GaugeMetricRow::new))
-                .add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
+                .add(CollectionVirtualTableAdapter.createSinglePartitionedValueFiltered(VIRTUAL_METRICS,
                         "type_histogram",
                         "All metrics with type \"Histogram\"",
                         new HistogramMetricRowWalker(),
-                        () -> () -> Metrics.getMetrics().entrySet()
-                                .stream()
-                                .filter(e -> e.getValue() instanceof Histogram)
-                                .iterator(),
+                        Metrics.getMetrics(),
+                        value -> value instanceof Histogram,
                         HistogramMetricRow::new))
-                .add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
+                .add(CollectionVirtualTableAdapter.createSinglePartitionedValueFiltered(VIRTUAL_METRICS,
                         "type_meter",
                         "All metrics with type \"Meter\"",
                         new MeterMetricRowWalker(),
-                        () -> () -> Metrics.getMetrics().entrySet()
-                                .stream()
-                                .filter(e -> e.getValue() instanceof Meter)
-                                .iterator(),
+                        Metrics.getMetrics(),
+                        value -> value instanceof Meter,
                         MeterMetricRow::new))
-                .add(CollectionVirtualTableAdapter.create(VIRTUAL_METRICS,
+                .add(CollectionVirtualTableAdapter.createSinglePartitionedValueFiltered(VIRTUAL_METRICS,
                         "type_timer",
                         "All metrics with type \"Timer\"",
                         new TimerMetricRowWalker(),
-                        () -> () -> Metrics.getMetrics().entrySet()
-                                .stream()
-                                .filter(e -> e.getValue() instanceof Timer)
-                                .iterator(),
+                        Metrics.getMetrics(),
+                        value -> value instanceof Timer,
                         TimerMetricRow::new));
         return builder.build();
     }

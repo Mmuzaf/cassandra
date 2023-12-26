@@ -190,8 +190,8 @@ public class SystemViewAnnotationProcessor extends AbstractProcessor
             String line = TAB + TAB +
                     "visitor.accept(" + innerClassName(Column.Type.class.getName()) + '.' + annotation.type() + ", \"" + camelToSnake(name) + "\", " +
                     getPrimitiveWrapperClass(returnType) +
-                    (isPrimitive(returnType) ? ".TYPE, () -> row." : ".class, () -> row.") +
-                    name + "());";
+                    (isPrimitive(returnType) ? ".TYPE, row::" : ".class, row::") +
+                    name + ");";
             code.add(line);
         });
 

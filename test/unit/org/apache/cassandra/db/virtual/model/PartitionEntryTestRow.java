@@ -18,42 +18,38 @@
 
 package org.apache.cassandra.db.virtual.model;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Metric;
 import org.apache.cassandra.db.virtual.proc.Column;
-
-import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 
 
 /**
- * Counter metric representation for a {@link org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter}.
+ * Test meter metric test representation for a {@link org.apache.cassandra.db.virtual.CollectionVirtualTableAdapter}.
  */
-public class CounterMetricRow
+public class PartitionEntryTestRow
 {
     private final String key;
-    private final Counter value;
+    private final CollectionEntry collectionEntry;
 
-    public CounterMetricRow(String key, Metric value)
+    public PartitionEntryTestRow(String key, CollectionEntry collectionEntry)
     {
         this.key = key;
-        this.value = (Counter) value;
+        this.collectionEntry = collectionEntry;
     }
 
     @Column(type = Column.Type.PARTITION_KEY)
-    public String name()
+    public String key()
     {
         return key;
     }
 
     @Column
-    public String scope()
+    public String primaryKey()
     {
-        return Metrics.getMetricScope(key);
+        return collectionEntry.getPrimaryKey();
     }
 
     @Column
-    public long value()
+    public String secondaryKey()
     {
-        return value.getCount();
+        return collectionEntry.getSecondaryKey();
     }
 }

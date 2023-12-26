@@ -23,8 +23,6 @@ import com.codahale.metrics.Metric;
 import com.codahale.metrics.Snapshot;
 import org.apache.cassandra.db.virtual.proc.Column;
 
-import java.util.Map;
-
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 
 
@@ -36,10 +34,10 @@ public class HistogramMetricRow
     private final String key;
     private final Snapshot value;
 
-    public HistogramMetricRow(Map.Entry<String, Metric> histogramEntry)
+    public HistogramMetricRow(String key, Metric value)
     {
-        this.key = histogramEntry.getKey();
-        this.value = ((Histogram) histogramEntry.getValue()).getSnapshot();
+        this.key = key;
+        this.value = ((Histogram) value).getSnapshot();
     }
 
     @Column
