@@ -317,7 +317,7 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
             // See the details in the benchmark: https://gist.github.com/Mmuzaf/80c73b7f9441ff21f6d22efe5746541a
             stream = StreamSupport.stream(data.spliterator(), false)
                     .map(row -> makeRow(row, columnFilter))
-                    .filter(cr -> cr.key.equals(partitionKey))
+                    .filter(cr -> partitionKey.equals(cr.key.get()))
                     .filter(cr -> clusteringFilter.selects(cr.clustering));
         }
         else
@@ -360,8 +360,8 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
                 NavigableMap<DecoratedKey, NavigableMap<Clustering<?>, Row>> partitionMap = new ConcurrentSkipListMap<>(DecoratedKey.comparator);
                 StreamSupport.stream(data.spliterator(), true)
                         .map(row -> makeRow(row, columnFilter))
-                        .filter(cr -> dataRange.keyRange().contains(cr.key))
-                        .forEach(cr -> partitionMap.computeIfAbsent(cr.key, key -> new TreeMap<>(metadata.comparator))
+                        .filter(cr -> dataRange.keyRange().contains(cr.key.get()))
+                        .forEach(cr -> partitionMap.computeIfAbsent(cr.key.get(), key -> new TreeMap<>(metadata.comparator))
                                 .put(cr.clustering, cr.rowSup.get()));
                 return partitionMap.entrySet()
                         .stream()
@@ -447,9 +447,9 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
             }
         });
 
-        return new CollectionRow(makeRowKey(metadata, fiterable.get(Column.Type.PARTITION_KEY)),
+        return new CollectionRow(() -> makeRowKey(metadata, fiterable.get(Column.Type.PARTITION_KEY)),
                 makeRowClustering(metadata, fiterable.get(Column.Type.CLUSTERING)),
-                (clustering) ->
+                clustering ->
                 {
                     Row.Builder rowBuilder = BTreeRow.unsortedBuilder();
                     rowBuilder.newRow(clustering);
@@ -465,15 +465,32 @@ public class CollectionVirtualTableAdapter<R> implements VirtualTable
 
     private static class CollectionRow
     {
-        private final DecoratedKey key;
+        private final Supplier<DecoratedKey> key;
         private final Clustering<?> clustering;
         private final Supplier<Row> rowSup;
 
-        public CollectionRow(DecoratedKey key, Clustering<?> clustering, Function<Clustering<?>, Row> rowSup)
+        public CollectionRow(Supplier<DecoratedKey> key, Clustering<?> clustering, Function<Clustering<?>, Row> rowSup)
         {
-            this.key = key;
+            this.key = new ValueHolder<>(key);
             this.clustering = clustering;
-            this.rowSup = () -> rowSup.apply(clustering);
+            this.rowSup = new ValueHolder<>(() -> rowSup.apply(clustering));
+        }
+
+        private static class ValueHolder<T> implements Supplier<T>
+        {
+            private final Supplier<T> delegate;
+            private volatile T value;
+
+            public ValueHolder(Supplier<T> delegate)
+            {
+                this.delegate = delegate;
+            }
+
+            @Override
+            public T get()
+            {
+                return value == null ? value = delegate.get() : value;
+            }
         }
     }
 
