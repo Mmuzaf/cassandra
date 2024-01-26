@@ -481,35 +481,6 @@
         </exec>
     </target>
 
-    <!-- Include annotation processor for VirtualTable -->
-    <property name="processor.build.classes" value="${build.classes}/processor" />
-    <property name="processor.manifest" value="${processor.build.classes}/MANIFEST.MF" />
-
-    <target name="annotation-processor-build" depends="init" description="Build system view annotation processor">
-        <antcall target="_annotation_processor_build"/>
-    </target>
-
-    <target name="_annotation_processor_build">
-        <mkdir dir="${processor.build.classes}" />
-        <javac includes="**/virtual/proc/*.java"
-               destdir="${processor.build.classes}"
-               includeantruntime="true"
-               source="${java.default}" target="${java.default}">
-            <src path="${build.src}"/>
-        </javac>
-    </target>
-
-    <target name="annotation-processor-jar"
-            depends="annotation-processor-build">
-        <mkdir dir="${processor.build.classes}/META-INF" />
-        <jar destfile="${build.dir.lib}/jars/cassandra-annotation-processor-${version}.jar">
-            <fileset dir="${processor.build.classes}"/>
-            <manifest>
-                <attribute name="Built-By" value="Maxim Muzafarov"/>
-            </manifest>
-        </jar>
-    </target>
-
     <!--
         Generates Java sources for tokenization support from jflex
         grammar files
@@ -2125,4 +2096,5 @@
   <import file="${build.helpers.dir}/build-cqlsh.xml"/>
   <import file="${build.helpers.dir}/build-bench.xml"/>
   <import file="${build.helpers.dir}/build-sonar.xml"/>
+  <import file="${build.helpers.dir}/build-compile-annotations.xml"/>
 </project>
