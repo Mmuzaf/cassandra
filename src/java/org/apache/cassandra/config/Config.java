@@ -39,6 +39,7 @@ import org.apache.cassandra.audit.AuditLogOptions;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.fql.FullQueryLoggerOptions;
 import org.apache.cassandra.index.internal.CassandraIndex;
+import org.apache.cassandra.io.compress.BufferType;
 import org.apache.cassandra.io.sstable.format.big.BigFormat;
 import org.apache.cassandra.service.StartupChecks.StartupCheckType;
 import org.apache.cassandra.utils.StorageCompatibilityMode;
@@ -346,7 +347,7 @@ public class Config
     public volatile int reject_repair_compaction_threshold = Integer.MAX_VALUE;
 
     // The number of executors to use for building secondary indexes
-    public int concurrent_index_builders = 2;
+    public volatile int concurrent_index_builders = 2;
 
     /**
      * @deprecated retry support removed on CASSANDRA-10992
@@ -907,6 +908,9 @@ public class Config
     public volatile int maximum_replication_factor_fail_threshold = -1;
     public volatile boolean zero_ttl_on_twcs_warned = true;
     public volatile boolean zero_ttl_on_twcs_enabled = true;
+    public volatile boolean non_partition_restricted_index_query_enabled = true;
+    public volatile int sai_sstable_indexes_per_query_warn_threshold = 32;
+    public volatile int sai_sstable_indexes_per_query_fail_threshold = -1;
 
     public volatile DurationSpec.LongNanosecondsBound streaming_state_expires = new DurationSpec.LongNanosecondsBound("3d");
     public volatile DataStorageSpec.LongBytesBound streaming_state_size = new DataStorageSpec.LongBytesBound("40MiB");
@@ -1171,7 +1175,22 @@ public class Config
         unslabbed_heap_buffers_logged,
         heap_buffers,
         offheap_buffers,
-        offheap_objects
+        offheap_objects;
+
+        public BufferType toBufferType()
+        {
+            switch (this)
+            {
+                case unslabbed_heap_buffers:
+                case heap_buffers:
+                    return BufferType.ON_HEAP;
+                case offheap_buffers:
+                case offheap_objects:
+                    return BufferType.OFF_HEAP;
+                default:
+                    throw new AssertionError();
+            }
+        }
     }
 
     public enum DiskFailurePolicy
@@ -1261,7 +1280,7 @@ public class Config
     public double severity_during_decommission = 0;
 
     // TODO Revisit MessagingService::current_version
-    public StorageCompatibilityMode storage_compatibility_mode = StorageCompatibilityMode.NONE;
+    public StorageCompatibilityMode storage_compatibility_mode;
 
     /**
      * For the purposes of progress barrier we only support ALL, EACH_QUORUM, QUORUM, LOCAL_QUORUM, ANY, and ONE.

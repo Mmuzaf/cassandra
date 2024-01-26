@@ -239,6 +239,7 @@ public class DatabaseDescriptor
 
     private static ImmutableMap<String, SSTableFormat<?, ?>> sstableFormats;
     private static volatile SSTableFormat<?, ?> selectedSSTableFormat;
+    private static StorageCompatibilityMode storageCompatibilityMode = CassandraRelevantProperties.TEST_STORAGE_COMPATIBILITY_MODE.getEnum(true, StorageCompatibilityMode.class);
 
     private static Function<CommitLog, AbstractCommitLogSegmentManager> commitLogSegmentMgrProvider = c -> DatabaseDescriptor.isCDCEnabled()
                                                                                                            ? new CommitLogSegmentManagerCDC(c, DatabaseDescriptor.getCommitLogLocation())
@@ -302,6 +303,8 @@ public class DatabaseDescriptor
 
         setConfig(loadConfig());
 
+        applyCompatibilityMode();
+
         applySSTableFormats();
 
         applySimpleConfig();
@@ -357,6 +360,7 @@ public class DatabaseDescriptor
         setDefaultFailureDetector();
         Config.setClientMode(true);
         conf = configSupplier.get();
+        applyCompatibilityMode();
         diskOptimizationStrategy = new SpinningDiskOptimizationStrategy();
         applySSTableFormats();
     }
@@ -445,7 +449,8 @@ public class DatabaseDescriptor
 
     private static void applyAll() throws ConfigurationException
     {
-        //InetAddressAndPort cares that applySimpleConfig runs first
+        applyCompatibilityMode();
+
         applySSTableFormats();
 
         applyCryptoProvider();
@@ -1546,6 +1551,15 @@ public class DatabaseDescriptor
         return selectedFormat;
     }
 
+    private static void applyCompatibilityMode()
+    {
+        if (isClientInitialized())
+            // tools or clients should not limit the sstable formats they support
+            storageCompatibilityMode = StorageCompatibilityMode.NONE;
+        else if (conf != null && conf.storage_compatibility_mode != null)
+            storageCompatibilityMode = conf.storage_compatibility_mode;
+    }
+
     private static void applySSTableFormats()
     {
         ServiceLoader<SSTableFormat.Factory> loader = ServiceLoader.load(SSTableFormat.Factory.class, DatabaseDescriptor.class.getClassLoader());
@@ -2387,6 +2401,11 @@ public class DatabaseDescriptor
     public static int getConcurrentIndexBuilders()
     {
         return conf.concurrent_index_builders;
+    }
+
+    public static void setConcurrentIndexBuilders(int value)
+    {
+        conf.concurrent_index_builders = value;
     }
 
     public static void setConcurrentValidations(int value)
@@ -5021,11 +5040,7 @@ public class DatabaseDescriptor
 
     public static StorageCompatibilityMode getStorageCompatibilityMode()
     {
-        // Config is null for junits that don't load the config. Get from env var that CI/build.xml sets
-        if (conf == null)
-            return CassandraRelevantProperties.JUNIT_STORAGE_COMPATIBILITY_MODE.getEnum(StorageCompatibilityMode.NONE);
-        else
-            return conf.storage_compatibility_mode;
+        return storageCompatibilityMode;
     }
 
     public static ParameterizedClass getDefaultCompaction()
@@ -5131,5 +5146,15 @@ public class DatabaseDescriptor
     public static boolean getUnsafeTCMMode()
     {
         return conf.unsafe_tcm_mode;
+    }
+
+    public static int getSaiSSTableIndexesPerQueryWarnThreshold()
+    {
+        return conf.sai_sstable_indexes_per_query_warn_threshold;
+    }
+
+    public static int getSaiSSTableIndexesPerQueryFailThreshold()
+    {
+        return conf.sai_sstable_indexes_per_query_fail_threshold;
     }
 }

@@ -37,6 +37,7 @@ import org.apache.cassandra.audit.AuditLogContext;
 import org.apache.cassandra.audit.AuditLogEntryType;
 import org.apache.cassandra.auth.Permission;
 import org.apache.cassandra.cql3.restrictions.SingleRestriction;
+import org.apache.cassandra.cql3.terms.Term;
 import org.apache.cassandra.db.guardrails.Guardrails;
 import org.apache.cassandra.index.Index;
 import org.apache.cassandra.schema.ColumnMetadata;
@@ -404,7 +405,12 @@ public class SelectStatement implements CQLStatement.SingleKeyspaceCqlStatement
         boolean isPartitionRangeQuery = restrictions.isKeyRange() || restrictions.usesSecondaryIndexing();
 
         if (isPartitionRangeQuery)
+        {
+            if (restrictions.isKeyRange() && restrictions.usesSecondaryIndexing() && !SchemaConstants.isLocalSystemKeyspace(table.keyspace))
+                Guardrails.nonPartitionRestrictedIndexQueryEnabled.ensureEnabled(state);
+
             return getRangeCommand(options, state, columnFilter, limit, nowInSec);
+        }
 
         return getSliceCommands(options, state, columnFilter, limit, nowInSec);
     }

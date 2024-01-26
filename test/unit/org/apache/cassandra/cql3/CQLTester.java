@@ -58,7 +58,6 @@ import org.apache.cassandra.db.Keyspace;
 import org.apache.cassandra.db.SystemKeyspace;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.BooleanType;
-import org.apache.cassandra.db.marshal.ByteBufferAccessor;
 import org.apache.cassandra.db.marshal.ByteType;
 import org.apache.cassandra.db.marshal.BytesType;
 import org.apache.cassandra.db.marshal.CollectionType;
@@ -120,6 +119,7 @@ import org.apache.cassandra.utils.JMXServerUtils;
 import org.apache.cassandra.utils.Pair;
 import org.apache.cassandra.utils.TimeUUID;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
 import org.junit.After;
@@ -127,6 +127,8 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -159,6 +161,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -180,6 +183,11 @@ import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_DRIVE
 import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_REUSE_PREPARED;
 import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_ROW_CACHE_SIZE;
 import static org.apache.cassandra.config.CassandraRelevantProperties.TEST_USE_PREPARED;
+import static org.apache.cassandra.cql3.SchemaElement.SchemaElementType.AGGREGATE;
+import static org.apache.cassandra.cql3.SchemaElement.SchemaElementType.FUNCTION;
+import static org.apache.cassandra.cql3.SchemaElement.SchemaElementType.MATERIALIZED_VIEW;
+import static org.apache.cassandra.cql3.SchemaElement.SchemaElementType.TABLE;
+import static org.apache.cassandra.cql3.SchemaElement.SchemaElementType.TYPE;
 import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_METRICS;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -197,6 +205,12 @@ public abstract class CQLTester
     private static final User SUPER_USER = new User("cassandra", "cassandra");
 
     protected static final Logger logger = LoggerFactory.getLogger(CQLTester.class);
+
+    // We make the test method name available and also use it when creating KS, table,...
+    @Rule
+    public final TestName testName = new TestName();
+    // Some tests use hardcoded constants so we may want to disable it
+    protected static volatile boolean decorateCQLWithTestNames = true;
 
     public static final String KEYSPACE = "cql_test_keyspace";
     public static final String KEYSPACE_PER_TEST = "cql_test_keyspace_alt";
@@ -869,14 +883,14 @@ public abstract class CQLTester
 
     protected String createTypeName()
     {
-        String typeName = String.format("type_%02d", seqNumber.getAndIncrement());
+        String typeName = createSchemaElementName(TYPE, null);
         types.add(typeName);
         return typeName;
     }
 
     protected String createFunctionName(String keyspace)
     {
-        return String.format("%s.function_%02d", keyspace, seqNumber.getAndIncrement());
+        return createSchemaElementName(FUNCTION, keyspace);
     }
 
     protected void registerFunction(String functionName, String argTypes)
@@ -901,7 +915,7 @@ public abstract class CQLTester
 
     protected String createAggregateName(String keyspace)
     {
-        return String.format("%s.aggregate_%02d", keyspace, seqNumber.getAndIncrement());
+        return createSchemaElementName(AGGREGATE, keyspace);
     }
 
     protected void registerAggregate(String aggregateName, String argTypes)
@@ -949,9 +963,25 @@ public abstract class CQLTester
 
     protected String createKeyspaceName()
     {
-        String currentKeyspace = String.format("keyspace_%02d", seqNumber.getAndIncrement());
+        String currentKeyspace = createSchemaElementName(SchemaElement.SchemaElementType.KEYSPACE, null);
         keyspaces.add(currentKeyspace);
         return currentKeyspace;
+    }
+
+    private String createSchemaElementName(SchemaElement.SchemaElementType type, String keyspace)
+    {
+        String prefix = keyspace == null ? "" : keyspace + '.';
+        String typeName = type == MATERIALIZED_VIEW ? "mv" : type.name().toLowerCase(Locale.US);
+        int sequence = seqNumber.getAndIncrement();
+        int usedSpaceSoFar = prefix.length() + typeName.length() + Math.max(2, numberOfDigits(sequence)) + 1;
+        String testMethodName = StringUtils.truncate(getTestMethodName(), SchemaConstants.NAME_LENGTH - usedSpaceSoFar);
+        return String.format("%s%s%s_%02d", prefix, typeName, testMethodName, sequence);
+    }
+
+    private int numberOfDigits(int i)
+    {
+        assert i >= 0;
+        return i == 0 ? 1 : (int) (Math.log10(i) + 1);
     }
 
     protected String createTable(String query)
@@ -980,7 +1010,7 @@ public abstract class CQLTester
 
     protected String createTableName(String tableName)
     {
-        String currentTable = tableName == null ? String.format("table_%02d", seqNumber.getAndIncrement()) : tableName;
+        String currentTable = tableName == null ? createSchemaElementName(TABLE, null) : tableName;
         tables.add(currentTable);
         return currentTable;
     }
@@ -1058,7 +1088,7 @@ public abstract class CQLTester
 
     protected String createViewName()
     {
-        String currentView = String.format("mv_%02d", seqNumber.getAndIncrement());
+        String currentView = createSchemaElementName(MATERIALIZED_VIEW, null);
         views.add(currentView);
         return currentView;
     }
@@ -1799,8 +1829,8 @@ public abstract class CQLTester
         // If the user writes a null for each column, then the whole tuple is null
         if (type.isUDT() && actualValue == null)
         {
-            ByteBuffer[] cells = ((TupleType) type).split(ByteBufferAccessor.instance, expectedByteValue);
-            return Stream.of(cells).allMatch(b -> b == null);
+            List<ByteBuffer> cells = ((TupleType) type).unpack(expectedByteValue);
+            return cells.stream().allMatch(java.util.Objects::isNull);
         }
         return false;
     }
@@ -2624,6 +2654,12 @@ public abstract class CQLTester
         return metrics.get(metricName);
     }
 
+    private String getTestMethodName()
+    {
+        return decorateCQLWithTestNames && testName.getMethodName() != null ? '_' + testName.getMethodName().toLowerCase().replaceAll("[^\\w]", "_")
+                                                                            : "";
+    }
+
     public static class Vector<T> extends AbstractList<T>
     {
         private final T[] values;
@@ -2757,10 +2793,15 @@ public abstract class CQLTester
 
         public ByteBuffer toByteBuffer()
         {
-            ByteBuffer[] bbs = new ByteBuffer[values.length];
-            for (int i = 0; i < values.length; i++)
-                bbs[i] = makeByteBuffer(values[i], typeFor(values[i]));
-            return TupleType.buildValue(bbs);
+            List<AbstractType<?>> types = new ArrayList<>(values.length);
+            List<ByteBuffer> bbs = new ArrayList<>(values.length);
+            for (Object value : values)
+            {
+                AbstractType<?> type = typeFor(value);
+                types.add(type);
+                bbs.add(makeByteBuffer(value, type));
+            }
+            return new TupleType(types).pack(bbs);
         }
 
         public String toCQLString()

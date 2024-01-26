@@ -316,14 +316,6 @@ public enum CassandraRelevantProperties
     /** Java Virtual Machine implementation name */
     JAVA_VM_NAME("java.vm.name"),
     JOIN_RING("cassandra.join_ring", "true"),
-    /**
-     * {@link StorageCompatibilityMode} mode sets how the node will behave, sstable or messaging versions to use etc according to a yaml setting. 
-     * But many tests don't load the config hence we need to force it otherwise they would run always under the default. Config is null for junits 
-     * that don't load the config. Get from env var that CI/build.xml sets.
-     *
-     * This is a dev/CI only property. Do not use otherwise.
-     */
-    JUNIT_STORAGE_COMPATIBILITY_MODE("cassandra.junit_storage_compatibility_mode", StorageCompatibilityMode.NONE.toString()),
     /** startup checks properties */
     LIBJEMALLOC("cassandra.libjemalloc"),
     /** Line separator ("\n" on UNIX). */
@@ -567,7 +559,6 @@ public enum CassandraRelevantProperties
      * can be also done manually for that particular case: {@code flush(SchemaConstants.SCHEMA_KEYSPACE_NAME);}. */
     TEST_FLUSH_LOCAL_SCHEMA_CHANGES("cassandra.test.flush_local_schema_changes", "true"),
     TEST_HARRY_SWITCH_AFTER("cassandra.test.harry.progression.switch-after", "1"),
-    TEST_IGNORE_SIGAR("cassandra.test.ignore_sigar"),
     TEST_INVALID_LEGACY_SSTABLE_ROOT("invalid-legacy-sstable-root"),
     TEST_JVM_DTEST_DISABLE_SSL("cassandra.test.disable_ssl"),
     TEST_JVM_SHUTDOWN_MESSAGING_GRACEFULLY("cassandra.test.messagingService.gracefulShutdown", "false"),
@@ -579,7 +570,6 @@ public enum CassandraRelevantProperties
     TEST_REUSE_PREPARED("cassandra.test.reuse_prepared", "true"),
     TEST_ROW_CACHE_SIZE("cassandra.test.row_cache_size"),
     TEST_SERIALIZATION_WRITES("cassandra.test-serialization-writes"),
-    TEST_SIGAR_NATIVE_LOGGING("sigar.nativeLogging", "true"),
     TEST_SIMULATOR_DEBUG("cassandra.test.simulator.debug"),
     TEST_SIMULATOR_DETERMINISM_CHECK("cassandra.test.simulator.determinismcheck", "none"),
     TEST_SIMULATOR_LIVENESS_CHECK("cassandra.test.simulator.livenesscheck", "true"),
@@ -590,6 +580,14 @@ public enum CassandraRelevantProperties
     TEST_SIMULATOR_PRINT_ASM_TYPES("cassandra.test.simulator.print_asm_types", ""),
     TEST_SKIP_CRYPTO_PROVIDER_INSTALLATION("cassandra.test.security.skip.provider.installation", "false"),
     TEST_SSTABLE_FORMAT_DEVELOPMENT("cassandra.test.sstableformatdevelopment"),
+    /**
+     * {@link StorageCompatibilityMode} mode sets how the node will behave, sstable or messaging versions to use etc according to a yaml setting.
+     * But many tests don't load the config hence we need to force it otherwise they would run always under the default. Config is null for junits
+     * that don't load the config. Get from env var that CI/build.xml sets.
+     *
+     * This is a dev/CI only property. Do not use otherwise.
+     */
+    TEST_STORAGE_COMPATIBILITY_MODE("cassandra.test.storage_compatibility_mode", StorageCompatibilityMode.NONE.toString()),
     TEST_STRICT_LCS_CHECKS("cassandra.test.strict_lcs_checks"),
     /** Turns some warnings into exceptions for testing. */
     TEST_STRICT_RUNTIME_CHECKS("cassandra.strict.runtime.checks"),
