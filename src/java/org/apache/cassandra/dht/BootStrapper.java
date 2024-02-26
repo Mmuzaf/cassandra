@@ -25,6 +25,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Meter;
+import org.apache.cassandra.metrics.StorageMetrics;
 import org.apache.cassandra.tcm.ownership.MovementMap;
 import org.apache.cassandra.utils.concurrent.Future;
 import org.slf4j.Logger;
@@ -47,6 +50,8 @@ import org.apache.cassandra.tcm.ClusterMetadata;
 import org.apache.cassandra.utils.progress.ProgressEvent;
 import org.apache.cassandra.utils.progress.ProgressEventNotifierSupport;
 import org.apache.cassandra.utils.progress.ProgressEventType;
+
+import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 
 public class BootStrapper extends ProgressEventNotifierSupport
 {
@@ -100,6 +105,8 @@ public class BootStrapper extends ProgressEventNotifierSupport
             streamer.addKeyspaceToFetch(keyspaceName);
         }
 
+        fireProgressEvent("bootstrap", new ProgressEvent(ProgressEventType.START, 0, 0, "Beginning bootstrap process"));
+
         StreamResultFuture bootstrapStreamResult = streamer.fetchAsync();
         bootstrapStreamResult.addEventListener(new StreamEventHandler()
         {
@@ -122,6 +129,7 @@ public class BootStrapper extends ProgressEventNotifierSupport
                         StreamEvent.ProgressEvent progress = (StreamEvent.ProgressEvent) event;
                         if (progress.progress.isCompleted())
                         {
+                            StorageMetrics.bootstrapFilesThroughputMetric.mark();
                             int received = receivedFiles.incrementAndGet();
                             ProgressEvent currentProgress = new ProgressEvent(ProgressEventType.PROGRESS, received, totalFilesToReceive.get(), "received file " + progress.progress.fileName);
                             fireProgressEvent("bootstrap", currentProgress);

@@ -17,11 +17,14 @@
  */
 package org.apache.cassandra.metrics;
 
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.ToLongFunction;
 import java.util.stream.StreamSupport;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Gauge;
+import com.codahale.metrics.Meter;
 import org.apache.cassandra.db.Keyspace;
 
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
@@ -31,7 +34,7 @@ import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
  */
 public class StorageMetrics
 {
-    private static final MetricNameFactory factory = new DefaultNameFactory("Storage");
+    public static final MetricNameFactory factory = new DefaultNameFactory("Storage");
 
     public static final Counter load = Metrics.counter(factory.createMetricName("Load"));
     public static final Counter uncompressedLoad = Metrics.counter(factory.createMetricName("UncompressedLoad"));
@@ -47,6 +50,14 @@ public class StorageMetrics
     public static final Counter repairExceptions = Metrics.counter(factory.createMetricName("RepairExceptions"));
     public static final Counter totalOpsForInvalidToken = Metrics.counter(factory.createMetricName("TotalOpsForInvalidToken"));
     public static final Counter startupOpsForInvalidToken = Metrics.counter(factory.createMetricName("StartupOpsForInvalidToken"));
+
+    public static final AtomicLong bootstrapFilesTotal = new AtomicLong();
+    public static final AtomicLong bootstrapFilesReceived = new AtomicLong();
+    public static final AtomicReference<String> bootstrapStatusMessage = new AtomicReference<>();
+    private static final Gauge<Long> bootstrapFilesToReceiveMetric = Metrics.register(factory.createMetricName("BootstrapFilesTotal"), bootstrapFilesTotal::get);
+    private static final Gauge<Long> bootstrapFilesReceivedMetric = Metrics.register(factory.createMetricName("BootstrapFilesReceived"), bootstrapFilesReceived::get);
+    private static final Gauge<String> bootstrapStatusMessageMetric = Metrics.register(factory.createMetricName("BootstrapStatusMessage"), bootstrapStatusMessage::get);
+    public static final Meter bootstrapFilesThroughputMetric = Metrics.meter(factory.createMetricName("BootstrapFilesThroughput"));
 
     private static Gauge<Long> createSummingGauge(String name, ToLongFunction<KeyspaceMetrics> extractor)
     {

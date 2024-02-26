@@ -1525,6 +1525,26 @@ public class StorageService extends NotificationBroadcasterSupport implements IE
         if (!res)
             throw new IllegalStateException("Bootstrap can be started exactly once, but seems to have already started: " + bootstrapper);
         bootstrapper.addProgressListener(progressSupport);
+        bootstrapper.addProgressListener((tag, event) -> {
+            ProgressEventType type = event.getType();
+            switch (type)
+            {
+                case START:
+                    StorageMetrics.bootstrapFilesTotal.set(0);
+                    StorageMetrics.bootstrapFilesReceived.set(0);
+                    StorageMetrics.bootstrapStatusMessage.set(event.getMessage());
+                    break;
+                case PROGRESS:
+                    StorageMetrics.bootstrapFilesTotal.set(event.getTotal());
+                    StorageMetrics.bootstrapFilesReceived.set(event.getProgressCount());
+                    break;
+                case SUCCESS:
+                case ERROR:
+                case COMPLETE:
+                    StorageMetrics.bootstrapStatusMessage.set(event.getMessage());
+                    break;
+            }
+        });
         return bootstrapper.bootstrap(streamStateStore,
                                       useStrictConsistency && beingReplaced == null,
                                       beingReplaced); // handles token update

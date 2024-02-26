@@ -48,6 +48,8 @@ import static org.apache.cassandra.distributed.shared.ClusterUtils.stopUnchecked
 import static org.apache.cassandra.distributed.test.hostreplacement.HostReplacementTest.setupCluster;
 import static org.apache.cassandra.distributed.shared.ClusterUtils.addInstance;
 import static org.apache.cassandra.distributed.shared.ClusterUtils.startHostReplacement;
+import static org.apache.cassandra.distributed.test.ring.BootstrapTest.getMetricGaugeValue;
+import static org.junit.Assert.assertEquals;
 
 public class FailedBootstrapTest extends TestBaseImpl
 {
@@ -82,6 +84,10 @@ public class FailedBootstrapTest extends TestBaseImpl
                 result.asserts().success();
                 logger.info("gossipinfo for node{}\n{}", i.config().num(), result.getStdout());
             });
+
+            assertEquals(Long.valueOf(28L), getMetricGaugeValue(added, "BootstrapFilesTotal", Long.class));
+            assertEquals(Long.valueOf(14L), getMetricGaugeValue(added, "BootstrapFilesReceived", Long.class));
+            assertEquals("Stream failed", getMetricGaugeValue(added, "BootstrapStatusMessage", String.class));
         }
     }
 
