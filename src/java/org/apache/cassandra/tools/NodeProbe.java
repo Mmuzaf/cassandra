@@ -92,6 +92,7 @@ import org.apache.cassandra.hints.HintsService;
 import org.apache.cassandra.hints.HintsServiceMBean;
 import org.apache.cassandra.locator.DynamicEndpointSnitchMBean;
 import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
+import org.apache.cassandra.management.CommandUtils;
 import org.apache.cassandra.metrics.CIDRAuthorizerMetrics;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 import org.apache.cassandra.metrics.StorageMetrics;
@@ -394,7 +395,7 @@ public class NodeProbe implements AutoCloseable
 
     public void forceKeyspaceCleanup(PrintStream out, int jobs, String keyspaceName, String... tableNames) throws IOException, ExecutionException, InterruptedException
     {
-        checkJobs(out, jobs);
+        CommandUtils.checkJobs(out, ssProxy, jobs);
         perform(out, keyspaceName,
                 () -> forceKeyspaceCleanup(jobs, keyspaceName, tableNames),
                 "cleaning up");

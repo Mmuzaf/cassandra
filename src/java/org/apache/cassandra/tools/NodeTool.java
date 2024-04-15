@@ -96,8 +96,8 @@ public class NodeTool
         List<Class<? extends NodeToolCmdRunnable>> commands = newArrayList(
                 AbortBootstrap.class,
                 Assassinate.class,
-                CassHelp.class,
                 CIDRFilteringStats.class,
+                CassHelp.class,
                 Cleanup.class,
                 ClearSnapshot.class,
                 ClientStats.class,
@@ -130,6 +130,7 @@ public class NodeTool
                 EnableOldProtocolVersions.class,
                 FailureDetectorInfo.class,
                 Flush.class,
+                ForceCompact.class,
                 GarbageCollect.class,
                 GcStats.class,
                 GetAuditLog.class,
@@ -161,7 +162,6 @@ public class NodeTool
                 InvalidateCounterCache.class,
                 InvalidateCredentialsCache.class,
                 InvalidateJmxPermissionsCache.class,
-                ReloadCIDRGroupsCache.class,
                 InvalidateKeyCache.class,
                 InvalidateNetworkPermissionsCache.class,
                 InvalidatePermissionsCache.class,
@@ -182,6 +182,7 @@ public class NodeTool
                 RecompressSSTables.class,
                 Refresh.class,
                 RefreshSizeEstimates.class,
+                ReloadCIDRGroupsCache.class,
                 ReloadLocalSchema.class,
                 ReloadSeeds.class,
                 ReloadSslCertificates.class,
@@ -234,8 +235,7 @@ public class NodeTool
                 UpgradeSSTable.class,
                 Verify.class,
                 Version.class,
-                ViewBuildStatus.class,
-                ForceCompact.class
+                ViewBuildStatus.class
         );
 
         Cli.CliBuilder<NodeToolCmdRunnable> builder = Cli.builder("nodetool");
@@ -271,7 +271,9 @@ public class NodeTool
         int status = 0;
         try
         {
+            // todo find command from the registry or deprecated commands
             NodeToolCmdRunnable parse = parser.parse(args);
+
             printHistory(args);
             parse.run(nodeProbeFactory, output);
         } catch (IllegalArgumentException |

@@ -64,6 +64,7 @@ import org.apache.cassandra.exceptions.StartupException;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileUtils;
 import org.apache.cassandra.locator.InetAddressAndPort;
+import org.apache.cassandra.management.CassandraCommandRegistry;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 import org.apache.cassandra.metrics.DefaultNameFactory;
 import org.apache.cassandra.net.StartupClusterConnectivityChecker;
@@ -419,6 +420,7 @@ public class CassandraDaemon
             logger.info("Prewarming of auth caches is disabled");
 
         PaxosState.startAutoRepairs();
+        CassandraCommandRegistry.instance.start(MBeanWrapper.instance);
 
         completeSetup();
     }
@@ -684,6 +686,7 @@ public class CassandraDaemon
         logger.info("Cassandra shutting down...");
         destroyClientTransports();
         StorageService.instance.setRpcReady(false);
+        CassandraCommandRegistry.instance.stop(MBeanWrapper.instance);
 
         if (jmxServer != null)
         {
