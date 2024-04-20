@@ -1056,18 +1056,6 @@ public class TableMetrics
                                                     considerZeroes));
     }
 
-    protected Histogram createTableHistogram(String name, boolean considerZeroes)
-    {
-        return createTableHistogram(name, name, considerZeroes);
-    }
-
-    protected Histogram createTableHistogram(String name, String alias, boolean considerZeroes)
-    {
-        Histogram tableHistogram = Metrics.histogram(factory.createMetricName(name), aliasFactory.createMetricName(alias), considerZeroes);
-        register(name, alias, tableHistogram);
-        return tableHistogram;
-    }
-
     protected TableTimer createTableTimer(String name, Timer keyspaceTimer)
     {
         Timer cfTimer = Metrics.timer(factory.createMetricName(name), aliasFactory.createMetricName(name));
@@ -1251,15 +1239,12 @@ public class TableMetrics
         public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
         {
             assert metricName.indexOf('.') == -1 : String.format("Metric name must not contain '.' character (got '%s')", metricName);
-
-            StringBuilder mbeanName = new StringBuilder();
-            mbeanName.append(GROUP_NAME).append(":");
-            mbeanName.append("type=").append(type);
-            mbeanName.append(",keyspace=").append(keyspaceName);
-            mbeanName.append(",scope=").append(tableName);
-            mbeanName.append(",name=").append(metricName);
-
-            return new CassandraMetricsRegistry.MetricName(GROUP_NAME, type, metricName, keyspaceName + "." + tableName, mbeanName.toString());
+            return new CassandraMetricsRegistry.MetricName(GROUP_NAME, type, metricName, keyspaceName + '.' + tableName,
+                                                           GROUP_NAME + ':' +
+                                                           "type=" + type +
+                                                           ",keyspace=" + keyspaceName +
+                                                           ",scope=" + tableName +
+                                                           ",name=" + metricName);
         }
     }
 
@@ -1274,11 +1259,11 @@ public class TableMetrics
 
         public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
         {
-            StringBuilder mbeanName = new StringBuilder();
-            mbeanName.append(GROUP_NAME).append(":");
-            mbeanName.append("type=").append(type);
-            mbeanName.append(",name=").append(metricName);
-            return new CassandraMetricsRegistry.MetricName(GROUP_NAME, type, metricName, "all", mbeanName.toString());
+            assert metricName.indexOf('.') == -1 : String.format("Metric name must not contain '.' character (got '%s')", metricName);
+            return new CassandraMetricsRegistry.MetricName(GROUP_NAME, type, metricName, "all",
+                                                           GROUP_NAME + ':' +
+                                                           "type=" + type +
+                                                           ",name=" + metricName);
         }
     }
 
