@@ -217,8 +217,8 @@ public class TableMetrics
     public final Timer coordinatorScanLatency;
     public final SnapshottingTimer coordinatorWriteLatency;
 
-    private final MetricNameFactory factory;
-    private final MetricNameFactory aliasFactory;
+    private final TableMetricNameFactory factory;
+    private final TableMetricNameFactory aliasFactory;
 
     public final Counter speculativeRetries;
     public final Counter speculativeFailedRetries;
@@ -885,9 +885,9 @@ public class TableMetrics
      */
     public void release()
     {
-        Metrics.removeIfMatch(fullName -> resolveShortMetricName(fullName, TableMetricNameFactory.GROUP_NAME, TYPE_NAME),
+        Metrics.removeIfMatch(fullName -> resolveShortMetricName(fullName, TableMetricNameFactory.GROUP_NAME, factory.type()),
                               factory::createMetricName, this::releaseMetric);
-        Metrics.removeIfMatch(fullName -> resolveShortMetricName(fullName, TableMetricNameFactory.GROUP_NAME, TYPE_NAME),
+        Metrics.removeIfMatch(fullName -> resolveShortMetricName(fullName, TableMetricNameFactory.GROUP_NAME, aliasFactory.type()),
                               aliasFactory::createMetricName, this::releaseMetric);
     }
 
@@ -1241,6 +1241,11 @@ public class TableMetrics
             this.keyspaceName = cfs.getKeyspaceName();
             this.tableName = cfs.name;
             this.type = type;
+        }
+
+        public String type()
+        {
+            return type;
         }
 
         public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
