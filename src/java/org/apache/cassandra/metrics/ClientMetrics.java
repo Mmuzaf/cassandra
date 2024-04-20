@@ -45,6 +45,10 @@ import org.apache.cassandra.transport.ServerConnection;
 
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
 
+/**
+ * Metrics for the client requests and responses. These metrics are initialized only once by the
+ * {@link org.apache.cassandra.metrics.CassandraMetricsRegistry} and removed when the node is stopped.
+ */
 public final class ClientMetrics
 {
     public static final String TYPE_NAME = "Client";

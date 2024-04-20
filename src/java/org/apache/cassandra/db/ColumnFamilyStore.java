@@ -137,6 +137,7 @@ import org.apache.cassandra.metrics.Sampler.Sample;
 import org.apache.cassandra.metrics.Sampler.SamplerType;
 import org.apache.cassandra.metrics.TableMetrics;
 import org.apache.cassandra.metrics.TopPartitionTracker;
+import org.apache.cassandra.metrics.TrieMemtableMetricsView;
 import org.apache.cassandra.repair.TableRepairManager;
 import org.apache.cassandra.repair.consistent.admin.CleanupSummary;
 import org.apache.cassandra.repair.consistent.admin.PendingStat;
@@ -290,6 +291,7 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
     private volatile boolean valid = true;
 
     private volatile Memtable.Factory memtableFactory;
+    private final TrieMemtableMetricsView memtableMetrics;
 
     /**
      * Memtables and SSTables on disk for this column family.
@@ -508,12 +510,15 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
 
         // Create Memtable and its metrics object only on online
         Memtable initialMemtable = null;
-        TableMetrics.ReleasableMetric memtableMetrics = null;
         if (DatabaseDescriptor.isDaemonInitialized())
         {
             initialMemtable = createMemtable(new AtomicReference<>(CommitLog.instance.getCurrentPosition()));
-            memtableMetrics = memtableFactory.createMemtableMetrics(metadata);
+            this.memtableMetrics = memtableFactory.createMemtableMetrics(metadata);
         }
+        else
+            this.memtableMetrics = null;
+
+        metric = new TableMetrics(this);
         data = new Tracker(this, initialMemtable, loadSSTables);
 
         // Note that this needs to happen before we load the first sstables, or the global sstable tracker will not
@@ -544,8 +549,6 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
         {
             indexManager.addIndex(info, true);
         }
-
-        metric = new TableMetrics(this, memtableMetrics);
 
         if (data.loadsstables)
         {
@@ -749,6 +752,8 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
         }
 
         // unregister metrics
+        if (memtableMetrics != null)
+            memtableMetrics.release();
         metric.release();
     }
 

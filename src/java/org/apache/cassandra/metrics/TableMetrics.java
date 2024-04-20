@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -33,7 +34,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.apache.commons.lang3.ArrayUtils;
 
 import com.codahale.metrics.Counter;
@@ -64,6 +64,7 @@ import org.apache.cassandra.utils.Pair;
 
 import static java.util.concurrent.TimeUnit.MICROSECONDS;
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;
+import static org.apache.cassandra.metrics.CassandraMetricsRegistry.resolveShortMetricName;
 import static org.apache.cassandra.utils.Clock.Global.nanoTime;
 
 /**
@@ -357,11 +358,6 @@ public class TableMetrics
 
     public final EnumMap<SamplerType, Sampler<?>> samplers;
 
-    /**
-     * Stores all metrics created that can be used when unregistering
-     */
-    private final Set<ReleasableMetric> all = Sets.newHashSet();
-
     private interface GetHistogram
     {
         EstimatedHistogram getHistogram(SSTableReader reader);
@@ -405,15 +401,10 @@ public class TableMetrics
      *
      * @param cfs ColumnFamilyStore to measure metrics
      */
-    public TableMetrics(final ColumnFamilyStore cfs, ReleasableMetric memtableMetrics)
+    public TableMetrics(final ColumnFamilyStore cfs)
     {
         factory = new TableMetricNameFactory(cfs, cfs.isIndex() ? INDEX_TYPE_NAME : TYPE_NAME);
         aliasFactory = new TableMetricNameFactory(cfs, cfs.isIndex() ? INDEX_ALIAS_TYPE_NAME : ALIAS_TYPE_NAME);
-
-        if (memtableMetrics != null)
-        {
-            all.add(memtableMetrics);
-        }
 
         samplers = new EnumMap<>(SamplerType.class);
         topReadPartitionFrequency = new FrequencySampler<ByteBuffer>()
@@ -894,10 +885,10 @@ public class TableMetrics
      */
     public void release()
     {
-        for (ReleasableMetric entry : all)
-        {
-            entry.release();
-        }
+        Metrics.removeIfMatch(fullName -> resolveShortMetricName(fullName, TableMetricNameFactory.GROUP_NAME, TYPE_NAME),
+                              factory::createMetricName, this::releaseMetric);
+        Metrics.removeIfMatch(fullName -> resolveShortMetricName(fullName, TableMetricNameFactory.GROUP_NAME, TYPE_NAME),
+                              aliasFactory::createMetricName, this::releaseMetric);
     }
 
     private ImmutableMap<SSTableFormat<?, ?>, ImmutableMap<String, Gauge<? extends Number>>> createFormatSpecificGauges(ColumnFamilyStore cfs)
@@ -1110,9 +1101,8 @@ public class TableMetrics
 
     private LatencyMetrics createLatencyMetrics(String namePrefix, LatencyMetrics ... parents)
     {
-        LatencyMetrics metric = new LatencyMetrics(factory, namePrefix, parents);
-        all.add(metric::release);
-        return metric;
+        // All metrics which are registered with the same factory type will be removed when release() is called.
+        return new LatencyMetrics(factory, namePrefix, parents);
     }
 
     /**
@@ -1137,22 +1127,16 @@ public class TableMetrics
     {
         boolean ret = ALL_TABLE_METRICS.putIfAbsent(name, ConcurrentHashMap.newKeySet()) == null;
         ALL_TABLE_METRICS.get(name).add(metric);
-        all.add(() -> releaseMetric(name, alias, deprecated));
         return ret;
     }
 
-    private void releaseMetric(String tableMetricName, String cfMetricName, String tableMetricAlias)
+    private void releaseMetric(CassandraMetricsRegistry.MetricName name)
     {
-        CassandraMetricsRegistry.MetricName name = factory.createMetricName(tableMetricName);
+        Metric metric = Metrics.getMetrics().get(name.getMetricName());
+        if (metric == null)
+            return;
 
-        final Metric metric = Metrics.getMetrics().get(name.getMetricName());
-        if (metric != null)
-        {
-            // Metric will be null if we are releasing a view metric.  Views have null for ViewLockAcquireTime and ViewLockReadTime
-            ALL_TABLE_METRICS.get(tableMetricName).remove(metric);
-            // Aliases are already known to the parent metrics, so we don't need to remove them here.
-            Metrics.remove(name);
-        }
+        Optional.ofNullable(ALL_TABLE_METRICS.get(name.getName())).ifPresent(set -> set.remove(metric));
     }
 
     public static class TableMeter
@@ -1247,6 +1231,7 @@ public class TableMetrics
 
     static class TableMetricNameFactory implements MetricNameFactory
     {
+        public static final String GROUP_NAME = TableMetrics.class.getPackage().getName();
         private final String keyspaceName;
         private final String tableName;
         private final String type;
@@ -1260,21 +1245,22 @@ public class TableMetrics
 
         public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
         {
-            String groupName = TableMetrics.class.getPackage().getName();
+            assert metricName.indexOf('.') == -1 : String.format("Metric name must not contain '.' character (got '%s')", metricName);
 
             StringBuilder mbeanName = new StringBuilder();
-            mbeanName.append(groupName).append(":");
+            mbeanName.append(GROUP_NAME).append(":");
             mbeanName.append("type=").append(type);
             mbeanName.append(",keyspace=").append(keyspaceName);
             mbeanName.append(",scope=").append(tableName);
             mbeanName.append(",name=").append(metricName);
 
-            return new CassandraMetricsRegistry.MetricName(groupName, type, metricName, keyspaceName + "." + tableName, mbeanName.toString());
+            return new CassandraMetricsRegistry.MetricName(GROUP_NAME, type, metricName, keyspaceName + "." + tableName, mbeanName.toString());
         }
     }
 
     static class AllTableMetricNameFactory implements MetricNameFactory
     {
+        private static final String GROUP_NAME = TableMetrics.class.getPackage().getName();
         private final String type;
         public AllTableMetricNameFactory(String type)
         {
@@ -1283,19 +1269,12 @@ public class TableMetrics
 
         public CassandraMetricsRegistry.MetricName createMetricName(String metricName)
         {
-            String groupName = TableMetrics.class.getPackage().getName();
             StringBuilder mbeanName = new StringBuilder();
-            mbeanName.append(groupName).append(":");
+            mbeanName.append(GROUP_NAME).append(":");
             mbeanName.append("type=").append(type);
             mbeanName.append(",name=").append(metricName);
-            return new CassandraMetricsRegistry.MetricName(groupName, type, metricName, "all", mbeanName.toString());
+            return new CassandraMetricsRegistry.MetricName(GROUP_NAME, type, metricName, "all", mbeanName.toString());
         }
-    }
-
-    @FunctionalInterface
-    public interface ReleasableMetric
-    {
-        void release();
     }
 
     private static class GlobalTableGauge implements Gauge<Long>
