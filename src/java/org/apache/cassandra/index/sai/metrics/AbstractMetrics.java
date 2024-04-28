@@ -55,7 +55,7 @@ public abstract class AbstractMetrics
 
     public void release()
     {
-        Metrics.removeIfMatch(fullName -> resolveShortMetricName(fullName,  DefaultNameFactory.GROUP_NAME, TYPE, metricScope()),
+        Metrics.removeIfMatch(fullName -> resolveShortMetricName(fullName,  DefaultNameFactory.GROUP_NAME, TYPE, null),
                               this::createMetricName, m -> {});
     }
 
