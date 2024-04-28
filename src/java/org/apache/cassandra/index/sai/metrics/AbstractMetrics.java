@@ -59,17 +59,12 @@ public abstract class AbstractMetrics
                               this::createMetricName, m -> {});
     }
 
-    protected String metricScope()
-    {
-        return scope;
-    }
-
     protected CassandraMetricsRegistry.MetricName createMetricName(String name)
     {
-        return createMetricName(name, metricScope());
+        return createMetricName(name, scope);
     }
 
-    private CassandraMetricsRegistry.MetricName createMetricName(String name, String scope)
+    protected CassandraMetricsRegistry.MetricName createMetricName(String name, String scope)
     {
         assert name.indexOf('.') == -1 : String.format("Metric name '%s' should not contain '.'", name);
         return new CassandraMetricsRegistry.MetricName(DefaultNameFactory.GROUP_NAME,
