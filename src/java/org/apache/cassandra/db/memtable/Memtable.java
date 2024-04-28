@@ -19,7 +19,6 @@
 package org.apache.cassandra.db.memtable;
 
 import java.util.concurrent.atomic.AtomicReference;
-
 import javax.annotation.concurrent.NotThreadSafe;
 
 import org.apache.cassandra.db.ColumnFamilyStore;
@@ -33,7 +32,6 @@ import org.apache.cassandra.db.rows.EncodingStats;
 import org.apache.cassandra.db.rows.UnfilteredSource;
 import org.apache.cassandra.index.transactions.UpdateTransaction;
 import org.apache.cassandra.io.sstable.format.SSTableWriter;
-import org.apache.cassandra.metrics.TableMetrics;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.TableMetadataRef;
 import org.apache.cassandra.utils.FBUtilities;
@@ -136,17 +134,6 @@ public interface Memtable extends Comparable<Memtable>, UnfilteredSource
         default boolean streamFromMemtable()
         {
             return false;
-        }
-
-        /**
-         * Override this method to include implementation-specific memtable metrics in the table metrics.
-         *
-         * Memtable metrics lifecycle matches table lifecycle. It is the table that owns the metrics and
-         * decides when to release them.
-         */
-        default TableMetrics.ReleasableMetric createMemtableMetrics(TableMetadataRef metadataRef)
-        {
-            return null;
         }
     }
 
@@ -444,4 +431,9 @@ public interface Memtable extends Comparable<Memtable>, UnfilteredSource
             super(copy.segmentId, copy.position);
         }
     }
+
+    /**
+     * Release any metrics associated with memtable.
+     */
+    default void releaseMetrics() {}
 }

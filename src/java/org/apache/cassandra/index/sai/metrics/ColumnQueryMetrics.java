@@ -49,9 +49,15 @@ public abstract class ColumnQueryMetrics extends AbstractMetrics
 
             termsTraversalTotalTime = Metrics.timer(createMetricName("TermsLookupLatency"));
 
-            Meter postingDecodes = Metrics.meter(createMetricName("PostingDecodes", TRIE_POSTINGS_TYPE));
+            Meter postingDecodes = Metrics.meter(createMetricName("PostingDecodes"));
 
             postingsListener = new PostingListEventsMetrics(postingDecodes);
+        }
+
+        @Override
+        protected String metricScope()
+        {
+            return TRIE_POSTINGS_TYPE;
         }
 
         @Override
@@ -90,11 +96,17 @@ public abstract class ColumnQueryMetrics extends AbstractMetrics
             intersectionLatency = Metrics.timer(createMetricName("BalancedTreeIntersectionLatency"));
             intersectionEarlyExits = Metrics.meter(createMetricName("BalancedTreeIntersectionEarlyExits"));
 
-            postingsNumPostings = Metrics.meter(createMetricName("NumPostings", BALANCED_TREE_POSTINGS_TYPE));
+            postingsNumPostings = Metrics.meter(createMetricName("NumPostings"));
 
-            Meter postingDecodes = Metrics.meter(createMetricName("PostingDecodes", BALANCED_TREE_POSTINGS_TYPE));
+            Meter postingDecodes = Metrics.meter(createMetricName("PostingDecodes"));
 
             postingsListener = new PostingListEventsMetrics(postingDecodes);
+        }
+
+        @Override
+        protected String metricScope()
+        {
+            return BALANCED_TREE_POSTINGS_TYPE;
         }
 
         @Override

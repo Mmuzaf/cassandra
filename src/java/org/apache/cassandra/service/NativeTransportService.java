@@ -102,6 +102,7 @@ public class NativeTransportService
      */
     public void stop()
     {
+        ClientMetrics.instance.release();
         if (server != null)
             server.stop();
     }
