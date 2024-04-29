@@ -17,32 +17,29 @@
  */
 package org.apache.cassandra.tools.nodetool;
 
-
-import io.airlift.airline.Command;
-import io.airlift.airline.Option;
-import org.apache.cassandra.tools.NodeProbe;
-import org.apache.cassandra.tools.NodeTool.NodeToolCmd;
+import org.apache.cassandra.service.StorageServiceMBean;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 @Command(name = "abortbootstrap", description = "Abort a failed bootstrap")
-public class AbortBootstrap extends NodeToolCmd
+public class AbortBootstrap extends BaseCommand
 {
-    @Option(title = "node id", name = "--node", description = "Node ID of the node that failed bootstrap", required = false)
+    @Option(names = "--node", description = "Node ID of the node that failed bootstrap")
     private String nodeId = EMPTY;
 
-    @Option(title = "ip", name = "--ip", description = "IP of the node that failed bootstrap", required = false)
+    @Option(names = "--ip", description = "IP of the node that failed bootstrap")
     private String endpoint = EMPTY;
 
-
     @Override
-    public void execute(NodeProbe probe)
+    public void execute(ManagementContext probe)
     {
         if (isEmpty(nodeId) && isEmpty(endpoint))
             throw new IllegalArgumentException("Either --node or --ip needs to be set");
         if (!isEmpty(nodeId) && !isEmpty(endpoint))
             throw new IllegalArgumentException("Only one of --node or --ip need to be set");
-        probe.abortBootstrap(nodeId, endpoint);
+        probe.getManagementService(StorageServiceMBean.class).abortBootstrap(nodeId, endpoint);
     }
 }

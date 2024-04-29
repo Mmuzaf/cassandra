@@ -203,7 +203,7 @@ JVM_ON_OUT_OF_MEMORY_ERROR_OPT="-XX:OnOutOfMemoryError=kill -9 %p"
 # jmx: metrics and administration interface
 #
 # add this if you're having trouble connecting:
-# JVM_OPTS="$JVM_OPTS -Djava.rmi.server.hostname=<public name>"
+JVM_OPTS="$JVM_OPTS -Djava.rmi.server.hostname=localhost"
 #
 # see
 # https://blogs.oracle.com/jmxetc/entry/troubleshooting_connection_problems_in_jconsole
@@ -214,9 +214,8 @@ JVM_ON_OUT_OF_MEMORY_ERROR_OPT="-XX:OnOutOfMemoryError=kill -9 %p"
 # To enable remote JMX connections, uncomment lines below
 # with authentication and/or ssl enabled. See https://wiki.apache.org/cassandra/JmxSecurity 
 #
-if [ "x$LOCAL_JMX" = "x" ]; then
-    LOCAL_JMX=yes
-fi
+
+LOCAL_JMX=no
 
 # Specifies the default port over which Cassandra will be available for
 # JMX connections.
@@ -233,7 +232,7 @@ else
   JVM_OPTS="$JVM_OPTS -Dcom.sun.management.jmxremote.rmi.port=$JMX_PORT"
 
   # turn on JMX authentication. See below for further options
-  JVM_OPTS="$JVM_OPTS -Dcom.sun.management.jmxremote.authenticate=true"
+  JVM_OPTS="$JVM_OPTS -Dcom.sun.management.jmxremote.authenticate=false"
 
   # jmx ssl options
   #JVM_OPTS="$JVM_OPTS -Dcom.sun.management.jmxremote.ssl=true"
@@ -249,7 +248,7 @@ fi
 # jmx authentication and authorization options. By default, auth is only
 # activated for remote connections but they can also be enabled for local only JMX
 ## Basic file based authn & authz
-JVM_OPTS="$JVM_OPTS -Dcom.sun.management.jmxremote.password.file=/etc/cassandra/jmxremote.password"
+#JVM_OPTS="$JVM_OPTS -Dcom.sun.management.jmxremote.password.file=/etc/cassandra/jmxremote.password"
 #JVM_OPTS="$JVM_OPTS -Dcom.sun.management.jmxremote.access.file=/etc/cassandra/jmxremote.access"
 ## Custom auth settings which can be used as alternatives to JMX's out of the box auth utilities.
 ## JAAS login modules can be used for authentication by uncommenting these two properties.

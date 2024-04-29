@@ -15,22 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.tools.nodetool;
 
-import org.apache.cassandra.service.StorageServiceMBean;
-import picocli.CommandLine;
+package org.apache.cassandra.management.api;
 
-import static org.apache.commons.lang3.StringUtils.EMPTY;
+import java.util.function.Consumer;
 
-@CommandLine.Command(name = "assassinate", description = "Forcefully remove a dead node without re-replicating any data.  Use as a last resort if you cannot removenode")
-public class Assassinate extends BaseCommand
+/**
+ * A command that can be executed locally on the node, without the need to know the remote node.
+ */
+public interface LocalCommand<T, R> extends Command<T, R>
 {
-    @CommandLine.Parameters(description = "IP address of the endpoint to assassinate", arity = "1")
-    private String endpoint = EMPTY;
-
-    @Override
-    public void execute(ManagementContext probe)
-    {
-        probe.getManagementService(StorageServiceMBean.class).assassinateEndpoint(endpoint);
-    }
+    R execute(CommandContext context, Consumer<String> printer);
 }

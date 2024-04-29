@@ -15,22 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.cassandra.tools.nodetool;
 
+import java.net.UnknownHostException;
+
 import org.apache.cassandra.service.StorageServiceMBean;
-import picocli.CommandLine;
 
-import static org.apache.commons.lang3.StringUtils.EMPTY;
-
-@CommandLine.Command(name = "assassinate", description = "Forcefully remove a dead node without re-replicating any data.  Use as a last resort if you cannot removenode")
-public class Assassinate extends BaseCommand
+/**
+ * Management context for nodetool commands to access management services like StorageServiceMBean etc.
+ */
+public interface ManagementContext
 {
-    @CommandLine.Parameters(description = "IP address of the endpoint to assassinate", arity = "1")
-    private String endpoint = EMPTY;
-
-    @Override
-    public void execute(ManagementContext probe)
-    {
-        probe.getManagementService(StorageServiceMBean.class).assassinateEndpoint(endpoint);
-    }
+    <T> T getManagementService(Class<T> serviceClass);
 }

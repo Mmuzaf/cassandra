@@ -15,22 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.tools.nodetool;
 
-import org.apache.cassandra.service.StorageServiceMBean;
-import picocli.CommandLine;
+package org.apache.cassandra.exceptions;
 
-import static org.apache.commons.lang3.StringUtils.EMPTY;
-
-@CommandLine.Command(name = "assassinate", description = "Forcefully remove a dead node without re-replicating any data.  Use as a last resort if you cannot removenode")
-public class Assassinate extends BaseCommand
+public class CommandExecutionException extends CassandraException
 {
-    @CommandLine.Parameters(description = "IP address of the endpoint to assassinate", arity = "1")
-    private String endpoint = EMPTY;
-
-    @Override
-    public void execute(ManagementContext probe)
+    public CommandExecutionException(String msg)
     {
-        probe.getManagementService(StorageServiceMBean.class).assassinateEndpoint(endpoint);
+        super(ExceptionCode.INVALID, msg);
+    }
+
+    public CommandExecutionException(String msg, Throwable cause)
+    {
+        super(ExceptionCode.INVALID, msg, cause);
     }
 }

@@ -37,11 +37,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
 import javax.annotation.Nullable;
 import javax.management.JMX;
 import javax.management.MBeanServerConnection;
@@ -55,12 +55,20 @@ import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 
+import com.google.common.base.Function;
+import com.google.common.base.Strings;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Uninterruptibles;
+
 import org.apache.cassandra.audit.AuditLogManager;
 import org.apache.cassandra.audit.AuditLogManagerMBean;
 import org.apache.cassandra.audit.AuditLogOptions;
 import org.apache.cassandra.audit.AuditLogOptionsCompositeData;
-
-import com.google.common.collect.ImmutableMap;
 import org.apache.cassandra.auth.AuthCache;
 import org.apache.cassandra.auth.AuthCacheMBean;
 import org.apache.cassandra.auth.CIDRGroupsMappingManager;
@@ -102,7 +110,6 @@ import org.apache.cassandra.net.MessagingServiceMBean;
 import org.apache.cassandra.service.ActiveRepairServiceMBean;
 import org.apache.cassandra.service.CacheService;
 import org.apache.cassandra.service.CacheServiceMBean;
-import org.apache.cassandra.tcm.CMSOperationsMBean;
 import org.apache.cassandra.service.GCInspector;
 import org.apache.cassandra.service.GCInspectorMXBean;
 import org.apache.cassandra.service.StorageProxy;
@@ -111,19 +118,11 @@ import org.apache.cassandra.service.StorageServiceMBean;
 import org.apache.cassandra.streaming.StreamManagerMBean;
 import org.apache.cassandra.streaming.StreamState;
 import org.apache.cassandra.streaming.management.StreamStateCompositeData;
-import org.apache.cassandra.tools.nodetool.formatter.TableBuilder;
-
-import com.google.common.base.Function;
-import com.google.common.base.Strings;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.Uninterruptibles;
-
 import org.apache.cassandra.tcm.CMSOperations;
+import org.apache.cassandra.tcm.CMSOperationsMBean;
 import org.apache.cassandra.tools.nodetool.GetTimeout;
+import org.apache.cassandra.tools.nodetool.ManagementContext;
+import org.apache.cassandra.tools.nodetool.formatter.TableBuilder;
 import org.apache.cassandra.utils.NativeLibrary;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.NODETOOL_JMX_NOTIFICATION_POLL_INTERVAL_SECONDS;
@@ -132,7 +131,7 @@ import static org.apache.cassandra.config.CassandraRelevantProperties.SSL_ENABLE
 /**
  * JMX client operations for Cassandra.
  */
-public class NodeProbe implements AutoCloseable
+public class NodeProbe implements AutoCloseable, ManagementContext
 {
     private static final String fmtUrl = "service:jmx:rmi:///jndi/rmi://%s:%d/jmxrmi";
     private static final String ssObjName = "org.apache.cassandra.db:type=StorageService";
@@ -175,6 +174,7 @@ public class NodeProbe implements AutoCloseable
     private boolean failed;
 
     protected CIDRFilteringMetricsTableMBean cfmProxy;
+    private final Map<String, Object> cachedMBeans = new HashMap<>();
 
     /**
      * Creates a NodeProbe using the specified JMX host, port, username, and password.
@@ -233,6 +233,19 @@ public class NodeProbe implements AutoCloseable
         this.output = Output.CONSOLE;
     }
 
+    private <T> T cacheProxy(T proxy)
+    {
+        cachedMBeans.put(proxy.getClass().getName(), proxy);
+        return proxy;
+    }
+
+    @Override
+    public <T> T getManagementService(Class<T> serviceClass)
+    {
+        return serviceClass.cast(Optional.ofNullable(cachedMBeans.get(serviceClass.getName()))
+                                         .orElseThrow(() -> new IllegalArgumentException("No MBean found for " + serviceClass.getName())));
+    }
+
     /**
      * Create a connection to the JMX agent and setup the M[X]Bean proxies.
      *
@@ -262,23 +275,23 @@ public class NodeProbe implements AutoCloseable
         try
         {
             ObjectName name = new ObjectName(ssObjName);
-            ssProxy = JMX.newMBeanProxy(mbeanServerConn, name, StorageServiceMBean.class);
+            ssProxy = cacheProxy(JMX.newMBeanProxy(mbeanServerConn, name, StorageServiceMBean.class));
             name = new ObjectName(CMSOperations.MBEAN_OBJECT_NAME);
-            cmsProxy = JMX.newMBeanProxy(mbeanServerConn, name, CMSOperationsMBean.class);
+            cmsProxy = cacheProxy(JMX.newMBeanProxy(mbeanServerConn, name, CMSOperationsMBean.class));
             name = new ObjectName(MessagingService.MBEAN_NAME);
-            msProxy = JMX.newMBeanProxy(mbeanServerConn, name, MessagingServiceMBean.class);
+            msProxy = cacheProxy(JMX.newMBeanProxy(mbeanServerConn, name, MessagingServiceMBean.class));
             name = new ObjectName(StreamManagerMBean.OBJECT_NAME);
-            streamProxy = JMX.newMBeanProxy(mbeanServerConn, name, StreamManagerMBean.class);
+            streamProxy = cacheProxy(JMX.newMBeanProxy(mbeanServerConn, name, StreamManagerMBean.class));
             name = new ObjectName(CompactionManager.MBEAN_OBJECT_NAME);
-            compactionProxy = JMX.newMBeanProxy(mbeanServerConn, name, CompactionManagerMBean.class);
+            compactionProxy = cacheProxy(JMX.newMBeanProxy(mbeanServerConn, name, CompactionManagerMBean.class));
             name = new ObjectName(FailureDetector.MBEAN_NAME);
-            fdProxy = JMX.newMBeanProxy(mbeanServerConn, name, FailureDetectorMBean.class);
+            fdProxy = cacheProxy(JMX.newMBeanProxy(mbeanServerConn, name, FailureDetectorMBean.class));
             name = new ObjectName(CacheService.MBEAN_NAME);
-            cacheService = JMX.newMBeanProxy(mbeanServerConn, name, CacheServiceMBean.class);
+            cacheService = cacheProxy(JMX.newMBeanProxy(mbeanServerConn, name, CacheServiceMBean.class));
             name = new ObjectName(StorageProxy.MBEAN_NAME);
-            spProxy = JMX.newMBeanProxy(mbeanServerConn, name, StorageProxyMBean.class);
+            spProxy = cacheProxy(JMX.newMBeanProxy(mbeanServerConn, name, StorageProxyMBean.class));
             name = new ObjectName(HintsService.MBEAN_NAME);
-            hsProxy = JMX.newMBeanProxy(mbeanServerConn, name, HintsServiceMBean.class);
+            hsProxy = cacheProxy(JMX.newMBeanProxy(mbeanServerConn, name, HintsServiceMBean.class));
             name = new ObjectName(GCInspector.MBEAN_NAME);
             gcProxy = JMX.newMBeanProxy(mbeanServerConn, name, GCInspectorMXBean.class);
             name = new ObjectName(Gossiper.MBEAN_NAME);

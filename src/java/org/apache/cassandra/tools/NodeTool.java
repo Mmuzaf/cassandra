@@ -17,23 +17,11 @@
  */
 package org.apache.cassandra.tools;
 
-import static com.google.common.base.Throwables.getStackTraceAsString;
-import static com.google.common.collect.Iterables.toArray;
-import static com.google.common.collect.Lists.newArrayList;
-import static java.lang.Integer.parseInt;
-import static java.lang.String.format;
-import static org.apache.cassandra.io.util.File.WriteMode.APPEND;
-import static org.apache.commons.lang3.ArrayUtils.EMPTY_STRING_ARRAY;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
-import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
-
 import java.io.Console;
-import org.apache.cassandra.io.util.File;
-import org.apache.cassandra.io.util.FileWriter;
 import java.io.FileNotFoundException;
 import java.io.IOError;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -44,16 +32,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.SortedMap;
-
 import javax.management.InstanceNotFoundException;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
-
-import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
-import org.apache.cassandra.tools.nodetool.*;
-import org.apache.cassandra.utils.FBUtilities;
-
 import com.google.common.collect.Maps;
 
 import io.airlift.airline.Cli;
@@ -67,6 +49,23 @@ import io.airlift.airline.ParseCommandUnrecognizedException;
 import io.airlift.airline.ParseOptionConversionException;
 import io.airlift.airline.ParseOptionMissingException;
 import io.airlift.airline.ParseOptionMissingValueException;
+import org.apache.cassandra.io.util.File;
+import org.apache.cassandra.io.util.FileWriter;
+import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
+import org.apache.cassandra.tools.nodetool.*;
+import org.apache.cassandra.utils.FBUtilities;
+import picocli.CommandLine;
+
+import static com.google.common.base.Throwables.getStackTraceAsString;
+import static com.google.common.collect.Iterables.toArray;
+import static com.google.common.collect.Lists.newArrayList;
+import static java.lang.Integer.parseInt;
+import static java.lang.String.format;
+import static org.apache.cassandra.io.util.File.WriteMode.APPEND;
+import static org.apache.commons.lang3.ArrayUtils.EMPTY_STRING_ARRAY;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 public class NodeTool
 {
@@ -94,8 +93,6 @@ public class NodeTool
     public int execute(String... args)
     {
         List<Class<? extends NodeToolCmdRunnable>> commands = newArrayList(
-                AbortBootstrap.class,
-                Assassinate.class,
                 CassHelp.class,
                 CIDRFilteringStats.class,
                 Cleanup.class,
@@ -237,6 +234,38 @@ public class NodeTool
                 ForceCompact.class
         );
 
+        List<Class<? extends BaseCommand>> cliCommands = newArrayList(
+            AbortBootstrap.class,
+            Assassinate.class);
+
+        picocli.CommandLine commandLine = new CommandLine(new TopLevelNodeToolCommand());
+        commandLine.setOut(new PrintWriter(output.out))
+                    .setErr(new PrintWriter(output.err))
+                    .setExecutionExceptionHandler((ex, cmdLine, parseResult) -> {
+                        if (ex instanceof CommandLine.ParameterException)
+                        {
+                            output.err.println(ex.getMessage());
+                            commandLine.usage(output.err);
+                        }
+                        return 1;
+                    });
+
+        try
+        {
+            for (Class<? extends BaseCommand> commandClass : cliCommands)
+                commandLine.addSubcommand(commandLine.getFactory().create(commandClass));
+
+            // This must be after all the subcommands are added to the commandLine.
+            commandLine.setHelpFactory(CassandraHelpLayout::new);
+        }
+        catch (Exception e)
+        {
+            err(Throwables.getRootCause(e));
+            return 2;
+        }
+
+//        return commandLine.execute(args);
+
         Cli.CliBuilder<NodeToolCmdRunnable> builder = Cli.builder("nodetool");
 
         builder.withDescription("Manage your Cassandra cluster")
@@ -263,17 +292,17 @@ public class NodeTool
                .withDefaultCommand(CMSAdmin.DescribeCMS.class)
                .withCommand(CMSAdmin.DescribeCMS.class)
                .withCommand(CMSAdmin.InitializeCMS.class)
-               .withCommand(CMSAdmin.ReconfigureCMS.class)
-               .withCommand(CMSAdmin.Snapshot.class);
+               .withCommand(CMSAdmin.ReconfigureCMS.class);
 
         Cli<NodeToolCmdRunnable> parser = builder.build();
 
         int status = 0;
         try
         {
-            NodeToolCmdRunnable parse = parser.parse(args);
+//            NodeToolCmdRunnable parse = parser.parse(args);
             printHistory(args);
-            parse.run(nodeProbeFactory, output);
+            commandLine.execute(args);
+//            parse.run(nodeProbeFactory, output);
         } catch (IllegalArgumentException |
                 IllegalStateException |
                 ParseArgumentsMissingException |
@@ -293,6 +322,18 @@ public class NodeTool
         }
 
         return status;
+    }
+
+    private static Object instantiateCommand(Class<? extends BaseCommand> commandClass)
+    {
+        try
+        {
+            return commandClass.getDeclaredConstructor().newInstance();
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException("Failed to instantiate command " + commandClass.getName(), e);
+        }
     }
 
     private static void printHistory(String... args)
