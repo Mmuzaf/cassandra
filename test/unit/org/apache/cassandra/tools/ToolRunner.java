@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -191,6 +192,16 @@ public class ToolRunner
         return invoke(CQLTester.buildNodetoolArgs(args));
     }
 
+    public static ToolResult invokeNodetool(Map<String, String> env, String... args)
+    {
+        return invokeNodetool(env, Arrays.asList(args));
+    }
+
+    public static ToolResult invokeNodetool(Map<String, String> env, List<String> args)
+    {
+        return invoke(env, CQLTester.buildNodetoolArgs(args));
+    }
+
     public static ToolResult invoke(List<String> args)
     {
         return invoke(args.toArray(new String[args.size()]));
@@ -303,6 +314,37 @@ public class ToolRunner
                               res.right.getStdout() + res.left.getStdout(),
                               res.right.getStderr() + res.left.getStderr(),
                               res.right.getException());
+    }
+
+    public static ToolResult invokeNodetoolInJvmV2(String... commands)
+    {
+        return ToolRunner.invokeNodetoolInJvm(NodeToolV2::new, commands);
+    }
+
+    public static ToolResult invokeNodetoolInJvmV1(String... commands)
+    {
+        return ToolRunner.invokeNodetoolInJvm(NodeTool::new, commands);
+    }
+
+    public static ToolRunner.ToolResult invokeNodetoolInJvm(BiFunction<INodeProbeFactory, Output, Object> factory, String... commands)
+    {
+        NodeToolSynopsisTest.ListOutputStream out = new NodeToolSynopsisTest.ListOutputStream();
+        NodeToolSynopsisTest.ListOutputStream err = new NodeToolSynopsisTest.ListOutputStream();
+        List<String> args = CQLTester.buildNodetoolArgs(List.of(commands));
+        args.remove("bin/nodetool");
+        try
+        {
+            Object runner = factory.apply(new NodeProbeFactory(), new Output(new PrintStream(out), new PrintStream(err)));
+            Object result = runner.getClass().getMethod("execute", String[].class)
+                                  .invoke(runner, new Object[] { args.toArray(new String[0]) });
+            assertTrue(result instanceof Integer);
+            return new ToolResult(args, (Integer) result, out.getOutput(), err.getOutput(), null);
+        }
+        catch (Exception e)
+        {
+            return new ToolResult(args, -1, out.getOutput(),
+                                  err.getOutput() + '\n' + Throwables.getStackTraceAsString(e), e);
+        }
     }
 
     public static <T> Pair<T, ToolResult> invokeSupplier(Supplier<T> runMe)

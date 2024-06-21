@@ -19,6 +19,8 @@
 package org.apache.cassandra.cql3.restrictions;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -229,16 +231,36 @@ public final class SimpleRestriction implements SingleRestriction
         {
             case SINGLE_COLUMN:
             case TOKEN:
-                return bindAndGet(options).stream()
-                                          .map(b ->  ClusteringElements.of(columnsExpression.columnSpecification(), b))
-                                          .collect(Collectors.toList());
+                return bindAndGetSingleTermClusteringElements(options);
             case MULTI_COLUMN:
-                return bindAndGetElements(options).stream()
-                                                  .map(buffers -> ClusteringElements.of(columnsExpression.columns(), buffers))
-                                                  .collect(Collectors.toList());
+                return bindAndGetMultiTermClusteringElements(options);
             default:
                 throw new UnsupportedOperationException();
         }
+    }
+
+    private List<ClusteringElements> bindAndGetSingleTermClusteringElements(QueryOptions options)
+    {
+        List<ByteBuffer> values = bindAndGet(options);
+        if (values.isEmpty())
+            return Collections.emptyList();
+
+        List<ClusteringElements> elements = new ArrayList<>(values.size());
+        for (int i = 0; i < values.size(); i++)
+            elements.add(ClusteringElements.of(columnsExpression.columnSpecification(), values.get(i)));
+        return elements;
+    }
+
+    private List<ClusteringElements> bindAndGetMultiTermClusteringElements(QueryOptions options)
+    {
+        List<List<ByteBuffer>> values = bindAndGetElements(options);
+        if (values.isEmpty())
+            return Collections.emptyList();
+
+        List<ClusteringElements> elements = new ArrayList<>(values.size());
+        for (int i = 0; i < values.size(); i++)
+            elements.add(ClusteringElements.of(columnsExpression.columns(), values.get(i)));
+        return elements;
     }
 
     private List<ByteBuffer> bindAndGet(QueryOptions options)
@@ -303,9 +325,9 @@ public final class SimpleRestriction implements SingleRestriction
                 List<ByteBuffer> buffers = bindAndGet(options);
 
                 ColumnMetadata column = firstColumn();
-                if (operator == Operator.IN)
+                if (operator == Operator.IN || operator == Operator.BETWEEN)
                 {
-                    filter.add(column, operator, inValues(column, buffers));
+                    filter.add(column, operator, multiInputOperatorValues(column, buffers));
                 }
                 else if (operator == Operator.LIKE)
                 {
@@ -344,7 +366,7 @@ public final class SimpleRestriction implements SingleRestriction
                                                                              .map(elements -> elements.get(0))
                                                                              .collect(Collectors.toList());
 
-                        filter.add(firstColumn(), Operator.IN, inValues(firstColumn(), values));
+                        filter.add(firstColumn(), Operator.IN, multiInputOperatorValues(firstColumn(), values));
                     }
                     else
                     {
@@ -361,14 +383,20 @@ public final class SimpleRestriction implements SingleRestriction
         }
     }
 
-    private static ByteBuffer inValues(ColumnMetadata column, List<ByteBuffer> values)
+    private static ByteBuffer multiInputOperatorValues(ColumnMetadata column, List<ByteBuffer> values)
     {
+
         return ListType.getInstance(column.type, false).pack(values);
     }
 
     @Override
     public String toString()
     {
+        if (operator.isTernary())
+        {
+            List<? extends Term> terms = values.asList();
+            return String.format("%s %s %s AND %s", columnsExpression.toCQLString(), operator, terms.get(0), terms.get(1));
+        }
         return String.format("%s %s %s", columnsExpression.toCQLString(), operator, values);
     }
 }

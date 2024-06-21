@@ -77,6 +77,7 @@ public enum CassandraRelevantProperties
     CACHEABLE_MUTATION_SIZE_LIMIT("cassandra.cacheable_mutation_size_limit_bytes", convertToString(1_000_000)),
     CASSANDRA_ALLOW_SIMPLE_STRATEGY("cassandra.allow_simplestrategy"),
     CASSANDRA_AVAILABLE_PROCESSORS("cassandra.available_processors"),
+    CASSANDRA_CLI_PICOCLI_LAYOUT("cassandra.cli.picocli.layout", "false"),
     /** The classpath storage configuration file. */
     CASSANDRA_CONFIG("cassandra.config", "cassandra.yaml"),
     /**
