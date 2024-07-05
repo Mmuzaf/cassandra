@@ -15,26 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.tools.nodetool;
+package org.apache.cassandra.management.api;
 
-import io.airlift.airline.Command;
-import io.airlift.airline.Option;
-import org.apache.cassandra.tools.NodeProbe;
-import org.apache.cassandra.tools.NodeTool.NodeToolCmd;
+import org.apache.cassandra.management.BaseCommand;
+import org.apache.cassandra.management.ServiceMBeanBridge;
+import picocli.CommandLine;
+import picocli.CommandLine.Option;
 
-@Command(name = "version", description = "Print cassandra version")
-public class Version extends NodeToolCmd
+@CommandLine.Command(name = "version", description = "Print cassandra version")
+public class Version extends BaseCommand
 {
-    @Option(title = "verbose",
-            name = {"-v", "--verbose"},
-            description = "Include additional information")
+    @Option(names = {"-v", "--verbose"}, description = "Include addtitional information")
     private boolean verbose = false;
 
     @Override
-    public void execute(NodeProbe probe)
+    protected void execute(ServiceMBeanBridge probe)
     {
-        probe.output().out.println("ReleaseVersion: " + probe.getReleaseVersion());
-        if (verbose)
-            probe.output().out.println("GitSHA: " + probe.getGitSHA());
+        logger.out.println("ReleaseVersion: " + probe.ssProxy().getReleaseVersion());
+        if (verbose) {
+            logger.out.println("GitSHA: " + probe.ssProxy().getGitSHA());
+        }
+        
     }
 }

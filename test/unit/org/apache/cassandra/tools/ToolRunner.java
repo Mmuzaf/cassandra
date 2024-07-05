@@ -40,6 +40,7 @@ import java.util.stream.Stream;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +52,7 @@ import org.assertj.core.util.Lists;
 
 import static com.github.jknack.handlebars.internal.lang3.ArrayUtils.isEmpty;
 import static org.assertj.core.api.Assertions.assertThat;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -558,6 +560,43 @@ public class ToolRunner
                 assertThat(stderr).isNotNull();
                 if (!Stream.of(messages).anyMatch(stderr::contains))
                     fail("stderr does not contain " + Arrays.toString(messages));
+                return this;
+            }
+
+            public AssertHelp outputContains(String messages)
+            {
+                return outputContainsAny(messages);
+            }
+
+            public AssertHelp outputContainsAny(String... messages)
+            {
+                assertThat(messages).hasSizeGreaterThan(0);
+                assertThat(stdout).isNotNull();
+                if (!Stream.of(messages).anyMatch(stdout::contains))
+                    fail("stdout does not contain " + Arrays.toString(messages));
+                return this;
+            }
+            
+            public AssertHelp outputMatches(String messages)
+            {
+                return outputMatchesAny(messages);
+            }
+
+            public AssertHelp outputMatchesAny(String... messages)
+            {
+                assertThat(messages).hasSizeGreaterThan(0);
+                assertThat(stdout).isNotNull();
+                if (!Stream.of(messages).anyMatch(stdout::matches))
+                    fail("stdout does not contain " + Arrays.toString(messages));
+                return this;
+            }
+            
+            public AssertHelp outputLinesMatchesAll(String... messages)
+            {
+                assertThat(messages).hasSizeGreaterThan(0);
+                assertThat(stdout).isNotNull();
+                if (!Stream.of(messages).allMatch((String msg) -> stdout.lines().anyMatch((String line) -> line.matches(msg))))
+                    fail("stdout does not match " + Arrays.toString(messages));
                 return this;
             }
 

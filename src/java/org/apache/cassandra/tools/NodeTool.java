@@ -241,7 +241,6 @@ public class NodeTool
                 UpdateCIDRGroup.class,
                 UpgradeSSTable.class,
                 Verify.class,
-                Version.class,
                 ViewBuildStatus.class
         );
 

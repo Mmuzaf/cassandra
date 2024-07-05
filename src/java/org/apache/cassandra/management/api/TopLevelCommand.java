@@ -29,7 +29,8 @@ import static org.apache.cassandra.management.CassandraHelpCommand.printTopComma
                     AbortBootstrap.class,
                     Assassinate.class,
                     ForceCompact.class,
-                    Compact.class })
+                    Compact.class,
+                    Version.class})
 public class TopLevelCommand implements Runnable
 {
     @CommandLine.Spec
