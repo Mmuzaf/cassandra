@@ -157,6 +157,8 @@ public class LegacyStateListener implements ChangeListener.Async
                         for (Token token : tokens)
                             logger.warn("Token {} changing ownership from {} to {}", token, replaced, replacement);
                     }
+                    Gossiper.instance.mergeNodeToGossip(change, next, tokens);
+                    PeersTable.updateLegacyPeerTable(change, prev, next);
                 }
             }
             else

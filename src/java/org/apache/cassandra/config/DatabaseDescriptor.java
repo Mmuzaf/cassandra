@@ -17,6 +17,7 @@
  */
 package org.apache.cassandra.config;
 
+import java.io.IOError;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
@@ -117,6 +118,7 @@ import static org.apache.cassandra.config.CassandraRelevantProperties.ALLOCATE_T
 import static org.apache.cassandra.config.CassandraRelevantProperties.ALLOW_UNLIMITED_CONCURRENT_VALIDATIONS;
 import static org.apache.cassandra.config.CassandraRelevantProperties.AUTO_BOOTSTRAP;
 import static org.apache.cassandra.config.CassandraRelevantProperties.CONFIG_LOADER;
+import static org.apache.cassandra.config.CassandraRelevantProperties.CHRONICLE_ANALYTICS_DISABLE;
 import static org.apache.cassandra.config.CassandraRelevantProperties.DISABLE_STCS_IN_L0;
 import static org.apache.cassandra.config.CassandraRelevantProperties.INITIAL_TOKEN;
 import static org.apache.cassandra.config.CassandraRelevantProperties.IO_NETTY_TRANSPORT_ESTIMATE_SIZE_ON_SUBMIT;
@@ -155,6 +157,7 @@ public class DatabaseDescriptor
 {
     static
     {
+        CHRONICLE_ANALYTICS_DISABLE.setBoolean(true);
         // This static block covers most usages
         FBUtilities.preventIllegalAccessWarnings();
         IO_NETTY_TRANSPORT_ESTIMATE_SIZE_ON_SUBMIT.setBoolean(false);
@@ -1007,6 +1010,8 @@ public class DatabaseDescriptor
                                                            conf.native_transport_min_backoff_on_queue_overload,
                                                            conf.native_transport_max_backoff_on_queue_overload));
 
+        if (conf.use_deterministic_table_id)
+            logger.warn("use_deterministic_table_id is no longer supported and should be removed from cassandra.yaml.");
     }
 
     @VisibleForTesting
@@ -1460,7 +1465,18 @@ public class DatabaseDescriptor
         boolean directIOSupported = false;
         try
         {
-            directIOSupported = FileUtils.getBlockSize(new File(getCommitLogLocation())) > 0;
+            String commitLogLocation = getCommitLogLocation();
+
+            if (commitLogLocation == null)
+                throw new ConfigurationException("commitlog_directory must be specified", false);
+
+            File commitLogLocationDir = new File(commitLogLocation);
+            PathUtils.createDirectoriesIfNotExists(commitLogLocationDir.toPath());
+            directIOSupported = FileUtils.getBlockSize(commitLogLocationDir) > 0;
+        }
+        catch (IOError | ConfigurationException ex)
+        {
+            throw  ex;
         }
         catch (RuntimeException e)
         {
@@ -2861,6 +2877,7 @@ public class DatabaseDescriptor
     @VisibleForTesting
     public static void setCommitLogWriteDiskAccessMode(DiskAccessMode diskAccessMode)
     {
+        commitLogWriteDiskAccessMode = diskAccessMode;
         conf.commitlog_disk_access_mode = diskAccessMode;
     }
 
@@ -3473,16 +3490,6 @@ public class DatabaseDescriptor
     public static Set<String> hintedHandoffDisabledDCs()
     {
         return conf.hinted_handoff_disabled_datacenters;
-    }
-
-    public static boolean useDeterministicTableID()
-    {
-        return conf != null && conf.use_deterministic_table_id;
-    }
-
-    public static void useDeterministicTableID(boolean value)
-    {
-        conf.use_deterministic_table_id = value;
     }
 
     public static void enableHintsForDC(String dc)
@@ -5252,5 +5259,10 @@ public class DatabaseDescriptor
     public static Config.TriggersPolicy getTriggersPolicy()
     {
         return conf.triggers_policy;
+    }
+
+    public static boolean isPasswordValidatorReconfigurationEnabled()
+    {
+        return conf.password_validator_reconfiguration_enabled;
     }
 }

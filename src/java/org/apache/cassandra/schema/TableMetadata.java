@@ -829,7 +829,7 @@ public class TableMetadata implements SchemaElement
             {
                 // make sure vtables use deteriminstic ids so they can be referenced in calls cross-nodes
                 // see CASSANDRA-17295
-                if (DatabaseDescriptor.useDeterministicTableID() || kind == Kind.VIRTUAL)
+                if (kind == Kind.VIRTUAL)
                     id = TableId.unsafeDeterministic(keyspace, name);
                 else
                     id = TableId.generate();
@@ -1426,7 +1426,7 @@ public class TableMetadata implements SchemaElement
                 DroppedColumn dropped = iterDropped.next();
                 dropped.column.appendCqlTo(builder);
 
-                if (!hasSingleColumnPrimaryKey || iter.hasNext())
+                if (!hasSingleColumnPrimaryKey || iterDropped.hasNext())
                     builder.append(',');
 
                 builder.newLine();

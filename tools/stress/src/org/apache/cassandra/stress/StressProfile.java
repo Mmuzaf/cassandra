@@ -40,6 +40,7 @@ import org.antlr.runtime.RecognitionException;
 import org.apache.cassandra.config.YamlConfigurationLoader;
 import org.apache.cassandra.cql3.CQLFragmentParser;
 import org.apache.cassandra.cql3.CqlParser;
+import org.apache.cassandra.cql3.conditions.ColumnCondition;
 import org.apache.cassandra.cql3.statements.ModificationStatement;
 import org.apache.cassandra.cql3.statements.schema.CreateTableStatement;
 import org.apache.cassandra.exceptions.RequestValidationException;
@@ -416,7 +417,7 @@ public class StressProfile implements Serializable
          *  for dynamic condition we have to read existing db value and then
          *  use current db values during the update.
          */
-        return modificationStatement.getConditions().stream().anyMatch(condition -> condition.right.getValue().getText().equals("?"));
+        return modificationStatement.getConditions().stream().anyMatch(ColumnCondition.Raw::containsBindMarkers);
     }
 
     public Operation getBulkReadQueries(String name, Timer timer, StressSettings settings, TokenRangeIterator tokenRangeIterator, boolean isWarmup)
@@ -476,7 +477,7 @@ public class StressProfile implements Serializable
         List<ColumnMetadata> allColumns = com.google.common.collect.Lists.newArrayList(metadata.allColumnsInSelectOrder());
 
         StringBuilder sb = new StringBuilder();
-        sb.append("INSERT INTO ").append(quoteIdentifier(keyspaceName)).append(".").append(quoteIdentifier(tableName)).append(" (");
+        sb.append("INSERT INTO ").append(keyspaceName).append('.').append(quoteIdentifier(tableName)).append(" (");
         StringBuilder value = new StringBuilder();
         for (ColumnMetadata c : allColumns)
         {
@@ -541,7 +542,7 @@ public class StressProfile implements Serializable
                     StringBuilder sb = new StringBuilder();
                     if (!isKeyOnlyTable)
                     {
-                        sb.append("UPDATE ").append(quoteIdentifier(tableName)).append(" SET ");
+                        sb.append("UPDATE ").append(keyspaceName).append('.').append(quoteIdentifier(tableName)).append(" SET ");
                         //PK Columns
                         StringBuilder pred = new StringBuilder();
                         pred.append(" WHERE ");
@@ -594,7 +595,7 @@ public class StressProfile implements Serializable
                     }
                     else
                     {
-                        sb.append("INSERT INTO ").append(quoteIdentifier(tableName)).append(" (");
+                        sb.append("INSERT INTO ").append(keyspaceName).append('.').append(quoteIdentifier(tableName)).append(" (");
                         StringBuilder value = new StringBuilder();
                         for (com.datastax.driver.core.ColumnMetadata c : tableMetaData.getPrimaryKey())
                         {

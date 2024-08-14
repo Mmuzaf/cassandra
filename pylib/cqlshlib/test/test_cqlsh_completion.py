@@ -1022,7 +1022,8 @@ class TestCqlshCompletion(CqlshCompletionCase):
         self.trycompletions('ALTER TYPE ', choices=['IF', 'system_views.',
                                                     'tags', 'system_traces.', 'system_distributed.', 'system_metrics.',
                                                     'phone_number', 'quote_udt', 'band_info_type', 'address', 'system.', 'system_schema.',
-                                                    'system_auth.', 'system_virtual_schema.', 'system_cluster_metadata.', self.cqlsh.keyspace + '.'
+                                                    'system_auth.', 'system_virtual_schema.', 'system_cluster_metadata.',
+                                                    self.cqlsh.keyspace + '.'
                                                     ])
         self.trycompletions('ALTER TYPE IF EXISTS new_type ADD ', choices=['<new_field_name>', 'IF'])
         self.trycompletions('ALTER TYPE IF EXISTS new_type ADD IF NOT EXISTS ', choices=['<new_field_name>'])
@@ -1034,7 +1035,7 @@ class TestCqlshCompletion(CqlshCompletionCase):
     def test_complete_in_create_role(self):
         self.trycompletions('CREATE ROLE ', choices=['<identifier>', 'IF', '<quotedName>'])
         self.trycompletions('CREATE ROLE IF ', immediate='NOT EXISTS ')
-        self.trycompletions('CREATE ROLE foo WITH ', choices=['ACCESS', 'HASHED', 'LOGIN', 'OPTIONS', 'PASSWORD', 'SUPERUSER'])
+        self.trycompletions('CREATE ROLE foo WITH ', choices=['ACCESS', 'HASHED', 'LOGIN', 'OPTIONS', 'PASSWORD', 'SUPERUSER', 'GENERATED'])
         self.trycompletions('CREATE ROLE foo WITH HASHED ', immediate='PASSWORD = ')
         self.trycompletions('CREATE ROLE foo WITH ACCESS TO ', choices=['ALL', 'DATACENTERS'])
         self.trycompletions('CREATE ROLE foo WITH ACCESS TO ALL ', immediate='DATACENTERS ')
@@ -1043,10 +1044,15 @@ class TestCqlshCompletion(CqlshCompletionCase):
 
     def test_complete_in_alter_role(self):
         self.trycompletions('ALTER ROLE ', choices=['<identifier>', 'IF', '<quotedName>'])
+        self.trycompletions('ALTER ROLE IF ', immediate='EXISTS ')
         self.trycompletions('ALTER ROLE foo ', immediate='WITH ')
-        self.trycompletions('ALTER ROLE foo WITH ', choices=['ACCESS', 'HASHED', 'LOGIN', 'OPTIONS', 'PASSWORD', 'SUPERUSER'])
+        self.trycompletions('ALTER ROLE foo WITH ', choices=['ACCESS', 'HASHED', 'LOGIN', 'OPTIONS', 'PASSWORD', 'SUPERUSER', 'GENERATED'])
         self.trycompletions('ALTER ROLE foo WITH ACCESS TO ', choices=['ALL', 'DATACENTERS'])
         self.trycompletions('ALTER ROLE foo WITH ACCESS FROM ', choices=['ALL', 'CIDRS'])
+
+    def test_complete_in_create_user(self):
+        self.trycompletions('CREATE USER ', choices=['<username>', 'IF'])
+        self.trycompletions('CREATE USER IF ', immediate='NOT EXISTS ')
 
     def test_complete_in_drop_role(self):
         self.trycompletions('DROP ROLE ', choices=['<identifier>', 'IF', '<quotedName>'])

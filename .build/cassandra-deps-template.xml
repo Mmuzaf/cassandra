@@ -166,10 +166,6 @@
       <artifactId>jamm</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpkix-jdk18on</artifactId>
-    </dependency>
-    <dependency>
       <groupId>io.netty</groupId>
       <artifactId>netty-all</artifactId>
     </dependency>
@@ -387,6 +383,10 @@
     <dependency>
       <groupId>com.vdurmont</groupId>
       <artifactId>semver4j</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.passay</groupId>
+      <artifactId>passay</artifactId>
     </dependency>
   </dependencies>
 </project>

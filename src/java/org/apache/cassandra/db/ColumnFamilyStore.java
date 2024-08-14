@@ -2495,7 +2495,7 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
     @Override
     public void forceCompactionForTokenRanges(String... strings)
     {
-        CompactionManager.instance.forceCompactionForTokenRange(this, toTokenRanges(DatabaseDescriptor.getPartitioner(), strings));
+        CompactionManager.instance.forceCompactionForTokenRange(this, toTokenRanges(getPartitioner(), strings));
     }
 
     static Set<Range<Token>> toTokenRanges(IPartitioner partitioner, String... strings)
@@ -2893,6 +2893,10 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
                 {
                     throw new RuntimeException(e);
                 }
+            }
+            finally
+            {
+                logger.debug("Resuming compactions for {}", metadata.name);
             }
         }
     }
@@ -3315,13 +3319,16 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
         if (metadata == null)
             return null;
 
-        Keyspace keyspace = Keyspace.open(metadata.keyspace);
-        if (keyspace == null)
-            return null;
+        return getIfExists(metadata);
+    }
 
-        return keyspace.hasColumnFamilyStore(id)
-             ? keyspace.getColumnFamilyStore(id)
-             : null;
+    /**
+     * Returns a ColumnFamilyStore by metadata if it exists, null otherwise
+     * Differently from others, this method does not throw exception if the table does not exist.
+     */
+    public static ColumnFamilyStore getIfExists(TableMetadata table)
+    {
+        return Keyspace.openAndGetStoreIfExists(table);
     }
 
     /**
@@ -3333,7 +3340,7 @@ public class ColumnFamilyStore implements ColumnFamilyStoreMBean, Memtable.Owner
         if (ksName == null || cfName == null)
             return null;
 
-        Keyspace keyspace = Keyspace.open(ksName);
+        Keyspace keyspace = Keyspace.openIfExists(ksName);
         if (keyspace == null)
             return null;
 

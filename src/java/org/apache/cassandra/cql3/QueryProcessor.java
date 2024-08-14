@@ -182,6 +182,7 @@ public class QueryProcessor implements QueryHandler
 
     public void preloadPreparedStatements()
     {
+        long startTime = nanoTime();
         int count = SystemKeyspace.loadPreparedStatements((id, query, keyspace) -> {
             try
             {
@@ -200,12 +201,13 @@ public class QueryProcessor implements QueryHandler
             catch (RequestValidationException e)
             {
                 JVMStabilityInspector.inspectThrowable(e);
-                logger.warn(String.format("Prepared statement recreation error, removing statement: %s %s %s", id, query, keyspace));
+                logger.warn("Prepared statement recreation error, removing statement: {} {} {}, error details: {}", id, query, keyspace, e.getMessage());
                 SystemKeyspace.removePreparedStatement(id);
                 return false;
             }
         });
-        logger.info("Preloaded {} prepared statements", count);
+        long endTime = nanoTime();
+        logger.info("Preloaded {} prepared statements in {} ms", count, TimeUnit.NANOSECONDS.toMillis(endTime - startTime));
     }
 
 
@@ -741,6 +743,9 @@ public class QueryProcessor implements QueryHandler
         Prepared prepared = parseAndPrepare(queryString, clientState, false);
         CQLStatement statement = prepared.statement;
 
+        if (!statement.eligibleAsPreparedStatement())
+            clientState.warnAboutUneligiblePreparedStatement(hashWithKeyspace);
+
         int boundTerms = statement.getBindVariables().size();
         if (boundTerms > FBUtilities.MAX_UNSIGNED_SHORT)
             throw new InvalidRequestException(String.format("Too many markers(?). %d markers exceed the allowed maximum of %d", boundTerms, FBUtilities.MAX_UNSIGNED_SHORT));
@@ -759,7 +764,8 @@ public class QueryProcessor implements QueryHandler
         }
         else
         {
-            clientState.warnAboutUseWithPreparedStatements(hashWithKeyspace, clientState.getRawKeyspace());
+            if (prepared.statement.eligibleAsPreparedStatement())
+                clientState.warnAboutUseWithPreparedStatements(hashWithKeyspace, clientState.getRawKeyspace());
 
             ResultMessage.Prepared nonQualifiedWithKeyspace = storePreparedStatement(queryString, clientState.getRawKeyspace(), prepared);
             ResultMessage.Prepared nonQualifiedWithNullKeyspace = storePreparedStatement(queryString, null, prepared);
