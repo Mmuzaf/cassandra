@@ -1,4 +1,7 @@
 5.1
+ * Ensure that RFP queries potentially stale replicas even with only key columns in the row filter (CASSANDRA-19938)
+ * Allow nodes to change IP address while upgrading to TCM (CASSANDRA-19921)
+ * Retain existing keyspace params on system tables after upgrade (CASSANDRA-19916)
  * Deprecate use of gossip state for paxos electorate verification (CASSANDRA-19904)
  * Update dtest-api to 0.0.17 to fix jvm17 crash in jvm-dtests (CASSANDRA-19239)
  * Add resource leak test and Update Netty to 4.1.113.Final to fix leak (CASSANDRA-19783)
@@ -76,6 +79,7 @@
  * Add the ability to disable bulk loading of SSTables (CASSANDRA-18781)
  * Clean up obsolete functions and simplify cql_version handling in cqlsh (CASSANDRA-18787)
 Merged from 5.0:
+ * Correct out-of-date metrics and configuration documentation for SAI (CASSANDRA-19898)
  * Make configuration entries in memtable section order-independent (CASSANDRA-19906)
  * Add guardrail for enabling usage of VectorType (CASSANDRA-19903)
  * Set executable flag for shell scripts in .build directory for source artifact (CASSANDRA-19896)
@@ -88,6 +92,7 @@ Merged from 5.0:
  * Add java.base/java.lang.reflect among opens for jvm11-client.options (CASSANDRA-19780)
 Merged from 4.1:
 Merged from 4.0:
+ * Fix indexing of a frozen collection that is the clustering key and reversed (CASSANDRA-19889)
  * Emit error when altering a table with non-frozen UDTs with nested non-frozen collections the same way as done upon table creation (CASSANDRA-19925)
  * Safer handling of out-of-range tokens (CASSANDRA-13704)
  * Fix memory leak in BTree.FastBuilder (CASSANDRA-19785)
