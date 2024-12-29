@@ -21,17 +21,19 @@ package org.apache.cassandra.tools.nodetool.layout;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.apache.commons.lang3.StringUtils;
 
 import org.apache.cassandra.tools.nodetool.CommandUtils;
 import org.apache.cassandra.utils.Pair;
 import picocli.CommandLine;
 
-import static org.apache.cassandra.tools.nodetool.CommandUtils.findBackwardCompatibleArgument;
+import static org.apache.cassandra.tools.nodetool.CommandUtils.findCassandraBackwardCompatibleArgument;
 import static org.apache.cassandra.tools.nodetool.CommandUtils.leadingSpaces;
 import static org.apache.cassandra.tools.nodetool.CommandUtils.sortShortestFirst;
 import static org.apache.commons.lang3.ArrayUtils.isEmpty;
@@ -163,8 +165,12 @@ public class CassandraHelpLayout extends CommandLine.Help
 
         ColorScheme colorScheme = colorScheme();
 
-        List<Ansi.Text> parentOptionsList = createCassandraSynopsisOptionsText(parentCommandOptions(commandSpec));
-        List<Ansi.Text> commandOptionsList = createCassandraSynopsisOptionsText(commandSpec.options());
+        List<CommandLine.Model.OptionSpec> parentOptions = parentCommandOptions(commandSpec);
+        List<CommandLine.Model.OptionSpec> commandOptions = commandSpec.options();
+        // Retain only the options that are not part of the command hierarchy (e.g. dynamic options).
+        parentOptions.removeAll(commandOptions);
+        List<Ansi.Text> parentOptionsList = createCassandraSynopsisOptionsText(parentOptions);
+        List<Ansi.Text> commandOptionsList = createCassandraSynopsisOptionsText(commandOptions);
 
         Ansi.Text positionalParamText = createCassandraSynopsisPositionalsText(commandSpec, colorScheme);
         Ansi.Text endOfOptionsText = positionalParamText.plainString().isEmpty() ?
@@ -189,11 +195,20 @@ public class CassandraHelpLayout extends CommandLine.Help
         textTable.indentWrappedLines = columnIndent;
         textTable.setAdjustLineBreaksForWideCJKCharacters(commandSpec.usageMessage().adjustLineBreaksForWideCJKCharacters());
 
-        // List<Text>
+        // Consider the following example:
+        // SYNOPSIS
+        //        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
+        //                [(-pw <password> | --password <password>)]
+        //                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
+        //                [(-u <username> | --username <username>)] describecluster
+        //                [(-pp | --print-port)]
         new LineBreakingLayout(colorScheme, width, textTable)
             .concatItem(synopsisPrefix.isEmpty() ? rootCommandText : colorScheme.text(synopsisPrefix).concat(" ").concat(rootCommandText))
+            // Print "[(-h <host> | --host <host>)] [(-p <port> | --port <port>)]" options related to the parent command.
             .concatItems(parentOptionsList)
+            // Print "describecluster" in the same line as the parent options.
             .concatItem(isEmptyParent ? colorScheme.text("") : mainCommandText)
+            // Print "[(-pp | --print-port)]" options related to the command itself.
             .concatItems(commandOptionsList)
             .concatItem(endOfOptionsText)
             // All other fields added to the synopsis are left-adjusted, so we don't need to add them one by one.
@@ -208,9 +223,10 @@ public class CassandraHelpLayout extends CommandLine.Help
     {
         List<CommandLine.Model.PositionalParamSpec> positionals = cassandraPositionals(spec);
 
-        Pair<String, String> commandArgumensSpec = findBackwardCompatibleArgument(spec.userObject());
+        Pair<String, String> commandArgumensSpec = findCassandraBackwardCompatibleArgument(spec.userObject());
         Ansi.Text text = colorScheme.text("");
-        // If the command has a backward compatible argument, use it to generate the synopsis based on the old format.
+        // If the command has a backward compatible @CassandraUsage argument,
+        // use it to generate the synopsis based on the old format.
         if (commandArgumensSpec != null)
             return colorScheme.parameterText(commandArgumensSpec.left);
 
@@ -310,13 +326,14 @@ public class CassandraHelpLayout extends CommandLine.Help
     public String optionList()
     {
         CommandLine.Model.CommandSpec spec = commandSpec();
-        Comparator<CommandLine.Model.OptionSpec> comparator = createShortOptionNameComparator();
-        List<CommandLine.Model.OptionSpec> options = new LinkedList<>(parentCommandOptions(commandSpec()));
-        options.addAll(spec.options().stream().filter(o -> !o.hidden()).collect(Collectors.toList()));
-        options.sort(comparator);
+        List<CommandLine.Model.OptionSpec> uniqueOptions = Stream.concat(parentCommandOptions(commandSpec()).stream(),
+                                                                         spec.options().stream().filter(o -> !o.hidden()))
+                                                                 .distinct()
+                                                                 .sorted(createShortOptionNameComparator())
+                                                                 .collect(Collectors.toList());
 
         Layout layout = cassandraSingleColumnOptionsParametersLayout();
-        layout.addAllOptions(options, CassandraStyleParamLabelRender.create());
+        layout.addAllOptions(uniqueOptions, CassandraStyleParamLabelRender.create());
         return layout.toString();
     }
 
@@ -348,7 +365,7 @@ public class CassandraHelpLayout extends CommandLine.Help
     @Override
     public String parameterList()
     {
-        Pair<String, String> cassandraArgument = findBackwardCompatibleArgument(commandSpec().userObject());
+        Pair<String, String> cassandraArgument = findCassandraBackwardCompatibleArgument(commandSpec().userObject());
         List<CommandLine.Model.PositionalParamSpec> positionalParams = cassandraPositionals(commandSpec());
         TextTable table = configureLayoutTextTable();
         Layout layout = cassandraArgument == null ?
@@ -592,8 +609,8 @@ public class CassandraHelpLayout extends CommandLine.Help
             if (argSpec.userObject() instanceof Field)
             {
                 Field field = (Field) argSpec.userObject();
-                if (field.getName().equals(argSpec.paramLabel()))
-                    return argSpec.paramLabel();
+                if (StringUtils.isEmpty(argSpec.paramLabel()))
+                    return field.getName();
                 String label = argSpec.paramLabel().replace("<", "").replace(">", "");
                 return '<' + label + '>';
             }

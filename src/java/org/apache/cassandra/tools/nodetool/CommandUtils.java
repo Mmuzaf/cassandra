@@ -22,6 +22,9 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.cassandra.tools.nodetool.layout.CassandraUsage;
 import org.apache.cassandra.utils.Pair;
@@ -52,10 +55,10 @@ public final class CommandUtils
         return result;
     }
 
-    public static Pair<String, String> findBackwardCompatibleArgument(Object userObject)
+    public static Pair<String, String> findCassandraBackwardCompatibleArgument(Object userObject)
     {
         Class<?> clazz = userObject.getClass();
-        for (Field field : clazz.getFields())
+        for (Field field : clazz.getDeclaredFields())
         {
             if (field.isAnnotationPresent(CassandraUsage.class))
             {
@@ -70,5 +73,15 @@ public final class CommandUtils
     {
         Arrays.sort(names, Comparator.comparing(String::length));
         return names;
+    }
+
+    public static List<String> concatArgs(String first, String[] second)
+    {
+        return Stream.concat(Stream.ofNullable(first), (second == null ? Stream.empty() : Arrays.stream(second))).collect(Collectors.toList());
+    }
+
+    public static List<String> concatArgs(String first, String second, String[] third)
+    {
+        return Stream.concat(Stream.ofNullable(first), concatArgs(second, third).stream()).collect(Collectors.toList());
     }
 }
