@@ -126,7 +126,7 @@ public class JmxConnect extends AbstractCommand implements AutoCloseable
             Throwable rootCause = Throwables.getRootCause(e);
             logger.error("nodetool: Failed to connect to '%s:%s' - %s: '%s'.%n", host, port,
                               rootCause.getClass().getSimpleName(), rootCause.getMessage());
-            throw new ExecutionException(spec.commandLine(), "Failed to connect to JMX", e);
+            throw new InitializationException("Failed to connect to JMX", e);
         }
     }
 

@@ -59,7 +59,7 @@ public class Compact extends AbstractCommand
             description = "Use -j to specify the maximum number of threads to use for parallel compaction. " +
                           "If not set, up to half the compaction threads will be used. " +
                           "If set to 0, the major compaction will use all threads and will not permit other compactions to run until it completes (use with caution).")
-    private Integer parallelism = null;
+    public Integer parallelism = null;
 
     @Override
     public void execute(NodeProbe probe)
