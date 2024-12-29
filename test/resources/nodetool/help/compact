@@ -8,7 +8,8 @@ SYNOPSIS
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] compact
                 [(-et <end_token> | --end-token <end_token>)]
-                [--partition <partition_key>] [(-s | --split-output)]
+                [(-j <jobs> | --jobs <jobs>)] [--partition <partition_key>]
+                [(-s | --split-output)]
                 [(-st <start_token> | --start-token <start_token>)] [--user-defined]
                 [--] [<keyspace> <tables>...] or <SSTable file>...
 
@@ -19,6 +20,13 @@ OPTIONS
 
         -h <host>, --host <host>
             Node hostname or ip address
+
+        -j <jobs>, --jobs <jobs>
+            Use -j to specify the maximum number of threads to use for
+            parallel compaction. If not set, up to half the compaction
+            threads will be used. If set to 0, the major compaction will use
+            all threads and will not permit other compactions to run until
+            it completes (use with caution).
 
         -p <port>, --port <port>
             Remote jmx agent port number
