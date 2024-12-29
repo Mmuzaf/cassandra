@@ -108,15 +108,6 @@ public class NodeTool
     {
         List<Class<? extends NodeToolCmdRunnable>> commands = newArrayList(
                 CassHelp.class,
-                CIDRFilteringStats.class,
-                Cleanup.class,
-                ClearSnapshot.class,
-                ClientStats.class,
-                CompactionHistory.class,
-                CompactionStats.class,
-                DataPaths.class,
-                Decommission.class,
-                DescribeCluster.class,
                 DescribeRing.class,
                 DisableAuditLog.class,
                 DisableAutoCompaction.class,
@@ -171,7 +162,6 @@ public class NodeTool
                 InvalidateCounterCache.class,
                 InvalidateCredentialsCache.class,
                 InvalidateJmxPermissionsCache.class,
-                ReloadCIDRGroupsCache.class,
                 InvalidateKeyCache.class,
                 InvalidateNetworkPermissionsCache.class,
                 InvalidatePermissionsCache.class,
@@ -192,6 +182,7 @@ public class NodeTool
                 RecompressSSTables.class,
                 Refresh.class,
                 RefreshSizeEstimates.class,
+                ReloadCIDRGroupsCache.class,
                 ReloadLocalSchema.class,
                 ReloadSeeds.class,
                 ReloadSslCertificates.class,
@@ -286,6 +277,14 @@ public class NodeTool
                                  return 1;
                              })
                              .withExecutionExceptionHandler((ex, c, arg) -> {
+                                 // Used for backward compatibility, some commands are validated when a command is run.
+                                 if (ex instanceof IllegalArgumentException |
+                                     ex instanceof IllegalStateException)
+                                 {
+                                     badUse(ex);
+                                     return 1;
+                                 }
+
                                  err(ex);
                                  return 2;
                              }).execute(args);
@@ -552,7 +551,7 @@ public class NodeTool
             return nodeClient;
         }
 
-        protected enum KeyspaceSet
+        public enum KeyspaceSet
         {
             ALL, NON_SYSTEM, NON_LOCAL_STRATEGY
         }
