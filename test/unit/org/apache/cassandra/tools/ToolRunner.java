@@ -203,6 +203,16 @@ public class ToolRunner
         return invoke(env, CQLTester.buildNodetoolArgs(args));
     }
 
+    public static ToolRunner.ToolResult invokeNodetoolV2InJvm(String... args)
+    {
+        return ToolRunner.invokeNodetoolInJvm(NodeToolV2::new, args);
+    }
+
+    public static ToolRunner.ToolResult invokeNodetoolV1InJvm(String... args)
+    {
+        return ToolRunner.invokeNodetoolInJvm(NodeTool::new, args);
+    }
+
     public static ToolResult invoke(List<String> args)
     {
         return invoke(args.toArray(new String[args.size()]));
@@ -317,23 +327,44 @@ public class ToolRunner
                               res.right.getException());
     }
 
-    public static ToolRunner.ToolResult invokeNodetoolInJvm(BiFunction<INodeProbeFactory, Output, Object> factory, String... commands)
+    public static ToolRunner.ToolResult invokeNodetoolInJvm(BiFunction<INodeProbeFactory, Output, Object> nodeTool, String... args)
     {
         LinesOutputStream out = new LinesOutputStream(logger::info);
         LinesOutputStream err = new LinesOutputStream(logger::error);
-        List<String> args = CQLTester.buildNodetoolArgs(isEmpty(commands) ? new ArrayList<>() : List.of(commands));
-        args.remove("bin/nodetool");
+        Output output = new Output(new PrintStream(out), new PrintStream(err));
+        List<String> clearedArgs = CQLTester.buildNodetoolArgs(isEmpty(args) ? new ArrayList<>() : List.of(args));
+        clearedArgs.remove("bin/nodetool");
         try
         {
-            Object runner = factory.apply(new NodeProbeFactory(), new Output(new PrintStream(out), new PrintStream(err)));
+            Object runner = nodeTool.apply(new INodeProbeFactory()
+            {
+                private final INodeProbeFactory delegate = new NodeProbeFactory();
+
+                @Override
+                public NodeProbe create(String host, int port) throws IOException
+                {
+                    NodeProbe probe = delegate.create(host, port);
+                    probe.setOutput(output);
+                    return probe;
+                }
+
+                @Override
+                public NodeProbe create(String host, int port, String username, String password) throws IOException
+                {
+                    NodeProbe probe = delegate.create(host, port, username, password);
+                    probe.setOutput(output);
+                    return probe;
+                }
+            }, output);
+
             Object result = runner.getClass().getMethod("execute", String[].class)
-                                  .invoke(runner, new Object[] { args.toArray(new String[0]) });
+                                  .invoke(runner, new Object[] { clearedArgs.toArray(new String[0]) });
             assertTrue(result instanceof Integer);
-            return new ToolResult(args, (Integer) result, out.getOutput(), err.getOutput(), null);
+            return new ToolResult(clearedArgs, (Integer) result, out.getOutput(), err.getOutput(), null);
         }
         catch (Exception e)
         {
-            return new ToolResult(args, -1, out.getOutput(),
+            return new ToolResult(clearedArgs, -1, out.getOutput(),
                                   err.getOutput() + '\n' + Throwables.getStackTraceAsString(e), e);
         }
     }
