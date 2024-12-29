@@ -18,25 +18,52 @@
 
 package org.apache.cassandra.tools.nodetool;
 
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import com.google.common.collect.Streams;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Assume;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import com.github.difflib.DiffUtils;
+import com.github.difflib.patch.AbstractDelta;
+import com.github.difflib.patch.Patch;
+import org.apache.cassandra.cql3.CQLTester;
 import org.apache.cassandra.tools.NodeToolV2;
+import org.apache.cassandra.tools.ToolRunner;
 
 import static org.junit.Assert.assertTrue;
 
-public class NodetoolHelpCommandsOutputTest extends NodetoolRunnerTester
+@RunWith(Parameterized.class)
+public class NodetoolHelpCommandsOutputTest extends CQLTester
 {
-    private static final String NODETOOL_COMMAND_HELP_FILE_PATTERN = "nodetool/help/%s";
-    private static final String COMMAND_FULL_NAME_SEPARATOR = "_";
+    private static final Map<String, ToolHandler> runnersMap = Map.of(
+        "shell", ToolRunner::invokeNodetool,
+        "injvmv1", ToolRunner::invokeNodetoolV1InJvm,
+        "injvmv2", ToolRunner::invokeNodetoolV2InJvm);
+
+    public static final String COMMAND_FULL_NAME_SEPARATOR = "$";
     private static final List<String> COMMANDS = NodeToolV2.getCommandsWithoutRoot(COMMAND_FULL_NAME_SEPARATOR);
+    private static final String NODETOOL_COMMAND_HELP_FILE_PATTERN = "nodetool/help/%s";
+
+    private static final Pattern SPLIT_PATTERN = Pattern.compile('\\' + COMMAND_FULL_NAME_SEPARATOR);
+    private static final String[] EMPTY_ARGS = new String[0];
+    private static final String COMMAND_WITHOUT_ARGS = "nodetool";
+
+    @Parameterized.Parameter
+    public String runner;
 
     @Parameterized.Parameter(1)
     public String command;
@@ -46,8 +73,12 @@ public class NodetoolHelpCommandsOutputTest extends NodetoolRunnerTester
     {
         List<Object[]> res = new ArrayList<>();
         for (String tool : runnersMap.keySet())
+        {
             for (String command : COMMANDS)
                 res.add(new Object[]{ tool, command });
+            // add a special case for the help command with no arguments
+            res.add(new Object[]{ tool, COMMAND_WITHOUT_ARGS });
+        }
         return res;
     }
 
@@ -59,12 +90,86 @@ public class NodetoolHelpCommandsOutputTest extends NodetoolRunnerTester
 
     private void compareCommandHelpOutput(String commandName) throws Exception
     {
+        Assume.assumeFalse("Skipping nodetool-injvmv2 nodetool during the migration period",
+                           COMMAND_WITHOUT_ARGS.equals(commandName) && runner.equals("injvmv2"));
+
         List<String> origLines = readCommandLines(String.format(NODETOOL_COMMAND_HELP_FILE_PATTERN, commandName));
-        List<String> targetLines = sliceStdout(invokeNodetool(Streams.concat(Stream.of("help"),
-                                                                             Stream.of(commandName.split(COMMAND_FULL_NAME_SEPARATOR)))
+        List<String> targetLines = sliceStdout(invokeNodetool(commandName.equals(COMMAND_WITHOUT_ARGS) ? EMPTY_ARGS :
+                                                              Streams.concat(Stream.of("help"), Stream.of(SPLIT_PATTERN.split(commandName)))
                                                                      .toArray(String[]::new)));
         String diff = computeDiff(targetLines, origLines);
         assertTrue(printFormattedDiffsMessage(origLines, targetLines, commandName, diff),
                    StringUtils.isBlank(diff));
+    }
+
+    public ToolRunner.ToolResult invokeNodetool(String... args)
+    {
+        return runnersMap.get(runner).execute(args);
+    }
+
+    public static List<String> sliceStdout(ToolRunner.ToolResult result)
+    {
+        result.assertOnCleanExit();
+        return Arrays.asList(result.getStdout().trim().split("\\R"));
+    }
+
+    protected static String printFormattedDiffsMessage(List<String> stdoutOrig,
+                                                       List<String> stdoutNew,
+                                                       String commandName,
+                                                       String diff)
+    {
+        return '\n' + ">> file_content <<" + '\n' +
+               printFormattedNodeToolOutput(stdoutOrig) +
+               '\n' + ">> command_output <<" +
+               '\n' + printFormattedNodeToolOutput(stdoutNew) +
+               '\n' + " difference for \"" + commandName + "\":" + diff;
+    }
+
+    protected static String printFormattedNodeToolOutput(List<String> output)
+    {
+        StringBuilder sb = new StringBuilder();
+        DecimalFormat df = new DecimalFormat("000");
+        for(int i = 0; i < output.size(); i++)
+        {
+            sb.append(df.format(i)).append(':').append(output.get(i));
+            if(i < output.size() - 1)
+                sb.append('\n');
+        }
+        return sb.toString();
+    }
+
+    protected static String computeDiff(List<String> original, List<String> revised) {
+        Patch<String> patch = DiffUtils.diff(original, revised);
+        List<String> diffLines = new ArrayList<>();
+
+        for (AbstractDelta<String> delta : patch.getDeltas()) {
+            for (String line : delta.getSource().getLines()) {
+                diffLines.add(delta.getType().toString().toLowerCase() + " command: " + line);
+            }
+            for (String line : delta.getTarget().getLines()) {
+                diffLines.add(delta.getType().toString().toLowerCase() + " srcfile: " + line);
+            }
+        }
+
+        return '\n' + String.join("\n", diffLines);
+    }
+
+    protected static List<String> readCommandLines(String resource) throws Exception
+    {
+        List<String> lines = new ArrayList<>();
+        URL url = NodetoolHelpCommandsOutputTest.class.getClassLoader().getResource(resource);
+        if (url == null)
+            throw new IllegalStateException("Command test output not found: " + resource);
+        try (Stream<String> stream = Files.lines(Paths.get(url.toURI())))
+        {
+            stream.forEach(lines::add);
+        }
+        return lines;
+    }
+
+    public interface ToolHandler
+    {
+        ToolRunner.ToolResult execute(String... args);
+        default ToolRunner.ToolResult execute(List<String> args) { return execute(args.toArray(new String[0])); }
     }
 }

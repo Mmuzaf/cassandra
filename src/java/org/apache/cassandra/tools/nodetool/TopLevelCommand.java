@@ -28,10 +28,19 @@ import static org.apache.cassandra.tools.nodetool.Help.printTopCommandUsage;
          description = "Manage your Cassandra cluster",
          subcommands = { Help.class,
                          AbortBootstrap.class,
-                         Bootstrap.class,
                          Assassinate.class,
-                         ForceCompact.class,
-                         Compact.class })
+                         Bootstrap.class,
+                         CIDRFilteringStats.class,
+                         Cleanup.class,
+                         Compact.class,
+                         ClearSnapshot.class,
+                         ClientStats.class,
+                         CompactionHistory.class,
+                         CompactionStats.class,
+                         DataPaths.class,
+                         Decommission.class,
+                         DescribeCluster.class,
+                         ForceCompact.class })
 public class TopLevelCommand implements Runnable
 {
     @Spec

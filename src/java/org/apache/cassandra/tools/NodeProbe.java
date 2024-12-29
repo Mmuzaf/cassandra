@@ -177,7 +177,7 @@ public class NodeProbe implements AutoCloseable
     protected CIDRGroupsMappingManagerMBean cmbProxy;
     protected PermissionsCacheMBean pcProxy;
     protected RolesCacheMBean rcProxy;
-    protected Output output;
+    protected volatile Output output;
     private boolean failed;
 
     protected CIDRFilteringMetricsTableMBean cfmProxy;
