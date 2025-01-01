@@ -1,6 +1,6 @@
 NAME
-        nodetool getconcurrentviewbuilders - Get the number of concurrent view
-        builders in the system
+        nodetool getconcurrentviewbuilders - Get the number of concurrent
+        view builders in the system
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]

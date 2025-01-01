@@ -5,7 +5,8 @@ SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] dropcidrgroup [--] <cidrGroup>
+                [(-u <username> | --username <username>)] dropcidrgroup [--]
+                <cidrGroup>
 
 OPTIONS
         -h <host>, --host <host>

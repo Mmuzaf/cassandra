@@ -1,6 +1,6 @@
 NAME
-        nodetool clearsnapshot - Remove the snapshot with the given name
-        from the given keyspaces
+        nodetool clearsnapshot - Remove the snapshot with the given name from
+        the given keyspaces
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
@@ -44,9 +44,9 @@ OPTIONS
             Remote jmx agent username
 
         --
-            This option can be used to separate command-line options from
-            the list of argument, (useful when arguments might be mistaken
-            for command-line options
+            This option can be used to separate command-line options from the
+            list of argument, (useful when arguments might be mistaken for
+            command-line options
 
         [<keyspaces>...]
             Remove snapshots from the given keyspaces

@@ -1,11 +1,13 @@
 NAME
-        nodetool describering - Shows the token ranges info of a given keyspace
+        nodetool describering - Shows the token ranges info of a given
+        keyspace
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
-                [(-pp | --print-port)] [(-pw <password> | --password <password>)]
+                [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] describering [--] <keyspace>
+                [(-u <username> | --username <username>)] describering
+                [(-pp | --print-port)] [--] <keyspace>
 
 OPTIONS
         -h <host>, --host <host>

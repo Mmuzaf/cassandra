@@ -1,12 +1,13 @@
 NAME
-        nodetool getcidrgroupsofip - Print CIDR groups associated with given IP
+        nodetool getcidrgroupsofip - Print CIDR groups associated with given
+        IP
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] getcidrgroupsofip [--] <IP
-                address>
+                [(-u <username> | --username <username>)] getcidrgroupsofip [--]
+                <ip_address>
 
 OPTIONS
         -h <host>, --host <host>
@@ -32,5 +33,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        <IP address>
+        <ip_address>
             Requires IP address as a string

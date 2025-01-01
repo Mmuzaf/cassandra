@@ -18,6 +18,8 @@
 
 package org.apache.cassandra.tools.nodetool;
 
+import java.util.regex.Pattern;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -87,9 +89,9 @@ public class SetGetCompactionThroughputTest extends CQLTester
         ToolResult tool = invokeNodetool("getcompactionthroughput");
         tool.assertOnCleanExit();
 
-        assertThat(tool.getStdout()).containsPattern("Current compaction throughput \\(1 minute\\): \\d+\\.\\d+ MiB/s");
-        assertThat(tool.getStdout()).containsPattern("Current compaction throughput \\(5 minute\\): \\d+\\.\\d+ MiB/s");
-        assertThat(tool.getStdout()).containsPattern("Current compaction throughput \\(15 minute\\): \\d+\\.\\d+ MiB/s");
+        assertThat(tool.getStdout()).containsPattern(Pattern.compile("Current compaction throughput \\(1 minute\\): \\d+,\\d+ MiB/s"));
+        assertThat(tool.getStdout()).containsPattern(Pattern.compile("Current compaction throughput \\(5 minute\\): \\d+,\\d+ MiB/s"));
+        assertThat(tool.getStdout()).containsPattern(Pattern.compile("Current compaction throughput \\(15 minute\\): \\d+,\\d+ MiB/s"));
     }
 
     private static void assertSetGetValidThroughput(int throughput)

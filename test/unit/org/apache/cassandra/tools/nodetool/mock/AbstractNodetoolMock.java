@@ -30,7 +30,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import org.apache.cassandra.cql3.CQLTester;
+import org.apache.cassandra.db.ColumnFamilyStoreMBean;
 import org.apache.cassandra.db.compaction.CompactionManagerMBean;
+import org.apache.cassandra.gms.FailureDetectorMBean;
 import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
 import org.apache.cassandra.locator.LocationInfoMBean;
 import org.apache.cassandra.service.StorageProxyMBean;
@@ -40,10 +42,14 @@ import org.apache.cassandra.tools.ToolRunner;
 import org.apache.cassandra.utils.MBeanWrapper;
 import org.mockito.Mockito;
 
+import static org.apache.cassandra.db.ColumnFamilyStore.getColumnFamilieMBeanName;
+
 public abstract class AbstractNodetoolMock extends CQLTester
 {
+    public static final String[] EMPTY_STRING_ARRAY = {};
     public static final String COMPACTION_MANAGER_MBEAN = "org.apache.cassandra.db:type=CompactionManager";
     public static final String ENDPOINT_SNITCH_INFO_MBEAN = "org.apache.cassandra.db:type=EndpointSnitchInfo";
+    public static final String FAILURE_DETECTOR_MBEAN = "org.apache.cassandra.net:type=FailureDetector";
     public static final String LOCATION_INFO_MBEAN = "org.apache.cassandra.db:type=LocationInfo";
     public static final String STORAGE_PROXY_MBEAN = "org.apache.cassandra.db:type=StorageProxy";
     public static final String STORAGE_SERVICE_MBEAN = "org.apache.cassandra.db:type=StorageService";
@@ -51,6 +57,7 @@ public abstract class AbstractNodetoolMock extends CQLTester
     private static final Map<String, Class<?>> mbeans = Map.of(
         COMPACTION_MANAGER_MBEAN, CompactionManagerMBean.class,
         ENDPOINT_SNITCH_INFO_MBEAN, EndpointSnitchInfoMBean.class,
+        FAILURE_DETECTOR_MBEAN, FailureDetectorMBean.class,
         LOCATION_INFO_MBEAN, LocationInfoMBean.class,
         STORAGE_PROXY_MBEAN, StorageProxyMBean.class,
         STORAGE_SERVICE_MBEAN, StorageServiceMBean.class);
@@ -84,6 +91,13 @@ public abstract class AbstractNodetoolMock extends CQLTester
     protected <T> T getMock(String mBeanName)
     {
         return mbeanMockHodler.getMock(mBeanName);
+    }
+
+    protected ColumnFamilyStoreMBean addAndGetMockColumnFamilyStore(String keyspace, String table, boolean index)
+    {
+        String mBeanName = getColumnFamilieMBeanName(keyspace, table, index);
+        mbeanMockHodler.registerMBean(mBeanName, ColumnFamilyStoreMBean.class, mbeanServer);
+        return getMock(mBeanName);
     }
 
     public static ToolRunner.ToolResult invokeNodetool(String... commands)
@@ -120,6 +134,12 @@ public abstract class AbstractNodetoolMock extends CQLTester
         public <T> T getMock(String mBeanName)
         {
             return (T) mocks.get(mBeanName).getImplementation();
+        }
+
+        public <T> void registerMBean(String name, Class<T> clz, MBeanWrapper mbeanMockInstance)
+        {
+            mocks.put(name, newMock(clz));
+            mbeanMockInstance.registerMBean(mocks.get(name), name);
         }
 
         public void registerAll(MBeanWrapper mbeanMockInstance)

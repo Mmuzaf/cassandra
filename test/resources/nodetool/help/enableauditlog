@@ -14,14 +14,14 @@ SYNOPSIS
                 [--included-keyspaces <included_keyspaces>]
                 [--included-users <included_users>] [--logger <logger>]
                 [--max-archive-retries <archive_retries>]
-                [--max-log-size <max_log_size>] [--max-queue-weight <max_queue_weight>]
-                [--roll-cycle <roll_cycle>]
+                [--max-log-size <max_log_size>]
+                [--max-queue-weight <max_queue_weight>] [--roll-cycle <roll_cycle>]
 
 OPTIONS
         --archive-command <archive_command>
-            Command that will handle archiving rolled audit log files. Format is
-            "/path/to/script.sh %path" where %path will be replaced with the
-            file to archive Enable this by setting the
+            Command that will handle archiving rolled audit log files. Format
+            is "/path/to/script.sh %path" where %path will be replaced with
+            the file to archive Enable this by setting the
             audit_logging_options.allow_nodetool_archive_command: true in the
             config.
 
@@ -34,12 +34,12 @@ OPTIONS
             audit log. If not set the value from cassandra.yaml will be used
 
         --excluded-keyspaces <excluded_keyspaces>
-            Comma separated list of keyspaces to be excluded for audit log. If
-            not set the value from cassandra.yaml will be used
+            Comma separated list of keyspaces to be excluded for audit log.
+            If not set the value from cassandra.yaml will be used
 
         --excluded-users <excluded_users>
-            Comma separated list of users to be excluded for audit log. If not
-            set the value from cassandra.yaml will be used
+            Comma separated list of users to be excluded for audit log. If
+            not set the value from cassandra.yaml will be used
 
         -h <host>, --host <host>
             Node hostname or ip address
@@ -49,23 +49,24 @@ OPTIONS
             audit log. If not set the value from cassandra.yaml will be used
 
         --included-keyspaces <included_keyspaces>
-            Comma separated list of keyspaces to be included for audit log. If
-            not set the value from cassandra.yaml will be used
+            Comma separated list of keyspaces to be included for audit log.
+            If not set the value from cassandra.yaml will be used
 
         --included-users <included_users>
-            Comma separated list of users to be included for audit log. If not
-            set the value from cassandra.yaml will be used
+            Comma separated list of users to be included for audit log. If
+            not set the value from cassandra.yaml will be used
 
         --logger <logger>
-            Logger name to be used for AuditLogging. Default BinAuditLogger. If
-            not set the value from cassandra.yaml will be used
+            Logger name to be used for AuditLogging. Default BinAuditLogger.
+            If not set the value from cassandra.yaml will be used
 
         --max-archive-retries <archive_retries>
             Max number of archive retries.
 
         --max-log-size <max_log_size>
-            How many bytes of log data to store before dropping segments. Might
-            not be respected if a log file hasn't rolled so it can be deleted.
+            How many bytes of log data to store before dropping segments.
+            Might not be respected if a log file hasn't rolled so it can be
+            deleted.
 
         --max-queue-weight <max_queue_weight>
             Maximum number of bytes of query data to queue to disk before

@@ -61,7 +61,9 @@ import static picocli.CommandLine.Model.UsageMessageSpec.SECTION_KEY_SYNOPSIS_HE
  */
 public class CassandraHelpLayout extends CommandLine.Help
 {
-    public static final int DEFAULT_USAGE_HELP_WIDTH = 85;
+    // The default width for the usage help output to match the width of
+    // the airline help output and minimize the divergence of layouts.
+    public static final int DEFAULT_USAGE_HELP_WIDTH = 86;
     private static final String DESCRIPTION_HEADING = "NAME%n";
     private static final String SYNOPSIS_HEADING = "SYNOPSIS%n";
     private static final String OPTIONS_HEADING = "OPTIONS%n";
@@ -455,10 +457,22 @@ public class CassandraHelpLayout extends CommandLine.Help
                 if (optionSpec.hidden())
                     continue;
                 table.addEmptyRow();
-                table.addRowValues(leadingSpaces.concat(colorScheme().optionText(
-                    String.format(SUBCOMMAND_OPTION_TEMPLATE,
-                                  optionSpec.longestName(),
-                                  String.join("", optionSpec.description())))));
+
+                // Print the option description in multiple lines as it is set in the annotation.
+                for (int i = 0; i < optionSpec.description().length; i++)
+                {
+                    if (i == 0)
+                    {
+                        table.addRowValues(leadingSpaces.concat(
+                            colorScheme().optionText(String.format(SUBCOMMAND_OPTION_TEMPLATE,
+                                                                   optionSpec.longestName(),
+                                                                   colorScheme().text(optionSpec.description()[i])))));
+                    }
+                    else
+                    {
+                        table.addRowValues(leadingSpaces.concat(colorScheme().text(optionSpec.description()[i])));
+                    }
+                }
             }
         }
         return table.toString();

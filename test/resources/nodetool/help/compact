@@ -25,8 +25,8 @@ OPTIONS
             Use -j to specify the maximum number of threads to use for
             parallel compaction. If not set, up to half the compaction
             threads will be used. If set to 0, the major compaction will use
-            all threads and will not permit other compactions to run until
-            it completes (use with caution).
+            all threads and will not permit other compactions to run until it
+            completes (use with caution).
 
         -p <port>, --port <port>
             Remote jmx agent port number
@@ -58,9 +58,9 @@ OPTIONS
             compaction
 
         --
-            This option can be used to separate command-line options from
-            the list of argument, (useful when arguments might be mistaken
-            for command-line options
+            This option can be used to separate command-line options from the
+            list of argument, (useful when arguments might be mistaken for
+            command-line options
 
         [<keyspace> <tables>...] or <SSTable file>...
             The keyspace followed by one or many tables or list of SSTable

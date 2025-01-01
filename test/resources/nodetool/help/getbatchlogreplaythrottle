@@ -1,6 +1,6 @@
 NAME
-        nodetool getbatchlogreplaythrottle - Print batchlog replay throttle in
-        KB/s. This is reduced proportionally to the number of nodes in the
+        nodetool getbatchlogreplaythrottle - Print batchlog replay throttle
+        in KB/s. This is reduced proportionally to the number of nodes in the
         cluster.
 
 SYNOPSIS
