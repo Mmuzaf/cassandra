@@ -76,6 +76,8 @@ import static org.apache.cassandra.tools.nodetool.Help.printTopCommandUsage;
                          GetConcurrency.class,
                          GetConcurrentCompactors.class,
                          GetConcurrentViewBuilders.class,
+                         GetDefaultKeyspaceRF.class,
+                         GetEndpoints.class,
                          Version.class })
 public class TopLevelCommand implements Runnable
 {

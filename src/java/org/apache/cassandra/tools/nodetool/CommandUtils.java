@@ -83,6 +83,11 @@ public final class CommandUtils
         return concat(ofNullable(first), ofNullable(second)).collect(Collectors.toList());
     }
 
+    public static List<String> concatArgs(String first, String second, String third)
+    {
+        return concat(ofNullable(first), concatArgs(second, third).stream()).collect(Collectors.toList());
+    }
+
     public static List<String> concatArgs(String first, String[] second)
     {
         return concat(ofNullable(first), (second == null ? Stream.empty() : Arrays.stream(second))).collect(Collectors.toList());

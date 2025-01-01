@@ -90,7 +90,7 @@ public class NodeTool
     private static final int FALLBACK_NODETOOL_V1_CODE = -100;
     private static final String HISTORYFILE = "nodetool.history";
 
-    private final INodeProbeFactory nodeProbeFactory;
+    protected final INodeProbeFactory nodeProbeFactory;
     private final Output output;
 
     public static void main(String... args)
@@ -108,8 +108,6 @@ public class NodeTool
     {
         List<Class<? extends NodeToolCmdRunnable>> commands = newArrayList(
                 CassHelp.class,
-                GetDefaultKeyspaceRF.class,
-                GetEndpoints.class,
                 GetFullQueryLog.class,
                 GetInterDCStreamThroughput.class,
                 GetLoggingLevels.class,
