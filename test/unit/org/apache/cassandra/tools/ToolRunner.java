@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -305,8 +306,24 @@ public class ToolRunner
                               res.right.getException());
 
     }
-    
+
+    public static ToolResult invokeNodetoolJvmDtestIsolated(IInstance node, String... args)
+    {
+        return invokeNodetoolJvmDtest(node, o -> o.left.getStdout(), e -> e.left.getStderr(), args);
+    }
+
     public static ToolResult invokeNodetoolJvmDtest(IInstance node, String... args)
+    {
+        return invokeNodetoolJvmDtest(node,
+                                      res -> res.right.getStdout() + res.left.getStdout(),
+                                      res -> res.right.getStderr() + res.left.getStderr(),
+                                      args);
+    }
+
+    private static ToolResult invokeNodetoolJvmDtest(IInstance node,
+                                                    Function<Pair<NodeToolResult, ToolResult>, String> stdout,
+                                                    Function<Pair<NodeToolResult, ToolResult>, String> stderr,
+                                                    String... args)
     {
         Supplier<NodeToolResult> runMe = new Supplier<NodeToolResult>()
         {
@@ -322,8 +339,8 @@ public class ToolRunner
         return new ToolResult(Arrays.asList(args),
                               res.left,
                               res.right.getExitCode() == -1 ? -1 : res.left.getRc(),
-                              res.right.getStdout() + res.left.getStdout(),
-                              res.right.getStderr() + res.left.getStderr(),
+                              stdout.apply(res),
+                              stderr.apply(res),
                               res.right.getException());
     }
 

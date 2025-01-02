@@ -21,21 +21,19 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.airlift.airline.Arguments;
-import io.airlift.airline.Command;
 import org.apache.cassandra.tools.NodeProbe;
-import org.apache.cassandra.tools.NodeTool.NodeToolCmd;
-
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Parameters;
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Nodetool command to get CIDR groups(s) of given IP
  */
 @Command(name = "getcidrgroupsofip", description = "Print CIDR groups associated with given IP")
-public class GetCIDRGroupsOfIP extends NodeToolCmd
+public class GetCIDRGroupsOfIP extends AbstractCommand
 {
-    @Arguments(usage = "<IP address>", description = "Requires IP address as a string")
-    private List<String> args = new ArrayList<>();
+    @Parameters(paramLabel = "ip_address", description = "Requires IP address as a string", arity = "1", index = "0")
+    public List<String> args = new ArrayList<>();
 
     @Override
     public void execute(NodeProbe probe)

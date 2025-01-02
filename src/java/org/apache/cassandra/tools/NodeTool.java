@@ -90,7 +90,7 @@ public class NodeTool
     private static final int FALLBACK_NODETOOL_V1_CODE = -100;
     private static final String HISTORYFILE = "nodetool.history";
 
-    private final INodeProbeFactory nodeProbeFactory;
+    protected final INodeProbeFactory nodeProbeFactory;
     private final Output output;
 
     public static void main(String... args)
@@ -108,43 +108,6 @@ public class NodeTool
     {
         List<Class<? extends NodeToolCmdRunnable>> commands = newArrayList(
                 CassHelp.class,
-                DescribeRing.class,
-                DisableAuditLog.class,
-                DisableAutoCompaction.class,
-                DisableBackup.class,
-                DisableBinary.class,
-                DisableFullQueryLog.class,
-                DisableGossip.class,
-                DisableHandoff.class,
-                DisableHintsForDC.class,
-                DisableOldProtocolVersions.class,
-                Drain.class,
-                DropCIDRGroup.class,
-                EnableAuditLog.class,
-                EnableAutoCompaction.class,
-                EnableBackup.class,
-                EnableBinary.class,
-                EnableFullQueryLog.class,
-                EnableGossip.class,
-                EnableHandoff.class,
-                EnableHintsForDC.class,
-                EnableOldProtocolVersions.class,
-                FailureDetectorInfo.class,
-                Flush.class,
-                GarbageCollect.class,
-                GcStats.class,
-                GetAuditLog.class,
-                GetAuthCacheConfig.class,
-                GetBatchlogReplayTrottle.class,
-                GetCIDRGroupsOfIP.class,
-                GetColumnIndexSize.class,
-                GetCompactionThreshold.class,
-                GetCompactionThroughput.class,
-                GetConcurrency.class,
-                GetConcurrentCompactors.class,
-                GetConcurrentViewBuilders.class,
-                GetDefaultKeyspaceRF.class,
-                GetEndpoints.class,
                 GetFullQueryLog.class,
                 GetInterDCStreamThroughput.class,
                 GetLoggingLevels.class,
@@ -233,7 +196,6 @@ public class NodeTool
                 UpdateCIDRGroup.class,
                 UpgradeSSTable.class,
                 Verify.class,
-                Version.class,
                 ViewBuildStatus.class
         );
 
