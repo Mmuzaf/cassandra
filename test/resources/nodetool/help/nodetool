@@ -1,5 +1,4 @@
-usage: nodetool [(-h <host> | --host <host>)]
-        [(-pw <password> | --password <password>)]
+usage: nodetool [(-h <host> | --host <host>)] [(-pw <password> | --password <password>)]
         [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
         [(-p <port> | --port <port>)] [(-pp | --print-port)]
         [(-u <username> | --username <username>)] <command> [<args>]

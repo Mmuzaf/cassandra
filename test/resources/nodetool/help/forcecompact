@@ -5,8 +5,8 @@ SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] forcecompact [--]
-                [<keyspace> <table> <keys>]
+                [(-u <username> | --username <username>)] forcecompact [--] [<keyspace>
+                <table> <keys>]
 
 OPTIONS
         -h <host>, --host <host>

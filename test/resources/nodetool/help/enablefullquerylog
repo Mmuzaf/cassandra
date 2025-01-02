@@ -9,17 +9,16 @@ SYNOPSIS
                 [(-u <username> | --username <username>)] enablefullquerylog
                 [--archive-command <archive_command>] [--blocking <blocking>]
                 [--max-archive-retries <archive_retries>]
-                [--max-log-size <max_log_size>]
-                [--max-queue-weight <max_queue_weight>] [--path <path>]
-                [--roll-cycle <roll_cycle>]
+                [--max-log-size <max_log_size>] [--max-queue-weight <max_queue_weight>]
+                [--path <path>] [--roll-cycle <roll_cycle>]
 
 OPTIONS
         --archive-command <archive_command>
             Command that will handle archiving rolled full query log files.
             Format is "/path/to/script.sh %path" where %path will be replaced
             with the file to archive Enable this by setting the
-            full_query_logging_options.allow_nodetool_archive_command: true
-            in the config.
+            full_query_logging_options.allow_nodetool_archive_command: true in
+            the config.
 
         --blocking <blocking>
             If the queue is full whether to block producers or drop samples
@@ -32,9 +31,8 @@ OPTIONS
             Max number of archive retries.
 
         --max-log-size <max_log_size>
-            How many bytes of log data to store before dropping segments.
-            Might not be respected if a log file hasn't rolled so it can be
-            deleted.
+            How many bytes of log data to store before dropping segments. Might
+            not be respected if a log file hasn't rolled so it can be deleted.
 
         --max-queue-weight <max_queue_weight>
             Maximum number of bytes of query data to queue to disk before

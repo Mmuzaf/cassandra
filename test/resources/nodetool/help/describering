@@ -1,6 +1,5 @@
 NAME
-        nodetool describering - Shows the token ranges info of a given
-        keyspace
+        nodetool describering - Shows the token ranges info of a given keyspace
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]

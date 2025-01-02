@@ -63,7 +63,7 @@ public class CassandraHelpLayout extends CommandLine.Help
 {
     // The default width for the usage help output to match the width of
     // the airline help output and minimize the divergence of layouts.
-    public static final int DEFAULT_USAGE_HELP_WIDTH = 86;
+    public static final int DEFAULT_USAGE_HELP_WIDTH = 88;
     private static final String DESCRIPTION_HEADING = "NAME%n";
     private static final String SYNOPSIS_HEADING = "SYNOPSIS%n";
     private static final String OPTIONS_HEADING = "OPTIONS%n";

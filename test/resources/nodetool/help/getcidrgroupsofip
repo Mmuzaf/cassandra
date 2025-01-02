@@ -1,6 +1,5 @@
 NAME
-        nodetool getcidrgroupsofip - Print CIDR groups associated with given
-        IP
+        nodetool getcidrgroupsofip - Print CIDR groups associated with given IP
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]

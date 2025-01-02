@@ -1,6 +1,5 @@
 NAME
-        nodetool getconcurrency - Get maximum concurrency for processing
-        stages
+        nodetool getconcurrency - Get maximum concurrency for processing stages
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
