@@ -1,14 +1,12 @@
 NAME
         nodetool assassinate - Forcefully remove a dead node without
-        re-replicating any data.  Use as a last resort if you cannot
-        removenode
+        re-replicating any data.  Use as a last resort if you cannot removenode
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] assassinate [--]
-                <ip_address>
+                [(-u <username> | --username <username>)] assassinate [--] <ip_address>
 
 OPTIONS
         -h <host>, --host <host>
@@ -30,9 +28,9 @@ OPTIONS
             Remote jmx agent username
 
         --
-            This option can be used to separate command-line options from
-            the list of argument, (useful when arguments might be mistaken
-            for command-line options
+            This option can be used to separate command-line options from the
+            list of argument, (useful when arguments might be mistaken for
+            command-line options
 
         <ip_address>
             IP address of the endpoint to assassinate

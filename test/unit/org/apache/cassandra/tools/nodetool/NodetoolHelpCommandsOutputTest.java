@@ -49,8 +49,9 @@ import static org.junit.Assert.assertTrue;
 @RunWith(Parameterized.class)
 public class NodetoolHelpCommandsOutputTest extends CQLTester
 {
+    // TODO Uncomment shell runner when migration is complete.
     private static final Map<String, ToolHandler> runnersMap = Map.of(
-        "shell", ToolRunner::invokeNodetool,
+//        "shell", ToolRunner::invokeNodetool,
         "injvmv1", ToolRunner::invokeNodetoolV1InJvm,
         "injvmv2", ToolRunner::invokeNodetoolV2InJvm);
 

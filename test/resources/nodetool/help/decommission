@@ -5,13 +5,12 @@ SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] decommission
-                [(-f | --force)]
+                [(-u <username> | --username <username>)] decommission [(-f | --force)]
 
 OPTIONS
         -f, --force
-            Force decommission of this node even when it reduces the number
-            of replicas to below configured RF
+            Force decommission of this node even when it reduces the number of
+            replicas to below configured RF
 
         -h <host>, --host <host>
             Node hostname or ip address

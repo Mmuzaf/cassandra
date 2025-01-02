@@ -40,6 +40,11 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * These tests replace the nodetool-related Python dtests in hintedhandoff_test.py.
+ *
+ * @see org.apache.cassandra.tools.nodetool.DisableHandoff
+ * @see org.apache.cassandra.tools.nodetool.DisableHintsForDC
+ * @see org.apache.cassandra.tools.nodetool.EnableHandoff
+ * @see org.apache.cassandra.tools.nodetool.EnableHintsForDC
  */
 @RunWith(Parameterized.class)
 public class HintedHandoffNodetoolTest extends TestBaseImpl

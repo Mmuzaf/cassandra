@@ -32,8 +32,8 @@ public class BootstrapResume extends AbstractCommand
     @Option(paramLabel = "force",
             names = { "-f", "--force" },
             description = { "Use --force to resume bootstrap regardless of ",
-                            "cassandra.reset_bootstrap_progress environment variable. " +
-                            "WARNING: This is potentially dangerous, see CASSANDRA-17679" })
+                            "cassandra.reset_bootstrap_progress environment variable. WARNING:",
+                            "This is potentially dangerous, see CASSANDRA-17679" })
     public boolean force = false;
 
     @Override

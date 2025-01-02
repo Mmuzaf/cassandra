@@ -5,8 +5,7 @@ SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] bootstrap <command>
-                [<args>]
+                [(-u <username> | --username <username>)] bootstrap <command> [<args>]
 
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
@@ -40,5 +39,5 @@ COMMANDS
             Resume bootstrap streaming
 
             With --force option, Use --force to resume bootstrap regardless of
-            cassandra.reset_bootstrap_progress environment variable. WARNING: This
-            is potentially dangerous, see CASSANDRA-17679
+            cassandra.reset_bootstrap_progress environment variable. WARNING:
+            This is potentially dangerous, see CASSANDRA-17679
