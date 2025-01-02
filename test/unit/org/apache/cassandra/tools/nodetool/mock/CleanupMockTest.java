@@ -28,8 +28,6 @@ import static org.mockito.Mockito.when;
 
 public class CleanupMockTest extends AbstractNodetoolMock
 {
-    private static final String[] EMPTY_STRING_ARRAY = {};
-
     @Test
     public void testCleanupKeyspaceWithTables() throws Throwable
     {

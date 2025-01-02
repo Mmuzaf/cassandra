@@ -32,9 +32,9 @@ OPTIONS
             Remote jmx agent username
 
         --
-            This option can be used to separate command-line options from
-            the list of argument, (useful when arguments might be mistaken
-            for command-line options
+            This option can be used to separate command-line options from the
+            list of argument, (useful when arguments might be mistaken for
+            command-line options
 
         [<keyspace.table>...]
             List of table (or keyspace) names

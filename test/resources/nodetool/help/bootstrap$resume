@@ -11,8 +11,8 @@ SYNOPSIS
 OPTIONS
         -f, --force
             Use --force to resume bootstrap regardless of
-            cassandra.reset_bootstrap_progress environment variable.
-            WARNING: This is potentially dangerous, see CASSANDRA-17679
+            cassandra.reset_bootstrap_progress environment variable. WARNING:
+            This is potentially dangerous, see CASSANDRA-17679
 
         -h <host>, --host <host>
             Node hostname or ip address
