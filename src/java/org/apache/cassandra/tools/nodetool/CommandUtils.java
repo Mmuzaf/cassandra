@@ -29,6 +29,9 @@ import java.util.stream.Stream;
 import org.apache.cassandra.tools.nodetool.layout.CassandraUsage;
 import org.apache.cassandra.utils.Pair;
 
+import static java.util.stream.Stream.concat;
+import static java.util.stream.Stream.ofNullable;
+
 /**
  * Utility methods for nodetool commands.
  */
@@ -75,13 +78,23 @@ public final class CommandUtils
         return names;
     }
 
+    public static List<String> concatArgs(String first, String second)
+    {
+        return concat(ofNullable(first), ofNullable(second)).collect(Collectors.toList());
+    }
+
+    public static List<String> concatArgs(String first, String second, String third)
+    {
+        return concat(ofNullable(first), concatArgs(second, third).stream()).collect(Collectors.toList());
+    }
+
     public static List<String> concatArgs(String first, String[] second)
     {
-        return Stream.concat(Stream.ofNullable(first), (second == null ? Stream.empty() : Arrays.stream(second))).collect(Collectors.toList());
+        return concat(ofNullable(first), (second == null ? Stream.empty() : Arrays.stream(second))).collect(Collectors.toList());
     }
 
     public static List<String> concatArgs(String first, String second, String[] third)
     {
-        return Stream.concat(Stream.ofNullable(first), concatArgs(second, third).stream()).collect(Collectors.toList());
+        return concat(ofNullable(first), concatArgs(second, third).stream()).collect(Collectors.toList());
     }
 }
