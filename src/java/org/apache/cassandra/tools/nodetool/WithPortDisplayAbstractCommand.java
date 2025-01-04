@@ -20,11 +20,13 @@ package org.apache.cassandra.tools.nodetool;
 
 import picocli.CommandLine.Option;
 
+import static picocli.CommandLine.ScopeType.INHERIT;
+
 /**
  * Abstract class for commands that display endpoints that can be disambiguated by port number. (e.g. gossipinfo, describecluster etc.).
  */
-public abstract class WithPortDisplayAbstractCommand extends AbstractCommand
+abstract class WithPortDisplayAbstractCommand extends AbstractCommand
 {
-    @Option(names = { "-pp", "--print-port" }, description = "Operate in 4.0 mode with hosts disambiguated by port number")
+    @Option(names = { "-pp", "--print-port" }, description = "Operate in 4.0 mode with hosts disambiguated by port number", scope = INHERIT)
     public boolean printPort = false;
 }

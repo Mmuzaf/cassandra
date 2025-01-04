@@ -112,7 +112,7 @@ public class InvalidatePermissionsCacheTest extends CQLTester
         tool = ToolRunner.invokeNodetool("invalidatepermissionscache", "role1", "--invalid-option");
         assertThat(tool.getExitCode()).isEqualTo(1);
         assertThat(tool.getStdout())
-                .isEqualTo(wrapByDefaultNodetoolMessage("A single <role> is only supported / you have a typo in the resource options spelling"));
+                .isEqualTo(wrapByDefaultNodetoolMessage("Found unexpected parameters: [invalidatepermissionscache, role1, --invalid-option]"));
         assertThat(tool.getCleanedStderr()).isEmpty();
 
         tool = ToolRunner.invokeNodetool("invalidatepermissionscache", "role1", "--all-tables");

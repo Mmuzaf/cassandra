@@ -84,7 +84,7 @@ public class GossipInfoTest extends CQLTester
     @Test
     public void testGossipInfoWithPortPrint()
     {
-        ToolRunner.ToolResult tool = ToolRunner.invokeNodetool("-pp", "gossipinfo");
+        ToolRunner.ToolResult tool = ToolRunner.invokeNodetool("gossipinfo", "-pp");
         tool.assertOnCleanExit();
         String stdout = tool.getStdout();
         Assertions.assertThat(stdout).containsPattern("/127.0.0.1\\:[0-9]+\\s+generation");
@@ -102,7 +102,7 @@ public class GossipInfoTest extends CQLTester
     @Test
     public void testGossipInfoWithPortPrintAndResolveIp()
     {
-        ToolRunner.ToolResult tool = ToolRunner.invokeNodetool("-pp", "gossipinfo", "--resolve-ip");
+        ToolRunner.ToolResult tool = ToolRunner.invokeNodetool("gossipinfo", "-pp", "--resolve-ip");
         tool.assertOnCleanExit();
         String stdout = tool.getStdout();
         Assertions.assertThat(stdout).containsPattern("^localhost\\:[0-9]+\\s+generation");
