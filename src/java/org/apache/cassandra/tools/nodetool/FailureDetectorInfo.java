@@ -25,7 +25,7 @@ import org.apache.cassandra.tools.NodeProbe;
 import picocli.CommandLine.Command;
 
 @Command(name = "failuredetector", description = "Shows the failure detector information for the cluster")
-public class FailureDetectorInfo extends EndpointDisplayAbstractCommand
+public class FailureDetectorInfo extends WithPortDisplayAbstractCommand
 {
     @Override
     public void execute(NodeProbe probe)

@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.tools;
+package org.apache.cassandra.tools.nodetool;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -24,6 +24,7 @@ import java.util.List;
 import io.airlift.airline.Arguments;
 import io.airlift.airline.Command;
 import org.apache.cassandra.auth.AuthKeyspace;
+import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.NodeTool.NodeToolCmd;
 
 /**

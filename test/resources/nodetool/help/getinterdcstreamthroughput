@@ -1,8 +1,8 @@
 NAME
         nodetool getinterdcstreamthroughput - Print the throughput cap for
-        inter-datacenter streaming and entire SSTable inter-datacenter streaming
-        in the systemin rounded megabits. For precise number, please, use option
-        -d
+        inter-datacenter streaming and entire SSTable inter-datacenter
+        streaming in the systemin rounded megabits. For precise number, please,
+        use option -d
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
