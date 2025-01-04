@@ -3,7 +3,7 @@ NAME
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
-                [(-pp | --print-port)] [(-pw <password> | --password <password>)]
+                [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] import
                 [(-c | --no-invalidate-caches)] [(-e | --extended-verify)]
@@ -33,9 +33,6 @@ OPTIONS
 
         -p, --copy-data
             Copy data from source directories instead of moving them
-
-        -pp, --print-port
-            Operate in 4.0 mode with hosts disambiguated by port number
 
         -pw <password>, --password <password>
             Remote jmx agent password

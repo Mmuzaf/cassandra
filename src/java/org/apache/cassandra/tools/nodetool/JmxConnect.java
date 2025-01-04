@@ -71,9 +71,6 @@ public class JmxConnect extends AbstractCommand implements AutoCloseable
     @Option(names = { "-pwf", "--password-file" }, description = "Path to the JMX password file")
     public String passwordFilePath = EMPTY;
 
-    @Option(names = { "-pp", "--print-port" }, description = "Operate in 4.0 mode with hosts disambiguated by port number")
-    public boolean printPort = false;
-
     @Inject
     private INodeProbeFactory nodeProbeFactory;
 

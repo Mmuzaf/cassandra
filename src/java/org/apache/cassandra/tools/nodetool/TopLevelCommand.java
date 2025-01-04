@@ -100,6 +100,8 @@ import static org.apache.cassandra.tools.nodetool.Help.printTopCommandUsage;
                          InvalidatePermissionsCache.class,
                          InvalidateRolesCache.class,
                          InvalidateRowCache.class,
+                         Join.class,
+                         ListCIDRGroups.class,
                          Version.class })
 public class TopLevelCommand implements Runnable
 {

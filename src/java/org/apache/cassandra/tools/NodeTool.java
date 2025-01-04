@@ -62,7 +62,7 @@ import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileWriter;
 import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
 import org.apache.cassandra.tools.nodetool.*;
-import org.apache.cassandra.tools.nodetool.layout.CassandraHelpLayout;
+import org.apache.cassandra.tools.nodetool.layout.CassandraJmxHelpLayout;
 import org.apache.cassandra.utils.FBUtilities;
 import picocli.CommandLine;
 
@@ -108,8 +108,6 @@ public class NodeTool
     {
         List<Class<? extends NodeToolCmdRunnable>> commands = newArrayList(
                 CassHelp.class,
-                Join.class,
-                ListCIDRGroups.class,
                 ListPendingHints.class,
                 ListSnapshots.class,
                 Move.class,
@@ -327,18 +325,18 @@ public class NodeTool
 
         public static void usage(GlobalMetadata global, Map<String, String> extraCommands, StringBuilder sb)
         {
-            UsagePrinter out = new UsagePrinter(sb, CassandraHelpLayout.DEFAULT_USAGE_HELP_WIDTH);
+            UsagePrinter out = new UsagePrinter(sb, CassandraJmxHelpLayout.DEFAULT_USAGE_HELP_WIDTH);
             List<String> commandArguments = global.getOptions().stream()
                                                   .sorted((o1, o2) -> StringUtils.compare(o1.getTitle(), o2.getTitle()))
                                                   .filter(option -> !option.isHidden())
                                                   .map(UsageHelper::toUsage)
                                                   .collect(toImmutableList());
 
-            out.newPrinterWithHangingIndent(CassandraHelpLayout.COLUMN_INDENT)
-               .append(CassandraHelpLayout.TOP_LEVEL_SYNOPSIS_LIST_PREFIX)
+            out.newPrinterWithHangingIndent(CassandraJmxHelpLayout.COLUMN_INDENT)
+               .append(CassandraJmxHelpLayout.TOP_LEVEL_SYNOPSIS_LIST_PREFIX)
                .append(global.getName())
                .appendWords(commandArguments)
-               .append(CassandraHelpLayout.SYNOPSIS_SUBCOMMANDS_LABEL)
+               .append(CassandraJmxHelpLayout.SYNOPSIS_SUBCOMMANDS_LABEL)
                .newline()
                .newline();
 
@@ -347,13 +345,13 @@ public class NodeTool
             extraCommands.remove("help");
             commands.putAll(extraCommands);
 
-            out.append(CassandraHelpLayout.TOP_LEVEL_COMMAND_HEADING).newline();
-            out.newIndentedPrinter(CassandraHelpLayout.SUBCOMMANDS_INDENT)
+            out.append(CassandraJmxHelpLayout.TOP_LEVEL_COMMAND_HEADING).newline();
+            out.newIndentedPrinter(CassandraJmxHelpLayout.SUBCOMMANDS_INDENT)
                .appendTable(commands.entrySet().stream()
                                     .map(entry -> ImmutableList.of(entry.getKey(), firstNonNull(entry.getValue(), "")))
                                     .collect(toList()));
             out.newline();
-            out.append(CassandraHelpLayout.USAGE_HELP_FOOTER);
+            out.append(CassandraJmxHelpLayout.USAGE_HELP_FOOTER);
         }
 
         private static Map<String, String> getCommandsDescription(GlobalMetadata global)
