@@ -229,7 +229,7 @@ public class NodeProbe implements AutoCloseable
         // this constructor is only used for extensions to rewrite their own connect method
         this.host = "";
         this.port = 0;
-//        this.output = Output.CONSOLE;
+        this.output = Output.CONSOLE;
     }
 
     /**
