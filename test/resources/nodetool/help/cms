@@ -2,34 +2,34 @@ NAME
         nodetool cms - Manage cluster metadata
 
 SYNOPSIS
-        nodetool [(-u <username> | --username <username>)]
-                [(-pw <password> | --password <password>)] [(-h <host> | --host <host>)]
-                [(-pp | --print-port)] [(-p <port> | --port <port>)]
-                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)] cms
-        nodetool [(-u <username> | --username <username>)]
-                [(-pw <password> | --password <password>)] [(-h <host> | --host <host>)]
-                [(-pp | --print-port)] [(-p <port> | --port <port>)]
-                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)] cms
+        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
+                [(-u <username> | --username <username>)]
+                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
+                [(-pw <password> | --password <password>)] [(-pp | --print-port)] cms
+        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
+                [(-u <username> | --username <username>)]
+                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
+                [(-pw <password> | --password <password>)] [(-pp | --print-port)] cms
                 describe
-        nodetool [(-u <username> | --username <username>)]
-                [(-pw <password> | --password <password>)] [(-h <host> | --host <host>)]
-                [(-pp | --print-port)] [(-p <port> | --port <port>)]
-                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)] cms
+        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
+                [(-u <username> | --username <username>)]
+                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
+                [(-pw <password> | --password <password>)] [(-pp | --print-port)] cms
                 initialize [(-i <ignored endpoints> | --ignore <ignored endpoints>)...]
-        nodetool [(-u <username> | --username <username>)]
-                [(-pw <password> | --password <password>)] [(-h <host> | --host <host>)]
-                [(-pp | --print-port)] [(-p <port> | --port <port>)]
-                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)] cms
-                reconfigure [(-c | --cancel)] [(-r | --resume)] [--status]
-        nodetool [(-u <username> | --username <username>)]
-                [(-pw <password> | --password <password>)] [(-h <host> | --host <host>)]
-                [(-pp | --print-port)] [(-p <port> | --port <port>)]
-                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)] cms
+        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
+                [(-u <username> | --username <username>)]
+                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
+                [(-pw <password> | --password <password>)] [(-pp | --print-port)] cms
+                reconfigure [(-c | --cancel)] [--status] [(-r | --resume)]
+        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
+                [(-u <username> | --username <username>)]
+                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
+                [(-pw <password> | --password <password>)] [(-pp | --print-port)] cms
                 snapshot
-        nodetool [(-u <username> | --username <username>)]
-                [(-pw <password> | --password <password>)] [(-h <host> | --host <host>)]
-                [(-pp | --print-port)] [(-p <port> | --port <port>)]
-                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)] cms
+        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
+                [(-u <username> | --username <username>)]
+                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
+                [(-pw <password> | --password <password>)] [(-pp | --print-port)] cms
                 unregister
 
 OPTIONS
@@ -67,11 +67,11 @@ COMMANDS
 
             With --cancel option, Cancels any in progress CMS reconfiguration
 
-            With --resume option, Whether or not a previously interrupted
-            sequence should be resumed
-
             With --status option, Poll status of the reconfigure command. All
             other flags and arguments are ignored when this one is used.
+
+            With --resume option, Whether or not a previously interrupted
+            sequence should be resumed
 
         snapshot
             Request a checkpointing snapshot of cluster metadata

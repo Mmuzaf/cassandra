@@ -15,28 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.tools.nodetool;
 
-import java.util.List;
+package org.apache.cassandra.tools.nodetool.mock;
 
-import org.apache.cassandra.tools.NodeProbe;
-import picocli.CommandLine.Command;
+import org.junit.Test;
 
-@Command(name = "getseeds", description = "Get the currently in use seed node IP list excluding the node IP")
-public class GetSeeds extends AbstractCommand
+import org.apache.cassandra.service.snapshot.SnapshotManagerMBean;
+import org.apache.cassandra.tools.ToolRunner;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
+public class GetSnapshotThrottleMockTest extends AbstractNodetoolMock
 {
-    @Override
-    public void execute(NodeProbe probe)
+    @Test
+    public void testGetSnapshotThrottle()
     {
-        List<String> seedList = probe.getSeeds();
-        if (seedList.isEmpty())
-        {
-            probe.output().out.println("Seed node list does not contain any remote node IPs");
-        }
-        else
-        {
-            probe.output().out.println("Current list of seed node IPs, excluding the current node's IP: " + String.join(" ", seedList));
-        }
-
+        SnapshotManagerMBean mock = getMock(SNAPSHOT_MANAGER_MBEAN);
+        when(mock.getSnapshotLinksPerSecond()).thenReturn(100L);
+        ToolRunner.ToolResult result = invokeNodetool("getsnapshotthrottle");
+        result.assertOnCleanExit();
+        assertThat(result.getStdout()).contains("Current snapshot throttle: 100 links/s");
     }
 }

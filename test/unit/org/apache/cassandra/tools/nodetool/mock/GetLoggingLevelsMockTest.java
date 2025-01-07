@@ -15,28 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.tools.nodetool;
 
-import java.util.List;
+package org.apache.cassandra.tools.nodetool.mock;
 
-import org.apache.cassandra.tools.NodeProbe;
-import picocli.CommandLine.Command;
+import java.util.Collections;
 
-@Command(name = "getseeds", description = "Get the currently in use seed node IP list excluding the node IP")
-public class GetSeeds extends AbstractCommand
+import org.junit.Test;
+
+import org.apache.cassandra.service.StorageServiceMBean;
+import org.mockito.Mockito;
+
+import static org.mockito.Mockito.when;
+
+public class GetLoggingLevelsMockTest extends AbstractNodetoolMock
 {
-    @Override
-    public void execute(NodeProbe probe)
+    @Test
+    public void testGetLoggingLevels()
     {
-        List<String> seedList = probe.getSeeds();
-        if (seedList.isEmpty())
-        {
-            probe.output().out.println("Seed node list does not contain any remote node IPs");
-        }
-        else
-        {
-            probe.output().out.println("Current list of seed node IPs, excluding the current node's IP: " + String.join(" ", seedList));
-        }
-
+        StorageServiceMBean mock = getMock(STORAGE_SERVICE_MBEAN);
+        when(mock.getLoggingLevels()).thenReturn(Collections.singletonMap("Logger Name", "Log Level"));
+        invokeNodetool("getlogginglevels").assertOnCleanExit();
+        Mockito.verify(mock).getLoggingLevels();
     }
 }

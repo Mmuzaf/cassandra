@@ -15,28 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.cassandra.tools.nodetool;
 
-import java.util.List;
+import picocli.CommandLine.Option;
 
-import org.apache.cassandra.tools.NodeProbe;
-import picocli.CommandLine.Command;
+import static picocli.CommandLine.ScopeType.INHERIT;
 
-@Command(name = "getseeds", description = "Get the currently in use seed node IP list excluding the node IP")
-public class GetSeeds extends AbstractCommand
+/**
+ * Abstract class for commands that display endpoints that can be disambiguated by port number. (e.g. gossipinfo, describecluster etc.).
+ */
+abstract class WithPortDisplayAbstractCommand extends AbstractCommand
 {
-    @Override
-    public void execute(NodeProbe probe)
-    {
-        List<String> seedList = probe.getSeeds();
-        if (seedList.isEmpty())
-        {
-            probe.output().out.println("Seed node list does not contain any remote node IPs");
-        }
-        else
-        {
-            probe.output().out.println("Current list of seed node IPs, excluding the current node's IP: " + String.join(" ", seedList));
-        }
-
-    }
+    @Option(names = { "-pp", "--print-port" }, description = "Operate in 4.0 mode with hosts disambiguated by port number", scope = INHERIT)
+    public boolean printPort = false;
 }
