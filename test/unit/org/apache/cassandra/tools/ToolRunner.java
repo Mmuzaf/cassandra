@@ -859,6 +859,7 @@ public class ToolRunner
 
         public String getOutput()
         {
+            flush();
             return String.join("\n", outputLines);
         }
     }

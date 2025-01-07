@@ -15,25 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.tools;
 
-import java.io.IOException;
+package org.apache.cassandra.tools.nodetool.mock;
 
-import io.airlift.airline.Command;
+import org.junit.Test;
 
-@Command(name = "reloadssl", description = "Signals Cassandra to reload SSL certificates")
-public class ReloadSslCertificates extends NodeTool.NodeToolCmd
+import org.apache.cassandra.service.StorageServiceMBean;
+import org.mockito.Mockito;
+
+public class GetTraceProbabilityMockTest extends AbstractNodetoolMock
 {
-    @Override
-    public void execute(NodeProbe probe)
+    @Test
+    public void testGetTraceProbability()
     {
-        try
-        {
-            probe.reloadSslCerts();
-        }
-        catch (IOException e)
-        {
-            throw new RuntimeException("Failed to reload SSL certificates. Please check the SSL certificates", e);
-        }
+        StorageServiceMBean mock = getMock(STORAGE_SERVICE_MBEAN);
+        invokeNodetool("gettraceprobability").assertOnCleanExit();
+        Mockito.verify(mock).getTraceProbability();
     }
 }

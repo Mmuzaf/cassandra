@@ -15,28 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.tools.nodetool;
+
+package org.apache.cassandra.tools.nodetool.mock;
 
 import java.util.List;
 
-import org.apache.cassandra.tools.NodeProbe;
-import picocli.CommandLine.Command;
+import org.junit.Test;
 
-@Command(name = "getseeds", description = "Get the currently in use seed node IP list excluding the node IP")
-public class GetSeeds extends AbstractCommand
+import org.apache.cassandra.gms.GossiperMBean;
+import org.apache.cassandra.tools.ToolRunner;
+import org.mockito.Mockito;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
+public class GetSeedsTest extends AbstractNodetoolMock
 {
-    @Override
-    public void execute(NodeProbe probe)
+    @Test
+    public void testGetSeeds()
     {
-        List<String> seedList = probe.getSeeds();
-        if (seedList.isEmpty())
-        {
-            probe.output().out.println("Seed node list does not contain any remote node IPs");
-        }
-        else
-        {
-            probe.output().out.println("Current list of seed node IPs, excluding the current node's IP: " + String.join(" ", seedList));
-        }
-
+        GossiperMBean mock = getMock(GOSSIPER_MBEAN);
+        when(mock.getSeeds()).thenReturn(List.of("seed1", "seed2"));
+        ToolRunner.ToolResult result = invokeNodetool("getseeds");
+        result.assertOnCleanExit();
+        Mockito.verify(mock).getSeeds();
+        assertThat(result.getStdout()).contains("Current list of seed node IPs, excluding the current node's IP: seed1 seed2");
     }
 }

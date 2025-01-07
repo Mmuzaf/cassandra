@@ -27,7 +27,7 @@ import picocli.CommandLine.Parameters;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 @Command(name = "describering", description = "Shows the token ranges info of a given keyspace")
-public class DescribeRing extends EndpointDisplayAbstractCommand
+public class DescribeRing extends WithPortDisplayAbstractCommand
 {
     @Parameters(description = "The keyspace name", arity = "1")
     String keyspace = EMPTY;

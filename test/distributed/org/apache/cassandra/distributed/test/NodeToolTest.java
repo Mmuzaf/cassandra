@@ -37,6 +37,7 @@ import static org.junit.Assert.assertEquals;
  * Tests for nodetool commands, including capturing console output and verifying exit codes.
  *
  * @see org.apache.cassandra.tools.nodetool.Flush
+ * @see org.apache.cassandra.tools.nodetool.Info
  */
 public class NodeToolTest extends TestBaseImpl
 {

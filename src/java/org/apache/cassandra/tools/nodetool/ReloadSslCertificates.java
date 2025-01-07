@@ -15,16 +15,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.cassandra.tools.nodetool;
 
-import picocli.CommandLine.Option;
+import java.io.IOException;
 
-/**
- * Abstract class for commands that display endpoints that can be disambiguated by port number. (e.g. gossipinfo, describecluster etc.).
- */
-public abstract class EndpointDisplayAbstractCommand extends AbstractCommand
+import io.airlift.airline.Command;
+import org.apache.cassandra.tools.NodeProbe;
+import org.apache.cassandra.tools.NodeTool;
+
+@Command(name = "reloadssl", description = "Signals Cassandra to reload SSL certificates")
+public class ReloadSslCertificates extends NodeTool.NodeToolCmd
 {
-    @Option(names = { "-pp", "--print-port" }, description = "Operate in 4.0 mode with hosts disambiguated by port number")
-    public boolean printPort = false;
+    @Override
+    public void execute(NodeProbe probe)
+    {
+        try
+        {
+            probe.reloadSslCerts();
+        }
+        catch (IOException e)
+        {
+            throw new RuntimeException("Failed to reload SSL certificates. Please check the SSL certificates", e);
+        }
+    }
 }

@@ -24,7 +24,15 @@ import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.Output;
 
 /**
- * Base class for all nodetool commands.
+ * Abstract class for all nodetool commands, which provides common methods and fields.
+ * <p>
+ * The command is executed by calling {@link #execute(NodeProbe)}, in all other cases
+ * it should not contain any fields or methods that are specific to a particular API
+ * being executed, or common methods that are shared across multiple commands.
+ * <p>
+ * Commands must be API-agnostic and work only with the {@link NodeProbe} API, or a
+ * wrapper around MBean classes (as a primary entry point), which do not need to be
+ * initialized or used with JMX.
  */
 public abstract class AbstractCommand implements Runnable
 {

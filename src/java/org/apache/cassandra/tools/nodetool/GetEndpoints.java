@@ -30,18 +30,18 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
 
 @Command(name = "getendpoints", description = "Print the end points that owns the key")
-public class GetEndpoints extends EndpointDisplayAbstractCommand
+public class GetEndpoints extends WithPortDisplayAbstractCommand
 {
     @CassandraUsage(usage = "<keyspace> <table> <key>", description = "The keyspace, the table, and the partition key for which we need to find the endpoint")
     public List<String> args = new ArrayList<>();
 
-    @Parameters(index = "0", arity = "1", description = "The keyspace for which we need to find the endpoint")
+    @Parameters(index = "0", arity = "0..1", description = "The keyspace for which we need to find the endpoint")
     public String keyspace;
 
-    @Parameters(index = "1", arity = "1", description = "The table for which we need to find the endpoint")
+    @Parameters(index = "1", arity = "0..1", description = "The table for which we need to find the endpoint")
     public String table;
 
-    @Parameters(index = "2", arity = "1", description = "The partition key for which we need to find the endpoint")
+    @Parameters(index = "2", arity = "0..1", description = "The partition key for which we need to find the endpoint")
     public String key;
 
     @Override
