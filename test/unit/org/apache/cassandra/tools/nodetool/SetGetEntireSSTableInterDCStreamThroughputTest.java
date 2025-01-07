@@ -31,6 +31,9 @@ import static org.assertj.core.api.Assertions.withPrecision;
 
 /**
  * Tests for entire SSTable {@code nodetool setinterdcstreamthroughput} and {@code nodetool getinterdcstreamthroughput}.
+ *
+ * @see GetInterDCStreamThroughput
+ * @see SetInterDCStreamThroughput
  */
 public class SetGetEntireSSTableInterDCStreamThroughputTest extends CQLTester
 {

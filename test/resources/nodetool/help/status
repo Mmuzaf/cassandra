@@ -5,12 +5,16 @@ SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] status [(-r | --resolve-ip)]
-                [--] [<keyspace>]
+                [(-u <username> | --username <username>)] status
+                [(-o <sort_order> | --order <sort_order>)] [(-r | --resolve-ip)]
+                [(-s <sort> | --sort <sort>)] [--] [<keyspace>]
 
 OPTIONS
         -h <host>, --host <host>
             Node hostname or ip address
+
+        -o <sort_order>, --order <sort_order>
+            Sorting order: 'asc' for ascending, 'desc' for descending.
 
         -p <port>, --port <port>
             Remote jmx agent port number
@@ -26,6 +30,13 @@ OPTIONS
 
         -r, --resolve-ip
             Show node domain names instead of IPs
+
+        -s <sort>, --sort <sort>
+            Sort by one of 'ip', 'host', 'load', 'owns', 'id', 'rack', 'state'
+            or 'token'. Default ordering is ascending for 'ip', 'host', 'id',
+            'token', 'rack' and descending for 'load', 'owns', 'state'. Sorting
+            by token is possible only when cluster does not use vnodes. When
+            using vnodes, default sorting is by id otherwise by token.
 
         -u <username>, --username <username>
             Remote jmx agent username

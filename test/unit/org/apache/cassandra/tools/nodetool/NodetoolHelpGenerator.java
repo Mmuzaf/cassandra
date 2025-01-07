@@ -31,7 +31,6 @@ import java.util.regex.Pattern;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +38,6 @@ import org.apache.cassandra.config.CassandraRelevantProperties;
 import org.apache.cassandra.tools.ToolRunner;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static org.apache.cassandra.tools.nodetool.NodetoolHelpCommandsOutputTest.COMMAND_FULL_NAME_SEPARATOR;
 
 /**
  * Generates files with commands help output for all available nodetool commands. The {@code $} character is used as
@@ -56,31 +54,39 @@ public class NodetoolHelpGenerator
     private static final String NODETOOL_SUBCOMMAND_LIST_START_AFTER = "COMMANDS";
     private static final Pattern NODETOOL_COMMAND_DESCRIPTION_SPACES = Pattern.compile("^ {4}(\\S+)");
     private static final Pattern NODETOOL_SUBCOMMAND_DESCRIPTION_SPACES = Pattern.compile("^ {8}(\\S+)");
+    private static final String COMMAND_FULL_NAME_SEPARATOR = "$";
 
     /**
-     * Main method to generate help files for all nodetool commands to a specified directory.
+     * Main method to generate help files for all nodetool commands to the {@code test/resources/nodetool/help/}.
      * <p>
      * For example, the {@code nodetool help bootstrap resume} help output results in a file
      * {@code test/resources/nodetool/help/bootstrap$resume}, where the {@code $} character
-     * is used as a separator for the subcommand.
+     * is used as a separator for the subcommand. The arguments are passed as a list of commands
+     * to generate help files for. For example, {@code bootstrap resume} is passed.
      * <p>
      * By default, the files are written to {@code test/resources/nodetool/help/}.
      */
     public static void main(String[] args)
     {
-        new NodetoolHelpGenerator().writeCommandsHelpOutput(args.length > 0 ? args[0] : NODETOOL_COMMAND_HELP_WRITE_DIR);
+        List<String> commands = new ArrayList<>(List.of(args));
+//        commands.add("assassinate");
+
+        if (commands.isEmpty())
+            new NodetoolHelpGenerator().writeCommandsHelpOutput();
+        else
+            new NodetoolHelpGenerator().writer(commands);
     }
 
-    public void writeCommandsHelpOutput(String outputDir)
+    public void writeCommandsHelpOutput()
     {
         List<String> roots = find(() -> ToolRunner.invoke(ENV, newArrayList("bin/nodetool", "help")),
                                   NODETOOL_COMMAND_LIST_START_AFTER, NODETOOL_COMMAND_DESCRIPTION_SPACES);
 
         for (String command : roots)
-            writeToFileRecursively(newArrayList(command), cmd -> writer(cmd, outputDir));
+            writeToFileRecursively(newArrayList(command), this::writer);
     }
 
-    private static void writeToFileRecursively(List<String> hierarchy, Consumer<List<String>> writer)
+    private void writeToFileRecursively(List<String> hierarchy, Consumer<List<String>> writer)
     {
         List<String> subcommands = find(() -> ToolRunner.invoke(ENV, Lists.asList("bin/nodetool",
                                                                                   "help",
@@ -96,7 +102,7 @@ public class NodetoolHelpGenerator
         writer.accept(hierarchy);
     }
 
-    private void writer(List<String> fullCommand, String outputDir)
+    public void writer(List<String> fullCommand)
     {
         ToolRunner.ToolResult result = ToolRunner.invoke(ENV, Lists.asList("bin/nodetool", "help",
                                                                            fullCommand.toArray(new String[0])));
@@ -104,7 +110,7 @@ public class NodetoolHelpGenerator
 
         try
         {
-            File commandHelpOut = new File(outputDir, String.join(COMMAND_FULL_NAME_SEPARATOR, fullCommand)); //checkstyle: permit this instantiation
+            File commandHelpOut = new File(NODETOOL_COMMAND_HELP_WRITE_DIR, String.join(COMMAND_FULL_NAME_SEPARATOR, fullCommand)); //checkstyle: permit this instantiation
             boolean created = commandHelpOut.getParentFile().mkdirs();
             if (created)
                 logger.debug("Created directory: {}", commandHelpOut.getParentFile().getAbsolutePath());

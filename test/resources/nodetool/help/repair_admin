@@ -2,40 +2,41 @@ NAME
         nodetool repair_admin - list and fail incremental repair sessions
 
 SYNOPSIS
-        nodetool [(-u <username> | --username <username>)]
-                [(-pw <password> | --password <password>)] [(-h <host> | --host <host>)]
-                [(-pp | --print-port)] [(-p <port> | --port <port>)]
+        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
+                [(-u <username> | --username <username>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
+                [(-pw <password> | --password <password>)] [(-pp | --print-port)]
                 repair_admin
-        nodetool [(-u <username> | --username <username>)]
-                [(-pw <password> | --password <password>)] [(-h <host> | --host <host>)]
-                [(-pp | --print-port)] [(-p <port> | --port <port>)]
+        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
+                [(-u <username> | --username <username>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
+                [(-pw <password> | --password <password>)] [(-pp | --print-port)]
                 repair_admin cancel (-s <session> | --session <session>)
                 [(-f | --force)]
-        nodetool [(-u <username> | --username <username>)]
-                [(-pw <password> | --password <password>)] [(-h <host> | --host <host>)]
-                [(-pp | --print-port)] [(-p <port> | --port <port>)]
+        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
+                [(-u <username> | --username <username>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                repair_admin cleanup [(-et <end_token> | --end-token <end_token>)]
-                [(-st <start_token> | --start-token <start_token>)] [(-f | --force)]
-        nodetool [(-u <username> | --username <username>)]
-                [(-pw <password> | --password <password>)] [(-h <host> | --host <host>)]
-                [(-pp | --print-port)] [(-p <port> | --port <port>)]
+                [(-pw <password> | --password <password>)] [(-pp | --print-port)]
+                repair_admin cleanup [(-f | --force)]
+                [(-et <end_token> | --end-token <end_token>)]
+                [(-st <start_token> | --start-token <start_token>)]
+        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
+                [(-u <username> | --username <username>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
+                [(-pw <password> | --password <password>)] [(-pp | --print-port)]
                 repair_admin list [(-et <end_token> | --end-token <end_token>)]
-                [(-a | --all)] [(-st <start_token> | --start-token <start_token>)]
-        nodetool [(-u <username> | --username <username>)]
-                [(-pw <password> | --password <password>)] [(-h <host> | --host <host>)]
-                [(-pp | --print-port)] [(-p <port> | --port <port>)]
+                [(-st <start_token> | --start-token <start_token>)] [(-a | --all)]
+        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
+                [(-u <username> | --username <username>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
+                [(-pw <password> | --password <password>)] [(-pp | --print-port)]
                 repair_admin summarize-pending [(-v | --verbose)]
                 [(-et <end_token> | --end-token <end_token>)]
                 [(-st <start_token> | --start-token <start_token>)]
-        nodetool [(-u <username> | --username <username>)]
-                [(-pw <password> | --password <password>)] [(-h <host> | --host <host>)]
-                [(-pp | --print-port)] [(-p <port> | --port <port>)]
+        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
+                [(-u <username> | --username <username>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
+                [(-pw <password> | --password <password>)] [(-pp | --print-port)]
                 repair_admin summarize-repaired [(-v | --verbose)]
                 [(-et <end_token> | --end-token <end_token>)]
                 [(-st <start_token> | --start-token <start_token>)]
@@ -68,10 +69,10 @@ COMMANDS
             With --end-token option, Use -et to specify a token at which repair
             range ends
 
-            With --all option, include completed and failed sessions
-
             With --start-token option, Use -st to specify a token at which the
             repair range starts
+
+            With --all option, include completed and failed sessions
 
         cancel
             cancel an incremental repair session. Use --force to cancel from a
@@ -88,13 +89,13 @@ COMMANDS
             needs to be expedited. Use --force to cancel compactions that are
             preventing promotion
 
+            With --force option, Force a cleanup.
+
             With --end-token option, Use -et to specify a token at which repair
             range ends
 
             With --start-token option, Use -st to specify a token at which the
             repair range starts
-
-            With --force option, Force a cleanup.
 
         summarize-pending
             report the amount of data marked pending repair for the given token

@@ -34,6 +34,9 @@ import org.assertj.core.api.Assertions;
 import static org.apache.cassandra.net.Verb.ECHO_REQ;
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * @see GossipInfo
+ */
 public class GossipInfoTest extends CQLTester
 {
     private static String token;
@@ -44,50 +47,6 @@ public class GossipInfoTest extends CQLTester
         requireNetwork();
         startJMXServer();
         token = StorageService.instance.getTokens().get(0);
-    }
-
-    @Test
-    @SuppressWarnings("SingleCharacterStringConcatenation")
-    public void testMaybeChangeDocs()
-    {
-        // If you added, modified options or help, please update docs if necessary
-        ToolRunner.ToolResult tool = ToolRunner.invokeNodetool("help", "gossipinfo");
-        tool.assertOnCleanExit();
-
-        String help =   "NAME\n" +
-                "        nodetool gossipinfo - Shows the gossip information for the cluster\n" +
-                "\n" +
-                "SYNOPSIS\n" +
-                "        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]\n" +
-                "                [(-pp | --print-port)] [(-pw <password> | --password <password>)]\n" +
-                "                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]\n" +
-                "                [(-u <username> | --username <username>)] gossipinfo\n" +
-                "                [(-r | --resolve-ip)]\n" +
-                "\n" +
-                "OPTIONS\n" +
-                "        -h <host>, --host <host>\n" +
-                "            Node hostname or ip address\n" +
-                "\n" +
-                "        -p <port>, --port <port>\n" +
-                "            Remote jmx agent port number\n" +
-                "\n" +
-                "        -pp, --print-port\n" +
-                "            Operate in 4.0 mode with hosts disambiguated by port number\n" +
-                "\n" +
-                "        -pw <password>, --password <password>\n" +
-                "            Remote jmx agent password\n" +
-                "\n" +
-                "        -pwf <passwordFilePath>, --password-file <passwordFilePath>\n" +
-                "            Path to the JMX password file\n" +
-                "\n" +
-                "        -r, --resolve-ip\n" +
-                "            Show node domain names instead of IPs\n" +
-                "\n" +
-                "        -u <username>, --username <username>\n" +
-                "            Remote jmx agent username\n" +
-                "\n" +
-                "\n";
-        assertThat(tool.getStdout()).isEqualTo(help);
     }
 
     @Test
@@ -125,7 +84,7 @@ public class GossipInfoTest extends CQLTester
     @Test
     public void testGossipInfoWithPortPrint()
     {
-        ToolRunner.ToolResult tool = ToolRunner.invokeNodetool("-pp", "gossipinfo");
+        ToolRunner.ToolResult tool = ToolRunner.invokeNodetool("gossipinfo", "-pp");
         tool.assertOnCleanExit();
         String stdout = tool.getStdout();
         Assertions.assertThat(stdout).containsPattern("/127.0.0.1\\:[0-9]+\\s+generation");
@@ -143,7 +102,7 @@ public class GossipInfoTest extends CQLTester
     @Test
     public void testGossipInfoWithPortPrintAndResolveIp()
     {
-        ToolRunner.ToolResult tool = ToolRunner.invokeNodetool("-pp", "gossipinfo", "--resolve-ip");
+        ToolRunner.ToolResult tool = ToolRunner.invokeNodetool("gossipinfo", "-pp", "--resolve-ip");
         tool.assertOnCleanExit();
         String stdout = tool.getStdout();
         Assertions.assertThat(stdout).containsPattern("^localhost\\:[0-9]+\\s+generation");

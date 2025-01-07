@@ -33,6 +33,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests for {@code nodetool setstreamthroughput} and {@code nodetool getstreamthroughput}.
+ *
+ * @see GetStreamThroughput
+ * @see SetStreamThroughput
  */
 public class SetGetStreamThroughputTest extends CQLTester
 {

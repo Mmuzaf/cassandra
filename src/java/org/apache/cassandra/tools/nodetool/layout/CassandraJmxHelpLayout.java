@@ -59,7 +59,7 @@ import static picocli.CommandLine.Model.UsageMessageSpec.SECTION_KEY_SYNOPSIS_HE
  * Help factory for the Cassandra nodetool to generate the help output. This class is used to match
  * the command output with the previously available nodetool help output format.
  */
-public class CassandraHelpLayout extends CommandLine.Help
+public class CassandraJmxHelpLayout extends CommandLine.Help
 {
     // The default width for the usage help output to match the width of
     // the airline help output and minimize the divergence of layouts.
@@ -87,7 +87,7 @@ public class CassandraHelpLayout extends CommandLine.Help
     public static final String SUBCOMMAND_SUBHEADER = "With no arguments, Display help information";
     private static final String[] EMPTY_FOOTER = new String[0];
 
-    public CassandraHelpLayout(CommandLine.Model.CommandSpec spec, ColorScheme scheme)
+    public CassandraJmxHelpLayout(CommandLine.Model.CommandSpec spec, ColorScheme scheme)
     {
         super(spec, scheme);
     }

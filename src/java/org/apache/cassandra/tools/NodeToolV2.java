@@ -29,7 +29,7 @@ import javax.inject.Inject;
 import com.google.common.base.Throwables;
 
 import org.apache.cassandra.config.CassandraRelevantProperties;
-import org.apache.cassandra.tools.nodetool.layout.CassandraHelpLayout;
+import org.apache.cassandra.tools.nodetool.layout.CassandraJmxHelpLayout;
 import org.apache.cassandra.tools.nodetool.JmxConnect;
 import org.apache.cassandra.tools.nodetool.TopLevelCommand;
 import org.apache.cassandra.utils.FBUtilities;
@@ -206,9 +206,9 @@ public class NodeToolV2
         switch (CassandraRelevantProperties.CASSANDRA_CLI_LAYOUT.getEnum(true, CliLayout.class))
         {
             case CASSANDRA:
-                commandLine.setHelpFactory(CassandraHelpLayout::new)
-                           .setUsageHelpWidth(CassandraHelpLayout.DEFAULT_USAGE_HELP_WIDTH)
-                           .setHelpSectionKeys(CassandraHelpLayout.cassandraHelpSectionKeys());
+                commandLine.setHelpFactory(CassandraJmxHelpLayout::new)
+                           .setUsageHelpWidth(CassandraJmxHelpLayout.DEFAULT_USAGE_HELP_WIDTH)
+                           .setHelpSectionKeys(CassandraJmxHelpLayout.cassandraHelpSectionKeys());
                 break;
             case PICOCLI:
                 break;
