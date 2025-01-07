@@ -19,26 +19,22 @@ package org.apache.cassandra.tools.nodetool;
 
 import com.google.common.math.DoubleMath;
 
-import io.airlift.airline.Command;
-import io.airlift.airline.Option;
 import org.apache.cassandra.tools.NodeProbe;
-import org.apache.cassandra.tools.NodeTool.NodeToolCmd;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 @Command(name = "getstreamthroughput", description = "Print the throughput cap for streaming and entire SSTable streaming in the system in rounded megabits. " +
                                                      "For precise number, please, use option -d")
-public class GetStreamThroughput extends NodeToolCmd
+public class GetStreamThroughput extends AbstractCommand
 {
-    @SuppressWarnings("UnusedDeclaration")
-    @Option(name = { "-e", "--entire-sstable-throughput" }, description = "Print entire SSTable streaming throughput in MiB/s")
-    private boolean entireSSTableThroughput;
+    @Option(names = { "-e", "--entire-sstable-throughput" }, description = "Print entire SSTable streaming throughput in MiB/s")
+    public boolean entireSSTableThroughput;
 
-    @SuppressWarnings("UnusedDeclaration")
-    @Option(name = { "-m", "--mib" }, description = "Print the throughput cap for streaming in MiB/s")
-    private boolean streamThroughputMiB;
+    @Option(names = { "-m", "--mib" }, description = "Print the throughput cap for streaming in MiB/s")
+    public boolean streamThroughputMiB;
 
-    @SuppressWarnings("UnusedDeclaration")
-    @Option(name = { "-d", "--precise-mbit" }, description = "Print the throughput cap for streaming in precise Mbits (double)")
-    private boolean streamThroughputDoubleMbit;
+    @Option(names = { "-d", "--precise-mbit" }, description = "Print the throughput cap for streaming in precise Mbits (double)")
+    public boolean streamThroughputDoubleMbit;
 
     @Override
     public void execute(NodeProbe probe)

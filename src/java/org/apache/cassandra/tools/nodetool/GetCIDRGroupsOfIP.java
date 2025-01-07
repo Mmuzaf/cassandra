@@ -17,14 +17,11 @@
  */
 package org.apache.cassandra.tools.nodetool;
 
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.cassandra.tools.NodeProbe;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
-import static com.google.common.base.Preconditions.checkArgument;
+
+import static org.apache.cassandra.tools.nodetool.CommandUtils.printSet;
 
 /**
  * Nodetool command to get CIDR groups(s) of given IP
@@ -33,16 +30,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class GetCIDRGroupsOfIP extends AbstractCommand
 {
     @Parameters(paramLabel = "ip_address", description = "Requires IP address as a string", arity = "1", index = "0")
-    public List<String> args = new ArrayList<>();
+    public String ipStr;
 
     @Override
     public void execute(NodeProbe probe)
     {
-        PrintStream out = probe.output().out;
-
-        checkArgument(args.size() == 1, "Requires IP address as input");
-
-        String ipStr = args.get(0);
-        probe.printSet(out, "CIDR Groups", probe.getCidrGroupsOfIp(ipStr));
+        printSet(probe.output().out, "CIDR Groups", probe.getCidrGroupsOfIp(ipStr));
     }
 }

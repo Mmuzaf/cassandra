@@ -3,10 +3,10 @@ NAME
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
-                [(-pp | --print-port)] [(-pw <password> | --password <password>)]
+                [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] listcidrgroups [--]
-                [<cidrGroup>]
+                <cidrGroup>
 
 OPTIONS
         -h <host>, --host <host>
@@ -14,9 +14,6 @@ OPTIONS
 
         -p <port>, --port <port>
             Remote jmx agent port number
-
-        -pp, --print-port
-            Operate in 4.0 mode with hosts disambiguated by port number
 
         -pw <password>, --password <password>
             Remote jmx agent password
@@ -32,5 +29,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        [<cidrGroup>]
+        <cidrGroup>
             LIST operation can be invoked with or without cidr group name

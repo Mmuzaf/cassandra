@@ -33,7 +33,7 @@ import org.apache.cassandra.tools.NodeTool;
 import picocli.CommandLine.Command;
 
 @Command(name = "describecluster", description = "Print the name, snitch, partitioner and schema version of a cluster")
-public class DescribeCluster extends EndpointDisplayAbstractCommand
+public class DescribeCluster extends WithPortDisplayAbstractCommand
 {
     private boolean resolveIp = false;
     private String keyspace = null;

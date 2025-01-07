@@ -33,10 +33,13 @@ import org.apache.cassandra.cql3.CQLTester;
 import org.apache.cassandra.db.ColumnFamilyStoreMBean;
 import org.apache.cassandra.db.compaction.CompactionManagerMBean;
 import org.apache.cassandra.gms.FailureDetectorMBean;
+import org.apache.cassandra.gms.GossiperMBean;
 import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
 import org.apache.cassandra.locator.LocationInfoMBean;
+import org.apache.cassandra.service.CacheServiceMBean;
 import org.apache.cassandra.service.StorageProxyMBean;
 import org.apache.cassandra.service.StorageServiceMBean;
+import org.apache.cassandra.service.snapshot.SnapshotManagerMBean;
 import org.apache.cassandra.tools.NodeTool;
 import org.apache.cassandra.tools.ToolRunner;
 import org.apache.cassandra.utils.MBeanWrapper;
@@ -47,18 +50,24 @@ import static org.apache.cassandra.db.ColumnFamilyStore.getColumnFamilieMBeanNam
 public abstract class AbstractNodetoolMock extends CQLTester
 {
     public static final String[] EMPTY_STRING_ARRAY = {};
+    public static final String CACHE_SERVICE_MBEAN = "org.apache.cassandra.db:type=Caches";
     public static final String COMPACTION_MANAGER_MBEAN = "org.apache.cassandra.db:type=CompactionManager";
     public static final String ENDPOINT_SNITCH_INFO_MBEAN = "org.apache.cassandra.db:type=EndpointSnitchInfo";
     public static final String FAILURE_DETECTOR_MBEAN = "org.apache.cassandra.net:type=FailureDetector";
+    public static final String GOSSIPER_MBEAN = "org.apache.cassandra.net:type=Gossiper";
     public static final String LOCATION_INFO_MBEAN = "org.apache.cassandra.db:type=LocationInfo";
+    public static final String SNAPSHOT_MANAGER_MBEAN = "org.apache.cassandra.service.snapshot:type=SnapshotManager";
     public static final String STORAGE_PROXY_MBEAN = "org.apache.cassandra.db:type=StorageProxy";
     public static final String STORAGE_SERVICE_MBEAN = "org.apache.cassandra.db:type=StorageService";
 
     private static final Map<String, Class<?>> mbeans = Map.of(
+        CACHE_SERVICE_MBEAN, CacheServiceMBean.class,
         COMPACTION_MANAGER_MBEAN, CompactionManagerMBean.class,
         ENDPOINT_SNITCH_INFO_MBEAN, EndpointSnitchInfoMBean.class,
         FAILURE_DETECTOR_MBEAN, FailureDetectorMBean.class,
+        GOSSIPER_MBEAN, GossiperMBean.class,
         LOCATION_INFO_MBEAN, LocationInfoMBean.class,
+        SNAPSHOT_MANAGER_MBEAN, SnapshotManagerMBean.class,
         STORAGE_PROXY_MBEAN, StorageProxyMBean.class,
         STORAGE_SERVICE_MBEAN, StorageServiceMBean.class);
 

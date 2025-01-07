@@ -18,14 +18,17 @@
 
 package org.apache.cassandra.tools.nodetool;
 
+import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.cassandra.tools.nodetool.formatter.TableBuilder;
 import org.apache.cassandra.tools.nodetool.layout.CassandraUsage;
 import org.apache.cassandra.utils.Pair;
 
@@ -96,5 +99,20 @@ public final class CommandUtils
     public static List<String> concatArgs(String first, String second, String[] third)
     {
         return concat(ofNullable(first), concatArgs(second, third).stream()).collect(Collectors.toList());
+    }
+
+    public static void printSet(PrintStream out, String colName, Set<String> values)
+    {
+        if (values == null || values.isEmpty())
+            return;
+
+        TableBuilder table = new TableBuilder();
+
+        table.add(colName + ": ");
+
+        for (String value : values)
+            table.add(value);
+
+        table.printTo(out);
     }
 }

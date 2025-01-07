@@ -123,7 +123,9 @@ public class NodetoolHelpCommandsOutputTest extends CQLTester
                printFormattedNodeToolOutput(stdoutOrig) +
                '\n' + ">> command_output <<" +
                '\n' + printFormattedNodeToolOutput(stdoutNew) +
-               '\n' + " difference for \"" + commandName + "\":" + diff;
+               '\n' + " difference for \"" + commandName + "\":" + diff + '\n' +
+               "The difference between the original and the new output is shown above. Make sure the " +
+               "changes are expected and update the test data if necessary. Use NodetoolHelpGenerator class.";
     }
 
     protected static String printFormattedNodeToolOutput(List<String> output)
