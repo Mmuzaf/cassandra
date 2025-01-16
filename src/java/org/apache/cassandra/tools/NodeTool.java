@@ -196,7 +196,7 @@ public class NodeTool
                                      return 1;
                                  }
 
-                                 err(ex);
+                                 err(Throwables.getRootCause(ex));
                                  return 2;
                              }).execute(args);
 
