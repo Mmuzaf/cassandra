@@ -15,17 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.tools.nodetool;
 
-import org.apache.cassandra.tools.NodeProbe;
-import picocli.CommandLine.Command;
+package org.apache.cassandra.tools.nodetool.mock;
 
-@Command(name = "resumehandoff", description = "Resume hints delivery process")
-public class ResumeHandoff extends AbstractCommand
+import org.junit.Test;
+
+import org.apache.cassandra.service.StorageServiceMBean;
+import org.mockito.Mockito;
+
+public class RebuildIndexMockTest extends AbstractNodetoolMock
 {
-    @Override
-    public void execute(NodeProbe probe)
+    @Test
+    public void testRebuildIndex()
     {
-        probe.resumeHintsDelivery();
+        StorageServiceMBean mock = getMock(STORAGE_SERVICE_MBEAN);
+        invokeNodetool("rebuild_index", keyspace(), "tbl1", "indexName1", "indexName2").assertOnCleanExit();
+        Mockito.verify(mock).rebuildSecondaryIndex(Mockito.eq(keyspace()), Mockito.eq("tbl1"), Mockito.eq("indexName1"), Mockito.eq("indexName2"));
     }
 }

@@ -62,7 +62,7 @@ import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileWriter;
 import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
 import org.apache.cassandra.tools.nodetool.*;
-import org.apache.cassandra.tools.nodetool.layout.CassandraJmxHelpLayout;
+import org.apache.cassandra.tools.nodetool.layout.CassandraCliHelpLayout;
 import org.apache.cassandra.utils.FBUtilities;
 import picocli.CommandLine;
 
@@ -108,32 +108,6 @@ public class NodeTool
     {
         List<Class<? extends NodeToolCmdRunnable>> commands = newArrayList(
                 CassHelp.class,
-                ListPendingHints.class,
-                ListSnapshots.class,
-                Move.class,
-                NetStats.class,
-                PauseHandoff.class,
-                ProfileLoad.class,
-                ProxyHistograms.class,
-                RangeKeySample.class,
-                Rebuild.class,
-                RebuildIndex.class,
-                RecompressSSTables.class,
-                Refresh.class,
-                RefreshSizeEstimates.class,
-                ReloadCIDRGroupsCache.class,
-                ReloadLocalSchema.class,
-                ReloadSeeds.class,
-                ReloadSslCertificates.class,
-                ReloadTriggers.class,
-                RelocateSSTables.class,
-                RemoveNode.class,
-                Repair.class,
-                ReplayBatchlog.class,
-                ResetFullQueryLog.class,
-                ResetLocalSchema.class,
-                ResumeHandoff.class,
-                Ring.class,
                 Scrub.class,
                 SetAuthCacheConfig.class,
                 SetBatchlogReplayThrottle.class,
@@ -166,7 +140,6 @@ public class NodeTool
                 StopDaemon.class,
                 TableHistograms.class,
                 TableStats.class,
-                TopPartitions.class,
                 TpStats.class,
                 TruncateHints.class,
                 UpdateCIDRGroup.class,
@@ -325,18 +298,18 @@ public class NodeTool
 
         public static void usage(GlobalMetadata global, Map<String, String> extraCommands, StringBuilder sb)
         {
-            UsagePrinter out = new UsagePrinter(sb, CassandraJmxHelpLayout.DEFAULT_USAGE_HELP_WIDTH);
+            UsagePrinter out = new UsagePrinter(sb, CassandraCliHelpLayout.DEFAULT_USAGE_HELP_WIDTH);
             List<String> commandArguments = global.getOptions().stream()
                                                   .sorted((o1, o2) -> StringUtils.compare(o1.getTitle(), o2.getTitle()))
                                                   .filter(option -> !option.isHidden())
                                                   .map(UsageHelper::toUsage)
                                                   .collect(toImmutableList());
 
-            out.newPrinterWithHangingIndent(CassandraJmxHelpLayout.COLUMN_INDENT)
-               .append(CassandraJmxHelpLayout.TOP_LEVEL_SYNOPSIS_LIST_PREFIX)
+            out.newPrinterWithHangingIndent(CassandraCliHelpLayout.COLUMN_INDENT)
+               .append(CassandraCliHelpLayout.TOP_LEVEL_SYNOPSIS_LIST_PREFIX)
                .append(global.getName())
                .appendWords(commandArguments)
-               .append(CassandraJmxHelpLayout.SYNOPSIS_SUBCOMMANDS_LABEL)
+               .append(CassandraCliHelpLayout.SYNOPSIS_SUBCOMMANDS_LABEL)
                .newline()
                .newline();
 
@@ -345,13 +318,13 @@ public class NodeTool
             extraCommands.remove("help");
             commands.putAll(extraCommands);
 
-            out.append(CassandraJmxHelpLayout.TOP_LEVEL_COMMAND_HEADING).newline();
-            out.newIndentedPrinter(CassandraJmxHelpLayout.SUBCOMMANDS_INDENT)
+            out.append(CassandraCliHelpLayout.TOP_LEVEL_COMMAND_HEADING).newline();
+            out.newIndentedPrinter(CassandraCliHelpLayout.SUBCOMMANDS_INDENT)
                .appendTable(commands.entrySet().stream()
                                     .map(entry -> ImmutableList.of(entry.getKey(), firstNonNull(entry.getValue(), "")))
                                     .collect(toList()));
             out.newline();
-            out.append(CassandraJmxHelpLayout.USAGE_HELP_FOOTER);
+            out.append(CassandraCliHelpLayout.USAGE_HELP_FOOTER);
         }
 
         private static Map<String, String> getCommandsDescription(GlobalMetadata global)

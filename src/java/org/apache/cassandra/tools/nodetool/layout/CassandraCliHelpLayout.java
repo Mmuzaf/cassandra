@@ -20,16 +20,20 @@ package org.apache.cassandra.tools.nodetool.layout;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 
 import org.apache.cassandra.tools.nodetool.CommandUtils;
+import org.apache.cassandra.tools.nodetool.JmxConnect;
 import org.apache.cassandra.utils.Pair;
 import picocli.CommandLine;
 
@@ -56,10 +60,14 @@ import static picocli.CommandLine.Model.UsageMessageSpec.SECTION_KEY_SYNOPSIS;
 import static picocli.CommandLine.Model.UsageMessageSpec.SECTION_KEY_SYNOPSIS_HEADING;
 
 /**
- * Help factory for the Cassandra nodetool to generate the help output. This class is used to match
- * the command output with the previously available nodetool help output format.
+ * Help factory for the Cassandra nodetool to generate the help output in the format
+ * of the airline help output, which is used as the default layout for the Cassandra nodetool.
+ * <p>
+ * Note, that JMX connect options are always shown in the help output and are not hidden. The
+ * {@link JmxConnect} class is used to connect to a C* node via JMX, but the opttions are not
+ * part of the command hierarchy to allow reusage of the commands in other contexts.
  */
-public class CassandraJmxHelpLayout extends CommandLine.Help
+public class CassandraCliHelpLayout extends CommandLine.Help
 {
     // The default width for the usage help output to match the width of
     // the airline help output and minimize the divergence of layouts.
@@ -87,7 +95,7 @@ public class CassandraJmxHelpLayout extends CommandLine.Help
     public static final String SUBCOMMAND_SUBHEADER = "With no arguments, Display help information";
     private static final String[] EMPTY_FOOTER = new String[0];
 
-    public CassandraJmxHelpLayout(CommandLine.Model.CommandSpec spec, ColorScheme scheme)
+    public CassandraCliHelpLayout(CommandLine.Model.CommandSpec spec, ColorScheme scheme)
     {
         super(spec, scheme);
     }
@@ -167,10 +175,12 @@ public class CassandraJmxHelpLayout extends CommandLine.Help
 
         ColorScheme colorScheme = colorScheme();
 
-        List<CommandLine.Model.OptionSpec> parentOptions = parentCommandOptions(commandSpec);
+        List<CommandLine.Model.OptionSpec> parentOptions = parentCommandOptionsWithJmxOptions(commandSpec);
         List<CommandLine.Model.OptionSpec> commandOptions = commandSpec.options();
         // Retain only the options that are not part of the command hierarchy (e.g. dynamic options).
-        parentOptions.removeAll(commandOptions);
+        Comparator<CommandLine.Model.OptionSpec> comparator = new OptionSpecByNamesComparator();
+        parentOptions.removeIf(o -> commandOptions.stream().anyMatch(c -> comparator.compare(o, c) == 0));
+
         List<Ansi.Text> parentOptionsList = createCassandraSynopsisOptionsText(parentOptions);
         List<Ansi.Text> commandOptionsList = createCassandraSynopsisOptionsText(commandOptions);
 
@@ -241,7 +251,7 @@ public class CassandraJmxHelpLayout extends CommandLine.Help
         return text;
     }
 
-    private static List<CommandLine.Model.OptionSpec> parentCommandOptions(CommandLine.Model.CommandSpec commandSpec)
+    private static List<CommandLine.Model.OptionSpec> parentCommandOptionsWithJmxOptions(final CommandLine.Model.CommandSpec commandSpec)
     {
         // If the command is the help local command, no need to show the parent options.
         if (commandSpec.helpCommand())
@@ -249,15 +259,30 @@ public class CassandraJmxHelpLayout extends CommandLine.Help
 
         List<CommandLine.Model.CommandSpec> hierarhy = new LinkedList<>();
         CommandLine.Model.CommandSpec curr;
-        while ((curr = commandSpec.parent()) != null)
+        CommandLine.Model.CommandSpec command = commandSpec;
+        while ((curr = command.parent()) != null)
         {
             hierarhy.add(curr);
-            commandSpec = curr;
+            command = curr;
         }
         Collections.reverse(hierarhy);
         List<CommandLine.Model.OptionSpec> options = new ArrayList<>();
         for (CommandLine.Model.CommandSpec spec : hierarhy)
-            options.addAll(spec.options());
+        {
+            for (CommandLine.Model.OptionSpec option : spec.options())
+            {
+                // JMX connect options are always shown in the help output.
+                if (option.userObject() instanceof Field &&
+                    ((Field) option.userObject()).getDeclaringClass().equals(JmxConnect.class))
+                    options.add(option);
+                else
+                {
+                    if (option.hidden() || option.scopeType() == CommandLine.ScopeType.LOCAL)
+                        continue;
+                    options.add(option);
+                }
+            }
+        }
         return options;
     }
 
@@ -288,13 +313,17 @@ public class CassandraJmxHelpLayout extends CommandLine.Help
             {
                 Ansi.Text shortName = colorScheme.optionText(option.shortestName());
                 Ansi.Text fullName = colorScheme.optionText(option.longestName());
+                boolean isArrayOrCollection =
+                    option.userObject() instanceof Field
+                    && (((Field) option.userObject()).getType().isArray() ||
+                        Collection.class.isAssignableFrom(((Field) option.userObject()).getType()));
                 text = text.concat("[(")
                            .concat(shortName)
                            .concat(spacedParamLabel(option, parameterLabelRenderer, colorScheme))
                            .concat(" | ")
                            .concat(fullName)
                            .concat(spacedParamLabel(option, parameterLabelRenderer, colorScheme))
-                           .concat(")]");
+                           .concat(isArrayOrCollection ? ")...]" : ")]");
             }
 
             result.add(text);
@@ -328,8 +357,13 @@ public class CassandraJmxHelpLayout extends CommandLine.Help
     public String optionList()
     {
         CommandLine.Model.CommandSpec spec = commandSpec();
-        List<CommandLine.Model.OptionSpec> uniqueOptions = Stream.concat(parentCommandOptions(commandSpec()).stream(),
-                                                                         spec.options().stream().filter(o -> !o.hidden()))
+        List<CommandLine.Model.OptionSpec> commandOptions = spec.options();
+        List<CommandLine.Model.OptionSpec> parentOptions = parentCommandOptionsWithJmxOptions(spec);
+        Comparator<CommandLine.Model.OptionSpec> comparator = new OptionSpecByNamesComparator();
+        parentOptions.removeIf(o -> commandOptions.stream().anyMatch(c -> comparator.compare(o, c) == 0));
+
+        List<CommandLine.Model.OptionSpec> uniqueOptions = Stream.concat(parentOptions.stream(),
+                                                                         commandOptions.stream().filter(o -> !o.hidden()))
                                                                  .distinct()
                                                                  .sorted(createShortOptionNameComparator())
                                                                  .collect(Collectors.toList());
@@ -720,6 +754,18 @@ public class CassandraJmxHelpLayout extends CommandLine.Help
         public void flush(Ansi.Text end)
         {
             textTable.addRowValues(current == padding ? end : current.concat(" ").concat(end));
+        }
+    }
+
+    private static class OptionSpecByNamesComparator implements Comparator<CommandLine.Model.OptionSpec>
+    {
+        private final Comparator<CommandLine.Model.OptionSpec> comparator = createShortOptionNameComparator();
+        @Override
+        public int compare(CommandLine.Model.OptionSpec o1, CommandLine.Model.OptionSpec o2)
+        {
+            if (Objects.deepEquals(o1.names(), o2.names()))
+                return 0;
+            return comparator.compare(o1, o2);
         }
     }
 }

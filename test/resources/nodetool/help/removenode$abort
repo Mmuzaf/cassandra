@@ -1,11 +1,11 @@
 NAME
-        nodetool pausehandoff - Pause hints delivery process
+        nodetool removenode abort - Abort remove node by provided ID
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] pausehandoff
+                [(-u <username> | --username <username>)] removenode abort [--] <nodeId>
 
 OPTIONS
         -h <host>, --host <host>
@@ -22,3 +22,11 @@ OPTIONS
 
         -u <username>, --username <username>
             Remote jmx agent username
+
+        --
+            This option can be used to separate command-line options from the
+            list of argument, (useful when arguments might be mistaken for
+            command-line options
+
+        <nodeId>
+            The ID of the node to remove

@@ -15,17 +15,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.tools.nodetool;
 
-import org.apache.cassandra.tools.NodeProbe;
-import picocli.CommandLine.Command;
+package org.apache.cassandra.tools.nodetool.mock;
 
-@Command(name = "resumehandoff", description = "Resume hints delivery process")
-public class ResumeHandoff extends AbstractCommand
+import java.util.List;
+
+import org.junit.Test;
+
+import org.apache.cassandra.gms.GossiperMBean;
+import org.apache.cassandra.tools.ToolRunner;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
+public class ReloadSeedsMockTest extends AbstractNodetoolMock
 {
-    @Override
-    public void execute(NodeProbe probe)
+    @Test
+    public void testReloadSeeds()
     {
-        probe.resumeHintsDelivery();
+        GossiperMBean mock = getMock(GOSSIPER_MBEAN);
+        when(mock.reloadSeeds()).thenReturn(List.of("seed1"));
+        ToolRunner.ToolResult result = invokeNodetool("reloadseeds");
+        result.assertOnCleanExit();
+        assertThat(result.getStdout()).contains("Updated seed node IP list, excluding the current node's IP: seed1");
     }
 }

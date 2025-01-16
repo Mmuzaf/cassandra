@@ -17,39 +17,26 @@
  */
 package org.apache.cassandra.tools.nodetool;
 
-import java.util.List;
-
-import io.airlift.airline.Arguments;
-import io.airlift.airline.Command;
-
 import org.apache.cassandra.tools.NodeProbe;
-import org.apache.cassandra.tools.NodeTool.NodeToolCmd;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-@Command(name = "removenode", description = "Show status of current node removal, abort removal or remove provided ID")
-public class RemoveNode extends NodeToolCmd
+@Command(name = "removenode",
+         description = "Show status of current node removal, abort removal or remove provided ID",
+         subcommands = { RemoveNodeAbort.class,
+                         RemoveNodeStatus.class })
+public class RemoveNode extends AbstractCommand
 {
-    @Arguments(title = "remove_operation", usage = "<status>|<abort> <ID>|<ID>|<ID> --force", description = "Show status of current node removal, abort removal, or remove provided ID", required = true)
-    private List<String> removeOperation = null;
+    @Parameters(paramLabel = "nodeId", description = "The ID of the node to remove", arity = "1")
+    public String nodeId;
+
+    @Option(names = { "--force" }, description = "Force node removal")
+    public boolean force = false;
 
     @Override
     public void execute(NodeProbe probe)
     {
-        switch (removeOperation.get(0))
-        {
-            case "status":
-                probe.output().out.println("RemovalStatus: " + probe.getRemovalStatus(printPort));
-                break;
-            case "force":
-                throw new IllegalArgumentException("Can't force a nodetool removenode. Instead abort the ongoing removenode and retry.");
-            case "abort":
-                if (removeOperation.size() < 2)
-                    probe.output().err.print("Abort requires the node id to abort the removal for.");
-                probe.getCMSOperationsProxy().cancelInProgressSequences(removeOperation.get(1), "REMOVE");
-                break;
-            default:
-                boolean force = removeOperation.size() > 1 && removeOperation.get(1).equals("--force");
-                probe.removeNode(removeOperation.get(0), force);
-                break;
-        }
+        probe.removeNode(nodeId, force);
     }
 }

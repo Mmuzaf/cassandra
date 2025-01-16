@@ -15,17 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.tools.nodetool;
 
-import org.apache.cassandra.tools.NodeProbe;
-import picocli.CommandLine.Command;
+package org.apache.cassandra.tools.nodetool.mock;
 
-@Command(name = "resumehandoff", description = "Resume hints delivery process")
-public class ResumeHandoff extends AbstractCommand
+import org.junit.Test;
+
+import org.apache.cassandra.service.StorageProxyMBean;
+import org.mockito.Mockito;
+
+public class ReloadTriggersMockTest extends AbstractNodetoolMock
 {
-    @Override
-    public void execute(NodeProbe probe)
+    @Test
+    public void testReloadTriggers()
     {
-        probe.resumeHintsDelivery();
+        StorageProxyMBean mock = getMock(STORAGE_PROXY_MBEAN);
+        invokeNodetool("reloadtriggers").assertOnCleanExit();
+        Mockito.verify(mock).reloadTriggerClasses();
     }
 }

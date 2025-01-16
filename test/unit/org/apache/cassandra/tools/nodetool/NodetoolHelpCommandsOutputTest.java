@@ -25,6 +25,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -94,10 +95,11 @@ public class NodetoolHelpCommandsOutputTest extends CQLTester
         Assume.assumeFalse("Skipping nodetool-injvmv2 nodetool during the migration period",
                            COMMAND_WITHOUT_ARGS.equals(commandName) && runner.equals("injvmv2"));
 
-        List<String> origLines = readCommandLines(String.format(NODETOOL_COMMAND_HELP_FILE_PATTERN, commandName));
         List<String> targetLines = sliceStdout(invokeNodetool(commandName.equals(COMMAND_WITHOUT_ARGS) ? EMPTY_ARGS :
                                                               Streams.concat(Stream.of("help"), Stream.of(SPLIT_PATTERN.split(commandName)))
                                                                      .toArray(String[]::new)));
+        List<String> origLines = readCommandLines(String.format(NODETOOL_COMMAND_HELP_FILE_PATTERN, commandName));
+
         String diff = computeDiff(targetLines, origLines);
         assertTrue(printFormattedDiffsMessage(origLines, targetLines, commandName, diff),
                    StringUtils.isBlank(diff));
@@ -162,7 +164,11 @@ public class NodetoolHelpCommandsOutputTest extends CQLTester
         List<String> lines = new ArrayList<>();
         URL url = NodetoolHelpCommandsOutputTest.class.getClassLoader().getResource(resource);
         if (url == null)
-            throw new IllegalStateException("Command test output not found: " + resource);
+        {
+            logger.error("Command test output not found: {}", resource);
+            return Collections.singletonList("Command test output not found: " + resource);
+        }
+
         try (Stream<String> stream = Files.lines(Paths.get(url.toURI())))
         {
             stream.forEach(lines::add);

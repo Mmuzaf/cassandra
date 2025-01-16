@@ -15,17 +15,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.tools.nodetool;
 
-import org.apache.cassandra.tools.NodeProbe;
-import picocli.CommandLine.Command;
+package org.apache.cassandra.tools.nodetool.mock;
 
-@Command(name = "resumehandoff", description = "Resume hints delivery process")
-public class ResumeHandoff extends AbstractCommand
+import java.util.Collections;
+
+import org.junit.Test;
+
+import org.apache.cassandra.hints.HintsServiceMBean;
+import org.apache.cassandra.tools.ToolRunner;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
+public class ListPendingHintsMockTest extends AbstractNodetoolMock
 {
-    @Override
-    public void execute(NodeProbe probe)
+    @Test
+    public void testListPendingHints()
     {
-        probe.resumeHintsDelivery();
+        HintsServiceMBean mock = getMock(HINTS_SERVICE_MBEAN);
+        when(mock.getPendingHints()).thenReturn(Collections.emptyList());
+        ToolRunner.ToolResult result = invokeNodetool("listpendinghints");
+        result.assertOnCleanExit();
+        assertThat(result.getStdout()).contains("This node does not have any pending hints");
     }
 }

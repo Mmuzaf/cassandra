@@ -20,12 +20,12 @@ package org.apache.cassandra.tools.nodetool;
 import org.apache.cassandra.tools.NodeProbe;
 import picocli.CommandLine.Command;
 
-@Command(name = "resumehandoff", description = "Resume hints delivery process")
-public class ResumeHandoff extends AbstractCommand
+@Command(name = "status", description = "Show status of the current node removal operation")
+public class RemoveNodeStatus extends WithPortDisplayAbstractCommand
 {
     @Override
     public void execute(NodeProbe probe)
     {
-        probe.resumeHintsDelivery();
+        probe.output().out.println("RemovalStatus: " + probe.getRemovalStatus(printPort));
     }
 }

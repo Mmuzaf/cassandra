@@ -15,17 +15,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.tools.nodetool;
 
-import org.apache.cassandra.tools.NodeProbe;
-import picocli.CommandLine.Command;
+package org.apache.cassandra.tools.nodetool.mock;
 
-@Command(name = "resumehandoff", description = "Resume hints delivery process")
-public class ResumeHandoff extends AbstractCommand
+import java.util.List;
+
+import org.junit.Test;
+
+import org.apache.cassandra.service.StorageServiceMBean;
+import org.mockito.Mockito;
+
+import static org.mockito.Mockito.when;
+
+public class RangeKeySampleMockTest extends AbstractNodetoolMock
 {
-    @Override
-    public void execute(NodeProbe probe)
+    @Test
+    public void testRangeKeySample()
     {
-        probe.resumeHintsDelivery();
+        StorageServiceMBean mock = getMock(STORAGE_SERVICE_MBEAN);
+        when(mock.sampleKeyRange()).thenReturn(List.of("key1", "key2"));
+        invokeNodetool("rangekeysample").assertOnCleanExit();
+        Mockito.verify(mock).sampleKeyRange();
     }
 }

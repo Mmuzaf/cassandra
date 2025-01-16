@@ -19,13 +19,17 @@ package org.apache.cassandra.tools.nodetool;
 
 import org.apache.cassandra.tools.NodeProbe;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Parameters;
 
-@Command(name = "resumehandoff", description = "Resume hints delivery process")
-public class ResumeHandoff extends AbstractCommand
+@Command(name = "abort",  description = "Abort remove node by provided ID")
+public class RemoveNodeAbort extends AbstractCommand
 {
+    @Parameters(paramLabel = "nodeId", description = "The ID of the node to remove", arity = "1")
+    public String nodeId;
+
     @Override
     public void execute(NodeProbe probe)
     {
-        probe.resumeHintsDelivery();
+        probe.getCMSOperationsProxy().cancelInProgressSequences(nodeId, "REMOVE");
     }
 }

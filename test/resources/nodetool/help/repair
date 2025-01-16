@@ -3,12 +3,13 @@ NAME
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
-                [(-pp | --print-port)] [(-pw <password> | --password <password>)]
+                [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] repair
                 [(-dc <specific_dc> | --in-dc <specific_dc>)...]
-                [(-dcpar | --dc-parallel)] [(-et <end_token> | --end-token <end_token>)]
-                [(-force | --force)] [(-full | --full)]
+                [(-dcpar | --dc-parallel)]
+                [(-et <end_token> | --end-token <end_token>)] [(-force | --force)]
+                [(-full | --full)]
                 [(-hosts <specific_host> | --in-hosts <specific_host>)...]
                 [--include-gcgs-expired-tombstones]
                 [(-iuk | --ignore-unreplicated-keyspaces)]
@@ -73,9 +74,6 @@ OPTIONS
             Use --pull to perform a one way repair where data is only streamed
             from a remote node to this node.
 
-        -pp, --print-port
-            Operate in 4.0 mode with hosts disambiguated by port number
-
         -pr, --partitioner-range
             Use -pr to repair only the first range returned by the partitioner
 
@@ -101,8 +99,8 @@ OPTIONS
             (exclusive)
 
         -tr, --trace
-            Use -tr to trace the repair. Traces are logged to
-            system_traces.events.
+            Use -tr to trace the repair. Traces are logged to system_traces.
+            events.
 
         -u <username>, --username <username>
             Remote jmx agent username
