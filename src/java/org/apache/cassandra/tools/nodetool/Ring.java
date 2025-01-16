@@ -42,7 +42,7 @@ import static java.lang.String.format;
 @Command(name = "ring", description = "Print information about the token ring")
 public class Ring extends WithPortDisplayAbstractCommand
 {
-    @Parameters(description = "Specify a keyspace for accurate ownership information (topology awareness)", index = "0")
+    @Parameters(description = "Specify a keyspace for accurate ownership information (topology awareness)", index = "0", arity = "0..1")
     public String keyspace = null;
 
     @Option(paramLabel = "resolve_ip", names = { "-r", "--resolve-ip" }, description = "Show node domain names instead of IPs")
