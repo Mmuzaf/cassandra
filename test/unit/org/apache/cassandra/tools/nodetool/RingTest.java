@@ -56,12 +56,12 @@ public class RingTest extends CQLTester
         final HostStatWithPort host = new HostStatWithPort(null, FBUtilities.getBroadcastAddressAndPort(),
                                                            false, null);
         validateRingOutput(host.ipOrDns(false), "ring");
-        Arrays.asList("-pp", "--print-port").forEach(arg -> validateRingOutput(host.ipOrDns(true), "-pp", "ring"));
+        Arrays.asList("-pp", "--print-port").forEach(arg -> validateRingOutput(host.ipOrDns(true), arg, "ring"));
 
         final HostStatWithPort hostResolved = new HostStatWithPort(null, FBUtilities.getBroadcastAddressAndPort(),
                                                                    true, null);
         Arrays.asList("-r", "--resolve-ip").forEach(arg ->
-                validateRingOutput(hostResolved.ipOrDns(false), "ring", "-r"));
+                validateRingOutput(hostResolved.ipOrDns(false), "ring", arg));
         validateRingOutput(hostResolved.ipOrDns(true), "-pp", "ring", "-r");
     }
 

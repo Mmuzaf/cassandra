@@ -21,6 +21,9 @@ import org.apache.cassandra.tools.NodeProbe;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.ParentCommand;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 @Command(name = "removenode",
          description = "Show status of current node removal, abort removal or remove provided ID",
@@ -28,7 +31,10 @@ import picocli.CommandLine.Parameters;
                          RemoveNodeStatus.class })
 public class RemoveNode extends AbstractCommand
 {
-    @Parameters(paramLabel = "nodeId", description = "The ID of the node to remove", arity = "1")
+    @ParentCommand
+    public TopLevelCommand parent;
+
+    @Parameters(paramLabel = "nodeId", description = "The ID of the node to remove", arity = "0..1")
     public String nodeId;
 
     @Option(names = { "--force" }, description = "Force node removal")
@@ -37,6 +43,9 @@ public class RemoveNode extends AbstractCommand
     @Override
     public void execute(NodeProbe probe)
     {
+        // The nodeId input arg is not required for RemoveNodeStatus and RemoveNodeAbort, so it can be null here.
+        // In order the picocli to parse the subcommand correctly, we need to check the nodeId here, or use @ArgGroup
+        checkArgument(nodeId != null, "nodeId is required");
         probe.removeNode(nodeId, force);
     }
 }

@@ -20,6 +20,7 @@ package org.apache.cassandra.tools.nodetool;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
 import static org.apache.cassandra.tools.nodetool.Help.printTopCommandUsage;
@@ -134,6 +135,12 @@ public class TopLevelCommand implements Runnable
 {
     @Spec
     public CommandSpec spec;
+
+    // TODO CASSANDRA-xxxxx, this option is used only in several commands and should not be the global option.
+    //  It should be pushed down to specific commands to clean up the global hierarchy, while maintaining backwards compatibility.
+    //  Calls such as './nodetool --print-port subcommand', and './nodetool subcommand --print-port' should work as expected.
+    @Option(names = { "-pp", "--print-port" }, description = "Operate in 4.0 mode with hosts disambiguated by port number")
+    public boolean printPort = false;
 
     public void run()
     {

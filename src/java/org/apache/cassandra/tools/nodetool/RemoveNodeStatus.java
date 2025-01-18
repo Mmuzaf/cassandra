@@ -19,13 +19,17 @@ package org.apache.cassandra.tools.nodetool;
 
 import org.apache.cassandra.tools.NodeProbe;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ParentCommand;
 
 @Command(name = "status", description = "Show status of the current node removal operation")
-public class RemoveNodeStatus extends WithPortDisplayAbstractCommand
+public class RemoveNodeStatus extends AbstractCommand
 {
+    @ParentCommand
+    public RemoveNode parent;
+
     @Override
     public void execute(NodeProbe probe)
     {
-        probe.output().out.println("RemovalStatus: " + probe.getRemovalStatus(printPort));
+        probe.output().out.println("RemovalStatus: " + probe.getRemovalStatus(parent.parent.printPort));
     }
 }

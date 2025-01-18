@@ -34,6 +34,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import org.apache.cassandra.tools.nodetool.CommandUtils;
 import org.apache.cassandra.tools.nodetool.JmxConnect;
+import org.apache.cassandra.tools.nodetool.TopLevelCommand;
 import org.apache.cassandra.utils.Pair;
 import picocli.CommandLine;
 
@@ -271,9 +272,10 @@ public class CassandraCliHelpLayout extends CommandLine.Help
         {
             for (CommandLine.Model.OptionSpec option : spec.options())
             {
-                // JMX connect options are always shown in the help output.
+                // JmxConnect and TopLevelCommand options are always shown in the help output for backwards compatibility.
                 if (option.userObject() instanceof Field &&
-                    ((Field) option.userObject()).getDeclaringClass().equals(JmxConnect.class))
+                    (((Field) option.userObject()).getDeclaringClass().equals(JmxConnect.class) ||
+                     ((Field) option.userObject()).getDeclaringClass().equals(TopLevelCommand.class)))
                     options.add(option);
                 else
                 {
