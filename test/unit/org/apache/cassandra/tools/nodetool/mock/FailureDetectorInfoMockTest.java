@@ -48,7 +48,7 @@ public class FailureDetectorInfoMockTest extends AbstractNodetoolMock
     {
         FailureDetectorMBean mock = getMock(FAILURE_DETECTOR_MBEAN);
         when(mock.getPhiValuesWithPort()).thenReturn(createPhiValues());
-        invokeNodetool("failuredetector", "-pp").assertOnCleanExit();
+        invokeNodetool("-pp", "failuredetector").assertOnCleanExit();
         Mockito.verify(mock).getPhiValuesWithPort();
     }
 
