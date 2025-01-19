@@ -1,6 +1,6 @@
 NAME
-        nodetool rebuild - Rebuild data by streaming from other nodes (similarly
-        to bootstrap)
+        nodetool rebuild - Rebuild data by streaming from other nodes
+        (similarly to bootstrap)
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
@@ -41,7 +41,9 @@ OPTIONS
             127.0.0.1,127.0.0.2,...)
 
         -ts <specific_tokens>, --tokens <specific_tokens>
-            Use -ts to rebuild specific token ranges, in the format of "(start_token_1,end_token_1],(start_token_2,end_token_2],...(start_token_n,end_token_n]".
+            Use -ts to rebuild specific token ranges, in the format of
+            "(start_token_1,end_token_1],(start_token_2,end_token_2],...
+            (start_token_n,end_token_n]".
 
         -u <username>, --username <username>
             Remote jmx agent username

@@ -45,6 +45,8 @@ import static org.junit.Assert.assertTrue;
  * @see org.apache.cassandra.tools.nodetool.DisableHintsForDC
  * @see org.apache.cassandra.tools.nodetool.EnableHandoff
  * @see org.apache.cassandra.tools.nodetool.EnableHintsForDC
+ * @see org.apache.cassandra.tools.nodetool.PauseHandoff
+ * @see org.apache.cassandra.tools.nodetool.ResumeHandoff
  */
 @RunWith(Parameterized.class)
 public class HintedHandoffNodetoolTest extends TestBaseImpl

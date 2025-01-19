@@ -18,26 +18,25 @@
 package org.apache.cassandra.tools.nodetool;
 
 import static org.apache.commons.lang3.StringUtils.EMPTY;
-import io.airlift.airline.Arguments;
-import io.airlift.airline.Command;
 
 import java.io.IOException;
 
-import io.airlift.airline.Option;
 import org.apache.cassandra.tools.NodeProbe;
-import org.apache.cassandra.tools.NodeTool.NodeToolCmd;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 @Command(name = "move", description = "Move node on the token ring to a new token")
-public class Move extends NodeToolCmd
+public class Move extends AbstractCommand
 {
-    @Arguments(usage = "<new token>", description = "The new token.")
-    private String newToken = EMPTY;
+    @Parameters(paramLabel = "newToken", description = "The new token.", arity = "0..1", index = "0")
+    public String newToken = EMPTY;
 
-    @Option(title = "Resume an ongoing move operation", name = "--resume")
-    private boolean resume;
+    @Option(description = "Resume an ongoing move operation", names = { "--resume" })
+    public boolean resume;
 
-    @Option(title = "Abort an ongoing move operation", name = "--abort")
-    private boolean abort;
+    @Option(description = "Abort an ongoing move operation", names = { "--abort" })
+    public boolean abort;
 
     @Override
     public void execute(NodeProbe probe)

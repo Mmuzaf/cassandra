@@ -43,6 +43,10 @@ import static com.google.common.collect.Lists.newArrayList;
  * Generates files with commands help output for all available nodetool commands. The {@code $} character is used as
  * a separator between command hierarchy levels in the file names (e.g. {@code "info$threads"}) due to the fact that
  * a command name can contain special characters like {@code -} or {@code _}.
+ * <p>
+ * The generator calls the {@code ./nodetool help} command to get the list of available commands and their descriptions,
+ * in order to generate the latest help output for each command be sure to run the generator after the jars are built
+ * (e.g. {@code ant jar}).
  */
 public class NodetoolHelpGenerator
 {

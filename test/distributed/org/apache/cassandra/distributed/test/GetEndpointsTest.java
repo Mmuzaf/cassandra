@@ -45,7 +45,7 @@ public class GetEndpointsTest extends TestBaseImpl
         {
             for (IInvokableInstance i : cluster)
             {
-                ToolRunner.ToolResult tool = ToolRunner.invokeNodetoolJvmDtestIsolated(i, "getendpoints", "-pp", "system", "compaction_history", "7d431310-43c9-11ef-bd50-53ff742309a9");
+                ToolRunner.ToolResult tool = ToolRunner.invokeNodetoolJvmDtestIsolated(i, "-pp", "getendpoints", "system", "compaction_history", "7d431310-43c9-11ef-bd50-53ff742309a9");
                 tool.asserts().success();
                 List<String> endpoints = tool.getStdout().trim().lines().collect(Collectors.toList());
                 assertEquals(1, endpoints.size());
@@ -64,13 +64,13 @@ public class GetEndpointsTest extends TestBaseImpl
             ToolRunner.ToolResult tool;
             for (IInvokableInstance i : cluster)
             {
-                tool = ToolRunner.invokeNodetoolJvmDtestIsolated(i, "getendpoints", "-pp", "system", "local_metadata_log", "1");
+                tool = ToolRunner.invokeNodetoolJvmDtestIsolated(i, "-pp", "getendpoints", "system", "local_metadata_log", "1");
                 tool.asserts().success();
                 List<String> systemKsEndpoints = tool.getStdout().trim().lines().collect(Collectors.toList());
                 assertEquals(1, systemKsEndpoints.size());
                 i.runOnInstance(() -> assertEquals(FBUtilities.getBroadcastAddressAndPort().getHostAddressAndPort(), systemKsEndpoints.get(0)));
 
-                tool = ToolRunner.invokeNodetoolJvmDtestIsolated(i, "getendpoints", "-pp", "system_cluster_metadata", "distributed_metadata_log", "1");
+                tool = ToolRunner.invokeNodetoolJvmDtestIsolated(i, "-pp", "getendpoints", "system_cluster_metadata", "distributed_metadata_log", "1");
                 tool.asserts().success();
                 List<String> scmEndpoints = tool.getStdout().trim().lines().collect(Collectors.toList());
                 assertEquals(1, scmEndpoints.size());
