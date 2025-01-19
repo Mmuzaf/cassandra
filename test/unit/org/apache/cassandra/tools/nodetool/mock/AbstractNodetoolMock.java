@@ -29,13 +29,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import org.apache.cassandra.batchlog.BatchlogManagerMBean;
 import org.apache.cassandra.cql3.CQLTester;
 import org.apache.cassandra.db.ColumnFamilyStoreMBean;
 import org.apache.cassandra.db.compaction.CompactionManagerMBean;
 import org.apache.cassandra.gms.FailureDetectorMBean;
 import org.apache.cassandra.gms.GossiperMBean;
+import org.apache.cassandra.hints.HintsServiceMBean;
 import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
 import org.apache.cassandra.locator.LocationInfoMBean;
+import org.apache.cassandra.net.MessagingServiceMBean;
 import org.apache.cassandra.service.CacheServiceMBean;
 import org.apache.cassandra.service.StorageProxyMBean;
 import org.apache.cassandra.service.StorageServiceMBean;
@@ -50,28 +53,37 @@ import static org.apache.cassandra.db.ColumnFamilyStore.getColumnFamilieMBeanNam
 public abstract class AbstractNodetoolMock extends CQLTester
 {
     public static final String[] EMPTY_STRING_ARRAY = {};
+    public static final String BATCHLOG_MANAGER_MBEAN = "org.apache.cassandra.db:type=BatchlogManager";
     public static final String CACHE_SERVICE_MBEAN = "org.apache.cassandra.db:type=Caches";
     public static final String COMPACTION_MANAGER_MBEAN = "org.apache.cassandra.db:type=CompactionManager";
     public static final String ENDPOINT_SNITCH_INFO_MBEAN = "org.apache.cassandra.db:type=EndpointSnitchInfo";
     public static final String FAILURE_DETECTOR_MBEAN = "org.apache.cassandra.net:type=FailureDetector";
     public static final String GOSSIPER_MBEAN = "org.apache.cassandra.net:type=Gossiper";
+    public static final String HINTS_SERVICE_MBEAN = "org.apache.cassandra.hints:type=HintsService";
     public static final String LOCATION_INFO_MBEAN = "org.apache.cassandra.db:type=LocationInfo";
+    public static final String MESSAGING_SERVICE_MBEAN = "org.apache.cassandra.net:type=MessagingService";
     public static final String SNAPSHOT_MANAGER_MBEAN = "org.apache.cassandra.service.snapshot:type=SnapshotManager";
     public static final String STORAGE_PROXY_MBEAN = "org.apache.cassandra.db:type=StorageProxy";
     public static final String STORAGE_SERVICE_MBEAN = "org.apache.cassandra.db:type=StorageService";
 
-    private static final Map<String, Class<?>> mbeans = Map.of(
-        CACHE_SERVICE_MBEAN, CacheServiceMBean.class,
-        COMPACTION_MANAGER_MBEAN, CompactionManagerMBean.class,
-        ENDPOINT_SNITCH_INFO_MBEAN, EndpointSnitchInfoMBean.class,
-        FAILURE_DETECTOR_MBEAN, FailureDetectorMBean.class,
-        GOSSIPER_MBEAN, GossiperMBean.class,
-        LOCATION_INFO_MBEAN, LocationInfoMBean.class,
-        SNAPSHOT_MANAGER_MBEAN, SnapshotManagerMBean.class,
-        STORAGE_PROXY_MBEAN, StorageProxyMBean.class,
-        STORAGE_SERVICE_MBEAN, StorageServiceMBean.class);
-
+    private static final Map<String, Class<?>> mbeans = new HashMap<>();
     private static final MBeanWrapper mbeanServer = MBeanWrapper.instance;
+
+    static
+    {
+        mbeans.put(BATCHLOG_MANAGER_MBEAN, BatchlogManagerMBean.class);
+        mbeans.put(CACHE_SERVICE_MBEAN, CacheServiceMBean.class);
+        mbeans.put(COMPACTION_MANAGER_MBEAN, CompactionManagerMBean.class);
+        mbeans.put(ENDPOINT_SNITCH_INFO_MBEAN, EndpointSnitchInfoMBean.class);
+        mbeans.put(FAILURE_DETECTOR_MBEAN, FailureDetectorMBean.class);
+        mbeans.put(GOSSIPER_MBEAN, GossiperMBean.class);
+        mbeans.put(HINTS_SERVICE_MBEAN, HintsServiceMBean.class);
+        mbeans.put(LOCATION_INFO_MBEAN, LocationInfoMBean.class);
+        mbeans.put(MESSAGING_SERVICE_MBEAN, MessagingServiceMBean.class);
+        mbeans.put(SNAPSHOT_MANAGER_MBEAN, SnapshotManagerMBean.class);
+        mbeans.put(STORAGE_PROXY_MBEAN, StorageProxyMBean.class);
+        mbeans.put(STORAGE_SERVICE_MBEAN, StorageServiceMBean.class);
+    }
 
     private MBeanMockHodler mbeanMockHodler;
 

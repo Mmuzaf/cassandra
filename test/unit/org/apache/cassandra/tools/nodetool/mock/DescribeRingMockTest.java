@@ -44,7 +44,7 @@ public class DescribeRingMockTest extends AbstractNodetoolMock
     {
         StorageServiceMBean mock = getMock(STORAGE_SERVICE_MBEAN);
         when(mock.getKeyspaces()).thenReturn(List.of(keyspace()));
-        invokeNodetool("describering", "-pp", keyspace()).assertOnCleanExit();
+        invokeNodetool("-pp", "describering", keyspace()).assertOnCleanExit();
         Mockito.verify(mock).describeRingWithPortJMX(keyspace());
     }
 }

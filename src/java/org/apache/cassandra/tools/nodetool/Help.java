@@ -26,7 +26,7 @@ import java.util.Map;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
-import org.apache.cassandra.tools.nodetool.layout.CassandraJmxHelpLayout;
+import org.apache.cassandra.tools.nodetool.layout.CassandraCliHelpLayout;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.IHelpCommandInitializable2;
@@ -104,13 +104,13 @@ public class Help implements IHelpCommandInitializable2, Runnable
 
         StringBuilder sb = new StringBuilder();
         CommandLine.Help help = command.getHelpFactory().create(command.getCommandSpec(), colors);
-        if (!(help instanceof CassandraJmxHelpLayout))
+        if (!(help instanceof CassandraCliHelpLayout))
         {
             command.usage(writer, colors);
             return;
         }
 
-        Map<String, CommandLine.IHelpSectionRenderer> helpSectionMap = cassandraTopLevelHelpSectionKeys((CassandraJmxHelpLayout) help);
+        Map<String, CommandLine.IHelpSectionRenderer> helpSectionMap = cassandraTopLevelHelpSectionKeys((CassandraCliHelpLayout) help);
         for (String key : command.getHelpSectionKeys())
         {
             CommandLine.IHelpSectionRenderer renderer = helpSectionMap.get(key);
@@ -131,7 +131,7 @@ public class Help implements IHelpCommandInitializable2, Runnable
      * @param layout The help class layout.
      * @return Map of supported keys for the help sections.
      */
-    public static Map<String, CommandLine.IHelpSectionRenderer> cassandraTopLevelHelpSectionKeys(CassandraJmxHelpLayout layout)
+    public static Map<String, CommandLine.IHelpSectionRenderer> cassandraTopLevelHelpSectionKeys(CassandraCliHelpLayout layout)
     {
         Map<String, CommandLine.IHelpSectionRenderer> sectionMap = new LinkedHashMap<>();
         sectionMap.put(SECTION_KEY_HEADER_HEADING, CommandLine.Help::headerHeading);

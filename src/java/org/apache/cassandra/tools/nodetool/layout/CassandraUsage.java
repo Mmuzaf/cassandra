@@ -25,7 +25,9 @@ import java.lang.annotation.Target;
 
 /**
  * Argument annotation for Cassandra commands, used to provide a message
- * for command-line argument for backward compatibility when help is requested.
+ * for command-line arguments for backward compatibility when help is requested.
+ * <p>
+ * Used only once in the command class hierarchy.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD })
