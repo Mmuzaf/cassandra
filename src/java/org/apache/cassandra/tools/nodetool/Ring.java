@@ -17,11 +17,6 @@
  */
 package org.apache.cassandra.tools.nodetool;
 
-import static java.lang.String.format;
-import io.airlift.airline.Arguments;
-import io.airlift.airline.Command;
-import io.airlift.airline.Option;
-
 import java.io.PrintStream;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
@@ -33,21 +28,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.common.collect.LinkedHashMultimap;
+
 import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
 import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.NodeTool;
-import org.apache.cassandra.tools.NodeTool.NodeToolCmd;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-import com.google.common.collect.LinkedHashMultimap;
+import static java.lang.String.format;
 
 @Command(name = "ring", description = "Print information about the token ring")
-public class Ring extends NodeToolCmd
+public class Ring extends WithPortDisplayAbstractCommand
 {
-    @Arguments(description = "Specify a keyspace for accurate ownership information (topology awareness)")
-    private String keyspace = null;
+    @Parameters(description = "Specify a keyspace for accurate ownership information (topology awareness)", index = "0", arity = "0..1")
+    public String keyspace = null;
 
-    @Option(title = "resolve_ip", name = {"-r", "--resolve-ip"}, description = "Show node domain names instead of IPs")
-    private boolean resolveIp = false;
+    @Option(paramLabel = "resolve_ip", names = { "-r", "--resolve-ip" }, description = "Show node domain names instead of IPs")
+    public boolean resolveIp = false;
 
     private PrintStream out;
     private EndpointSnitchInfoMBean epSnitchInfo;

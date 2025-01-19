@@ -54,7 +54,13 @@ public abstract class AbstractCommand implements Runnable
     @Override
     public void run()
     {
+        init();
         execute(probe);
+    }
+
+    protected void init()
+    {
+        // no-op
     }
 
     protected abstract void execute(NodeProbe probe);

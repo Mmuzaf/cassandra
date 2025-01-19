@@ -85,8 +85,10 @@ public class Import extends AbstractCommand
             description = "Run an extended verify, verifying all values in the new sstables")
     public boolean extendedVerify = false;
 
+    // The previous option -p collides with the --port in the JMX, so we need to alter it to -cd.
+    // It is safe to alter the name since the option is not used by users as it doesn't work.
     @Option(paramLabel = "copy_data",
-            names = { "-p", "--copy-data" },
+            names = { "-cd", "--copy-data" },
             description = "Copy data from source directories instead of moving them")
     public boolean copyData = false;
 

@@ -63,7 +63,7 @@ public class DescribeClusterMockTest extends AbstractNodetoolMock
         when(ssMock.getKeyspaceReplicationInfo(keyspace())).thenReturn("{'class':'SimpleStrategy', 'replication_factor':1}");
         when(spMock.getSchemaVersionsWithPort()).thenReturn(Map.of("proxy1", List.of("1.0", "2.0")));
 
-        ToolRunner.ToolResult result = invokeNodetool("describecluster", "--print-port");
+        ToolRunner.ToolResult result = invokeNodetool("--print-port", "describecluster");
         result.assertOnCleanExit();
 
         assertThat(result.getStdout()).contains("cql_test_keyspace -> Replication class: {'class':'SimpleStrategy', 'replication_factor':1}");
