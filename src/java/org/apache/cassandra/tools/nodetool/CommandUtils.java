@@ -64,14 +64,18 @@ public final class CommandUtils
     public static Pair<String, String> findCassandraBackwardCompatibleArgument(Object userObject)
     {
         Class<?> clazz = userObject.getClass();
-        for (Field field : clazz.getDeclaredFields())
+        do
         {
-            if (field.isAnnotationPresent(CassandraUsage.class))
+            for (Field field : clazz.getDeclaredFields())
             {
-                CassandraUsage ann = field.getAnnotation(CassandraUsage.class);
-                return Pair.create(ann.usage(), ann.description());
+                if (field.isAnnotationPresent(CassandraUsage.class))
+                {
+                    CassandraUsage ann = field.getAnnotation(CassandraUsage.class);
+                    return Pair.create(ann.usage(), ann.description());
+                }
             }
         }
+        while ((clazz = clazz.getSuperclass()) != null);
         return null;
     }
 
@@ -96,9 +100,24 @@ public final class CommandUtils
         return concat(ofNullable(first), (second == null ? Stream.empty() : Arrays.stream(second))).collect(Collectors.toList());
     }
 
+    public static List<String> concatArgs(String first, List<String> second)
+    {
+        return concat(ofNullable(first), (second == null ? Stream.empty() : second.stream())).collect(Collectors.toList());
+    }
+
     public static List<String> concatArgs(String first, String second, String[] third)
     {
         return concat(ofNullable(first), concatArgs(second, third).stream()).collect(Collectors.toList());
+    }
+
+    public static List<String> concatArgs(String first, String second, List<String> third)
+    {
+        return concat(ofNullable(first), concatArgs(second, third).stream()).collect(Collectors.toList());
+    }
+
+    public static List<String> concatArgs(String first, String second, String third, String[] fourth)
+    {
+        return concat(ofNullable(first), concatArgs(second, third, fourth).stream()).collect(Collectors.toList());
     }
 
     public static void printSet(PrintStream out, String colName, Set<String> values)

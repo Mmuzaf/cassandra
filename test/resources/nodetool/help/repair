@@ -7,8 +7,9 @@ SYNOPSIS
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] repair
                 [(-dc <specific_dc> | --in-dc <specific_dc>)...]
-                [(-dcpar | --dc-parallel)] [(-et <end_token> | --end-token <end_token>)]
-                [(-force | --force)] [(-full | --full)]
+                [(-dcpar | --dc-parallel)]
+                [(-et <end_token> | --end-token <end_token>)] [(-force | --force)]
+                [(-full | --full)]
                 [(-hosts <specific_host> | --in-hosts <specific_host>)...]
                 [--include-gcgs-expired-tombstones]
                 [(-iuk | --ignore-unreplicated-keyspaces)]
@@ -101,8 +102,8 @@ OPTIONS
             (exclusive)
 
         -tr, --trace
-            Use -tr to trace the repair. Traces are logged to
-            system_traces.events.
+            Use -tr to trace the repair. Traces are logged to system_traces.
+            events.
 
         -u <username>, --username <username>
             Remote jmx agent username

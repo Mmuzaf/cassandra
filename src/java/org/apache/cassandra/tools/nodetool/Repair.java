@@ -17,13 +17,6 @@
  */
 package org.apache.cassandra.tools.nodetool;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
-import io.airlift.airline.Arguments;
-import io.airlift.airline.Cli;
-import io.airlift.airline.Command;
-import io.airlift.airline.Option;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,84 +25,100 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import com.google.common.collect.Sets;
-
-import org.apache.cassandra.schema.SchemaConstants;
-import org.apache.cassandra.streaming.PreviewKind;
-import org.apache.cassandra.repair.RepairParallelism;
-import org.apache.cassandra.repair.messages.RepairOption;
-import org.apache.cassandra.tools.NodeProbe;
-import org.apache.cassandra.tools.NodeTool.NodeToolCmd;
 import org.apache.commons.lang3.StringUtils;
 
+import org.apache.cassandra.repair.RepairParallelism;
+import org.apache.cassandra.repair.messages.RepairOption;
+import org.apache.cassandra.schema.SchemaConstants;
+import org.apache.cassandra.streaming.PreviewKind;
+import org.apache.cassandra.tools.NodeProbe;
+import org.apache.cassandra.tools.NodeTool;
+import org.apache.cassandra.tools.nodetool.layout.CassandraUsage;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
+
+import static com.google.common.collect.Lists.newArrayList;
+import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.parseOptionalKeyspace;
+import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.parseOptionalTables;
+import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
+
 @Command(name = "repair", description = "Repair one or more tables")
-public class Repair extends NodeToolCmd
+public class Repair extends AbstractCommand
 {
     public final static Set<String> ONLY_EXPLICITLY_REPAIRED = Sets.newHashSet(SchemaConstants.DISTRIBUTED_KEYSPACE_NAME);
 
-    @Arguments(usage = "[<keyspace> <tables>...]", description = "The keyspace followed by one or many tables")
-    private List<String> args = new ArrayList<>();
+    @CassandraUsage(usage = "[<keyspace> <tables>...]", description = "The keyspace followed by one or many tables")
+    public List<String> args = new ArrayList<>();
+    
+    @Parameters(index = "0", description = "The keyspace followed by one or many tables", arity = "0..1")
+    public String keyspace;
 
-    @Option(title = "seqential", name = {"-seq", "--sequential"}, description = "Use -seq to carry out a sequential repair")
-    private boolean sequential = false;
+    @Parameters(index = "1..*", description = "Tables to repair", arity = "0..1")
+    public String[] tables;
 
-    @Option(title = "dc parallel", name = {"-dcpar", "--dc-parallel"}, description = "Use -dcpar to repair data centers in parallel.")
-    private boolean dcParallel = false;
+    @Option(paramLabel = "seqential", names = { "-seq", "--sequential" }, description = "Use -seq to carry out a sequential repair")
+    public boolean sequential = false;
 
-    @Option(title = "local_dc", name = {"-local", "--in-local-dc"}, description = "Use -local to only repair against nodes in the same datacenter")
-    private boolean localDC = false;
+    @Option(paramLabel = "dc_parallel", names = { "-dcpar", "--dc-parallel" }, description = "Use -dcpar to repair data centers in parallel.")
+    public boolean dcParallel = false;
 
-    @Option(title = "specific_dc", name = {"-dc", "--in-dc"}, description = "Use -dc to repair specific datacenters")
-    private List<String> specificDataCenters = new ArrayList<>();;
+    @Option(paramLabel = "local_dc", names = { "-local", "--in-local-dc" }, description = "Use -local to only repair against nodes in the same datacenter")
+    public boolean localDC = false;
 
-    @Option(title = "specific_host", name = {"-hosts", "--in-hosts"}, description = "Use -hosts to repair specific hosts")
-    private List<String> specificHosts = new ArrayList<>();
+    @Option(paramLabel = "specific_dc", names = { "-dc", "--in-dc" }, description = "Use -dc to repair specific datacenters")
+    public List<String> specificDataCenters = new ArrayList<>();
 
-    @Option(title = "start_token", name = {"-st", "--start-token"}, description = "Use -st to specify a token at which the repair range starts (exclusive)")
-    private String startToken = EMPTY;
+    @Option(paramLabel = "specific_host", names = { "-hosts", "--in-hosts" }, description = "Use -hosts to repair specific hosts")
+    public List<String> specificHosts = new ArrayList<>();
 
-    @Option(title = "end_token", name = {"-et", "--end-token"}, description = "Use -et to specify a token at which repair range ends (inclusive)")
-    private String endToken = EMPTY;
+    @Option(paramLabel = "start_token", names = { "-st", "--start-token" }, description = "Use -st to specify a token at which the repair range starts (exclusive)")
+    public String startToken = EMPTY;
 
-    @Option(title = "primary_range", name = {"-pr", "--partitioner-range"}, description = "Use -pr to repair only the first range returned by the partitioner")
-    private boolean primaryRange = false;
+    @Option(paramLabel = "end_token", names = { "-et", "--end-token" }, description = "Use -et to specify a token at which repair range ends (inclusive)")
+    public String endToken = EMPTY;
 
-    @Option(title = "full", name = {"-full", "--full"}, description = "Use -full to issue a full repair.")
-    private boolean fullRepair = false;
+    @Option(paramLabel = "primary_range", names = { "-pr", "--partitioner-range" }, description = "Use -pr to repair only the first range returned by the partitioner")
+    public boolean primaryRange = false;
 
-    @Option(title = "force", name = {"-force", "--force"}, description = "Use -force to filter out down endpoints")
-    private boolean force = false;
+    @Option(paramLabel = "full", names = { "-full", "--full" }, description = "Use -full to issue a full repair.")
+    public boolean fullRepair = false;
 
-    @Option(title = "preview", name = {"-prv", "--preview"}, description = "Determine ranges and amount of data to be streamed, but don't actually perform repair")
-    private boolean preview = false;
+    @Option(paramLabel = "force", names = { "-force", "--force" }, description = "Use -force to filter out down endpoints")
+    public boolean force = false;
 
-    @Option(title = "validate", name = {"-vd", "--validate"}, description = "Checks that repaired data is in sync between nodes. Out of sync repaired data indicates a full repair should be run.")
-    private boolean validate = false;
+    @Option(paramLabel = "preview", names = { "-prv", "--preview" }, description = "Determine ranges and amount of data to be streamed, but don't actually perform repair")
+    public boolean preview = false;
 
-    @Option(title = "job_threads", name = {"-j", "--job-threads"}, description = "Number of threads to run repair jobs. " +
-                                                                                 "Usually this means number of CFs to repair concurrently. " +
-                                                                                 "WARNING: increasing this puts more load on repairing nodes, so be careful. (default: 1, max: 4)")
-    private int numJobThreads = 1;
+    @Option(paramLabel = "validate", names = { "-vd", "--validate" }, description = "Checks that repaired data is in sync between nodes. Out of sync repaired data indicates a full repair should be run.")
+    public boolean validate = false;
 
-    @Option(title = "trace_repair", name = {"-tr", "--trace"}, description = "Use -tr to trace the repair. Traces are logged to system_traces.events.")
-    private boolean trace = false;
+    @Option(paramLabel = "job_threads", names = { "-j", "--job-threads" }, description = "Number of threads to run repair jobs. " +
+                                                                                         "Usually this means number of CFs to repair concurrently. " +
+                                                                                         "WARNING: increasing this puts more load on repairing nodes, so be careful. (default: 1, max: 4)")
+    public int numJobThreads = 1;
 
-    @Option(title = "pull_repair", name = {"-pl", "--pull"}, description = "Use --pull to perform a one way repair where data is only streamed from a remote node to this node.")
-    private boolean pullRepair = false;
+    @Option(paramLabel = "trace_repair", names = { "-tr", "--trace" }, description = "Use -tr to trace the repair. Traces are logged to system_traces.events.")
+    public boolean trace = false;
 
-    @Option(title = "optimise_streams", name = {"-os", "--optimise-streams"}, description = "Use --optimise-streams to try to reduce the number of streams we do (EXPERIMENTAL, see CASSANDRA-3200).")
-    private boolean optimiseStreams = false;
+    @Option(paramLabel = "pull_repair", names = { "-pl", "--pull" }, description = "Use --pull to perform a one way repair where data is only streamed from a remote node to this node.")
+    public boolean pullRepair = false;
 
-    @Option(title = "skip-paxos", name = {"-skip-paxos", "--skip-paxos"}, description = "If the --skip-paxos flag is included, the paxos repair step is skipped. Paxos repair is also skipped for preview repairs.")
-    private boolean skipPaxos = false;
+    @Option(paramLabel = "optimise_streams", names = { "-os", "--optimise-streams" }, description = "Use --optimise-streams to try to reduce the number of streams we do (EXPERIMENTAL, see CASSANDRA-3200).")
+    public boolean optimiseStreams = false;
 
-    @Option(title = "paxos-only", name = {"-paxos-only", "--paxos-only"}, description = "If the --paxos-only flag is included, no table data is repaired, only paxos operations..")
-    private boolean paxosOnly = false;
+    @Option(paramLabel = "skip-paxos", names = { "-skip-paxos", "--skip-paxos" }, description = "If the --skip-paxos flag is included, the paxos repair step is skipped. Paxos repair is also skipped for preview repairs.")
+    public boolean skipPaxos = false;
 
-    @Option(title = "ignore_unreplicated_keyspaces", name = {"-iuk","--ignore-unreplicated-keyspaces"}, description = "Use --ignore-unreplicated-keyspaces to ignore keyspaces which are not replicated, otherwise the repair will fail")
-    private boolean ignoreUnreplicatedKeyspaces = false;
+    @Option(paramLabel = "paxos-only", names = { "-paxos-only", "--paxos-only" }, description = "If the --paxos-only flag is included, no table data is repaired, only paxos operations..")
+    public boolean paxosOnly = false;
 
-    @Option(title = "no_purge", name = {"--include-gcgs-expired-tombstones"}, description = "Do not apply gc grace seconds to purge any tombstones.  Only useful in rare recovery scenarios, never regular operations.")
-    private boolean dontPurgeTombstones = false;
+    @Option(paramLabel = "ignore_unreplicated_keyspaces", names = { "-iuk", "--ignore-unreplicated-keyspaces" }, description = "Use --ignore-unreplicated-keyspaces to ignore keyspaces which are not replicated, otherwise the repair will fail")
+    public boolean ignoreUnreplicatedKeyspaces = false;
+
+    @Option(paramLabel = "no_purge", names = { "--include-gcgs-expired-tombstones" }, description = "Do not apply gc grace seconds to purge any tombstones. Only useful in rare recovery scenarios, never regular operations.")
+    public boolean dontPurgeTombstones = false;
 
     private PreviewKind getPreviewKind()
     {
@@ -134,7 +143,9 @@ public class Repair extends NodeToolCmd
     @Override
     public void execute(NodeProbe probe)
     {
-        List<String> keyspaces = parseOptionalKeyspace(args, probe, KeyspaceSet.NON_LOCAL_STRATEGY);
+        args = concatArgs(keyspace, tables);
+        
+        List<String> keyspaces = parseOptionalKeyspace(args, probe, NodeTool.NodeToolCmd.KeyspaceSet.NON_LOCAL_STRATEGY);
         String[] cfnames = parseOptionalTables(args);
 
         if (primaryRange && (!specificDataCenters.isEmpty() || !specificHosts.isEmpty()))
@@ -157,18 +168,7 @@ public class Repair extends NodeToolCmd
         }
     }
 
-    public static Map<String, String> parseOptionMap(Supplier<String> localDCOption, List<String> args)
-    {
-        List<String> realArgs = new ArrayList<>(args.size() + 1);
-        realArgs.add("repair");
-        realArgs.addAll(args);
-        Cli<Object> parser = Cli.builder("fortesting").withCommand(Repair.class).build();
-        Repair repair = (Repair) parser.parse(realArgs);
-        String[] cfnames = repair.parseOptionalTables(repair.args);
-        return repair.createOptions(localDCOption, cfnames);
-    }
-
-    private Map<String, String> createOptions(Supplier<String> localDCOption, String[] cfnames)
+    public Map<String, String> createOptions(Supplier<String> localDCOption, String[] cfnames)
     {
         Map<String, String> options = new HashMap<>();
         RepairParallelism parallelismDegree = RepairParallelism.PARALLEL;
