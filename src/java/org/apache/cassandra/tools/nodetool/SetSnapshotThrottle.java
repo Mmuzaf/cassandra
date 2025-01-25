@@ -17,16 +17,15 @@
  */
 package org.apache.cassandra.tools.nodetool;
 
-import io.airlift.airline.Arguments;
-import io.airlift.airline.Command;
 import org.apache.cassandra.tools.NodeProbe;
-import org.apache.cassandra.tools.NodeTool.NodeToolCmd;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Parameters;
 
 @Command(name = "setsnapshotthrottle", description = "Set the snapshot_links_per_second cap for snapshot and clearsnapshot throttling")
-public class SetSnapshotThrottle extends NodeToolCmd
+public class SetSnapshotThrottle extends AbstractCommand
 {
-    @Arguments(title = "setsnapshotthrottle", usage = "<throttle>", description = "Value represents hardlinks per second ( snapshot_links_per_second ) , 0 to disable throttling", required = true)
-    private Long snapshotThrottle = null;
+    @Parameters(paramLabel = "throttle", description = "Value represents hardlinks per second ( snapshot_links_per_second ) , 0 to disable throttling", arity = "1")
+    public Long snapshotThrottle = null;
 
     @Override
     public void execute(NodeProbe probe)

@@ -6,8 +6,8 @@ SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] setconcurrentviewbuilders [--]
-                <value>
+                [(-u <username> | --username <username>)] setconcurrentviewbuilders
+                [--] <concurrent_view_builders>
 
 OPTIONS
         -h <host>, --host <host>
@@ -33,5 +33,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        <value>
+        <concurrent_view_builders>
             Number of concurrent view builders, greater than 0.

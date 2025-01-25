@@ -7,8 +7,8 @@ SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] setbatchlogreplaythrottle [--]
-                <value_in_kb_per_sec>
+                [(-u <username> | --username <username>)] setbatchlogreplaythrottle
+                [--] <batchlog_replay_throttle>
 
 OPTIONS
         -h <host>, --host <host>
@@ -34,5 +34,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        <value_in_kb_per_sec>
+        <batchlog_replay_throttle>
             Value in KiB per second, 0 to disable throttling

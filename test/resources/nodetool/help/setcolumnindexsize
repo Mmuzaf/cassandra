@@ -1,13 +1,13 @@
 NAME
-        nodetool setcolumnindexsize - Set the granularity of the collation index
-        of rows within a partition in KiB
+        nodetool setcolumnindexsize - Set the granularity of the collation
+        index of rows within a partition in KiB
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] setcolumnindexsize [--]
-                <value_in_kib>
+                <column_index_size>
 
 OPTIONS
         -h <host>, --host <host>
@@ -33,5 +33,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        <value_in_kib>
+        <column_index_size>
             Value in KiB
