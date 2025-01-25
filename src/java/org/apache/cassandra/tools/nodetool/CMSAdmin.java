@@ -50,7 +50,10 @@ public class CMSAdmin extends AbstractCommand
     @Override
     protected void execute(NodeProbe probe)
     {
-        new DescribeCMS().execute(probe);
+        AbstractCommand cmd = new DescribeCMS();
+        cmd.probe(probe);
+        cmd.logger(logger);
+        cmd.run();
     }
 
     @Command(name = "describe", description = "Describe the current Cluster Metadata Service")

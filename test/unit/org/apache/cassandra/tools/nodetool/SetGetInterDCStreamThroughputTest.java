@@ -53,7 +53,7 @@ public class SetGetInterDCStreamThroughputTest extends CQLTester
     @Test
     public void testNull()
     {
-        assertSetInvalidThroughput(null, "Required parameters are missing: inter_dc_stream_throughput");
+        assertSetInvalidThroughput(null, "nodetool: Missing required parameter: 'inter_dc_stream_throughput'");
     }
 
     @Test
@@ -101,8 +101,8 @@ public class SetGetInterDCStreamThroughputTest extends CQLTester
     @Test
     public void testUnparseable()
     {
-        assertSetInvalidThroughput("1.2", "inter_dc_stream_throughput: can not convert \"1.2\" to a int");
-        assertSetInvalidThroughput("value", "inter_dc_stream_throughput: can not convert \"value\" to a int");
+        assertSetInvalidThroughput("1.2", "Invalid value for positional parameter at index 0 (inter_dc_stream_throughput): '1.2' is not an int");
+        assertSetInvalidThroughput("value", "Invalid value for positional parameter at index 0 (inter_dc_stream_throughput): 'value' is not an int");
         assertSetGetMoreFlagsIsInvalid();
         assertDFlagNeeded();
     }

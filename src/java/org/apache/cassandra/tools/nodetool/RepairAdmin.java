@@ -57,7 +57,10 @@ public class RepairAdmin extends AbstractCommand
     @Override
     protected void execute(NodeProbe probe)
     {
-        new ListCmd().execute(probe);
+        AbstractCommand cmd = new ListCmd();
+        cmd.probe(probe);
+        cmd.logger(logger);
+        cmd.run();
     }
 
     @Command(name = "list", description = "list repair sessions")
