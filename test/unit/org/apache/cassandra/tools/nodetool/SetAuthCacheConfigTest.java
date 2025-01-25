@@ -50,12 +50,12 @@ public class SetAuthCacheConfigTest extends CQLTester
     {
         ToolRunner.ToolResult tool = ToolRunner.invokeNodetool("setauthcacheconfig");
         assertThat(tool.getExitCode()).isEqualTo(1);
-        assertThat(tool.getStdout()).isEqualTo(wrapByDefaultNodetoolMessage("Required option '--cache-name' is missing"));
+        assertThat(tool.getStdout()).isEqualTo(wrapByDefaultNodetoolMessage("Missing required option: '--cache-name=cache-name'"));
         assertThat(tool.getCleanedStderr()).isEmpty();
 
         tool = ToolRunner.invokeNodetool("setauthcacheconfig", "--cache-name");
         assertThat(tool.getExitCode()).isEqualTo(1);
-        assertThat(tool.getStdout()).isEqualTo(wrapByDefaultNodetoolMessage("Required values for option 'cache-name' not provided"));
+        assertThat(tool.getStdout()).isEqualTo(wrapByDefaultNodetoolMessage("Missing required parameter for option '--cache-name' (cache-name)"));
         assertThat(tool.getCleanedStderr()).isEmpty();
 
         tool = ToolRunner.invokeNodetool("setauthcacheconfig", "--cache-name", "wrong", "--validity-period", "1");

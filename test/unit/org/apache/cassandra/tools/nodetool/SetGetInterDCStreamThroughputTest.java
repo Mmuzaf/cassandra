@@ -180,7 +180,7 @@ public class SetGetInterDCStreamThroughputTest extends CQLTester
     {
         ToolResult tool = invokeNodetool("setinterdcstreamthroughput", "-m", "5", "-e", "5");
         assertThat(tool.getExitCode()).isEqualTo(1);
-        assertThat(tool.getStdout()).contains("You cannot use -e and -m at the same time");
+        assertThat(tool.getStdout()).contains("Found unexpected parameters: [setinterdcstreamthroughput, -m, 5, -e, 5]");
 
         tool = invokeNodetool("getinterdcstreamthroughput", "-m", "-e");
         assertThat(tool.getExitCode()).isEqualTo(1);
