@@ -3,34 +3,37 @@ NAME
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
-                [(-u <username> | --username <username>)]
+                [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-pw <password> | --password <password>)] [(-pp | --print-port)] cms
+                [(-u <username> | --username <username>)] cms <command> [<args>]
+
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
-                [(-u <username> | --username <username>)]
+                [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-pw <password> | --password <password>)] [(-pp | --print-port)] cms
-                describe
+                [(-u <username> | --username <username>)] cms describe
+
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
-                [(-u <username> | --username <username>)]
+                [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-pw <password> | --password <password>)] [(-pp | --print-port)] cms
-                initialize [(-i <ignored endpoints> | --ignore <ignored endpoints>)...]
+                [(-u <username> | --username <username>)] cms initialize
+                [(-i <ignored_endpoints> | --ignore <ignored_endpoints>)...]
+
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
-                [(-u <username> | --username <username>)]
+                [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-pw <password> | --password <password>)] [(-pp | --print-port)] cms
-                reconfigure [(-c | --cancel)] [--status] [(-r | --resume)]
+                [(-u <username> | --username <username>)] cms reconfigure
+                [(-c | --cancel)] [(-r | --resume)] [--status] [--] [<replication
+                factor>] or <datacenter>:<replication_factor> ...
+
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
-                [(-u <username> | --username <username>)]
+                [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-pw <password> | --password <password>)] [(-pp | --print-port)] cms
-                snapshot
+                [(-u <username> | --username <username>)] cms snapshot
+
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
-                [(-u <username> | --username <username>)]
+                [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-pw <password> | --password <password>)] [(-pp | --print-port)] cms
-                unregister
+                [(-u <username> | --username <username>)] cms unregister [--] <nodeId>
 
 OPTIONS
         -h <host>, --host <host>
@@ -52,29 +55,25 @@ OPTIONS
             Remote jmx agent username
 
 COMMANDS
-        With no arguments, Describe the current Cluster Metadata Service
+        With no arguments, Display help information
 
         describe
             Describe the current Cluster Metadata Service
-
         initialize
             Upgrade from gossip and initialize CMS
 
             With --ignore option, Hosts to ignore due to them being down
-
         reconfigure
             Reconfigure replication factor of CMS
 
+            With --status option, Poll status of the reconfigure command. All other
+            flags and arguments are ignored when this one is used.
+
+            With --resume option, Whether or not a previously interrupted sequence
+            should be resumed
+
             With --cancel option, Cancels any in progress CMS reconfiguration
-
-            With --status option, Poll status of the reconfigure command. All
-            other flags and arguments are ignored when this one is used.
-
-            With --resume option, Whether or not a previously interrupted
-            sequence should be resumed
-
         snapshot
             Request a checkpointing snapshot of cluster metadata
-
         unregister
             Unregister nodes in LEFT state

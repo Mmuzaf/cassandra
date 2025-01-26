@@ -6,13 +6,13 @@ SYNOPSIS
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] cms initialize
-                [(-i <ignored endpoints> | --ignore <ignored endpoints>)...]
+                [(-i <ignored_endpoints> | --ignore <ignored_endpoints>)...]
 
 OPTIONS
         -h <host>, --host <host>
             Node hostname or ip address
 
-        -i <ignored endpoints>, --ignore <ignored endpoints>
+        -i <ignored_endpoints>, --ignore <ignored_endpoints>
             Hosts to ignore due to them being down
 
         -p <port>, --port <port>

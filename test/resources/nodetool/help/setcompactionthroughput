@@ -7,7 +7,7 @@ SYNOPSIS
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] setcompactionthroughput [--]
-                <value_in_mb>
+                <compaction_throughput>
 
 OPTIONS
         -h <host>, --host <host>
@@ -33,5 +33,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        <value_in_mb>
+        <compaction_throughput>
             Value in MiB, 0 to disable throttling

@@ -38,6 +38,7 @@ import static org.junit.Assert.assertEquals;
  *
  * @see org.apache.cassandra.tools.nodetool.Flush
  * @see org.apache.cassandra.tools.nodetool.Info
+ * @see org.apache.cassandra.tools.nodetool.SetCacheCapacity
  */
 public class NodeToolTest extends TestBaseImpl
 {

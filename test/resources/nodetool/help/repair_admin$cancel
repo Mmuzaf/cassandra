@@ -1,6 +1,6 @@
 NAME
-        nodetool repair_admin cancel - cancel an incremental repair session. Use
-        --force to cancel from a node other than the repair coordinator
+        nodetool repair_admin cancel - cancel an incremental repair session.
+        Use --force to cancel from a node other than the repair coordinator
         Attempting to cancel FINALIZED or FAILED sessions is an error.
 
 SYNOPSIS
@@ -8,7 +8,7 @@ SYNOPSIS
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] repair_admin cancel
-                [(-f | --force)] (-s <session> | --session <session>)
+                [(-f | --force)] [(-s <session> | --session <session>)]
 
 OPTIONS
         -f, --force

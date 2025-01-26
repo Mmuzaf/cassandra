@@ -109,43 +109,7 @@ public class NodeTool
         List<Class<? extends NodeToolCmdRunnable>> commands = newArrayList(
                 CassHelp.class,
                 Scrub.class,
-                SetAuthCacheConfig.class,
-                SetBatchlogReplayThrottle.class,
-                SetCacheCapacity.class,
-                SetCacheKeysToSave.class,
-                SetColumnIndexSize.class,
-                SetCompactionThreshold.class,
-                SetCompactionThroughput.class,
-                SetConcurrency.class,
-                SetConcurrentCompactors.class,
-                SetConcurrentViewBuilders.class,
-                SetDefaultKeyspaceRF.class,
-                SetHintedHandoffThrottleInKB.class,
-                SetInterDCStreamThroughput.class,
-                SetLoggingLevel.class,
-                SetMaxHintWindow.class,
-                SetSnapshotThrottle.class,
-                SetStreamThroughput.class,
-                SetTimeout.class,
-                SetTraceProbability.class,
-                Sjk.class,
-                Snapshot.class,
-                Status.class,
-                StatusAutoCompaction.class,
-                StatusBackup.class,
-                StatusBinary.class,
-                StatusGossip.class,
-                StatusHandoff.class,
-                Stop.class,
-                StopDaemon.class,
-                TableHistograms.class,
-                TableStats.class,
-                TpStats.class,
-                TruncateHints.class,
-                UpdateCIDRGroup.class,
-                UpgradeSSTable.class,
-                Verify.class,
-                ViewBuildStatus.class
+                Sjk.class
         );
 
         Cli.CliBuilder<NodeToolCmdRunnable> builder = Cli.builder("nodetool");
@@ -153,24 +117,6 @@ public class NodeTool
         builder.withDescription("Manage your Cassandra cluster")
                  .withDefaultCommand(CassHelp.class)
                  .withCommands(commands);
-
-        builder.withGroup("repair_admin")
-               .withDescription("list and fail incremental repair sessions")
-               .withDefaultCommand(RepairAdmin.ListCmd.class)
-               .withCommand(RepairAdmin.ListCmd.class)
-               .withCommand(RepairAdmin.CancelCmd.class)
-               .withCommand(RepairAdmin.CleanupDataCmd.class)
-               .withCommand(RepairAdmin.SummarizePendingCmd.class)
-               .withCommand(RepairAdmin.SummarizeRepairedCmd.class);
-
-        builder.withGroup("cms")
-               .withDescription("Manage cluster metadata")
-               .withDefaultCommand(CMSAdmin.DescribeCMS.class)
-               .withCommand(CMSAdmin.DescribeCMS.class)
-               .withCommand(CMSAdmin.InitializeCMS.class)
-               .withCommand(CMSAdmin.ReconfigureCMS.class)
-               .withCommand(CMSAdmin.Snapshot.class)
-               .withCommand(CMSAdmin.Unregister.class);
 
         Cli<NodeToolCmdRunnable> parser = builder.build();
 

@@ -1,14 +1,15 @@
 NAME
         nodetool setinterdcstreamthroughput - Set the throughput cap for
-        inter-datacenter streaming and entire SSTable inter-datacenter streaming
-        in the system, or 0 to disable throttling
+        inter-datacenter streaming and entire SSTable inter-datacenter
+        streaming in the system, or 0 to disable throttling
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] setinterdcstreamthroughput
-                [(-e | --entire-sstable-throughput)] [(-m | --mib)] [--] <value_in_mb>
+                [(-e | --entire-sstable-throughput)] [(-m | --mib)] [--]
+                <inter_dc_stream_throughput>
 
 OPTIONS
         -e, --entire-sstable-throughput
@@ -40,5 +41,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        <value_in_mb>
+        <inter_dc_stream_throughput>
             Value in megabits, 0 to disable throttling
