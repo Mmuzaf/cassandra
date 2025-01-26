@@ -159,6 +159,7 @@ import static org.apache.cassandra.tools.nodetool.Help.printTopCommandUsage;
                          StatusHandoff.class,
                          Stop.class,
                          StopDaemon.class,
+                         Sjk.class,
                          TableHistograms.class,
                          TableStats.class,
                          TopPartitions.class,

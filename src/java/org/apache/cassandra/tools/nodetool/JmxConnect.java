@@ -149,8 +149,10 @@ public class JmxConnect extends AbstractCommand implements AutoCloseable
             CommandSpec lastParent = lastExecutableSubcommandWithSameParent(parseResult.asCommandLineList());
             if (lastParent.userObject() instanceof AbstractCommand)
             {
-                connect.run();
-                ((AbstractCommand) lastParent.userObject()).probe(connect.probe());
+                AbstractCommand command = (AbstractCommand) lastParent.userObject();
+                if (command.prepareAndConnect())
+                    connect.run();
+                command.probe(connect.probe());
             }
             return new RunLast().execute(parseResult);
         }

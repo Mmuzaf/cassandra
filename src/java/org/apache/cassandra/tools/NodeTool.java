@@ -108,8 +108,7 @@ public class NodeTool
     {
         List<Class<? extends NodeToolCmdRunnable>> commands = newArrayList(
                 CassHelp.class,
-                Scrub.class,
-                Sjk.class
+                Scrub.class
         );
 
         Cli.CliBuilder<NodeToolCmdRunnable> builder = Cli.builder("nodetool");
