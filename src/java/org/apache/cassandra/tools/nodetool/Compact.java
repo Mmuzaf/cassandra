@@ -30,6 +30,7 @@ import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.parseOptionalKeysp
 import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.parseOptionalTables;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
+// TODO CASSANDRA-xxxxx Types of input aguments shouldn't be mixed in the same command. The keyspace, table and SSTable file arguments should have their own commands.
 @Command(name = "compact", description = "Force a (major) compaction on one or more tables or user-defined compaction on given SSTables")
 public class Compact extends AbstractCommand
 {

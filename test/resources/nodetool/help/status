@@ -7,7 +7,7 @@ SYNOPSIS
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] status
                 [(-o <sort_order> | --order <sort_order>)] [(-r | --resolve-ip)]
-                [(-s <sort> | --sort <sort>)] [--] [<keyspace>]
+                [(-s <sort> | --sort <sort>)] [--] <keyspace>
 
 OPTIONS
         -h <host>, --host <host>
@@ -46,5 +46,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        [<keyspace>]
+        <keyspace>
             The keyspace name

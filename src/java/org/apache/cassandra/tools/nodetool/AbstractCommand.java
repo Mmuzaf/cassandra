@@ -51,6 +51,11 @@ public abstract class AbstractCommand implements Runnable
         return probe;
     }
 
+    public void logger(Output logger)
+    {
+        this.logger = logger;
+    }
+
     @Override
     public void run()
     {

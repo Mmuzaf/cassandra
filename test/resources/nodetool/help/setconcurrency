@@ -34,5 +34,5 @@ OPTIONS
             command-line options
 
         <stage-name> <maximum-concurrency> | <stage-name> <core-pool>
-        <maximum-concurrency>
+            <maximum-concurrency>
             Set concurrency for processing stage

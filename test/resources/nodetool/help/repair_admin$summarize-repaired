@@ -1,14 +1,15 @@
 NAME
         nodetool repair_admin summarize-repaired - return the most recent
-        repairedAt timestamp for the given token range (or all replicated ranges
-        if no tokens are provided)
+        repairedAt timestamp for the given token range (or all replicated
+        ranges if no tokens are provided)
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] repair_admin
-                summarize-repaired [(-et <end_token> | --end-token <end_token>)]
+                [(-u <username> | --username <username>)]
+                repair_admin summarize-repaired
+                [(-et <end_token> | --end-token <end_token>)]
                 [(-st <start_token> | --start-token <start_token>)] [(-v | --verbose)]
                 [--] [<keyspace> <tables>...]
 
