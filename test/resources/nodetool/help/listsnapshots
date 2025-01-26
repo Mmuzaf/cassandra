@@ -10,7 +10,9 @@ SYNOPSIS
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] listsnapshots
-                [(-e | --ephemeral)] [(-nt | --no-ttl)]
+                [(-e | --ephemeral)] [(-k <keyspace> | --keyspace <keyspace>)]
+                [(-n <snapshot> | --snapshot <snapshot>)] [(-nt | --no-ttl)]
+                [(-t <table> | --table <table>)]
 
 OPTIONS
         -e, --ephemeral
@@ -18,6 +20,12 @@ OPTIONS
 
         -h <host>, --host <host>
             Node hostname or ip address
+
+        -k <keyspace>, --keyspace <keyspace>
+            Include snapshots of specified keyspace name
+
+        -n <snapshot>, --snapshot <snapshot>
+            Include snapshots of specified name
 
         -nt, --no-ttl
             Skip snapshots with TTL
@@ -33,6 +41,9 @@ OPTIONS
 
         -pwf <passwordFilePath>, --password-file <passwordFilePath>
             Path to the JMX password file
+
+        -t <table>, --table <table>
+            Include snapshots of specified table name
 
         -u <username>, --username <username>
             Remote jmx agent username

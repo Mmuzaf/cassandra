@@ -6,7 +6,7 @@ SYNOPSIS
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] setauthcacheconfig
-                --cache-name <cache-name> [--disable-active-update]
+                [--cache-name <cache-name>] [--disable-active-update]
                 [--enable-active-update] [--max-entries <max-entries>]
                 [--update-interval <update-interval>]
                 [--validity-period <validity-period>]

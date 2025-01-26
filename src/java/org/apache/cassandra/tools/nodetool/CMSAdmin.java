@@ -23,11 +23,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.airlift.airline.Arguments;
-import io.airlift.airline.Command;
-import io.airlift.airline.Option;
 import org.apache.cassandra.tools.NodeProbe;
-import org.apache.cassandra.tools.NodeTool;
+import org.apache.cassandra.tools.nodetool.layout.CassandraUsage;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 import static org.apache.cassandra.tcm.CMSOperations.COMMITS_PAUSED;
 import static org.apache.cassandra.tcm.CMSOperations.EPOCH;
@@ -39,33 +39,48 @@ import static org.apache.cassandra.tcm.CMSOperations.NEEDS_RECONFIGURATION;
 import static org.apache.cassandra.tcm.CMSOperations.REPLICATION_FACTOR;
 import static org.apache.cassandra.tcm.CMSOperations.SERVICE_STATE;
 
-public abstract class CMSAdmin extends NodeTool.NodeToolCmd
+@Command(name = "cms", description = "Manage cluster metadata",
+         subcommands = { CMSAdmin.DescribeCMS.class,
+                         CMSAdmin.InitializeCMS.class,
+                         CMSAdmin.ReconfigureCMS.class,
+                         CMSAdmin.Snapshot.class,
+                         CMSAdmin.Unregister.class })
+public class CMSAdmin extends AbstractCommand
 {
+    @Override
+    protected void execute(NodeProbe probe)
+    {
+        AbstractCommand cmd = new DescribeCMS();
+        cmd.probe(probe);
+        cmd.logger(logger);
+        cmd.run();
+    }
+
     @Command(name = "describe", description = "Describe the current Cluster Metadata Service")
-    public static class DescribeCMS extends NodeTool.NodeToolCmd
+    public static class DescribeCMS extends AbstractCommand
     {
         @Override
         protected void execute(NodeProbe probe)
         {
             Map<String, String> info = probe.getCMSOperationsProxy().describeCMS();
-            output.out.printf("Cluster Metadata Service:%n");
-            output.out.printf("Members: %s%n", info.get(MEMBERS));
-            output.out.printf("Needs reconfiguration: %s%n", info.get(NEEDS_RECONFIGURATION));
-            output.out.printf("Is Member: %s%n", info.get(IS_MEMBER));
-            output.out.printf("Service State: %s%n", info.get(SERVICE_STATE));
-            output.out.printf("Is Migrating: %s%n", info.get(IS_MIGRATING));
-            output.out.printf("Epoch: %s%n", info.get(EPOCH));
-            output.out.printf("Local Pending Count: %s%n", info.get(LOCAL_PENDING));
-            output.out.printf("Commits Paused: %s%n", info.get(COMMITS_PAUSED));
-            output.out.printf("Replication factor: %s%n", info.get(REPLICATION_FACTOR));
+            logger.out.printf("Cluster Metadata Service:%n");
+            logger.out.printf("Members: %s%n", info.get(MEMBERS));
+            logger.out.printf("Needs reconfiguration: %s%n", info.get(NEEDS_RECONFIGURATION));
+            logger.out.printf("Is Member: %s%n", info.get(IS_MEMBER));
+            logger.out.printf("Service State: %s%n", info.get(SERVICE_STATE));
+            logger.out.printf("Is Migrating: %s%n", info.get(IS_MIGRATING));
+            logger.out.printf("Epoch: %s%n", info.get(EPOCH));
+            logger.out.printf("Local Pending Count: %s%n", info.get(LOCAL_PENDING));
+            logger.out.printf("Commits Paused: %s%n", info.get(COMMITS_PAUSED));
+            logger.out.printf("Replication factor: %s%n", info.get(REPLICATION_FACTOR));
         }
     }
 
     @Command(name = "initialize", description = "Upgrade from gossip and initialize CMS")
-    public static class InitializeCMS extends NodeTool.NodeToolCmd
+    public static class InitializeCMS extends AbstractCommand
     {
-        @Option(title = "ignored endpoints", name = { "-i", "--ignore"}, description = "Hosts to ignore due to them being down")
-        private List<String> endpoint = new ArrayList<>();
+        @Option(paramLabel = "ignored_endpoints", names = { "-i", "--ignore" }, description = "Hosts to ignore due to them being down")
+        public List<String> endpoint = new ArrayList<>();
 
         @Override
         protected void execute(NodeProbe probe)
@@ -75,25 +90,26 @@ public abstract class CMSAdmin extends NodeTool.NodeToolCmd
     }
 
     @Command(name = "reconfigure", description = "Reconfigure replication factor of CMS")
-    public static class ReconfigureCMS extends NodeTool.NodeToolCmd
+    public static class ReconfigureCMS extends AbstractCommand
     {
-        @Option(title = "status",
-        name = {"--status"},
-        description = "Poll status of the reconfigure command. All other flags and arguments are ignored when this one is used.")
-        private boolean status = false;
+        @Option(paramLabel = "status",
+                names = { "--status" },
+                description = "Poll status of the reconfigure command. All other flags and arguments are ignored when this one is used.")
+        public boolean status = false;
 
-        @Option(title = "resume",
-        name = {"-r", "--resume"},
-        description = "Whether or not a previously interrupted sequence should be resumed")
-        private boolean resume = false;
+        @Option(paramLabel = "resume",
+                names = { "-r", "--resume" },
+                description = "Whether or not a previously interrupted sequence should be resumed")
+        public boolean resume = false;
 
-        @Option(title = "cancel",
-        name = {"-c", "--cancel"},
-        description = "Cancels any in progress CMS reconfiguration")
-        private boolean cancel = false;
+        @Option(paramLabel = "cancel",
+                names = { "-c", "--cancel" },
+                description = "Cancels any in progress CMS reconfiguration")
+        public boolean cancel = false;
 
-        @Arguments(usage = "[<replication factor>] or <datacenter>:<replication_factor> ... ", description = "Replication factor of new CMS")
-        private List<String> args = new ArrayList<>();
+        @CassandraUsage(usage = "[<replication factor>] or <datacenter>:<replication_factor> ... ", description = "Replication factor of new CMS")
+        @Parameters(paramLabel = "replication_factor", description = "Replication factors of new CMS in format <replication factor> or <datacenter>:<replication_factor>")
+        public List<String> args = new ArrayList<>();
 
         @Override
         protected void execute(NodeProbe probe)
@@ -103,12 +119,12 @@ public abstract class CMSAdmin extends NodeTool.NodeToolCmd
                 Map<String, List<String>> status = probe.getCMSOperationsProxy().reconfigureCMSStatus();
                 if (status == null)
                 {
-                    output.out.println("No active reconfiguration");
+                    logger.out.println("No active reconfiguration");
                 }
                 else
                 {
                     for (Map.Entry<String, List<String>> e : status.entrySet())
-                        output.out.printf("%s: %s%n", e.getKey(), e.getValue());
+                        logger.out.printf("%s: %s%n", e.getKey(), e.getValue());
                 }
                 return;
             }
@@ -173,7 +189,7 @@ public abstract class CMSAdmin extends NodeTool.NodeToolCmd
     }
 
     @Command(name = "snapshot", description = "Request a checkpointing snapshot of cluster metadata")
-    public static class Snapshot extends NodeTool.NodeToolCmd
+    public static class Snapshot extends AbstractCommand
     {
         @Override
         public void execute(NodeProbe probe)
@@ -183,9 +199,9 @@ public abstract class CMSAdmin extends NodeTool.NodeToolCmd
     }
 
     @Command(name = "unregister", description = "Unregister nodes in LEFT state")
-    public static class Unregister extends NodeTool.NodeToolCmd
+    public static class Unregister extends AbstractCommand
     {
-        @Arguments(required = true, title = "Unregister nodes in LEFT state", description = "One or more nodeIds to unregister, they all need to be in LEFT state", usage = "<nodeId>+")
+        @Parameters(paramLabel = "nodeId", description = "One or more nodeIds to unregister, they all need to be in LEFT state", arity = "1..*")
         public List<String> nodeIds;
 
         @Override

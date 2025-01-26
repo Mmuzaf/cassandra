@@ -1,21 +1,20 @@
 NAME
-        nodetool snapshot - Take a snapshot of specified keyspaces or a snapshot
-        of the specified table
+        nodetool snapshot - Take a snapshot of specified keyspaces or a
+        snapshot of the specified table
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] snapshot
-                [(-cf <table> | --column-family <table> | --table <table>)]
-                [(-kt <ktlist> | --kt-list <ktlist> | -kc <ktlist> | --kc.list <ktlist>)]
-                [(-sf | --skip-flush)] [(-t <tag> | --tag <tag>)] [--ttl <ttl>] [--]
-                [<keyspaces...>]
+                [(-cf <table> | --column-family <table>)]
+                [(-kt <ktlist> | --kt-list <ktlist>)] [(-sf | --skip-flush)]
+                [(-t <tag> | --tag <tag>)] [--ttl <ttl>] [--] <keyspaces>
 
 OPTIONS
         -cf <table>, --column-family <table>, --table <table>
-            The table name (you must specify one and only one keyspace for using
-            this option)
+            The table name (you must specify one and only one keyspace for
+            using this option)
 
         -h <host>, --host <host>
             Node hostname or ip address
@@ -54,5 +53,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        [<keyspaces...>]
+        <keyspaces>
             List of keyspaces. By default, all keyspaces
