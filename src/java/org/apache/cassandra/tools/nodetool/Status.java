@@ -40,7 +40,6 @@ import org.apache.cassandra.io.util.FileUtils;
 import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.tools.NodeProbe;
-import org.apache.cassandra.tools.NodeTool;
 import org.apache.cassandra.tools.nodetool.formatter.TableBuilder;
 import org.apache.cassandra.utils.LocalizeString;
 import picocli.CommandLine.Command;
@@ -124,7 +123,7 @@ public class Status extends WithPortDisplayAbstractCommand
             throw ex;
         }
 
-        SortedMap<String, SetHostStatWithPort> dcs = NodeTool.getOwnershipByDcWithPort(probe, resolveIp, tokensToEndpoints, ownerships);
+        SortedMap<String, SetHostStatWithPort> dcs = CommandUtils.getOwnershipByDcWithPort(probe, resolveIp, tokensToEndpoints, ownerships);
 
         int nodesOfTokens = tokensToEndpoints.values().size();
 

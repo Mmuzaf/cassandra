@@ -62,8 +62,8 @@ public class Scrub extends NodeToolCmd
     @Override
     public void execute(NodeProbe probe)
     {
-        List<String> keyspaces = parseOptionalKeyspace(args, probe);
-        String[] tableNames = parseOptionalTables(args);
+        List<String> keyspaces = CommandUtils.parseOptionalKeyspace(args, probe);
+        String[] tableNames = CommandUtils.parseOptionalTables(args);
 
         for (String keyspace : keyspaces)
         {

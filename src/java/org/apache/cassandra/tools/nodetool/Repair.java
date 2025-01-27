@@ -32,16 +32,15 @@ import org.apache.cassandra.repair.messages.RepairOption;
 import org.apache.cassandra.schema.SchemaConstants;
 import org.apache.cassandra.streaming.PreviewKind;
 import org.apache.cassandra.tools.NodeProbe;
-import org.apache.cassandra.tools.NodeTool;
 import org.apache.cassandra.tools.nodetool.layout.CassandraUsage;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.parseOptionalKeyspace;
-import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.parseOptionalTables;
 import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
+import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalKeyspaceNonLocal;
+import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalTables;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 @Command(name = "repair", description = "Repair one or more tables")
@@ -145,7 +144,7 @@ public class Repair extends AbstractCommand
     {
         args = concatArgs(keyspace, tables);
         
-        List<String> keyspaces = parseOptionalKeyspace(args, probe, NodeTool.NodeToolCmd.KeyspaceSet.NON_LOCAL_STRATEGY);
+        List<String> keyspaces = parseOptionalKeyspaceNonLocal(args, probe);
         String[] cfnames = parseOptionalTables(args);
 
         if (primaryRange && (!specificDataCenters.isEmpty() || !specificHosts.isEmpty()))

@@ -27,7 +27,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.parsePartitionKeys;
+import static org.apache.cassandra.tools.nodetool.CommandUtils.parsePartitionKeys;
 import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
 
 @Command(name = "forcecompact", description = "Force a (major) compaction on a table")

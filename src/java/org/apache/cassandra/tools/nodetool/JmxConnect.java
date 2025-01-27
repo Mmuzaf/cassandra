@@ -18,11 +18,15 @@
 
 package org.apache.cassandra.tools.nodetool;
 
+import java.io.Console;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Scanner;
 import javax.inject.Inject;
 
 import com.google.common.base.Throwables;
 
+import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.tools.INodeProbeFactory;
 import org.apache.cassandra.tools.NodeProbe;
 import picocli.CommandLine.Command;
@@ -37,8 +41,6 @@ import picocli.CommandLine.RunLast;
 import picocli.CommandLine.Spec;
 
 import static java.lang.Integer.parseInt;
-import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.promptAndReadPassword;
-import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.readUserPasswordFromFile;
 import static org.apache.cassandra.tools.NodeToolV2.lastExecutableSubcommandWithSameParent;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
@@ -132,6 +134,46 @@ public class JmxConnect extends AbstractCommand implements AutoCloseable
     {
         if (probe != null)
             ((AutoCloseable) probe).close();
+    }
+
+    public static String readUserPasswordFromFile(String username, String passwordFilePath)
+    {
+        String password = EMPTY;
+
+        File passwordFile = new File(passwordFilePath);
+        try (Scanner scanner = new Scanner(passwordFile.toJavaIOFile()).useDelimiter("\\s+"))
+        {
+            while (scanner.hasNextLine())
+            {
+                if (scanner.hasNext())
+                {
+                    String jmxRole = scanner.next();
+                    if (jmxRole.equals(username) && scanner.hasNext())
+                    {
+                        password = scanner.next();
+                        break;
+                    }
+                }
+                scanner.nextLine();
+            }
+        }
+        catch (FileNotFoundException e)
+        {
+            throw new RuntimeException(e);
+        }
+
+        return password;
+    }
+
+    public static String promptAndReadPassword()
+    {
+        String password = EMPTY;
+
+        Console console = System.console();
+        if (console != null)
+            password = String.valueOf(console.readPassword("Password:"));
+
+        return password;
     }
 
     private static class JmxConnectionCommandInvoker implements IExecutionStrategy, AutoCloseable

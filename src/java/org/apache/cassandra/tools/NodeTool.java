@@ -17,20 +17,12 @@
  */
 package org.apache.cassandra.tools;
 
-import java.io.Console;
-import java.io.FileNotFoundException;
 import java.io.IOError;
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -39,7 +31,6 @@ import javax.management.InstanceNotFoundException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 
 import io.airlift.airline.Cli;
@@ -60,8 +51,8 @@ import io.airlift.airline.model.CommandMetadata;
 import io.airlift.airline.model.GlobalMetadata;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileWriter;
-import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
-import org.apache.cassandra.tools.nodetool.*;
+import org.apache.cassandra.tools.nodetool.JmxConnect;
+import org.apache.cassandra.tools.nodetool.Scrub;
 import org.apache.cassandra.tools.nodetool.layout.CassandraCliHelpLayout;
 import org.apache.cassandra.utils.FBUtilities;
 import picocli.CommandLine;
@@ -69,13 +60,11 @@ import picocli.CommandLine;
 import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.base.Throwables.getStackTraceAsString;
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.common.collect.Iterables.toArray;
 import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.Integer.parseInt;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 import static org.apache.cassandra.io.util.File.WriteMode.APPEND;
-import static org.apache.commons.lang3.ArrayUtils.EMPTY_STRING_ARRAY;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
@@ -324,10 +313,10 @@ public class NodeTool
         {
             if (isNotEmpty(username)) {
                 if (isNotEmpty(passwordFilePath))
-                    password = readUserPasswordFromFile(username, passwordFilePath);
+                    password = JmxConnect.readUserPasswordFromFile(username, passwordFilePath);
 
                 if (isEmpty(password))
-                    password = promptAndReadPassword();
+                    password = JmxConnect.promptAndReadPassword();
             }
 
             try (NodeProbe probe = connect())
@@ -341,46 +330,6 @@ public class NodeTool
                 throw new RuntimeException("Error while closing JMX connection", e);
             }
 
-        }
-
-        public static String readUserPasswordFromFile(String username, String passwordFilePath)
-        {
-            String password = EMPTY;
-
-            File passwordFile = new File(passwordFilePath);
-            try (Scanner scanner = new Scanner(passwordFile.toJavaIOFile()).useDelimiter("\\s+"))
-            {
-                while (scanner.hasNextLine())
-                {
-                    if (scanner.hasNext())
-                    {
-                        String jmxRole = scanner.next();
-                        if (jmxRole.equals(username) && scanner.hasNext())
-                        {
-                            password = scanner.next();
-                            break;
-                        }
-                    }
-                    scanner.nextLine();
-                }
-            }
-            catch (FileNotFoundException e)
-            {
-                throw new RuntimeException(e);
-            }
-
-            return password;
-        }
-
-        public static String promptAndReadPassword()
-        {
-            String password = EMPTY;
-
-            Console console = System.console();
-            if (console != null)
-                password = String.valueOf(console.readPassword("Password:"));
-
-            return password;
         }
 
         protected abstract void execute(NodeProbe probe);
@@ -406,76 +355,5 @@ public class NodeTool
 
             return nodeClient;
         }
-
-        public enum KeyspaceSet
-        {
-            ALL, NON_SYSTEM, NON_LOCAL_STRATEGY
-        }
-
-        public static List<String> parseOptionalKeyspace(List<String> cmdArgs, NodeProbe nodeProbe)
-        {
-            return parseOptionalKeyspace(cmdArgs, nodeProbe, KeyspaceSet.ALL);
-        }
-
-        public static List<String> parseOptionalKeyspace(List<String> cmdArgs, NodeProbe nodeProbe, KeyspaceSet defaultKeyspaceSet)
-        {
-            List<String> keyspaces = new ArrayList<>();
-
-
-            if (cmdArgs == null || cmdArgs.isEmpty())
-            {
-                if (defaultKeyspaceSet == KeyspaceSet.NON_LOCAL_STRATEGY)
-                    keyspaces.addAll(keyspaces = nodeProbe.getNonLocalStrategyKeyspaces());
-                else if (defaultKeyspaceSet == KeyspaceSet.NON_SYSTEM)
-                    keyspaces.addAll(keyspaces = nodeProbe.getNonSystemKeyspaces());
-                else
-                    keyspaces.addAll(nodeProbe.getKeyspaces());
-            }
-            else
-            {
-                keyspaces.add(cmdArgs.get(0));
-            }
-
-            for (String keyspace : keyspaces)
-            {
-                if (!nodeProbe.getKeyspaces().contains(keyspace))
-                    throw new IllegalArgumentException("Keyspace [" + keyspace + "] does not exist.");
-            }
-
-            return Collections.unmodifiableList(keyspaces);
-        }
-
-        public static String[] parseOptionalTables(List<String> cmdArgs)
-        {
-            return cmdArgs.size() <= 1 ? EMPTY_STRING_ARRAY : toArray(cmdArgs.subList(1, cmdArgs.size()), String.class);
-        }
-
-        public static String[] parsePartitionKeys(List<String> cmdArgs)
-        {
-            return cmdArgs.size() <= 2 ? EMPTY_STRING_ARRAY : toArray(cmdArgs.subList(2, cmdArgs.size()), String.class);
-        }
-    }
-
-    public static SortedMap<String, SetHostStatWithPort> getOwnershipByDcWithPort(NodeProbe probe, boolean resolveIp,
-                                                                  Map<String, String> tokenToEndpoint,
-                                                                  Map<String, Float> ownerships)
-    {
-        SortedMap<String, SetHostStatWithPort> ownershipByDc = Maps.newTreeMap();
-        EndpointSnitchInfoMBean epSnitchInfo = probe.getEndpointSnitchInfoProxy();
-        try
-        {
-            for (Entry<String, String> tokenAndEndPoint : tokenToEndpoint.entrySet())
-            {
-                String dc = epSnitchInfo.getDatacenter(tokenAndEndPoint.getValue());
-                if (!ownershipByDc.containsKey(dc))
-                    ownershipByDc.put(dc, new SetHostStatWithPort(resolveIp));
-                ownershipByDc.get(dc).add(tokenAndEndPoint.getKey(), tokenAndEndPoint.getValue(), ownerships);
-            }
-        }
-        catch (UnknownHostException e)
-        {
-            throw new RuntimeException(e);
-        }
-        return ownershipByDc;
     }
 }
