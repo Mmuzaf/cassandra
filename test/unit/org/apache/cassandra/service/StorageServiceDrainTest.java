@@ -100,7 +100,7 @@ public class StorageServiceDrainTest
         Executors.newSingleThreadExecutor().execute(() -> {
                 try
                 {
-                    ToolRunner.invokeNodetoolV1InJvm("drain").assertOnCleanExit();
+                    ToolRunner.invokeNodetoolInJvm("drain").assertOnCleanExit();
                 }
                 catch (final Exception exception)
                 {

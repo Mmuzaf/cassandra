@@ -42,7 +42,7 @@ import com.github.difflib.DiffUtils;
 import com.github.difflib.patch.AbstractDelta;
 import com.github.difflib.patch.Patch;
 import org.apache.cassandra.cql3.CQLTester;
-import org.apache.cassandra.tools.NodeToolV2;
+import org.apache.cassandra.tools.NodeTool;
 import org.apache.cassandra.tools.ToolRunner;
 
 import static org.junit.Assert.assertTrue;
@@ -53,11 +53,10 @@ public class NodetoolHelpCommandsOutputTest extends CQLTester
     // TODO Uncomment shell runner when migration is complete.
     private static final Map<String, ToolHandler> runnersMap = Map.of(
 //        "shell", ToolRunner::invokeNodetool,
-        "injvmv1", ToolRunner::invokeNodetoolV1InJvm,
-        "injvmv2", ToolRunner::invokeNodetoolV2InJvm);
+        "injvm", ToolRunner::invokeNodetoolInJvm);
 
     public static final String COMMAND_FULL_NAME_SEPARATOR = "$";
-    private static final List<String> COMMANDS = NodeToolV2.getCommandsWithoutRoot(COMMAND_FULL_NAME_SEPARATOR);
+    private static final List<String> COMMANDS = NodeTool.getCommandsWithoutRoot(COMMAND_FULL_NAME_SEPARATOR);
     private static final String NODETOOL_COMMAND_HELP_FILE_PATTERN = "nodetool/help/%s";
 
     private static final Pattern SPLIT_PATTERN = Pattern.compile('\\' + COMMAND_FULL_NAME_SEPARATOR);

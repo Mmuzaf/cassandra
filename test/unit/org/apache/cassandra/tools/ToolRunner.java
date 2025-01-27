@@ -204,12 +204,7 @@ public class ToolRunner
         return invoke(env, CQLTester.buildNodetoolArgs(args));
     }
 
-    public static ToolRunner.ToolResult invokeNodetoolV2InJvm(String... args)
-    {
-        return ToolRunner.invokeNodetoolInJvm(NodeToolV2::new, args);
-    }
-
-    public static ToolRunner.ToolResult invokeNodetoolV1InJvm(String... args)
+    public static ToolRunner.ToolResult invokeNodetoolInJvm(String... args)
     {
         return ToolRunner.invokeNodetoolInJvm(NodeTool::new, args);
     }
