@@ -692,7 +692,7 @@ public class CassandraCliHelpLayout extends CommandLine.Help
             Ansi.Text[][] result = new Ansi.Text[height][];
             result[0] = new Ansi.Text[]{ optionText };
             for (int i = 0; i < description.length; i++)
-                result[i + 1] = new Ansi.Text[]{ descPadding.concat(scheme.optionText(description[i])) };
+                result[i + 1] = new Ansi.Text[]{ descPadding.concat(scheme.text(description[i])) };
             result[height - 1] = new Ansi.Text[]{ scheme.text("") };
             return result;
         }
