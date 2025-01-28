@@ -26,6 +26,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class SjkMockTest extends AbstractNodetoolMock
 {
+
+    @Test
+    public void testSjk()
+    {
+        ToolRunner.ToolResult result = invokeNodetool("sjk");
+        result.assertOnCleanExit();
+        assertThat(result.getStdout()).contains("Usage: <main class> [options] [command] [command options]");
+        assertThat(result.getStdout()).contains("    gc      [Print GC] Print GC log like information for remote process");
+    }
+
     @Test
     public void testSjkHelp()
     {

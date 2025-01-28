@@ -63,7 +63,7 @@ public class Sjk extends AbstractCommand
     protected boolean prepareAndConnect() throws ExecutionException
     {
         // We want to parse the given arguments in advance to determine if the SJK command requires an MBeanServerConnection or not.
-        wrapper.prepare(args.isEmpty() ? new String[]{ "help" } : args.toArray(new String[0]), logger.out, logger.err);
+        wrapper.prepare(args.isEmpty() ? new String[]{ "--help" } : args.toArray(new String[0]), logger.out, logger.err);
         // {@code true} then the connection will be established and an {@code NodeProbe} instance will be passed to the execute method.
         return wrapper.requiresMbeanServerConn();
     }
@@ -82,6 +82,9 @@ public class Sjk extends AbstractCommand
         {
             // Consume all arguments and pass them to SJK.
             assert commandSpec.userObject() instanceof Sjk;
+            if (args.isEmpty())
+                return true;
+
             ((Sjk) commandSpec.userObject()).args.add(args.pop());
             return true;
         }

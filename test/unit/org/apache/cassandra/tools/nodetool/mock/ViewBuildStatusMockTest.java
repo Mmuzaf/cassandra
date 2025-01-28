@@ -44,7 +44,7 @@ public class ViewBuildStatusMockTest extends AbstractNodetoolMock
     public void testViewBuildStatusUnknownArgs()
     {
         ToolRunner.ToolResult result = invokeNodetool("viewbuildstatus", "keyspace", "table", "unknown");
-        assertThat(result.getStdout()).contains("nodetool: Found unexpected parameters: [viewbuildstatus, keyspace, table, unknown]");
+        assertThat(result.getStdout()).contains("nodetool: Unmatched argument at index 7: 'unknown'");
     }
 
     @Test

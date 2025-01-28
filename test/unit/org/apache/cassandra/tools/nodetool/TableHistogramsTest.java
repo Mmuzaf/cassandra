@@ -94,7 +94,7 @@ public class TableHistogramsTest extends CQLTester
         // format 2 : ks1 tb1 ks2 tb2
         tool = invokeNodetool("tablehistograms", "system", "local", "system", "paxos");
         assertNotEquals(0, tool.getExitCode());
-        assertThat(tool.getStdout()).contains("nodetool: Found unexpected parameters: [tablehistograms, system, local, system, paxos]");
+        assertThat(tool.getStdout()).contains("nodetool: Unmatched arguments from index 7: 'system', 'paxos'");
 
         // format 3 : ks1.tb1 ks2
         tool = invokeNodetool("tablehistograms", "system.local", "system");
