@@ -21,6 +21,7 @@ package org.apache.cassandra.tools.nodetool;
 import java.io.Console;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 import java.util.Scanner;
 import javax.inject.Inject;
 
@@ -29,6 +30,7 @@ import com.google.common.base.Throwables;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.tools.INodeProbeFactory;
 import org.apache.cassandra.tools.NodeProbe;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.IExecutionStrategy;
@@ -41,7 +43,6 @@ import picocli.CommandLine.RunLast;
 import picocli.CommandLine.Spec;
 
 import static java.lang.Integer.parseInt;
-import static org.apache.cassandra.tools.NodeTool.lastExecutableSubcommandWithSameParent;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
@@ -211,6 +212,18 @@ public class JmxConnect extends AbstractCommand implements AutoCloseable
             {
                 throw new CloseException("Failed to close JMX connection", e);
             }
+        }
+
+        private static CommandLine.Model.CommandSpec lastExecutableSubcommandWithSameParent(List<CommandLine> parsedCommands)
+        {
+            int start = parsedCommands.size() - 1;
+            for (int i = parsedCommands.size() - 2; i >= 0; i--)
+            {
+                if (parsedCommands.get(i).getParent() != parsedCommands.get(i + 1).getParent())
+                    break;
+                start = i;
+            }
+            return parsedCommands.get(start).getCommandSpec();
         }
 
         private static class CloseException extends RuntimeException

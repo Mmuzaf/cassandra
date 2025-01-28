@@ -52,7 +52,7 @@ public class NodeTool
 
     private static final String HISTORYFILE = "nodetool.history";
 
-    protected final INodeProbeFactory nodeProbeFactory;
+    private final INodeProbeFactory nodeProbeFactory;
     private final Output output;
 
     public static void main(String... args)
@@ -113,6 +113,27 @@ public class NodeTool
         }
     }
 
+    private static void printHistory(String... args)
+    {
+        //don't bother to print if no args passed (meaning, nodetool is just printing out the sub-commands list)
+        if (args.length == 0)
+            return;
+
+        String cmdLine = Joiner.on(" ").skipNulls().join(args);
+        cmdLine = cmdLine.replaceFirst("(?<=(-pw|--password))\\s+\\S+", " <hidden>");
+
+        try (FileWriter writer = new File(FBUtilities.getToolsOutputDirectory(), HISTORYFILE).newWriter(APPEND))
+        {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS");
+            writer.append(sdf.format(new Date())).append(": ").append(cmdLine).append(System.lineSeparator());
+        }
+        catch (IOException | IOError ioe)
+        {
+            //quietly ignore any errors about not being able to write out history
+        }
+    }
+
+
     public static List<String> getCommandsWithoutRoot(String separator)
     {
         List<String> commands = new ArrayList<>();
@@ -128,18 +149,6 @@ public class NodeTool
             commands.add(name.replace(cli.getCommandSpec().root().qualifiedName() + separator, ""));
         for (CommandLine sub : cli.getSubcommands().values())
             getCommandsWithoutRoot(sub, commands, separator);
-    }
-
-    public static CommandLine.Model.CommandSpec lastExecutableSubcommandWithSameParent(List<CommandLine> parsedCommands)
-    {
-        int start = parsedCommands.size() - 1;
-        for (int i = parsedCommands.size() - 2; i >= 0; i--)
-        {
-            if (parsedCommands.get(i).getParent() != parsedCommands.get(i + 1).getParent())
-                break;
-            start = i;
-        }
-        return parsedCommands.get(start).getCommandSpec();
     }
 
     private static CommandLine createCommandLine(CassandraCliFactory factory)
@@ -164,26 +173,6 @@ public class NodeTool
             default:
                 throw new IllegalStateException("Unknown CLI layout: " +
                                                 CassandraRelevantProperties.CASSANDRA_CLI_LAYOUT.getString());
-        }
-    }
-
-    public static void printHistory(String... args)
-    {
-        //don't bother to print if no args passed (meaning, nodetool is just printing out the sub-commands list)
-        if (args.length == 0)
-            return;
-
-        String cmdLine = Joiner.on(" ").skipNulls().join(args);
-        cmdLine = cmdLine.replaceFirst("(?<=(-pw|--password))\\s+\\S+", " <hidden>");
-
-        try (FileWriter writer = new File(FBUtilities.getToolsOutputDirectory(), HISTORYFILE).newWriter(APPEND))
-        {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS");
-            writer.append(sdf.format(new Date())).append(": ").append(cmdLine).append(System.lineSeparator());
-        }
-        catch (IOException | IOError ioe)
-        {
-            //quietly ignore any errors about not being able to write out history
         }
     }
 
