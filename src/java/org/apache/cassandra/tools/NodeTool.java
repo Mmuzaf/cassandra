@@ -25,7 +25,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.management.InstanceNotFoundException;
 
@@ -107,9 +106,9 @@ public class NodeTool
             printHistory(args);
             return commandLine.execute(args);
         }
-        catch (Exception e)
+        catch (Throwable e)
         {
-            err(output.err::println, e);
+            err(Throwables.getRootCause(e));
             return 2;
         }
     }
@@ -168,12 +167,6 @@ public class NodeTool
         }
     }
 
-    private enum CliLayout
-    {
-        CASSANDRA,
-        PICOCLI
-    }
-
     public static void printHistory(String... args)
     {
         //don't bother to print if no args passed (meaning, nodetool is just printing out the sub-commands list)
@@ -194,31 +187,27 @@ public class NodeTool
         }
     }
 
-    public static void badUse(Consumer<String> out, Throwable e)
-    {
-        out.accept("nodetool: " + e.getMessage());
-        out.accept("See 'nodetool help' or 'nodetool help <command>'.");
-    }
-
     protected void badUse(Exception e)
     {
-        badUse(output.out::println, e);
+        output.out.println("nodetool: " + e.getMessage());
+        output.out.println("See 'nodetool help' or 'nodetool help <command>'.");
     }
 
-    public static void err(Consumer<String> out, Throwable e)
+    protected void err(Throwable e)
     {
         // CASSANDRA-11537: friendly error message when server is not ready
         if (e instanceof InstanceNotFoundException)
             throw new IllegalArgumentException("Server is not initialized yet, cannot run nodetool.");
 
-        out.accept("error: " + e.getMessage());
-        out.accept("-- StackTrace --");
-        out.accept(getStackTraceAsString(e));
+        output.err.println("error: " + e.getMessage());
+        output.err.println("-- StackTrace --");
+        output.err.println(getStackTraceAsString(e));
     }
 
-    protected void err(Throwable e)
+    private enum CliLayout
     {
-        err(output.err::println, e);
+        CASSANDRA,
+        PICOCLI
     }
 
     private static class CassandraCliFactory implements CommandLine.IFactory
