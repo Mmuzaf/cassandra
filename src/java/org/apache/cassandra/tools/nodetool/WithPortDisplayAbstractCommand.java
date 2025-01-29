@@ -32,8 +32,9 @@ abstract class WithPortDisplayAbstractCommand extends AbstractCommand
     public boolean printPort;
 
     @Override
-    protected void init()
+    protected boolean prepareAndConnect()
     {
         printPort = parent.printPort;
+        return true;
     }
 }

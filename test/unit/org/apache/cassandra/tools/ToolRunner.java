@@ -204,12 +204,7 @@ public class ToolRunner
         return invoke(env, CQLTester.buildNodetoolArgs(args));
     }
 
-    public static ToolRunner.ToolResult invokeNodetoolV2InJvm(String... args)
-    {
-        return ToolRunner.invokeNodetoolInJvm(NodeToolV2::new, args);
-    }
-
-    public static ToolRunner.ToolResult invokeNodetoolV1InJvm(String... args)
+    public static ToolRunner.ToolResult invokeNodetoolInJvm(String... args)
     {
         return ToolRunner.invokeNodetoolInJvm(NodeTool::new, args);
     }
@@ -346,9 +341,13 @@ public class ToolRunner
 
     public static ToolRunner.ToolResult invokeNodetoolInJvm(BiFunction<INodeProbeFactory, Output, Object> nodeTool, String... args)
     {
+        PrintStream originalSysOut = System.out;
+        PrintStream originalSysErr = System.err;
         LinesOutputStream out = new LinesOutputStream(logger::info);
         LinesOutputStream err = new LinesOutputStream(logger::error);
-        Output output = new Output(new PrintStream(out), new PrintStream(err));
+        PrintStream printOut = new PrintStream(out);
+        PrintStream printErr = new PrintStream(err);
+        Output output = new Output(printOut, printErr);
         List<String> clearedArgs = CQLTester.buildNodetoolArgs(isEmpty(args) ? new ArrayList<>() : List.of(args));
         clearedArgs.remove("bin/nodetool");
         try
@@ -374,6 +373,8 @@ public class ToolRunner
                 }
             }, output);
 
+            System.setOut(printOut);
+            System.setErr(printErr);
             Object result = runner.getClass().getMethod("execute", String[].class)
                                   .invoke(runner, new Object[] { clearedArgs.toArray(new String[0]) });
             assertTrue(result instanceof Integer);
@@ -383,6 +384,11 @@ public class ToolRunner
         {
             return new ToolResult(clearedArgs, -1, out.getOutput(),
                                   err.getOutput() + '\n' + Throwables.getStackTraceAsString(e), e);
+        }
+        finally
+        {
+            System.setOut(originalSysOut);
+            System.setErr(originalSysErr);
         }
     }
 

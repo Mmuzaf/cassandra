@@ -178,9 +178,9 @@ public class SetGetInterDCStreamThroughputTest extends CQLTester
 
     private static void assertSetGetMoreFlagsIsInvalid()
     {
-        ToolResult tool = invokeNodetool("setinterdcstreamthroughput", "-m", "5", "-e", "5");
+        ToolResult tool = invokeNodetool("setinterdcstreamthroughput", "-m", "5", "-e", "6");
         assertThat(tool.getExitCode()).isEqualTo(1);
-        assertThat(tool.getStdout()).contains("Found unexpected parameters: [setinterdcstreamthroughput, -m, 5, -e, 5]");
+        assertThat(tool.getStdout()).contains("nodetool: Unmatched argument at index 8: '6'");
 
         tool = invokeNodetool("getinterdcstreamthroughput", "-m", "-e");
         assertThat(tool.getExitCode()).isEqualTo(1);

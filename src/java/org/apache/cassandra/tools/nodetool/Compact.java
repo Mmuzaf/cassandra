@@ -26,8 +26,8 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.parseOptionalKeyspace;
-import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.parseOptionalTables;
+import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalKeyspace;
+import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalTables;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 // TODO CASSANDRA-xxxxx Types of input aguments shouldn't be mixed in the same command. The keyspace, table and SSTable file arguments should have their own commands.

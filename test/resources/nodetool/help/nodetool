@@ -1,7 +1,7 @@
-usage: nodetool [(-h <host> | --host <host>)] [(-pw <password> | --password <password>)]
-        [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-        [(-p <port> | --port <port>)] [(-pp | --print-port)]
-        [(-u <username> | --username <username>)] <command> [<args>]
+usage: nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
+                [(-pp | --print-port)] [(-pw <password> | --password <password>)]
+                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
+                [(-u <username> | --username <username>)] <command> [<args>]
 
 The most commonly used nodetool commands are:
     abortbootstrap                      Abort a failed bootstrap

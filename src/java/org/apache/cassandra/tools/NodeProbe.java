@@ -174,7 +174,6 @@ public class NodeProbe implements AutoCloseable
     protected PermissionsCacheMBean pcProxy;
     protected RolesCacheMBean rcProxy;
     protected volatile Output output;
-    private boolean failed;
 
     protected CIDRFilteringMetricsTableMBean cfmProxy;
 
@@ -449,9 +448,8 @@ public class NodeProbe implements AutoCloseable
                            jobName, ks);
                 break;
             case 2:
-                failed = true;
-                out.printf("Failed marking some sstables compacting in keyspace %s, check server logs for more information.\n",
-                           ks);
+                out.printf("Failed marking some sstables compacting in keyspace %s, check server logs for more information.\n", ks);
+                throw new RuntimeException(String.format("Failed marking some sstables compacting in keyspace %s, check server logs for more information.\n", ks));
         }
     }
 
@@ -459,8 +457,8 @@ public class NodeProbe implements AutoCloseable
     {
         if (garbageCollect(tombstoneOption, jobs, keyspaceName, tableNames) != 0)
         {
-            failed = true;
             out.println("Aborted garbage collection for at least one table in keyspace " + keyspaceName + ", check server logs for more information.");
+            throw new RuntimeException("Aborted garbage collection for at least one table in keyspace " + keyspaceName + ", check server logs for more information.");
         }
     }
 
@@ -1754,16 +1752,6 @@ public class NodeProbe implements AutoCloseable
     public void reloadLocalSchema()
     {
         ssProxy.reloadLocalSchema();
-    }
-
-    public boolean isFailed()
-    {
-        return failed;
-    }
-
-    public void failed()
-    {
-        this.failed = true;
     }
 
     public long getReadRepairAttempted()

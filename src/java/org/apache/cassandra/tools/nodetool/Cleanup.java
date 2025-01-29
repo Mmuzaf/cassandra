@@ -22,15 +22,14 @@ import java.util.List;
 
 import org.apache.cassandra.schema.SchemaConstants;
 import org.apache.cassandra.tools.NodeProbe;
-import org.apache.cassandra.tools.NodeTool;
 import org.apache.cassandra.tools.nodetool.layout.CassandraUsage;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.parseOptionalKeyspace;
-import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.parseOptionalTables;
 import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
+import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalKeyspaceNonLocal;
+import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalTables;
 
 @Command(name = "cleanup", description = "Triggers the immediate cleanup of keys no longer belonging to a node. By default, clean all keyspaces")
 public class Cleanup extends AbstractCommand
@@ -47,14 +46,14 @@ public class Cleanup extends AbstractCommand
     @Option(paramLabel = "jobs",
             names = {"-j", "--jobs"},
             description = "Number of sstables to cleanup simultanously, set to 0 to use all available compaction threads")
-    public int jobs = 2;
+    private int jobs = 2;
 
     @Override
     public void execute(NodeProbe probe)
     {
         args = concatArgs(keyspace, tables);
 
-        List<String> keyspaces = parseOptionalKeyspace(args, probe, NodeTool.NodeToolCmd.KeyspaceSet.NON_LOCAL_STRATEGY);
+        List<String> keyspaces = parseOptionalKeyspaceNonLocal(args, probe);
         String[] tableNames = parseOptionalTables(args);
 
         for (String keyspace : keyspaces)
