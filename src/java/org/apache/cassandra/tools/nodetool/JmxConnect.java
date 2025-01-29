@@ -18,13 +18,19 @@
 
 package org.apache.cassandra.tools.nodetool;
 
+import java.io.Console;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
+import java.util.Scanner;
 import javax.inject.Inject;
 
 import com.google.common.base.Throwables;
 
+import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.tools.INodeProbeFactory;
 import org.apache.cassandra.tools.NodeProbe;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExecutionException;
 import picocli.CommandLine.IExecutionStrategy;
@@ -37,9 +43,6 @@ import picocli.CommandLine.RunLast;
 import picocli.CommandLine.Spec;
 
 import static java.lang.Integer.parseInt;
-import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.promptAndReadPassword;
-import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.readUserPasswordFromFile;
-import static org.apache.cassandra.tools.NodeToolV2.lastExecutableSubcommandWithSameParent;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
@@ -56,19 +59,19 @@ public class JmxConnect extends AbstractCommand implements AutoCloseable
     @Spec
     protected CommandSpec spec; // injected by picocli
 
-    @Option(names = { "-h", "--host" }, description = "Node hostname or ip address")
+    @Option(names = { "-h", "--host" }, description = "Node hostname or ip address", arity = "0..1")
     public String host = "127.0.0.1";
 
-    @Option(names = { "-p", "--port" }, description = "Remote jmx agent port number")
+    @Option(names = { "-p", "--port" }, description = "Remote jmx agent port number", arity = "0..1")
     public String port = "7199";
 
-    @Option(names = { "-u", "--username" }, description = "Remote jmx agent username")
+    @Option(names = { "-u", "--username" }, description = "Remote jmx agent username", arity = "0..1")
     public String username = EMPTY;
 
-    @Option(names = { "-pw", "--password" }, description = "Remote jmx agent password")
+    @Option(names = { "-pw", "--password" }, description = "Remote jmx agent password", arity = "0..1")
     public String password = EMPTY;
 
-    @Option(names = { "-pwf", "--password-file" }, description = "Path to the JMX password file")
+    @Option(names = { "-pwf", "--password-file" }, description = "Path to the JMX password file", arity = "0..1")
     public String passwordFilePath = EMPTY;
 
     @Inject
@@ -134,6 +137,46 @@ public class JmxConnect extends AbstractCommand implements AutoCloseable
             ((AutoCloseable) probe).close();
     }
 
+    public static String readUserPasswordFromFile(String username, String passwordFilePath)
+    {
+        String password = EMPTY;
+
+        File passwordFile = new File(passwordFilePath);
+        try (Scanner scanner = new Scanner(passwordFile.toJavaIOFile()).useDelimiter("\\s+"))
+        {
+            while (scanner.hasNextLine())
+            {
+                if (scanner.hasNext())
+                {
+                    String jmxRole = scanner.next();
+                    if (jmxRole.equals(username) && scanner.hasNext())
+                    {
+                        password = scanner.next();
+                        break;
+                    }
+                }
+                scanner.nextLine();
+            }
+        }
+        catch (FileNotFoundException e)
+        {
+            throw new RuntimeException(e);
+        }
+
+        return password;
+    }
+
+    public static String promptAndReadPassword()
+    {
+        String password = EMPTY;
+
+        Console console = System.console();
+        if (console != null)
+            password = String.valueOf(console.readPassword("Password:"));
+
+        return password;
+    }
+
     private static class JmxConnectionCommandInvoker implements IExecutionStrategy, AutoCloseable
     {
         private final JmxConnect connect;
@@ -149,8 +192,10 @@ public class JmxConnect extends AbstractCommand implements AutoCloseable
             CommandSpec lastParent = lastExecutableSubcommandWithSameParent(parseResult.asCommandLineList());
             if (lastParent.userObject() instanceof AbstractCommand)
             {
-                connect.run();
-                ((AbstractCommand) lastParent.userObject()).probe(connect.probe());
+                AbstractCommand command = (AbstractCommand) lastParent.userObject();
+                if (command.prepareAndConnect())
+                    connect.run();
+                command.probe(connect.probe());
             }
             return new RunLast().execute(parseResult);
         }
@@ -167,6 +212,18 @@ public class JmxConnect extends AbstractCommand implements AutoCloseable
             {
                 throw new CloseException("Failed to close JMX connection", e);
             }
+        }
+
+        private static CommandLine.Model.CommandSpec lastExecutableSubcommandWithSameParent(List<CommandLine> parsedCommands)
+        {
+            int start = parsedCommands.size() - 1;
+            for (int i = parsedCommands.size() - 2; i >= 0; i--)
+            {
+                if (parsedCommands.get(i).getParent() != parsedCommands.get(i + 1).getParent())
+                    break;
+                start = i;
+            }
+            return parsedCommands.get(start).getCommandSpec();
         }
 
         private static class CloseException extends RuntimeException

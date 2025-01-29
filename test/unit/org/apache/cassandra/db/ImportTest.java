@@ -1010,7 +1010,7 @@ public class ImportTest extends CQLTester
         args.add(cfs.getTableName());
         args.addAll(options.srcPaths);
 
-        return  ToolRunner.invokeNodetoolV1InJvm(args.toArray(new String[0]));
+        return  ToolRunner.invokeNodetoolInJvm(args.toArray(new String[0]));
     }
 
     private static class MockCFS extends ColumnFamilyStore

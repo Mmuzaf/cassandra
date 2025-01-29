@@ -32,7 +32,6 @@ import com.google.common.collect.LinkedHashMultimap;
 
 import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
 import org.apache.cassandra.tools.NodeProbe;
-import org.apache.cassandra.tools.NodeTool;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -110,7 +109,7 @@ public class Ring extends WithPortDisplayAbstractCommand
         }
 
         out.println();
-        for (Entry<String, SetHostStatWithPort> entry : NodeTool.getOwnershipByDcWithPort(probe, resolveIp, tokensToEndpoints, ownerships).entrySet())
+        for (Entry<String, SetHostStatWithPort> entry : CommandUtils.getOwnershipByDcWithPort(probe, resolveIp, tokensToEndpoints, ownerships).entrySet())
             printDc(format, entry.getKey(), endpointsToTokens, entry.getValue(), showEffectiveOwnership);
 
         if (haveVnodes)

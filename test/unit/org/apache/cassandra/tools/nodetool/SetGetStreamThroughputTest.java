@@ -182,9 +182,9 @@ public class SetGetStreamThroughputTest extends CQLTester
 
     private static void assertSetGetMoreFlagsIsInvalid()
     {
-        ToolResult tool = invokeNodetool("setstreamthroughput", "-m", "5", "-e", "5");
+        ToolResult tool = invokeNodetool("setstreamthroughput", "-m", "5", "-e", "6");
         assertThat(tool.getExitCode()).isEqualTo(1);
-        assertThat(tool.getStdout()).contains("Found unexpected parameters: [setstreamthroughput, -m, 5, -e, 5]");
+        assertThat(tool.getStdout()).contains("nodetool: Unmatched argument at index 8: '6'");
 
         tool = invokeNodetool("getstreamthroughput", "-m", "-e");
         assertThat(tool.getExitCode()).isEqualTo(1);

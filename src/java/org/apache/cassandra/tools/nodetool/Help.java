@@ -138,7 +138,7 @@ public class Help implements IHelpCommandInitializable2, Runnable
         sectionMap.put(SECTION_KEY_HEADER, CommandLine.Help::header);
         sectionMap.put(SECTION_KEY_SYNOPSIS, layout::topLevelSynopsis);
         sectionMap.put(SECTION_KEY_COMMAND_LIST_HEADING, layout::topLevelCommandListHeading);
-        sectionMap.put(SECTION_KEY_COMMAND_LIST, layout::topCommandList);
+        sectionMap.put(SECTION_KEY_COMMAND_LIST, layout::topLevelCommandList);
         sectionMap.put(SECTION_KEY_EXIT_CODE_LIST_HEADING, CommandLine.Help::exitCodeListHeading);
         sectionMap.put(SECTION_KEY_EXIT_CODE_LIST, CommandLine.Help::exitCodeList);
         sectionMap.put(SECTION_KEY_FOOTER_HEADING, CommandLine.Help::footerHeading);

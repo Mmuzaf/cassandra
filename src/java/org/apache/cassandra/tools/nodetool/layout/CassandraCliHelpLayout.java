@@ -27,6 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -73,6 +74,7 @@ public class CassandraCliHelpLayout extends CommandLine.Help
     // The default width for the usage help output to match the width of
     // the airline help output and minimize the divergence of layouts.
     public static final int DEFAULT_USAGE_HELP_WIDTH = 88;
+    private static final int TOP_LEVEL_USAGE_HELP_WIDTH = 999;
     private static final String DESCRIPTION_HEADING = "NAME%n";
     private static final String SYNOPSIS_HEADING = "SYNOPSIS%n";
     private static final String OPTIONS_HEADING = "OPTIONS%n";
@@ -81,6 +83,7 @@ public class CassandraCliHelpLayout extends CommandLine.Help
     private static final int DESCRIPTION_INDENT = 4;
     public static final int COLUMN_INDENT = 8;
     public static final int SUBCOMMANDS_INDENT = 4;
+    public static final int SUBCOMMANDS_DESCRIPTION_INDENT_TOP_LEVEL = 3;
     private static final CommandLine.Model.OptionSpec CASSANDRA_END_OF_OPTIONS_OPTION =
         CommandLine.Model.OptionSpec.builder("--")
                                     .description("This option can be used to separate command-line options from the " +
@@ -196,7 +199,7 @@ public class CassandraCliHelpLayout extends CommandLine.Help
         if (!commandSpec.subcommands().isEmpty())
             commandText = commandText.concat(SYNOPSIS_SUBCOMMANDS_LABEL);
 
-        int width = commandSpec.usageMessage().width();
+        int usageHelpWidth = commandSpec.usageMessage().width();
         boolean isEmptyParent = commandSpec.root() == commandSpec;
         Ansi.Text rootCommandText = colorScheme.commandText(commandSpec.root().name());
         // If the command is the top-level command, use the command name as the root command text.
@@ -204,18 +207,18 @@ public class CassandraCliHelpLayout extends CommandLine.Help
         // Example: "nodetool status" -> "status", "nodetool status thrift" -> "status thrift"
         Ansi.Text mainCommandText = isEmptyParent ? colorScheme.commandText(commandSpec.name()) :
                                     colorScheme.commandText(commandSpec.qualifiedName().replace(rootCommandText.plainString(), "").trim());
-        TextTable textTable = TextTable.forColumns(colorScheme, new Column(width, columnIndent, Column.Overflow.WRAP));
+        TextTable textTable = TextTable.forColumns(colorScheme, new Column(usageHelpWidth, columnIndent, Column.Overflow.WRAP));
         textTable.indentWrappedLines = columnIndent;
         textTable.setAdjustLineBreaksForWideCJKCharacters(commandSpec.usageMessage().adjustLineBreaksForWideCJKCharacters());
 
         // Consider the following example:
         // SYNOPSIS
-        //        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
+        //         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
         //                [(-pw <password> | --password <password>)]
         //                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
         //                [(-u <username> | --username <username>)] describecluster
         //                [(-pp | --print-port)]
-        new LineBreakingLayout(colorScheme, width, textTable)
+        new LineBreakingLayout(colorScheme, usageHelpWidth, textTable)
             .concatItem(synopsisPrefix.isEmpty() ? rootCommandText : colorScheme.text(synopsisPrefix).concat(" ").concat(rootCommandText))
             // Print "[(-h <host> | --host <host>)] [(-p <port> | --port <port>)]" options related to the parent command.
             .concatItems(parentOptionsList)
@@ -547,7 +550,7 @@ public class CassandraCliHelpLayout extends CommandLine.Help
 
     public String topLevelSynopsis(Object... params)
     {
-        return printDetailedSynopsis(TOP_LEVEL_SYNOPSIS_LIST_PREFIX, 0, false);
+        return printDetailedSynopsis(commandSpec(), TOP_LEVEL_SYNOPSIS_LIST_PREFIX, COLUMN_INDENT, false);
     }
 
     /**
@@ -565,17 +568,15 @@ public class CassandraCliHelpLayout extends CommandLine.Help
      * @param params Arguments referenced by the format specifiers in the header strings.
      * @return The top-level subcommands list.
      */
-    public String topCommandList(Object... params)
+    public String topLevelCommandList(Object... params)
     {
-        Map<String, CommandLine.Help> subcommands = commandSpec().commandLine().getHelp().subcommands();
-        int width = commandSpec().usageMessage().width();
+        Map<String, CommandLine.Help> subcommands = new TreeMap<>(commandSpec().commandLine().getHelp().subcommands());
+        int width = TOP_LEVEL_USAGE_HELP_WIDTH;
         int commandLength = Math.min(CommandUtils.maxLength(subcommands.keySet()), width / 2);
         int leadinColumnWidth = commandLength + SUBCOMMANDS_INDENT;
         TextTable table = TextTable.forColumns(colorScheme(),
-                                               new Column(leadinColumnWidth, SUBCOMMANDS_INDENT,
-                                                          Column.Overflow.SPAN),
-                                               new Column(width - leadinColumnWidth, SUBCOMMANDS_INDENT,
-                                                          Column.Overflow.WRAP));
+                                               new Column(leadinColumnWidth, SUBCOMMANDS_INDENT, Column.Overflow.SPAN),
+                                               new Column(width - leadinColumnWidth, SUBCOMMANDS_DESCRIPTION_INDENT_TOP_LEVEL, Column.Overflow.TRUNCATE));
         table.setAdjustLineBreaksForWideCJKCharacters(commandSpec().usageMessage().adjustLineBreaksForWideCJKCharacters());
 
         for (Map.Entry<String, CommandLine.Help> entry : subcommands.entrySet())
@@ -585,7 +586,7 @@ public class CassandraCliHelpLayout extends CommandLine.Help
             String header = isEmpty(usage.header()) ? (isEmpty(usage.description()) ? "" : usage.description()[0]) : usage.header()[0];
             Ansi.Text[] lines = colorScheme().text(header).splitLines();
             for (int i = 0; i < lines.length; i++)
-                table.addRowValues(i == 0 ? help.commandNamesText(", ") : Ansi.OFF.new Text(0), lines[i]);
+                table.addRowValues(i == 0 ? colorScheme().commandText(entry.getKey()) : Ansi.OFF.new Text(0), lines[i]);
         }
         return table.toString();
     }
@@ -691,7 +692,7 @@ public class CassandraCliHelpLayout extends CommandLine.Help
             Ansi.Text[][] result = new Ansi.Text[height][];
             result[0] = new Ansi.Text[]{ optionText };
             for (int i = 0; i < description.length; i++)
-                result[i + 1] = new Ansi.Text[]{ descPadding.concat(scheme.optionText(description[i])) };
+                result[i + 1] = new Ansi.Text[]{ descPadding.concat(scheme.text(description[i])) };
             result[height - 1] = new Ansi.Text[]{ scheme.text("") };
             return result;
         }

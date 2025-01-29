@@ -80,7 +80,7 @@ public class CounterCacheTest
     {
         ColumnFamilyStore cfs = Keyspace.open(KEYSPACE1).getColumnFamilyStore(COUNTER1);
         cfs.truncateBlocking();
-        ToolRunner.invokeNodetoolV1InJvm("invalidatecountercache").assertOnCleanExit();
+        ToolRunner.invokeNodetoolInJvm("invalidatecountercache").assertOnCleanExit();
 
         Clustering<?> c1 = CBuilder.create(cfs.metadata().comparator).add(ByteBufferUtil.bytes(1)).build();
         Clustering<?> c2 = CBuilder.create(cfs.metadata().comparator).add(ByteBufferUtil.bytes(2)).build();
@@ -108,7 +108,7 @@ public class CounterCacheTest
     {
         ColumnFamilyStore cfs = Keyspace.open(KEYSPACE1).getColumnFamilyStore(COUNTER1);
         cfs.truncateBlocking();
-        ToolRunner.invokeNodetoolV1InJvm("invalidatecountercache").assertOnCleanExit();
+        ToolRunner.invokeNodetoolInJvm("invalidatecountercache").assertOnCleanExit();
 
         Clustering<?> c1 = CBuilder.create(cfs.metadata().comparator).add(ByteBufferUtil.bytes(1)).build();
         Clustering<?> c2 = CBuilder.create(cfs.metadata().comparator).add(ByteBufferUtil.bytes(2)).build();
@@ -153,7 +153,7 @@ public class CounterCacheTest
     {
         ColumnFamilyStore cfs = Keyspace.open(KEYSPACE1).getColumnFamilyStore(COUNTER1);
         cfs.truncateBlocking();
-        ToolRunner.invokeNodetoolV1InJvm("invalidatecountercache").assertOnCleanExit();
+        ToolRunner.invokeNodetoolInJvm("invalidatecountercache").assertOnCleanExit();
 
         new CounterMutation(new RowUpdateBuilder(cfs.metadata(), 0, bytes(1)).clustering(1).add("c", 1L).build(), ConsistencyLevel.ONE).apply();
         new CounterMutation(new RowUpdateBuilder(cfs.metadata(), 0, bytes(1)).clustering(2).add("c", 2L).build(), ConsistencyLevel.ONE).apply();
@@ -164,7 +164,7 @@ public class CounterCacheTest
 
         // flush the counter cache and invalidate
         CacheService.instance.counterCache.submitWrite(Integer.MAX_VALUE).get();
-        ToolRunner.invokeNodetoolV1InJvm("invalidatecountercache").assertOnCleanExit();
+        ToolRunner.invokeNodetoolInJvm("invalidatecountercache").assertOnCleanExit();
         assertEquals(0, CacheService.instance.counterCache.size());
 
         // load from cache and validate
@@ -186,7 +186,7 @@ public class CounterCacheTest
     {
         ColumnFamilyStore cfs = Keyspace.open(KEYSPACE1).getColumnFamilyStore(COUNTER1);
         cfs.truncateBlocking();
-        ToolRunner.invokeNodetoolV1InJvm("invalidatecountercache").assertOnCleanExit();
+        ToolRunner.invokeNodetoolInJvm("invalidatecountercache").assertOnCleanExit();
 
         new CounterMutation(new RowUpdateBuilder(cfs.metadata(), 0, bytes(1)).clustering(1).add("c", 1L).build(), ConsistencyLevel.ONE).apply();
         new CounterMutation(new RowUpdateBuilder(cfs.metadata(), 0, bytes(1)).clustering(2).add("c", 2L).build(), ConsistencyLevel.ONE).apply();
@@ -195,7 +195,7 @@ public class CounterCacheTest
 
         // flush the counter cache and invalidate
         CacheService.instance.counterCache.submitWrite(Integer.MAX_VALUE).get();
-        ToolRunner.invokeNodetoolV1InJvm("invalidatecountercache").assertOnCleanExit();
+        ToolRunner.invokeNodetoolInJvm("invalidatecountercache").assertOnCleanExit();
         assertEquals(0, CacheService.instance.counterCache.size());
 
         KeyspaceMetadata ksm = Schema.instance.getKeyspaceMetadata(KEYSPACE1);
@@ -218,7 +218,7 @@ public class CounterCacheTest
     {
         ColumnFamilyStore cfs = Keyspace.open(KEYSPACE1).getColumnFamilyStore(COUNTER1);
         cfs.truncateBlocking();
-        ToolRunner.invokeNodetoolV1InJvm("invalidatecountercache").assertOnCleanExit();
+        ToolRunner.invokeNodetoolInJvm("invalidatecountercache").assertOnCleanExit();
 
         new CounterMutation(new RowUpdateBuilder(cfs.metadata(), 0, bytes(1)).clustering(1).add("c", 1L).build(), ConsistencyLevel.ONE).apply();
         new CounterMutation(new RowUpdateBuilder(cfs.metadata(), 0, bytes(1)).clustering(2).add("c", 2L).build(), ConsistencyLevel.ONE).apply();
@@ -227,7 +227,7 @@ public class CounterCacheTest
 
         // flush the counter cache and invalidate
         CacheService.instance.counterCache.submitWrite(Integer.MAX_VALUE).get();
-        ToolRunner.invokeNodetoolV1InJvm("invalidatecountercache").assertOnCleanExit();
+        ToolRunner.invokeNodetoolInJvm("invalidatecountercache").assertOnCleanExit();
         assertEquals(0, CacheService.instance.counterCache.size());
 
 

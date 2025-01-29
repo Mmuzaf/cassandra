@@ -26,8 +26,8 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.parseOptionalKeyspace;
-import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.parseOptionalTables;
+import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalKeyspace;
+import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalTables;
 import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
 
 @Command(name = "relocatesstables", description = "Relocates sstables to the correct disk")

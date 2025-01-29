@@ -26,8 +26,8 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.parseOptionalKeyspace;
-import static org.apache.cassandra.tools.NodeTool.NodeToolCmd.parseOptionalTables;
+import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalKeyspace;
+import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalTables;
 import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
 
 @Command(name = "recompress_sstables", description = "Rewrite sstables (for the requested tables) that have compression configuration different from the current")

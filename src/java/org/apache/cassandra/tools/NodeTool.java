@@ -17,68 +17,31 @@
  */
 package org.apache.cassandra.tools;
 
-import java.io.Console;
-import java.io.FileNotFoundException;
 import java.io.IOError;
 import java.io.IOException;
-import java.net.UnknownHostException;
+import java.io.PrintWriter;
+import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
+import javax.inject.Inject;
 import javax.management.InstanceNotFoundException;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
-import org.apache.commons.lang3.StringUtils;
 
-import io.airlift.airline.Cli;
-import io.airlift.airline.Help;
-import io.airlift.airline.Option;
-import io.airlift.airline.OptionType;
-import io.airlift.airline.ParseArgumentsMissingException;
-import io.airlift.airline.ParseArgumentsUnexpectedException;
-import io.airlift.airline.ParseCommandMissingException;
-import io.airlift.airline.ParseCommandUnrecognizedException;
-import io.airlift.airline.ParseOptionConversionException;
-import io.airlift.airline.ParseOptionMissingException;
-import io.airlift.airline.ParseOptionMissingValueException;
-import io.airlift.airline.UsageHelper;
-import io.airlift.airline.UsagePrinter;
-import io.airlift.airline.model.CommandGroupMetadata;
-import io.airlift.airline.model.CommandMetadata;
-import io.airlift.airline.model.GlobalMetadata;
+import org.apache.cassandra.config.CassandraRelevantProperties;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileWriter;
-import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
-import org.apache.cassandra.tools.nodetool.*;
+import org.apache.cassandra.tools.nodetool.JmxConnect;
+import org.apache.cassandra.tools.nodetool.TopLevelCommand;
 import org.apache.cassandra.tools.nodetool.layout.CassandraCliHelpLayout;
 import org.apache.cassandra.utils.FBUtilities;
 import picocli.CommandLine;
 
-import static com.google.common.base.MoreObjects.firstNonNull;
 import static com.google.common.base.Throwables.getStackTraceAsString;
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.common.collect.Iterables.toArray;
-import static com.google.common.collect.Lists.newArrayList;
-import static java.lang.Integer.parseInt;
-import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
 import static org.apache.cassandra.io.util.File.WriteMode.APPEND;
-import static org.apache.commons.lang3.ArrayUtils.EMPTY_STRING_ARRAY;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
-import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 public class NodeTool
 {
@@ -87,10 +50,9 @@ public class NodeTool
         FBUtilities.preventIllegalAccessWarnings();
     }
 
-    private static final int FALLBACK_NODETOOL_V1_CODE = -100;
     private static final String HISTORYFILE = "nodetool.history";
 
-    protected final INodeProbeFactory nodeProbeFactory;
+    private final INodeProbeFactory nodeProbeFactory;
     private final Output output;
 
     public static void main(String... args)
@@ -104,77 +66,54 @@ public class NodeTool
         this.output = output;
     }
 
+    /**
+     * Execute the command line utility with the given arguments via the JMX connection.
+     *
+     * @param args command line arguments
+     * @return 0 on success, 1 on bad use, 2 on execution error
+     */
     public int execute(String... args)
     {
-        List<Class<? extends NodeToolCmdRunnable>> commands = newArrayList(
-                CassHelp.class,
-                Scrub.class,
-                Sjk.class
-        );
-
-        Cli.CliBuilder<NodeToolCmdRunnable> builder = Cli.builder("nodetool");
-
-        builder.withDescription("Manage your Cassandra cluster")
-                 .withDefaultCommand(CassHelp.class)
-                 .withCommands(commands);
-
-        Cli<NodeToolCmdRunnable> parser = builder.build();
-
-        int status = 0;
         try
         {
-            // Try to run the command with the new parser, if it у fails, fallback to the old parser.
-            int result = new NodeToolV2(nodeProbeFactory, output)
-                             // Filter out the help command, and nodetool command, and fallback to the old help message.
-                             .withCommandNameFilter(cmd -> cmd.equals("help") || cmd.equals("nodetool"), FALLBACK_NODETOOL_V1_CODE)
-                             .withParameterExceptionHandler((ex, arg) -> {
-                                 if (ex instanceof CommandLine.UnmatchedArgumentException)
-                                     return FALLBACK_NODETOOL_V1_CODE;
-                                 badUse(ex);
-                                 return 1;
-                             })
-                             .withExecutionExceptionHandler((ex, c, arg) -> {
-                                 // Used for backward compatibility, some commands are validated when a command is run.
-                                 if (ex instanceof IllegalArgumentException |
-                                     ex instanceof IllegalStateException)
-                                 {
-                                     badUse(ex);
-                                     return 1;
-                                 }
+            CommandLine commandLine = createCommandLine(new CassandraCliFactory(nodeProbeFactory, output));
+            configureCliLayout(commandLine);
+            commandLine.setExecutionStrategy(JmxConnect::executionStrategy)
+                       .setExecutionExceptionHandler((ex, c, arg) -> {
+                           // Used for backward compatibility, some commands are validated when a command is run.
+                           if (ex instanceof IllegalArgumentException |
+                               ex instanceof IllegalStateException)
+                           {
+                               badUse(ex);
+                               return 1;
+                           }
 
-                                 err(Throwables.getRootCause(ex));
-                                 return 2;
-                             }).execute(args);
+                           err(Throwables.getRootCause(ex));
+                           return 2;
+                       })
+                       .setParameterExceptionHandler((ex, arg) -> {
+                           badUse(ex);
+                           return 1;
+                       })
+                       // Some of the Cassandra commands don't comply with the POSIX standard, so we need to disable such options.
+                       // Example: ./nodetool -h localhost -p 7100 repair mykeyspayce -hosts 127.0.0.1,127.0.0.2
+                       //
+                       // This also means that option parameters must be separated from the option name by whitespace
+                       // or the = separator character, so -D key=value and -D=key=value will be recognized but
+                       // -Dkey=value will not.
+                       .setPosixClusteredShortOptionsAllowed(false);
 
-            if (result >= 0)
-                return result;
-
-            // Fallback to the old parser, and run the command.
-            assert result == FALLBACK_NODETOOL_V1_CODE;
-            NodeToolCmdRunnable cmd = parser.parse(args);
-            cmd.run(nodeProbeFactory, output);
-        } catch (IllegalArgumentException |
-                IllegalStateException |
-                ParseArgumentsMissingException |
-                ParseArgumentsUnexpectedException |
-                ParseOptionConversionException |
-                ParseOptionMissingException |
-                ParseOptionMissingValueException |
-                ParseCommandMissingException |
-                ParseCommandUnrecognizedException e)
-        {
-            badUse(e);
-            status = 1;
-        } catch (Throwable throwable)
-        {
-            err(Throwables.getRootCause(throwable));
-            status = 2;
+            printHistory(args);
+            return commandLine.execute(args);
         }
-
-        return status;
+        catch (Throwable e)
+        {
+            err(Throwables.getRootCause(e));
+            return 2;
+        }
     }
 
-    public static void printHistory(String... args)
+    private static void printHistory(String... args)
     {
         //don't bother to print if no args passed (meaning, nodetool is just printing out the sub-commands list)
         if (args.length == 0)
@@ -194,289 +133,112 @@ public class NodeTool
         }
     }
 
-    public static void badUse(Consumer<String> out, Throwable e)
+
+    public static List<String> getCommandsWithoutRoot(String separator)
     {
-        out.accept("nodetool: " + e.getMessage());
-        out.accept("See 'nodetool help' or 'nodetool help <command>'.");
+        List<String> commands = new ArrayList<>();
+        getCommandsWithoutRoot(createCommandLine(new CassandraCliFactory(new NodeProbeFactory(), Output.CONSOLE)), commands, separator);
+        return commands;
+    }
+
+    private static void getCommandsWithoutRoot(CommandLine cli, List<String> commands, String separator)
+    {
+        String name = cli.getCommandSpec().qualifiedName(separator);
+        // Skip the root command as it's not a real command.
+        if (cli.getCommandSpec().root() != cli.getCommandSpec())
+            commands.add(name.replace(cli.getCommandSpec().root().qualifiedName() + separator, ""));
+        for (CommandLine sub : cli.getSubcommands().values())
+            getCommandsWithoutRoot(sub, commands, separator);
+    }
+
+    private static CommandLine createCommandLine(CassandraCliFactory factory)
+    {
+        return new CommandLine(new TopLevelCommand(), factory)
+                   .addMixin(JmxConnect.MIXIN_KEY, factory.create(JmxConnect.class))
+                   .setOut(new PrintWriter(factory.output.out, true))
+                   .setErr(new PrintWriter(factory.output.err, true));
+    }
+
+    private static void configureCliLayout(CommandLine commandLine)
+    {
+        switch (CassandraRelevantProperties.CASSANDRA_CLI_LAYOUT.getEnum(true, CliLayout.class))
+        {
+            case CASSANDRA:
+                commandLine.setHelpFactory(CassandraCliHelpLayout::new)
+                           .setUsageHelpWidth(CassandraCliHelpLayout.DEFAULT_USAGE_HELP_WIDTH)
+                           .setHelpSectionKeys(CassandraCliHelpLayout.cassandraHelpSectionKeys());
+                break;
+            case PICOCLI:
+                break;
+            default:
+                throw new IllegalStateException("Unknown CLI layout: " +
+                                                CassandraRelevantProperties.CASSANDRA_CLI_LAYOUT.getString());
+        }
     }
 
     protected void badUse(Exception e)
     {
-        badUse(output.out::println, e);
+        output.out.println("nodetool: " + e.getMessage());
+        output.out.println("See 'nodetool help' or 'nodetool help <command>'.");
     }
 
-    public static void err(Consumer<String> out, Throwable e)
+    protected void err(Throwable e)
     {
         // CASSANDRA-11537: friendly error message when server is not ready
         if (e instanceof InstanceNotFoundException)
             throw new IllegalArgumentException("Server is not initialized yet, cannot run nodetool.");
 
-        out.accept("error: " + e.getMessage());
-        out.accept("-- StackTrace --");
-        out.accept(getStackTraceAsString(e));
+        output.err.println("error: " + e.getMessage());
+        output.err.println("-- StackTrace --");
+        output.err.println(getStackTraceAsString(e));
     }
 
-    protected void err(Throwable e)
+    private enum CliLayout
     {
-        err(output.err::println, e);
+        CASSANDRA,
+        PICOCLI
     }
 
-    public static class CassHelp extends Help implements NodeToolCmdRunnable
+    private static class CassandraCliFactory implements CommandLine.IFactory
     {
-        public void run(INodeProbeFactory nodeProbeFactory, Output output)
+        private final CommandLine.IFactory fallback;
+        private final INodeProbeFactory nodeProbeFactory;
+        private final Output output;
+
+        public CassandraCliFactory(INodeProbeFactory nodeProbeFactory, Output output)
         {
-            StringBuilder sb = new StringBuilder();
-            NodeToolV2 cmd = new NodeToolV2(nodeProbeFactory, output);
-            if (command.isEmpty())
-            {
-                usage(global, cmd.getTopLevelCommandsDescription(), sb);
-            }
-            else
-            {
-                if (cmd.isCommandPresent(command))
-                    cmd.execute(Stream.concat(Stream.of("help"), command.stream()).toArray(String[]::new));
-                else
-                    help(global, command, sb);
-            }
-
-            output.out.println(sb);
-        }
-
-        public static void usage(GlobalMetadata global, Map<String, String> extraCommands, StringBuilder sb)
-        {
-            UsagePrinter out = new UsagePrinter(sb, CassandraCliHelpLayout.DEFAULT_USAGE_HELP_WIDTH);
-            List<String> commandArguments = global.getOptions().stream()
-                                                  .sorted((o1, o2) -> StringUtils.compare(o1.getTitle(), o2.getTitle()))
-                                                  .filter(option -> !option.isHidden())
-                                                  .map(UsageHelper::toUsage)
-                                                  .collect(toImmutableList());
-
-            out.newPrinterWithHangingIndent(CassandraCliHelpLayout.COLUMN_INDENT)
-               .append(CassandraCliHelpLayout.TOP_LEVEL_SYNOPSIS_LIST_PREFIX)
-               .append(global.getName())
-               .appendWords(commandArguments)
-               .append(CassandraCliHelpLayout.SYNOPSIS_SUBCOMMANDS_LABEL)
-               .newline()
-               .newline();
-
-            Map<String, String> commands = getCommandsDescription(global);
-            // Remove the help command from the list of extra commands if exists, as it's not applicable for backward compatibility.
-            extraCommands.remove("help");
-            commands.putAll(extraCommands);
-
-            out.append(CassandraCliHelpLayout.TOP_LEVEL_COMMAND_HEADING).newline();
-            out.newIndentedPrinter(CassandraCliHelpLayout.SUBCOMMANDS_INDENT)
-               .appendTable(commands.entrySet().stream()
-                                    .map(entry -> ImmutableList.of(entry.getKey(), firstNonNull(entry.getValue(), "")))
-                                    .collect(toList()));
-            out.newline();
-            out.append(CassandraCliHelpLayout.USAGE_HELP_FOOTER);
-        }
-
-        private static Map<String, String> getCommandsDescription(GlobalMetadata global)
-        {
-            Map<String, String> commands = new TreeMap<>();
-            for (CommandMetadata meta : global.getDefaultGroupCommands())
-                commands.put(meta.getName(), meta.getDescription());
-            for (CommandGroupMetadata grp : global.getCommandGroups())
-                commands.put(grp.getName(), grp.getDescription());
-            return commands;
-        }
-    }
-
-    interface NodeToolCmdRunnable
-    {
-        void run(INodeProbeFactory nodeProbeFactory, Output output);
-    }
-
-    public static abstract class NodeToolCmd implements NodeToolCmdRunnable
-    {
-
-        @Option(type = OptionType.GLOBAL, name = {"-h", "--host"}, description = "Node hostname or ip address")
-        private String host = "127.0.0.1";
-
-        @Option(type = OptionType.GLOBAL, name = {"-p", "--port"}, description = "Remote jmx agent port number")
-        private String port = "7199";
-
-        @Option(type = OptionType.GLOBAL, name = {"-u", "--username"}, description = "Remote jmx agent username")
-        private String username = EMPTY;
-
-        @Option(type = OptionType.GLOBAL, name = {"-pw", "--password"}, description = "Remote jmx agent password")
-        private String password = EMPTY;
-
-        @Option(type = OptionType.GLOBAL, name = {"-pwf", "--password-file"}, description = "Path to the JMX password file")
-        private String passwordFilePath = EMPTY;
-
-        @Option(type = OptionType.GLOBAL, name = { "-pp", "--print-port"}, description = "Operate in 4.0 mode with hosts disambiguated by port number", arity = 0)
-        protected boolean printPort = false;
-
-        private INodeProbeFactory nodeProbeFactory;
-        protected Output output;
-
-        @Override
-        public void run(INodeProbeFactory nodeProbeFactory, Output output)
-        {
+            this.fallback = CommandLine.defaultFactory();
             this.nodeProbeFactory = nodeProbeFactory;
             this.output = output;
-            runInternal();
         }
 
-        public void runInternal()
+        public <K> K create(Class<K> cls)
         {
-            if (isNotEmpty(username)) {
-                if (isNotEmpty(passwordFilePath))
-                    password = readUserPasswordFromFile(username, passwordFilePath);
-
-                if (isEmpty(password))
-                    password = promptAndReadPassword();
-            }
-
-            try (NodeProbe probe = connect())
-            {
-                execute(probe);
-                if (probe.isFailed())
-                    throw new RuntimeException("nodetool failed, check server logs");
-            }
-            catch (IOException e)
-            {
-                throw new RuntimeException("Error while closing JMX connection", e);
-            }
-
-        }
-
-        public static String readUserPasswordFromFile(String username, String passwordFilePath)
-        {
-            String password = EMPTY;
-
-            File passwordFile = new File(passwordFilePath);
-            try (Scanner scanner = new Scanner(passwordFile.toJavaIOFile()).useDelimiter("\\s+"))
-            {
-                while (scanner.hasNextLine())
-                {
-                    if (scanner.hasNext())
-                    {
-                        String jmxRole = scanner.next();
-                        if (jmxRole.equals(username) && scanner.hasNext())
-                        {
-                            password = scanner.next();
-                            break;
-                        }
-                    }
-                    scanner.nextLine();
-                }
-            }
-            catch (FileNotFoundException e)
-            {
-                throw new RuntimeException(e);
-            }
-
-            return password;
-        }
-
-        public static String promptAndReadPassword()
-        {
-            String password = EMPTY;
-
-            Console console = System.console();
-            if (console != null)
-                password = String.valueOf(console.readPassword("Password:"));
-
-            return password;
-        }
-
-        protected abstract void execute(NodeProbe probe);
-
-        private NodeProbe connect()
-        {
-            NodeProbe nodeClient = null;
-
             try
             {
-                if (username.isEmpty())
-                    nodeClient = nodeProbeFactory.create(host, parseInt(port));
-                else
-                    nodeClient = nodeProbeFactory.create(host, parseInt(port), username, password);
-
-                nodeClient.setOutput(output);
-            } catch (IOException | SecurityException e)
-            {
-                Throwable rootCause = Throwables.getRootCause(e);
-                output.err.println(format("nodetool: Failed to connect to '%s:%s' - %s: '%s'.", host, port, rootCause.getClass().getSimpleName(), rootCause.getMessage()));
-                System.exit(1);
+                K bean = this.fallback.create(cls);
+                Class<?> beanClass = bean.getClass();
+                do
+                {
+                    Field[] fields = beanClass.getDeclaredFields();
+                    for (Field field : fields)
+                    {
+                        if (!field.isAnnotationPresent(Inject.class))
+                            continue;
+                        field.setAccessible(true);
+                        if (field.getType().equals(INodeProbeFactory.class))
+                            field.set(bean, nodeProbeFactory);
+                        else if (field.getType().equals(Output.class))
+                            field.set(bean, output);
+                    }
+                }
+                while ((beanClass = beanClass.getSuperclass()) != null);
+                return bean;
             }
-
-            return nodeClient;
-        }
-
-        public enum KeyspaceSet
-        {
-            ALL, NON_SYSTEM, NON_LOCAL_STRATEGY
-        }
-
-        public static List<String> parseOptionalKeyspace(List<String> cmdArgs, NodeProbe nodeProbe)
-        {
-            return parseOptionalKeyspace(cmdArgs, nodeProbe, KeyspaceSet.ALL);
-        }
-
-        public static List<String> parseOptionalKeyspace(List<String> cmdArgs, NodeProbe nodeProbe, KeyspaceSet defaultKeyspaceSet)
-        {
-            List<String> keyspaces = new ArrayList<>();
-
-
-            if (cmdArgs == null || cmdArgs.isEmpty())
+            catch (Exception e)
             {
-                if (defaultKeyspaceSet == KeyspaceSet.NON_LOCAL_STRATEGY)
-                    keyspaces.addAll(keyspaces = nodeProbe.getNonLocalStrategyKeyspaces());
-                else if (defaultKeyspaceSet == KeyspaceSet.NON_SYSTEM)
-                    keyspaces.addAll(keyspaces = nodeProbe.getNonSystemKeyspaces());
-                else
-                    keyspaces.addAll(nodeProbe.getKeyspaces());
-            }
-            else
-            {
-                keyspaces.add(cmdArgs.get(0));
-            }
-
-            for (String keyspace : keyspaces)
-            {
-                if (!nodeProbe.getKeyspaces().contains(keyspace))
-                    throw new IllegalArgumentException("Keyspace [" + keyspace + "] does not exist.");
-            }
-
-            return Collections.unmodifiableList(keyspaces);
-        }
-
-        public static String[] parseOptionalTables(List<String> cmdArgs)
-        {
-            return cmdArgs.size() <= 1 ? EMPTY_STRING_ARRAY : toArray(cmdArgs.subList(1, cmdArgs.size()), String.class);
-        }
-
-        public static String[] parsePartitionKeys(List<String> cmdArgs)
-        {
-            return cmdArgs.size() <= 2 ? EMPTY_STRING_ARRAY : toArray(cmdArgs.subList(2, cmdArgs.size()), String.class);
-        }
-    }
-
-    public static SortedMap<String, SetHostStatWithPort> getOwnershipByDcWithPort(NodeProbe probe, boolean resolveIp,
-                                                                  Map<String, String> tokenToEndpoint,
-                                                                  Map<String, Float> ownerships)
-    {
-        SortedMap<String, SetHostStatWithPort> ownershipByDc = Maps.newTreeMap();
-        EndpointSnitchInfoMBean epSnitchInfo = probe.getEndpointSnitchInfoProxy();
-        try
-        {
-            for (Entry<String, String> tokenAndEndPoint : tokenToEndpoint.entrySet())
-            {
-                String dc = epSnitchInfo.getDatacenter(tokenAndEndPoint.getValue());
-                if (!ownershipByDc.containsKey(dc))
-                    ownershipByDc.put(dc, new SetHostStatWithPort(resolveIp));
-                ownershipByDc.get(dc).add(tokenAndEndPoint.getKey(), tokenAndEndPoint.getValue(), ownerships);
+                throw new CommandLine.InitializationException("Failed to create instance of " + cls, e);
             }
         }
-        catch (UnknownHostException e)
-        {
-            throw new RuntimeException(e);
-        }
-        return ownershipByDc;
     }
 }
