@@ -30,7 +30,7 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.printSet;
 public class GetCIDRGroupsOfIP extends AbstractCommand
 {
     @Parameters(paramLabel = "ip_address", description = "Requires IP address as a string", arity = "1", index = "0")
-    public String ipStr;
+    private String ipStr;
 
     @Override
     public void execute(NodeProbe probe)

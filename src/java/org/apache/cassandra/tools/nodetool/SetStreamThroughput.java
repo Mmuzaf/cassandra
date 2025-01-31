@@ -26,13 +26,13 @@ import picocli.CommandLine.Parameters;
 public class SetStreamThroughput extends AbstractCommand
 {
     @Parameters(paramLabel = "stream_throughput", description = "Value in megabits, 0 to disable throttling", arity = "1")
-    public int streamThroughput;
+    private int streamThroughput;
 
     @Option(names = { "-e", "--entire-sstable-throughput" }, description = "Set entire SSTable streaming throughput in MiB/s")
-    public boolean setEntireSSTableThroughput;
+    private boolean setEntireSSTableThroughput;
 
     @Option(names = { "-m", "--mib" }, description = "Set streaming throughput in MiB/s")
-    public boolean streamThroughputInMebibytes;
+    private boolean streamThroughputInMebibytes;
 
     @Override
     public void execute(NodeProbe probe)

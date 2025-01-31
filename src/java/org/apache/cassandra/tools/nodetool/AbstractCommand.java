@@ -18,7 +18,6 @@
 
 package org.apache.cassandra.tools.nodetool;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 import org.apache.cassandra.tools.NodeProbe;
@@ -84,5 +83,5 @@ public abstract class AbstractCommand implements Runnable
      *
      * @param probe The {@link NodeProbe} instance to use, or {@code null} if no connection is required.
      */
-    protected abstract void execute(@Nullable NodeProbe probe);
+    protected abstract void execute(NodeProbe probe);
 }

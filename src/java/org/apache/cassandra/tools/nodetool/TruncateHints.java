@@ -29,7 +29,7 @@ public class TruncateHints extends AbstractCommand
 {
     @CassandraUsage(usage = "[endpoint ... ]", description = "Endpoint address(es) to delete hints for, either ip address (\"127.0.0.1\") or hostname")
     @Parameters(index = "0", arity = "0..1", description = "Endpoint address(es) to delete hints for, either ip address ('127.0.0.1') or hostname")
-    public String endpoint = EMPTY;
+    private String endpoint = EMPTY;
 
     @Override
     public void execute(NodeProbe probe)

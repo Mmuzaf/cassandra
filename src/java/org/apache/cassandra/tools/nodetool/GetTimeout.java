@@ -34,10 +34,10 @@ public class GetTimeout extends AbstractCommand
     public static final String TIMEOUT_TYPES = "read, range, write, counterwrite, cascontention, truncate, internodeconnect, internodeuser, internodestreaminguser, misc (general rpc_timeout_in_ms)";
 
     @CassandraUsage(usage = "<timeout_type>", description = "The timeout type, one of (" + TIMEOUT_TYPES + ")")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters (index = "0", description = "The timeout type, one of (" + TIMEOUT_TYPES + ')')
-    public String timeout_type;
+    private String timeout_type;
 
     @Override
     public void execute(NodeProbe probe)

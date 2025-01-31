@@ -39,68 +39,68 @@ public class Import extends AbstractCommand
     public static final String IMPORT_FAIL_MESSAGE = "Some directories failed to import, check server logs for details";
 
     @CassandraUsage(usage = "<keyspace> <table> <directory> ...", description = "The keyspace, table name and directories to import sstables from")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(index = "0", paramLabel = "keyspace", description = "The keyspace name")
-    public String keyspace;
+    private String keyspace;
 
     @Parameters(index = "1", paramLabel = "table", description = "The table name")
-    public String table;
+    private String table;
 
     @Parameters(index = "2..*", paramLabel = "directories", description = "The directories to import sstables from")
-    public String[] directories;
+    private String[] directories;
 
     @Option(paramLabel = "keep_level",
             names = { "-l", "--keep-level" },
             description = "Keep the level on the new sstables")
-    public boolean keepLevel = false;
+    private boolean keepLevel = false;
 
     @Option(paramLabel = "keep_repaired",
             names = { "-r", "--keep-repaired" },
             description = "Keep any repaired information from the sstables")
-    public boolean keepRepaired = false;
+    private boolean keepRepaired = false;
 
     @Option(paramLabel = "no_verify_sstables",
             names = { "-v", "--no-verify" },
             description = "Don't verify new sstables")
-    public boolean noVerify = false;
+    private boolean noVerify = false;
 
     @Option(paramLabel = "no_verify_tokens",
             names = { "-t", "--no-tokens" },
             description = "Don't verify that all tokens in the new sstable are owned by the current node")
-    public boolean noVerifyTokens = false;
+    private boolean noVerifyTokens = false;
 
     @Option(paramLabel = "no_invalidate_caches",
             names = { "-c", "--no-invalidate-caches" },
             description = "Don't invalidate the row cache when importing")
-    public boolean noInvalidateCaches = false;
+    private boolean noInvalidateCaches = false;
 
     @Option(paramLabel = "quick",
             names = { "-q", "--quick" },
             description = "Do a quick import without verifying sstables, clearing row cache or checking in which data directory to put the file")
-    public boolean quick = false;
+    private boolean quick = false;
 
     @Option(paramLabel = "extended_verify",
             names = { "-e", "--extended-verify" },
             description = "Run an extended verify, verifying all values in the new sstables")
-    public boolean extendedVerify = false;
+    private boolean extendedVerify = false;
 
     // The previous option -p collides with the --port in the JMX, so we need to alter it to -cd.
     // It is safe to alter the name since the option is not used by users as it doesn't work.
     @Option(paramLabel = "copy_data",
             names = { "-cd", "--copy-data" },
             description = "Copy data from source directories instead of moving them")
-    public boolean copyData = false;
+    private boolean copyData = false;
 
     @Option(paramLabel = "require_index_components",
             names = { "-ri", "--require-index-components" },
             description = "Require existing index components for SSTables with attached indexes")
-    public boolean failOnMissingIndex = false;
+    private boolean failOnMissingIndex = false;
 
     @Option(paramLabel = "no_index_validation",
             names = { "-niv", "--no-index-validation" },
             description = "Skip SSTable-attached index checksum validation")
-    public boolean noIndexValidation = false;
+    private boolean noIndexValidation = false;
 
     @Override
     public void execute(NodeProbe probe)

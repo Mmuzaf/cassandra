@@ -38,19 +38,19 @@ import picocli.CommandLine.Option;
 public class ClientStats extends AbstractCommand
 {
     @Option(paramLabel = "list_connections", names = "--all", description = "Lists all connections")
-    public boolean listConnections = false;
+    private boolean listConnections = false;
 
     @Option(paramLabel = "by_protocol", names = "--by-protocol", description = "Lists most recent client connections by protocol version")
-    public boolean connectionsByProtocolVersion = false;
+    private boolean connectionsByProtocolVersion = false;
 
     @Option(paramLabel = "clear_history", names = "--clear-history", description = "Clear the history of connected clients")
-    public boolean clearConnectionHistory = false;
+    private boolean clearConnectionHistory = false;
 
     @Option(paramLabel = "list_connections_with_client_options", names = "--client-options", description = "Lists all connections and the client options")
-    public boolean clientOptions = false;
+    private boolean clientOptions = false;
 
     @Option(paramLabel = "verbose", names = "--verbose", description = "Lists all connections with additional details (client options, authenticator-specific metadata and more)")
-    public boolean verbose = false;
+    private boolean verbose = false;
 
     @Override
     public void execute(NodeProbe probe)

@@ -29,7 +29,7 @@ import picocli.CommandLine.Option;
 public class GetCompactionThroughput extends AbstractCommand
 {
     @Option(names = { "-d", "--precise-mib" }, description = "Print the MiB/s throughput cap for compaction in the system as a precise number (double)")
-    public boolean  compactionThroughputAsDouble;
+    private boolean  compactionThroughputAsDouble;
 
     @Override
     public void execute(NodeProbe probe)

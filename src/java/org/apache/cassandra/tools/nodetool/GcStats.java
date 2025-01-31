@@ -30,7 +30,7 @@ public class GcStats extends AbstractCommand
     @Option(paramLabel = "format",
             names = { "-F", "--format" },
             description = "Output format (json, yaml)")
-    public String outputFormat = "";
+    private String outputFormat = "";
 
     @Override
     public void execute(NodeProbe probe)

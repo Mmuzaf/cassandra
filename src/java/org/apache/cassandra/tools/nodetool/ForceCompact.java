@@ -34,16 +34,16 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
 public class ForceCompact extends AbstractCommand
 {
     @CassandraUsage(usage = "[<keyspace> <table> <keys>]", description = "The keyspace, table, and a list of partition keys ignoring the gc_grace_seconds")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(index = "0", description = "The keyspace name to compact", arity = "0..1")
-    public String keyspace;
+    private String keyspace;
 
     @Parameters(index = "1", description = "The table name to compact", arity = "0..1")
-    public String table;
+    private String table;
 
     @Parameters(index = "2..*", description = "The partition keys to compact", arity = "0..1")
-    public String[] keys;
+    private String[] keys;
 
     @Override
     public void execute(NodeProbe probe)

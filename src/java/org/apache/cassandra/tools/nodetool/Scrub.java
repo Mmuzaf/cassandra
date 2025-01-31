@@ -33,38 +33,38 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
 public class Scrub extends AbstractCommand
 {
     @CassandraUsage(usage = "[<keyspace> <tables>...]", description = "The keyspace followed by one or many tables")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(index = "0", description = "The keyspace followed by one or many tables", arity = "0..1")
-    public String keyspace;
+    private String keyspace;
 
     @Parameters(index = "1..*", description = "The tables to scrub", arity = "0..1")
-    public List<String> tables;
+    private List<String> tables;
 
     @Option(paramLabel = "disable_snapshot",
             names = { "-ns", "--no-snapshot" },
             description = "Scrubbed CFs will be snapshotted first, if disableSnapshot is false. (default false)")
-    public boolean disableSnapshot = false;
+    private boolean disableSnapshot = false;
 
     @Option(paramLabel = "skip_corrupted",
             names = { "-s", "--skip-corrupted" },
             description = "Skip corrupted partitions even when scrubbing counter tables. (default false)")
-    public boolean skipCorrupted = false;
+    private boolean skipCorrupted = false;
 
     @Option(paramLabel = "no_validate",
             names = { "-n", "--no-validate" },
             description = "Do not validate columns using column validator")
-    public boolean noValidation = false;
+    private boolean noValidation = false;
 
     @Option(paramLabel = "reinsert_overflowed_ttl",
             names = { "-r", "--reinsert-overflowed-ttl" },
             description = StandaloneScrubber.REINSERT_OVERFLOWED_TTL_OPTION_DESCRIPTION)
-    public boolean reinsertOverflowedTTL = false;
+    private boolean reinsertOverflowedTTL = false;
 
     @Option(paramLabel = "jobs",
             names = { "-j", "--jobs" },
             description = "Number of sstables to scrub simultanously, set to 0 to use all available compaction threads")
-    public int jobs = 2;
+    private int jobs = 2;
 
     @Override
     public void execute(NodeProbe probe)

@@ -25,7 +25,7 @@ import picocli.CommandLine.Parameters;
 public class SetHintedHandoffThrottleInKB extends AbstractCommand
 {
     @Parameters(paramLabel = "throttle_in_kb", description = "Value in KiB per second", arity = "1")
-    public Integer throttleInKB = null;
+    private Integer throttleInKB = null;
 
     @Override
     public void execute(NodeProbe probe)

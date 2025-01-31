@@ -34,10 +34,10 @@ public class DataPaths extends AbstractCommand
 {
     @CassandraUsage(usage = "[<keyspace.table>...]", description = "List of table (or keyspace) names")
     @Parameters(paramLabel = "keyspace.table", description = "List of table (or keyspace) names")
-    public List<String> tableNames = new ArrayList<>();
+    private List<String> tableNames = new ArrayList<>();
 
     @Option(paramLabel = "format", names = { "-F", "--format" }, description = "Output format (json, yaml)")
-    public String outputFormat = "";
+    private String outputFormat = "";
 
     @Override
     protected void execute(NodeProbe probe)

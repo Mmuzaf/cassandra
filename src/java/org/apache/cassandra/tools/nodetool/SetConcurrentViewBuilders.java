@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class SetConcurrentViewBuilders extends AbstractCommand
 {
     @Parameters(paramLabel = "concurrent_view_builders", description = "Number of concurrent view builders, greater than 0.", arity = "1")
-    public Integer concurrentViewBuilders = null;
+    private Integer concurrentViewBuilders = null;
 
     protected void execute(NodeProbe probe)
     {

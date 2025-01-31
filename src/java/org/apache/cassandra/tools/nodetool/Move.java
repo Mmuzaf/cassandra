@@ -30,13 +30,13 @@ import picocli.CommandLine.Parameters;
 public class Move extends AbstractCommand
 {
     @Parameters(paramLabel = "newToken", description = "The new token.", arity = "0..1", index = "0")
-    public String newToken = EMPTY;
+    private String newToken = EMPTY;
 
     @Option(description = "Resume an ongoing move operation", names = { "--resume" })
-    public boolean resume;
+    private boolean resume;
 
     @Option(description = "Abort an ongoing move operation", names = { "--abort" })
-    public boolean abort;
+    private boolean abort;
 
     @Override
     public void execute(NodeProbe probe)

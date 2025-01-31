@@ -28,13 +28,13 @@ import picocli.CommandLine.Option;
 public class GetInterDCStreamThroughput extends AbstractCommand
 {
     @Option(names = { "-e", "--entire-sstable-throughput" }, description = "Print entire SSTable streaming throughput in MiB/s")
-    public boolean entireSSTableThroughput;
+    private boolean entireSSTableThroughput;
 
     @Option(names = { "-m", "--mib" }, description = "Print the throughput cap for inter-datacenter streaming in MiB/s")
-    public boolean interDCStreamThroughputMiB;
+    private boolean interDCStreamThroughputMiB;
 
     @Option(names = { "-d", "--precise-mbit" }, description = "Print the throughput cap for inter-datacenter streaming in precise Mbits (double)")
-    public boolean interDCStreamThroughputDoubleMbit;
+    private boolean interDCStreamThroughputDoubleMbit;
 
     @Override
     public void execute(NodeProbe probe)

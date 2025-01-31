@@ -35,13 +35,13 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
 public class EnableAutoCompaction extends AbstractCommand
 {
     @CassandraUsage(usage = "[<keyspace> <tables>...]", description = "The keyspace followed by one or many tables")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(index = "0", description = "The keyspace to enable auto-compaction on", arity = "0..1")
-    public String keyspace;
+    private String keyspace;
 
     @Parameters(index = "1..*", description = "The tables to enable auto-compaction on", arity = "0..1")
-    public String[] tables;
+    private String[] tables;
 
     @Override
     public void execute(NodeProbe probe)

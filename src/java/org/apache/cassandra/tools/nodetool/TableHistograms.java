@@ -44,14 +44,13 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
 public class TableHistograms extends AbstractCommand
 {
     @CassandraUsage(usage = "[<keyspace> <table> | <keyspace.table>]", description = "The keyspace and table name")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(index = "0", description = "The keyspace name or keyspace and table name", arity = "0..1")
-    public String keyspaceTable = null;
+    private String keyspaceTable = null;
 
     @Parameters(index = "1", description = "The table name", arity = "0..1")
-    public String table = null;
-
+    private String table = null;
 
     @Override
     public void execute(NodeProbe probe)

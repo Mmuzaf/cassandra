@@ -35,10 +35,10 @@ public class RemoveNode extends AbstractCommand
     public TopLevelCommand parent;
 
     @Parameters(paramLabel = "nodeId", description = "The ID of the node to remove", arity = "0..1")
-    public String nodeId;
+    private String nodeId;
 
     @Option(names = { "--force" }, description = "Force node removal")
-    public boolean force = false;
+    private boolean force = false;
 
     @Override
     public void execute(NodeProbe probe)

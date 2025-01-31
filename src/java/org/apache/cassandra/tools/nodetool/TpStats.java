@@ -31,12 +31,12 @@ public class TpStats extends AbstractCommand
     @Option(paramLabel = "format",
             names = { "-F", "--format" },
             description = "Output format (json, yaml)")
-    public String outputFormat = "";
+    private String outputFormat = "";
 
     @Option(paramLabel = "verbose",
             names = { "-v", "--verbose" },
             description = "Display detailed metrics about thread pool's sizes")
-    public boolean verbose = false;
+    private boolean verbose = false;
 
     @Override
     public void execute(NodeProbe probe)

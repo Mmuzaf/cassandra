@@ -38,29 +38,29 @@ public class Compact extends AbstractCommand
                     description = "The keyspace followed by one or many tables or list of SSTable data files when using --user-defined")
     @Parameters(index = "0..*", description = "The keyspace followed by one or many tables or " +
                                               "list of SSTable data files when using --user-defined")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Option(paramLabel = "split_output", names = { "-s", "--split-output" }, description = "Use -s to not create a single big file")
-    public boolean splitOutput = false;
+    private boolean splitOutput = false;
 
     @Option(paramLabel = "user_defined", names = { "--user-defined" }, description = "Use --user-defined to submit listed files for user-defined compaction")
-    public boolean userDefined = false;
+    private boolean userDefined = false;
 
     @Option(paramLabel = "start_token", names = { "-st", "--start-token" }, description = "Use -st to specify a token at which the compaction range starts (inclusive)")
-    public String startToken = EMPTY;
+    private String startToken = EMPTY;
 
     @Option(paramLabel = "end_token", names = { "-et", "--end-token" }, description = "Use -et to specify a token at which compaction range ends (inclusive)")
-    public String endToken = EMPTY;
+    private String endToken = EMPTY;
 
     @Option(paramLabel = "partition_key", names = { "--partition" }, description = "String representation of the partition key")
-    public String partitionKey = EMPTY;
+    private String partitionKey = EMPTY;
 
     @Option(paramLabel = "jobs",
             names = {"-j", "--jobs"},
             description = "Use -j to specify the maximum number of threads to use for parallel compaction. " +
                           "If not set, up to half the compaction threads will be used. " +
                           "If set to 0, the major compaction will use all threads and will not permit other compactions to run until it completes (use with caution).")
-    public Integer parallelism = null;
+    private Integer parallelism = null;
 
     @Override
     public void execute(NodeProbe probe)

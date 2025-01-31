@@ -34,7 +34,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class DropCIDRGroup extends AbstractCommand
 {
     @Parameters(paramLabel = "cidrGroup", description = "Requires a cidr group name")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Override
     public void execute(NodeProbe probe)

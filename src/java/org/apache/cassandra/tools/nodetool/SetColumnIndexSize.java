@@ -26,7 +26,7 @@ import picocli.CommandLine.Parameters;
 public class SetColumnIndexSize extends AbstractCommand
 {
     @Parameters(paramLabel = "column_index_size", description = "Value in KiB", arity = "1")
-    public int columnIndexSizeInKiB;
+    private int columnIndexSizeInKiB;
 
     @Override
     protected void execute(NodeProbe probe)

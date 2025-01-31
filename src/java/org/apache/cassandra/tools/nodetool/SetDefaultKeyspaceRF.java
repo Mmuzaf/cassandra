@@ -26,7 +26,7 @@ import picocli.CommandLine.Parameters;
 public class SetDefaultKeyspaceRF extends AbstractCommand
 {
     @Parameters(paramLabel = "default_rf", description = "Default replication factor", arity = "1")
-    public Integer defaultRF = null;
+    private Integer defaultRF = null;
 
     protected void execute(NodeProbe probe)
     {

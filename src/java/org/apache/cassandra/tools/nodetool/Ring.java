@@ -42,10 +42,10 @@ import static java.lang.String.format;
 public class Ring extends WithPortDisplayAbstractCommand
 {
     @Parameters(description = "Specify a keyspace for accurate ownership information (topology awareness)", index = "0", arity = "0..1")
-    public String keyspace = null;
+    private String keyspace = null;
 
     @Option(paramLabel = "resolve_ip", names = { "-r", "--resolve-ip" }, description = "Show node domain names instead of IPs")
-    public boolean resolveIp = false;
+    private boolean resolveIp = false;
 
     private PrintStream out;
     private EndpointSnitchInfoMBean epSnitchInfo;

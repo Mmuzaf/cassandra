@@ -28,10 +28,10 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
 public class AbortBootstrap extends AbstractCommand
 {
     @Option(paramLabel = "node_id", names = "--node", description = "Node ID of the node that failed bootstrap")
-    public String nodeId = EMPTY;
+    private String nodeId = EMPTY;
 
     @Option(paramLabel = "ip", names = "--ip", description = "IP of the node that failed bootstrap")
-    public String endpoint = EMPTY;
+    private String endpoint = EMPTY;
 
     @Override
     public void execute(NodeProbe probe)

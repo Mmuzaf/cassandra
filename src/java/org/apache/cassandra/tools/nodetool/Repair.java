@@ -49,75 +49,75 @@ public class Repair extends AbstractCommand
     public final static Set<String> ONLY_EXPLICITLY_REPAIRED = Sets.newHashSet(SchemaConstants.DISTRIBUTED_KEYSPACE_NAME);
 
     @CassandraUsage(usage = "[<keyspace> <tables>...]", description = "The keyspace followed by one or many tables")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
     
     @Parameters(index = "0", description = "The keyspace followed by one or many tables", arity = "0..1")
-    public String keyspace;
+    private String keyspace;
 
     @Parameters(index = "1..*", description = "Tables to repair", arity = "0..1")
     public String[] tables;
 
     @Option(paramLabel = "seqential", names = { "-seq", "--sequential" }, description = "Use -seq to carry out a sequential repair")
-    public boolean sequential = false;
+    private boolean sequential = false;
 
     @Option(paramLabel = "dc_parallel", names = { "-dcpar", "--dc-parallel" }, description = "Use -dcpar to repair data centers in parallel.")
-    public boolean dcParallel = false;
+    private boolean dcParallel = false;
 
     @Option(paramLabel = "local_dc", names = { "-local", "--in-local-dc" }, description = "Use -local to only repair against nodes in the same datacenter")
-    public boolean localDC = false;
+    private boolean localDC = false;
 
     @Option(paramLabel = "specific_dc", names = { "-dc", "--in-dc" }, description = "Use -dc to repair specific datacenters")
-    public List<String> specificDataCenters = new ArrayList<>();
+    private List<String> specificDataCenters = new ArrayList<>();
 
     @Option(paramLabel = "specific_host", names = { "-hosts", "--in-hosts" }, description = "Use -hosts to repair specific hosts")
-    public List<String> specificHosts = new ArrayList<>();
+    private List<String> specificHosts = new ArrayList<>();
 
     @Option(paramLabel = "start_token", names = { "-st", "--start-token" }, description = "Use -st to specify a token at which the repair range starts (exclusive)")
-    public String startToken = EMPTY;
+    private String startToken = EMPTY;
 
     @Option(paramLabel = "end_token", names = { "-et", "--end-token" }, description = "Use -et to specify a token at which repair range ends (inclusive)")
-    public String endToken = EMPTY;
+    private String endToken = EMPTY;
 
     @Option(paramLabel = "primary_range", names = { "-pr", "--partitioner-range" }, description = "Use -pr to repair only the first range returned by the partitioner")
-    public boolean primaryRange = false;
+    private boolean primaryRange = false;
 
     @Option(paramLabel = "full", names = { "-full", "--full" }, description = "Use -full to issue a full repair.")
-    public boolean fullRepair = false;
+    private boolean fullRepair = false;
 
     @Option(paramLabel = "force", names = { "-force", "--force" }, description = "Use -force to filter out down endpoints")
-    public boolean force = false;
+    private boolean force = false;
 
     @Option(paramLabel = "preview", names = { "-prv", "--preview" }, description = "Determine ranges and amount of data to be streamed, but don't actually perform repair")
-    public boolean preview = false;
+    private boolean preview = false;
 
     @Option(paramLabel = "validate", names = { "-vd", "--validate" }, description = "Checks that repaired data is in sync between nodes. Out of sync repaired data indicates a full repair should be run.")
-    public boolean validate = false;
+    private boolean validate = false;
 
     @Option(paramLabel = "job_threads", names = { "-j", "--job-threads" }, description = "Number of threads to run repair jobs. " +
                                                                                          "Usually this means number of CFs to repair concurrently. " +
                                                                                          "WARNING: increasing this puts more load on repairing nodes, so be careful. (default: 1, max: 4)")
-    public int numJobThreads = 1;
+    private int numJobThreads = 1;
 
     @Option(paramLabel = "trace_repair", names = { "-tr", "--trace" }, description = "Use -tr to trace the repair. Traces are logged to system_traces.events.")
-    public boolean trace = false;
+    private boolean trace = false;
 
     @Option(paramLabel = "pull_repair", names = { "-pl", "--pull" }, description = "Use --pull to perform a one way repair where data is only streamed from a remote node to this node.")
-    public boolean pullRepair = false;
+    private boolean pullRepair = false;
 
     @Option(paramLabel = "optimise_streams", names = { "-os", "--optimise-streams" }, description = "Use --optimise-streams to try to reduce the number of streams we do (EXPERIMENTAL, see CASSANDRA-3200).")
-    public boolean optimiseStreams = false;
+    private boolean optimiseStreams = false;
 
     @Option(paramLabel = "skip-paxos", names = { "-skip-paxos", "--skip-paxos" }, description = "If the --skip-paxos flag is included, the paxos repair step is skipped. Paxos repair is also skipped for preview repairs.")
-    public boolean skipPaxos = false;
+    private boolean skipPaxos = false;
 
     @Option(paramLabel = "paxos-only", names = { "-paxos-only", "--paxos-only" }, description = "If the --paxos-only flag is included, no table data is repaired, only paxos operations..")
-    public boolean paxosOnly = false;
+    private boolean paxosOnly = false;
 
     @Option(paramLabel = "ignore_unreplicated_keyspaces", names = { "-iuk", "--ignore-unreplicated-keyspaces" }, description = "Use --ignore-unreplicated-keyspaces to ignore keyspaces which are not replicated, otherwise the repair will fail")
-    public boolean ignoreUnreplicatedKeyspaces = false;
+    private boolean ignoreUnreplicatedKeyspaces = false;
 
     @Option(paramLabel = "no_purge", names = { "--include-gcgs-expired-tombstones" }, description = "Do not apply gc grace seconds to purge any tombstones. Only useful in rare recovery scenarios, never regular operations.")
-    public boolean dontPurgeTombstones = false;
+    private boolean dontPurgeTombstones = false;
 
     private PreviewKind getPreviewKind()
     {

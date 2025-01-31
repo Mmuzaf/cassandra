@@ -25,7 +25,7 @@ import picocli.CommandLine.Parameters;
 public class SetSnapshotThrottle extends AbstractCommand
 {
     @Parameters(paramLabel = "throttle", description = "Value represents hardlinks per second ( snapshot_links_per_second ) , 0 to disable throttling", arity = "1")
-    public Long snapshotThrottle = null;
+    private Long snapshotThrottle = null;
 
     @Override
     public void execute(NodeProbe probe)

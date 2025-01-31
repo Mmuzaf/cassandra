@@ -25,7 +25,7 @@ import picocli.CommandLine.Option;
 public class GossipInfo extends WithPortDisplayAbstractCommand
 {
     @Option(paramLabel = "resolve_ip", names = { "-r", "--resolve-ip" }, description = "Show node domain names instead of IPs")
-    public boolean resolveIp = false;
+    private boolean resolveIp = false;
 
     @Override
     public void execute(NodeProbe probe)

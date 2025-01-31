@@ -52,10 +52,10 @@ public class PaxosSimulationRunner extends SimulationRunner implements Runnable
         @Option(names = "--without-paxos-state-cache", description = "Run with the paxos state cache always disabled")
         boolean withoutStateCache;
 
-        @Option(names = "--variant", paramLabel = "paxos_variant", description = "Specify the initial paxos variant to use")
+        @Option(names = "--variant", paramLabel = "from_paxos_variant", description = "Specify the initial paxos variant to use")
         String variant;
 
-        @Option(names = "--to-variant",  paramLabel = "paxos_variant", description = "Specify the paxos variant to change to at some point during the simulation")
+        @Option(names = "--to-variant",  paramLabel = "to_paxos_variant", description = "Specify the paxos variant to change to at some point during the simulation")
         String toVariant;
 
         public Run() {}

@@ -29,7 +29,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 public class Assassinate extends AbstractCommand
 {
     @Parameters(paramLabel = "ip_address", description = "IP address of the endpoint to assassinate", arity = "1")
-    public String endpoint = EMPTY;
+    private String endpoint = EMPTY;
 
     @Override
     public void execute(NodeProbe probe)

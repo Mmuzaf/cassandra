@@ -38,28 +38,28 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
 public class UpgradeSSTable extends AbstractCommand
 {
     @CassandraUsage(usage = "[<keyspace> <tables>...]", description = "The keyspace followed by one or many tables")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(index = "0", description = "The keyspace followed by one or many tables", arity = "0..1")
-    public String keyspace;
+    private String keyspace;
 
     @Parameters(index = "1..*", description = "The tables to upgrade", arity = "0..*")
-    public List<String> tables;
+    private List<String> tables;
 
     @Option(paramLabel = "include_all",
             names = { "-a", "--include-all-sstables" },
             description = "Use -a to include all sstables, even those already on the current version")
-    public boolean includeAll = false;
+    private boolean includeAll = false;
 
     @Option(paramLabel = "max_timestamp",
             names = { "-t", "--max-timestamp" },
             description = "Use -t to compact only SSTables that have local creation time _older_ than the given timestamp")
-    public long maxSSTableTimestamp = Long.MAX_VALUE;
+    private long maxSSTableTimestamp = Long.MAX_VALUE;
 
     @Option(paramLabel = "jobs",
             names = { "-j", "--jobs" },
             description = "Number of sstables to upgrade simultanously, set to 0 to use all available compaction threads")
-    public int jobs = 2;
+    private int jobs = 2;
 
     @Override
     public void execute(NodeProbe probe)

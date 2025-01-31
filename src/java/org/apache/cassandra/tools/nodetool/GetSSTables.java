@@ -37,22 +37,22 @@ public class GetSSTables extends AbstractCommand
     @Option(paramLabel = "hex_format",
             names = { "-hf", "--hex-format" },
             description = "Specify the key in hexadecimal string format")
-    public boolean hexFormat = false;
+    private boolean hexFormat = false;
 
     @Option(names = { "-l", "--show-levels" }, description = "If the table is using leveled compaction the level of each sstable will be included in the output (Default: false)")
-    public boolean showLevels = false;
+    private boolean showLevels = false;
 
     @CassandraUsage(usage = "<keyspace> <cfname> <key>", description = "The keyspace, the column family, and the key")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(paramLabel = "keyspace", index = "0", arity = "0..1", description = "The keyspace")
-    public String keyspace;
+    private String keyspace;
 
     @Parameters(paramLabel = "cfname", index = "1", arity = "0..1", description = "The column family")
-    public String cfname;
+    private String cfname;
 
     @Parameters(paramLabel = "key", index = "2", arity = "0..1", description = "The key")
-    public String key;
+    private String key;
 
     @Override
     public void execute(NodeProbe probe)

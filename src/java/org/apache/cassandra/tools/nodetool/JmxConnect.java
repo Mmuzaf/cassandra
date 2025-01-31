@@ -60,19 +60,19 @@ public class JmxConnect extends AbstractCommand implements AutoCloseable
     protected CommandSpec spec; // injected by picocli
 
     @Option(names = { "-h", "--host" }, description = "Node hostname or ip address", arity = "0..1")
-    public String host = "127.0.0.1";
+    private String host = "127.0.0.1";
 
     @Option(names = { "-p", "--port" }, description = "Remote jmx agent port number", arity = "0..1")
-    public String port = "7199";
+    private String port = "7199";
 
     @Option(names = { "-u", "--username" }, description = "Remote jmx agent username", arity = "0..1")
-    public String username = EMPTY;
+    private String username = EMPTY;
 
     @Option(names = { "-pw", "--password" }, description = "Remote jmx agent password", arity = "0..1")
-    public String password = EMPTY;
+    private String password = EMPTY;
 
     @Option(names = { "-pwf", "--password-file" }, description = "Path to the JMX password file", arity = "0..1")
-    public String passwordFilePath = EMPTY;
+    private String passwordFilePath = EMPTY;
 
     @Inject
     private INodeProbeFactory nodeProbeFactory;

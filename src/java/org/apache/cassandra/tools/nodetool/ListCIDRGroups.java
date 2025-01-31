@@ -33,7 +33,7 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.printSet;
 public class ListCIDRGroups extends AbstractCommand
 {
     @Parameters(paramLabel = "cidrGroup", description = "LIST operation can be invoked with or without cidr group name", arity = "0..1")
-    public String cidrGroup;
+    private String cidrGroup;
 
     @Override
     public void execute(NodeProbe probe)

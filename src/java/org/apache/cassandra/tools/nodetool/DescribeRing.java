@@ -30,7 +30,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 public class DescribeRing extends WithPortDisplayAbstractCommand
 {
     @Parameters(description = "The keyspace name", arity = "1")
-    String keyspace = EMPTY;
+    private String keyspace = EMPTY;
 
     @Override
     public void execute(NodeProbe probe)

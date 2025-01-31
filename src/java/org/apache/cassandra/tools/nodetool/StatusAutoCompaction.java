@@ -37,16 +37,16 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
 public class StatusAutoCompaction extends AbstractCommand
 {
     @CassandraUsage(usage = "[<keyspace> <tables>...]", description = "The keyspace followed by one or many tables")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(index = "0", description = "The keyspace followed by one or many tables", arity = "0..1")
-    public String keyspace;
+    private String keyspace;
 
     @Parameters(index = "1..*", description = "Tables to get autocomaction status to", arity = "0..*")
-    public List<String> tables;
+    private List<String> tables;
 
     @Option(paramLabel = "show_all", names = { "-a", "--all" }, description = "Show auto compaction status for each keyspace/table")
-    public boolean showAll = false;
+    private boolean showAll = false;
 
     @Override
     public void execute(NodeProbe probe)

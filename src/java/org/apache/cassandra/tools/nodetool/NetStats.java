@@ -38,7 +38,7 @@ public class NetStats extends WithPortDisplayAbstractCommand
     @Option(paramLabel = "human_readable",
             names = { "-H", "--human-readable" },
             description = "Display bytes in human readable form, i.e. KiB, MiB, GiB, TiB")
-    public boolean humanReadable = false;
+    private boolean humanReadable = false;
 
     @Override
     public void execute(NodeProbe probe)

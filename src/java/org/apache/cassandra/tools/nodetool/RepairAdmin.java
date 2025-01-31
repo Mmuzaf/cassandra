@@ -67,13 +67,13 @@ public class RepairAdmin extends AbstractCommand
     public static class ListCmd extends AbstractCommand
     {
         @Option(paramLabel = "all", names = { "-a", "--all" }, description = "include completed and failed sessions")
-        public boolean all;
+        private boolean all;
 
         @Option(paramLabel = "start_token", names = { "-st", "--start-token" }, description = "Use -st to specify a token at which the repair range starts")
-        public String startToken = StringUtils.EMPTY;
+        private String startToken = StringUtils.EMPTY;
 
         @Option(paramLabel = "end_token", names = { "-et", "--end-token" }, description = "Use -et to specify a token at which repair range ends")
-        public String endToken = StringUtils.EMPTY;
+        private String endToken = StringUtils.EMPTY;
 
         protected void execute(NodeProbe probe)
         {
@@ -114,22 +114,22 @@ public class RepairAdmin extends AbstractCommand
     public static class SummarizePendingCmd extends AbstractCommand
     {
         @Option(paramLabel = "verbose", names = { "-v", "--verbose" }, description = "print additional info ")
-        public boolean verbose;
+        private boolean verbose;
 
         @Option(paramLabel = "start_token", names = { "-st", "--start-token" }, description = "Use -st to specify a token at which the repair range starts")
-        public String startToken = StringUtils.EMPTY;
+        private String startToken = StringUtils.EMPTY;
 
         @Option(paramLabel = "end_token", names = { "-et", "--end-token" }, description = "Use -et to specify a token at which repair range ends")
-        public String endToken = StringUtils.EMPTY;
+        private String endToken = StringUtils.EMPTY;
 
         @CassandraUsage(usage = "[<keyspace> <tables>...]", description = "The keyspace followed by one or many tables")
-        public List<String> schemaArgs = new ArrayList<>();
+        private List<String> schemaArgs = new ArrayList<>();
 
         @Parameters(index = "0", description = "The keyspace followed by one or many tables", arity = "0..1")
-        public String keyspace;
+        private String keyspace;
 
         @Parameters(index = "1..*", description = "The tables", arity = "0..*")
-        public List<String> tables;
+        private List<String> tables;
 
         protected void execute(NodeProbe probe)
         {
@@ -180,22 +180,22 @@ public class RepairAdmin extends AbstractCommand
     public static class SummarizeRepairedCmd extends AbstractCommand
     {
         @Option(paramLabel = "verbose", names = {"-v", "--verbose"}, description = "print additional info ")
-        public boolean verbose = false;
+        private boolean verbose = false;
 
         @Option(paramLabel = "start_token", names = {"-st", "--start-token"}, description = "Use -st to specify a token at which the repair range starts")
-        public String startToken = StringUtils.EMPTY;
+        private String startToken = StringUtils.EMPTY;
 
         @Option(paramLabel = "end_token", names = {"-et", "--end-token"}, description = "Use -et to specify a token at which repair range ends")
-        public String endToken = StringUtils.EMPTY;
+        private String endToken = StringUtils.EMPTY;
 
         @CassandraUsage(usage = "[<keyspace> <tables>...]", description = "The keyspace followed by one or many tables")
-        public List<String> schemaArgs = new ArrayList<>();
+        private List<String> schemaArgs = new ArrayList<>();
 
         @Parameters(index = "0", description = "The keyspace followed by one or many tables", arity = "0..1")
-        public String keyspace;
+        private String keyspace;
 
         @Parameters(index = "1..*", description = "The tables", arity = "0..*")
-        public List<String> tables;
+        private List<String> tables;
 
         protected void execute(NodeProbe probe)
         {
@@ -251,22 +251,22 @@ public class RepairAdmin extends AbstractCommand
     public static class CleanupDataCmd extends AbstractCommand
     {
         @Option(paramLabel = "force", names = { "-f", "--force" }, description = "Force a cleanup.")
-        public boolean force = false;
+        private boolean force = false;
 
         @Option(paramLabel = "start_token", names = { "-st", "--start-token" }, description = "Use -st to specify a token at which the repair range starts")
-        public String startToken = StringUtils.EMPTY;
+        private String startToken = StringUtils.EMPTY;
 
         @Option(paramLabel = "end_token", names = { "-et", "--end-token" }, description = "Use -et to specify a token at which repair range ends")
-        public String endToken = StringUtils.EMPTY;
+        private String endToken = StringUtils.EMPTY;
 
         @CassandraUsage(usage = "[<keyspace> <tables>...]", description = "The keyspace followed by one or many tables")
-        public List<String> schemaArgs = new ArrayList<>();
+        private List<String> schemaArgs = new ArrayList<>();
 
         @Parameters(index = "0", description = "The keyspace followed by one or many tables", arity = "0..1")
-        public String keyspace;
+        private String keyspace;
 
         @Parameters(index = "1..*", description = "The tables", arity = "0..*")
-        public List<String> tables;
+        private List<String> tables;
 
         protected void execute(NodeProbe probe)
         {
@@ -315,10 +315,10 @@ public class RepairAdmin extends AbstractCommand
     public static class CancelCmd extends AbstractCommand
     {
         @Option(paramLabel = "force", names = { "-f", "--force" }, description = "Force a cancellation.")
-        public boolean force = false;
+        private boolean force = false;
 
         @Option(paramLabel = "session", names = { "-s", "--session" }, description = "The session to cancel", required = true)
-        public String sessionToCancel;
+        private String sessionToCancel;
 
         protected void execute(NodeProbe probe)
         {

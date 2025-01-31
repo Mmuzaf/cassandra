@@ -36,14 +36,14 @@ public class SetLoggingLevel extends AbstractCommand
 {
     @CassandraUsage(usage = "<component|class> <level>", description = "The component or class to change the level for and the log level threshold to set. Will reset to initial level if omitted. "
                                                                        + "Available components: bootstrap, compaction, repair, streaming, cql, ring")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(paramLabel = "component", description = "The component or class to change the level for. " +
                                                         "Available components: bootstrap, compaction, repair, streaming, cql, ring", arity = "0..1", index = "0")
-    public String component;
+    private String component;
 
     @Parameters(paramLabel = "level", description = "The log level threshold to set. Will reset to initial level if omitted.", arity = "0..1", index = "1")
-    public String level;
+    private String level;
 
     @Override
     public void execute(NodeProbe probe)

@@ -34,13 +34,13 @@ public class SetTimeout extends AbstractCommand
 {
     @CassandraUsage(usage = "<timeout_type> <timeout_in_ms>", description = "Timeout type followed by value in ms " +
                                                                             "(0 disables socket streaming timeout). Type should be one of (" + GetTimeout.TIMEOUT_TYPES + ")")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(paramLabel = "timeout_type", description = "Timeout type", index = "0", arity = "0..1")
-    public String timeoutType;
+    private String timeoutType;
 
     @Parameters(paramLabel = "timeout_in_ms", description = "Timeout in ms", index = "1", arity = "0..1")
-    public String timeoutInMs;
+    private String timeoutInMs;
 
     @Override
     public void execute(NodeProbe probe)

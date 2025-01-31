@@ -55,7 +55,7 @@ import picocli.CommandLine.Parameters;
 public class Sjk extends AbstractCommand
 {
     @Parameters(description = "Arguments passed as is to 'Swiss Java Knife'.", arity = "0..*", index = "0..*")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     private final Wrapper wrapper = new Wrapper();
 

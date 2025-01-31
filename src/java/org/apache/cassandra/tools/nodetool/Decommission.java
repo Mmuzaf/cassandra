@@ -28,7 +28,7 @@ public class Decommission extends AbstractCommand
     @Option(paramLabel = "force",
             names = { "-f", "--force" },
             description = "Force decommission of this node even when it reduces the number of replicas to below configured RF")
-    public boolean force = false;
+    private boolean force = false;
 
     @Override
     public void execute(NodeProbe probe)

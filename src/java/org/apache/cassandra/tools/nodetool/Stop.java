@@ -29,13 +29,13 @@ public class Stop extends AbstractCommand
     @Parameters(paramLabel = "compaction_type",
                 description = "Supported types are COMPACTION, VALIDATION, CLEANUP, SCRUB, UPGRADE_SSTABLES, INDEX_BUILD, TOMBSTONE_COMPACTION, ANTICOMPACTION, VERIFY, VIEW_BUILD, INDEX_SUMMARY, RELOCATE, GARBAGE_COLLECT",
                 arity = "0..1")
-    public OperationType compactionType = OperationType.UNKNOWN;
+    private OperationType compactionType = OperationType.UNKNOWN;
 
     @Option(paramLabel = "compactionId",
             names = { "-id", "--compaction-id" },
             description = "Use -id to stop a compaction by the specified id. Ids can be found in the transaction log files whose name starts with compaction_, located in the table transactions folder.",
             arity = "0..1")
-    public String compactionId = "";
+    private String compactionId = "";
 
     @Override
     public void execute(NodeProbe probe)
