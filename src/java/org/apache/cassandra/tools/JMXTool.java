@@ -195,7 +195,7 @@ public class JMXTool implements Callable<Void>
     public static final class Diff implements Callable<Void>
     {
         @CommandLine.Parameters(description = "Files to diff")
-        private List<File> files;
+        private List<String> files;
 
         @Option(paramLabel = "format", names = { "-f", "--format" }, description = "What format the files are in; only support json and yaml as format")
         private Format format = Format.yaml;
@@ -206,28 +206,27 @@ public class JMXTool implements Callable<Void>
         @Option(paramLabel = "ignore_right", names = { "--ignore-missing-on-right" }, description = "Ignore results missing on the right")
         private boolean ignoreMissingRight;
 
-        @Option(paramLabel = "exclude_objects", names = "--exclude-object", description = "Ignores processing specific objects. " +
-                                                                                          "Each usage should take a single object, " +
-                                                                                          "but can use this flag multiple times.")
-        private List<CliPattern> excludeObjects = new ArrayList<>();
+        @Option(paramLabel = "exclude_objects", names = "--exclude-object", converter = PatternConverter.class,
+                description = "Ignores processing specific objects. Each usage should take a single object, but can use this flag multiple times.")
+        private List<Pattern> excludeObjects = new ArrayList<>();
 
-        @Option(paramLabel = "exclude_attributes", names = "--exclude-attribute", description = "Ignores processing specific attributes. " +
-                                                                                                "Each usage should take a single attribute, " +
-                                                                                                "but can use this flag multiple times.")
-        private List<CliPattern> excludeAttributes = new ArrayList<>();
+        @Option(paramLabel = "exclude_attributes", names = "--exclude-attribute", converter = PatternConverter.class,
+                description = "Ignores processing specific attributes. Each usage should take a single attribute, but can use this flag multiple times.")
+        private List<Pattern> excludeAttributes = new ArrayList<>();
 
-        @Option(paramLabel = "exclud_operations", names = "--exclude-operation", description = "Ignores processing specific operations. " +
-                                                                                               "Each usage should take a single operation, " +
-                                                                                               "but can use this flag multiple times.")
-        private List<CliPattern> excludeOperations = new ArrayList<>();
+        @Option(paramLabel = "exclud_operations", names = "--exclude-operation", converter = PatternConverter.class,
+                description = "Ignores processing specific operations. Each usage should take a single operation, but can use this flag multiple times.")
+        private List<Pattern> excludeOperations = new ArrayList<>();
 
         public Void call() throws Exception
         {
             Preconditions.checkArgument(files.size() == 2, "files requires 2 arguments but given %s", files);
+            File leftFile = new File(files.get(0));
+            File rightFile = new File(files.get(1));
             Map<String, Info> left;
             Map<String, Info> right;
-            try (FileInputStreamPlus leftStream = new FileInputStreamPlus(files.get(0));
-                 FileInputStreamPlus rightStream = new FileInputStreamPlus(files.get(1)))
+            try (FileInputStreamPlus leftStream = new FileInputStreamPlus(leftFile);
+                 FileInputStreamPlus rightStream = new FileInputStreamPlus(rightFile))
             {
                 left = format.load(leftStream);
                 right = format.load(rightStream);
@@ -240,9 +239,9 @@ public class JMXTool implements Callable<Void>
         private void diff(Map<String, Info> left, Map<String, Info> right)
         {
             DiffResult<String> objectNames = diff(left.keySet(), right.keySet(), name -> {
-                for (CliPattern p : excludeObjects)
+                for (Pattern p : excludeObjects)
                 {
-                    if (p.pattern.matcher(name).matches())
+                    if (p.matcher(name).matches())
                         return false;
                 }
                 return true;
@@ -277,9 +276,9 @@ public class JMXTool implements Callable<Void>
                 Info leftInfo = left.get(key);
                 Info rightInfo = right.get(key);
                 DiffResult<Attribute> attributes = diff(leftInfo.attributeSet(), rightInfo.attributeSet(), attribute -> {
-                    for (CliPattern p : excludeAttributes)
+                    for (Pattern p : excludeAttributes)
                     {
-                        if (p.pattern.matcher(attribute.name).matches())
+                        if (p.matcher(attribute.name).matches())
                             return false;
                     }
                     return true;
@@ -298,10 +297,10 @@ public class JMXTool implements Callable<Void>
                 }
 
                 DiffResult<Operation> operations = diff(leftInfo.operationSet(), rightInfo.operationSet(), operation -> {
-                    for (CliPattern p : excludeOperations)
+                    for (Pattern p : excludeOperations)
                     {
-                        if (p.pattern.matcher(operation.name).matches() ||
-                            p.pattern.matcher(operation.toString().replaceAll(" +", "")).matches())
+                        if (p.matcher(operation.name).matches() ||
+                            p.matcher(operation.toString().replaceAll(" +", "")).matches())
                             return false;
                     }
                     return true;
@@ -841,13 +840,12 @@ public class JMXTool implements Callable<Void>
         }
     }
 
-    public static final class CliPattern
+    public static class PatternConverter implements CommandLine.ITypeConverter<Pattern>
     {
-        private final Pattern pattern;
-
-        public CliPattern(String pattern)
+        @Override
+        public Pattern convert(String pattern) throws Exception
         {
-            this.pattern = Pattern.compile(pattern);
+            return Pattern.compile(pattern);
         }
     }
 
