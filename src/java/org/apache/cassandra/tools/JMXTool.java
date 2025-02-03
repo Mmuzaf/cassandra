@@ -221,12 +221,10 @@ public class JMXTool implements Callable<Void>
         public Void call() throws Exception
         {
             Preconditions.checkArgument(files.size() == 2, "files requires 2 arguments but given %s", files);
-            File leftFile = new File(files.get(0));
-            File rightFile = new File(files.get(1));
             Map<String, Info> left;
             Map<String, Info> right;
-            try (FileInputStreamPlus leftStream = new FileInputStreamPlus(leftFile);
-                 FileInputStreamPlus rightStream = new FileInputStreamPlus(rightFile))
+            try (FileInputStreamPlus leftStream = new FileInputStreamPlus(files.get(0));
+                 FileInputStreamPlus rightStream = new FileInputStreamPlus(files.get(1)))
             {
                 left = format.load(leftStream);
                 right = format.load(rightStream);
