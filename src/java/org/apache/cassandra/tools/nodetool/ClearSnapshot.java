@@ -41,20 +41,20 @@ public class ClearSnapshot extends AbstractCommand
 {
     @CassandraUsage(usage = "[<keyspaces>...]", description = "Remove snapshots from the given keyspaces")
     @Parameters(description = "Remove snapshots from the given keyspaces", arity = "0..*")
-    public List<String> keyspaces = new ArrayList<>();
+    private List<String> keyspaces = new ArrayList<>();
 
     @Option(paramLabel = "snapshot_name", names = "-t", description = "Remove the snapshot with a given name")
-    public String snapshotName = EMPTY;
+    private String snapshotName = EMPTY;
 
     @Option(paramLabel = "clear_all_snapshots", names = "--all", description = "Removes all snapshots")
-    public boolean clearAllSnapshots = false;
+    private boolean clearAllSnapshots = false;
 
     @Option(paramLabel = "older_than", names = "--older-than", description = "Clear snapshots older than specified time period.")
-    public String olderThan;
+    private String olderThan;
 
     @Option(paramLabel = "older_than_timestamp", names = "--older-than-timestamp",
             description = "Clear snapshots older than specified timestamp. It has to be a string in ISO format, for example '2022-12-03T10:15:30Z'")
-    public String olderThanTimestamp;
+    private String olderThanTimestamp;
 
     @Override
     public void execute(NodeProbe probe)

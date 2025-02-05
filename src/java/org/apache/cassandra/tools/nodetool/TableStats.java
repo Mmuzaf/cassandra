@@ -37,20 +37,20 @@ public class TableStats extends AbstractCommand
 {
     @CassandraUsage(usage = "[<keyspace.table>...]", description = "List of tables (or keyspace) names")
     @CommandLine.Parameters(paramLabel = "keyspace.table", index = "0..*", arity = "0..1", description = "List of tables (or keyspace) names")
-    public List<String> tableNames = new ArrayList<>();
+    private List<String> tableNames = new ArrayList<>();
 
     @Option(names = { "-i" }, description = "Ignore the list of tables and display the remaining tables")
-    public boolean ignore = false;
+    private boolean ignore = false;
 
     @Option(paramLabel = "human_readable",
             names = { "-H", "--human-readable" },
             description = "Display bytes in human readable form, i.e. KiB, MiB, GiB, TiB")
-    public boolean humanReadable = false;
+    private boolean humanReadable = false;
 
     @Option(paramLabel = "format",
             names = { "-F", "--format" },
             description = "Output format (json, yaml)")
-    public String outputFormat = "";
+    private String outputFormat = "";
 
     @Option(paramLabel = "sort_key",
             names = { "-s", "--sort" },
@@ -70,17 +70,17 @@ public class TableStats extends AbstractCommand
                         + "max_sstable_size, local_read_write_ratio, twcs_max_duration, sai_local_query_latency_ms, "
                         + "sai_post_filtering_read_latency, sai_disk_used_bytes, sai_sstable_indexes_hit, sai_index_segments_hit "
                         + "sai_rows_filtered, sai_total_query_timeouts, sai_total_queryable_index_ratio)")
-    public String sortKey = "";
+    private String sortKey = "";
 
     @Option(paramLabel = "top",
             names = { "-t", "--top" },
             description = "Show only the top K tables for the sort key (specify the number K of tables to be shown")
-    public int top = 0;
+    private int top = 0;
 
     @Option(paramLabel = "sstable_location_check",
             names = { "-l", "--sstable-location-check" },
             description = "Check whether or not the SSTables are in the correct location.")
-    public boolean locationCheck = false;
+    private boolean locationCheck = false;
 
     @Override
     public void execute(NodeProbe probe)

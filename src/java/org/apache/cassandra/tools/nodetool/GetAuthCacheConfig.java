@@ -30,7 +30,7 @@ public class GetAuthCacheConfig extends AbstractCommand
             names = { "--cache-name" },
             description = "Name of Auth cache (required)",
             required = true)
-    public String cacheName;
+    private String cacheName;
 
     @Override
     public void execute(NodeProbe probe)

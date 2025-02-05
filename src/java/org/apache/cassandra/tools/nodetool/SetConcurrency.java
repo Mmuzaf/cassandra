@@ -35,7 +35,7 @@ public class SetConcurrency extends AbstractCommand
                     description = "Set concurrency for processing stage")
     @Parameters(paramLabel = "<stage-name> <maximum-concurrency> | <stage-name> <core-pool> <maximum-concurrency>",
                 arity = "2..3", description = "Set concurrency for processing stage")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Override
     public void execute(NodeProbe probe)

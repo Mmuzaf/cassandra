@@ -31,7 +31,7 @@ public class GetConcurrency extends AbstractCommand
     @Parameters(paramLabel = "stage-names",
                 description = "Optional list of stage names, otherwise display all stages",
                 index = "0..*")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Override
     public void execute(NodeProbe probe)

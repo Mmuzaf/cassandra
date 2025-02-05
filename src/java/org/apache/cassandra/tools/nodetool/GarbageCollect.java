@@ -36,7 +36,7 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
 public class GarbageCollect extends AbstractCommand
 {
     @CassandraUsage(usage = "[<keyspace> <tables>...]", description = "The keyspace followed by one or many tables")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(index = "0", description = "The keyspace followed by one or many tables to garbage collect", arity = "0..1")
     private String keyspace;
@@ -47,14 +47,14 @@ public class GarbageCollect extends AbstractCommand
     @Option(paramLabel = "granularity",
             names = { "-g", "--granularity" },
             description = "Granularity of garbage removal. ROW (default) removes deleted partitions and rows, CELL also removes overwritten or deleted cells.")
-    public CompactionParams.TombstoneOption tombstoneOption = CompactionParams.TombstoneOption.ROW;
+    private CompactionParams.TombstoneOption tombstoneOption = CompactionParams.TombstoneOption.ROW;
 
     @Option(paramLabel = "jobs",
             names = { "-j", "--jobs" },
             description = "Number of sstables to cleanup simultanously, set to 0 to use all available compaction " +
                           "threads. Defaults to 1 so that collections of newer tables can see the data is deleted " +
                           "and also remove tombstones.")
-    public int jobs = 1;
+    private int jobs = 1;
 
     @Override
     public void execute(NodeProbe probe)

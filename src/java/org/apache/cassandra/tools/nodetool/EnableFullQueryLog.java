@@ -26,27 +26,27 @@ import picocli.CommandLine.Option;
 public class EnableFullQueryLog extends AbstractCommand
 {
     @Option(paramLabel = "roll_cycle", names = { "--roll-cycle" }, description = "How often to roll the log file (MINUTELY, HOURLY, DAILY).")
-    public String rollCycle = null;
+    private String rollCycle = null;
 
     @Option(paramLabel = "blocking", names = { "--blocking" }, description = "If the queue is full whether to block producers or drop samples [true|false].")
-    public String blocking = null;
+    private String blocking = null;
 
     @Option(paramLabel = "max_queue_weight", names = { "--max-queue-weight" }, description = "Maximum number of bytes of query data to queue to disk before blocking or dropping samples.")
-    public int maxQueueWeight = Integer.MIN_VALUE;
+    private int maxQueueWeight = Integer.MIN_VALUE;
 
     @Option(paramLabel = "max_log_size", names = { "--max-log-size" }, description = "How many bytes of log data to store before dropping segments. Might not be respected if a log file hasn't rolled so it can be deleted.")
-    public long maxLogSize = Long.MIN_VALUE;
+    private long maxLogSize = Long.MIN_VALUE;
 
     @Option(paramLabel = "path", names = { "--path" }, description = "Path to store the full query log at. Will have it's contents recursively deleted.")
-    public String path = null;
+    private String path = null;
 
     @Option(paramLabel = "archive_command", names = { "--archive-command" }, description = "Command that will handle archiving rolled full query log files." +
                                                                                    " Format is \"/path/to/script.sh %%path\" where %%path will be replaced with the file to archive" +
                                                                                    " Enable this by setting the full_query_logging_options.allow_nodetool_archive_command: true in the config.")
-    public String archiveCommand = null;
+    private String archiveCommand = null;
 
     @Option(paramLabel = "archive_retries", names = { "--max-archive-retries" }, description = "Max number of archive retries.")
-    public int archiveRetries = Integer.MIN_VALUE;
+    private int archiveRetries = Integer.MIN_VALUE;
 
     @Override
     public void execute(NodeProbe probe)

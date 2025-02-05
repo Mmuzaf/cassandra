@@ -33,16 +33,16 @@ public class SetCacheKeysToSave extends AbstractCommand
 {
     @CassandraUsage(usage = "<key-cache-keys-to-save> <row-cache-keys-to-save> <counter-cache-keys-to-save>",
                     description = "The number of keys saved by each cache. 0 to disable")
-    public List<Integer> args = new ArrayList<>();
+    private List<Integer> args = new ArrayList<>();
 
     @Parameters(paramLabel = "key-cache-keys-to-save", description = "Key cache keys to save", arity = "0..1", index = "0")
-    public Integer keyCacheKeysToSave = null;
+    private Integer keyCacheKeysToSave = null;
 
     @Parameters(paramLabel = "row-cache-keys-to-save", description = "Row cache keys to save", arity = "0..1", index = "1")
-    public Integer rowCacheKeysToSave = null;
+    private Integer rowCacheKeysToSave = null;
 
     @Parameters(paramLabel = "counter-cache-keys-to-save", description = "Counter cache keys to save", arity = "0..1", index = "2")
-    public Integer counterCacheKeysToSave = null;
+    private Integer counterCacheKeysToSave = null;
 
     @Override
     public void execute(NodeProbe probe)

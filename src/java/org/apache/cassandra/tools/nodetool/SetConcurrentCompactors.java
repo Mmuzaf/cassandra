@@ -28,7 +28,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class SetConcurrentCompactors extends AbstractCommand
 {
     @Parameters(paramLabel = "concurrent_compactors", description = "Number of concurrent compactors, greater than 0.", arity = "1")
-    public Integer concurrentCompactors = null;
+    private Integer concurrentCompactors = null;
 
     protected void execute(NodeProbe probe)
     {

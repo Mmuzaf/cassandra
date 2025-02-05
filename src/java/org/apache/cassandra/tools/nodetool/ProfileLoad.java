@@ -49,34 +49,34 @@ import static org.apache.commons.lang3.StringUtils.join;
 public class ProfileLoad extends AbstractCommand
 {
     @CassandraUsage(usage = "<keyspace> <cfname> <duration>", description = "The keyspace, column family name, and duration in milliseconds (Default: 10000)")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(index = "0", description = "The keyspace name", arity = "0..1")
-    public String keyspace;
+    private String keyspace;
 
     @Parameters(index = "1", description = "The cloumn family name", arity = "0..1")
-    public String cfname;
+    private String cfname;
 
     @Parameters(index = "2", description = "The duration in milliseconds (Default: 10000)", arity = "0..1")
-    public String duration;
+    private String duration;
 
     @Option(names = "-s", description = "Capacity of the sampler, higher for more accuracy (Default: 256)")
-    public int capacity = 256;
+    private int capacity = 256;
 
     @Option(names = "-k", description = "Number of the top samples to list (Default: 10)")
-    public int topCount = 10;
+    private int topCount = 10;
 
     @Option(names = "-a", description = "Comma separated list of samplers to use (Default: all)")
-    public String samplers = join(SamplerType.values(), ',');
+    private String samplers = join(SamplerType.values(), ',');
 
     @Option(names = { "-i", "--interval" }, description = "Schedule a new job that samples every interval milliseconds (Default: disabled) in the background")
-    public int intervalMillis = -1; // -1 for disabled.
+    private int intervalMillis = -1; // -1 for disabled.
 
     @Option(names = { "-t", "--stop" }, description = "Stop the scheduled sampling job identified by <keyspace> and <cfname>. Jobs are stopped until the last schedules complete.")
-    public boolean shouldStop = false;
+    private boolean shouldStop = false;
 
     @Option(names = { "-l", "--list" }, description = "List the scheduled sampling jobs")
-    public boolean shouldList = false;
+    private boolean shouldList = false;
 
     @Override
     public void execute(NodeProbe probe)

@@ -38,13 +38,13 @@ public class ViewBuildStatus extends AbstractCommand
     private final static String SUCCESS = "SUCCESS";
 
     @CassandraUsage(usage = "<keyspace> <view> | <keyspace.view>", description = "The keyspace and view name")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(index = "0", description = "Keyspace or keyspace and view in format <keyspace> <view> | <keyspace.view>", arity = "0..1")
-    public String keyspaceView;
+    private String keyspaceView;
 
     @Parameters(index = "1", description = "View name", arity = "0..1")
-    public String view;
+    private String view;
 
     protected void execute(NodeProbe probe)
     {

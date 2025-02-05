@@ -33,13 +33,13 @@ import picocli.CommandLine.Parameters;
 public class GetCompactionThreshold extends AbstractCommand
 {
     @CassandraUsage(usage = "<keyspace> <table>", description = "The keyspace with a table")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(index = "0", arity = "1", description = "The keyspace to get the compaction threshold for")
-    public String keyspace;
+    private String keyspace;
 
     @Parameters(index = "1", arity = "1", description = "The table to get the compaction threshold for")
-    public String table;
+    private String table;
 
     @Override
     public void execute(NodeProbe probe)

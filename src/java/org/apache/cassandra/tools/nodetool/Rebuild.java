@@ -29,27 +29,27 @@ public class Rebuild extends AbstractCommand
                 description = "Name of DC from which to select sources for streaming. By default, pick any DC (except local DC when --exclude-local-dc is set)",
                 index = "0",
                 arity = "0..1")
-    public String sourceDataCenterName = null;
+    private String sourceDataCenterName = null;
 
     @Option(paramLabel = "specific_keyspace",
             names = {"-ks", "--keyspace"},
             description = "Use -ks to rebuild specific keyspace.")
-    public String keyspace = null;
+    private String keyspace = null;
 
     @Option(paramLabel = "specific_tokens",
             names = {"-ts", "--tokens"},
             description = "Use -ts to rebuild specific token ranges, in the format of \"(start_token_1,end_token_1],(start_token_2,end_token_2],...(start_token_n,end_token_n]\".")
-    public String tokens = null;
+    private String tokens = null;
 
     @Option(paramLabel = "specific_sources",
             names = {"-s", "--sources"},
             description = "Use -s to specify hosts that this node should stream from when -ts is used. Multiple hosts should be separated using commas (e.g. 127.0.0.1,127.0.0.2,...)")
-    public String specificSources = null;
+    private String specificSources = null;
 
     @Option(paramLabel = "exclude_local_dc",
             names = {"--exclude-local-dc"},
             description = "Use --exclude-local-dc to exclude nodes in local data center as source for streaming.")
-    public boolean excludeLocalDatacenterNodes = false;
+    private boolean excludeLocalDatacenterNodes = false;
 
     @Override
     public void execute(NodeProbe probe)

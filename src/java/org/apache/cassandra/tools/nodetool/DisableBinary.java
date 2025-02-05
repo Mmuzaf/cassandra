@@ -25,7 +25,7 @@ import picocli.CommandLine.Option;
 public class DisableBinary extends AbstractCommand
 {
     @Option(paramLabel = "force", names = { "-f", "--force" }, description = "Use -f to interrupt client requests that have already started")
-    public boolean force = false;
+    private boolean force = false;
 
     @Override
     public void execute(NodeProbe probe)

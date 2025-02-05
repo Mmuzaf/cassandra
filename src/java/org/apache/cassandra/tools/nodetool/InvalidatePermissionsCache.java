@@ -38,67 +38,67 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class InvalidatePermissionsCache extends AbstractCommand
 {
     @Parameters(paramLabel = "role", description = "A role for which permissions to specified resources need to be invalidated", arity = "0..1", index = "0")
-    public String roleName;
+    private String roleName;
 
     // Data Resources
     @Option(paramLabel = "all-keyspaces",
             names = { "--all-keyspaces" },
             description = "Invalidate permissions for 'ALL KEYSPACES'")
-    public boolean allKeyspaces;
+    private boolean allKeyspaces;
 
     @Option(paramLabel = "keyspace",
             names = { "--keyspace" },
             description = "Keyspace to invalidate permissions for")
-    public String keyspace;
+    private String keyspace;
 
     @Option(paramLabel = "all-tables",
             names = { "--all-tables" },
             description = "Invalidate permissions for 'ALL TABLES'")
-    public boolean allTables;
+    private boolean allTables;
 
     @Option(paramLabel = "table",
             names = { "--table" },
             description = "Table to invalidate permissions for (you must specify --keyspace for using this option)")
-    public String table;
+    private String table;
 
     // Roles Resources
     @Option(paramLabel = "all-roles",
             names = { "--all-roles" },
             description = "Invalidate permissions for 'ALL ROLES'")
-    public boolean allRoles;
+    private boolean allRoles;
 
     @Option(paramLabel = "role",
             names = { "--role" },
             description = "Role to invalidate permissions for")
-    public String role;
+    private String role;
 
     // Functions Resources
     @Option(paramLabel = "all-functions",
             names = { "--all-functions" },
             description = "Invalidate permissions for 'ALL FUNCTIONS'")
-    public boolean allFunctions;
+    private boolean allFunctions;
 
     @Option(paramLabel = "functions-in-keyspace",
             names = { "--functions-in-keyspace" },
             description = "Keyspace to invalidate permissions for")
-    public String functionsInKeyspace;
+    private String functionsInKeyspace;
 
     @Option(paramLabel = "function",
             names = { "--function" },
             description = "Function to invalidate permissions for (you must specify --functions-in-keyspace for using " +
                           "this option; function format: name[arg1^..^agrN], for example: foo[Int32Type^DoubleType])")
-    public String function;
+    private String function;
 
     // MBeans Resources
     @Option(paramLabel = "all-mbeans",
             names = { "--all-mbeans" },
             description = "Invalidate permissions for 'ALL MBEANS'")
-    public boolean allMBeans;
+    private boolean allMBeans;
 
     @Option(paramLabel = "mbean",
             names = { "--mbean" },
             description = "MBean to invalidate permissions for")
-    public String mBean;
+    private String mBean;
 
     @Override
     public void execute(NodeProbe probe)

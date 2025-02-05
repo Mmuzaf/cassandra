@@ -52,10 +52,10 @@ import static java.util.stream.Collectors.toMap;
 public class Status extends WithPortDisplayAbstractCommand
 {
     @Parameters(description = "The keyspace name", arity = "0..1")
-    public String keyspace = null;
+    private String keyspace = null;
 
     @Option(paramLabel = "resolve_ip", names = { "-r", "--resolve-ip" }, description = "Show node domain names instead of IPs")
-    public boolean resolveIp = false;
+    private boolean resolveIp = false;
 
     @Option(paramLabel = "sort",
             names = { "-s", "--sort" },
@@ -63,12 +63,12 @@ public class Status extends WithPortDisplayAbstractCommand
                           "Default ordering is ascending for 'ip', 'host', 'id', 'token', 'rack' and descending for 'load', 'owns', 'state'. " +
                           "Sorting by token is possible only when cluster does not use vnodes. When using vnodes, default " +
                           "sorting is by id otherwise by token.")
-    public SortBy sortBy = null;
+    private SortBy sortBy = null;
 
     @Option(paramLabel = "sort_order",
             names = { "-o", "--order" },
             description = "Sorting order: 'asc' for ascending, 'desc' for descending.")
-    public SortOrder sortOrder = null;
+    private SortOrder sortOrder = null;
 
     private boolean isTokenPerNode = true;
     private Collection<String> joiningNodes, leavingNodes, movingNodes, liveNodes, unreachableNodes;

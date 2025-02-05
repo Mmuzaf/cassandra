@@ -35,48 +35,48 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
 public class Verify extends AbstractCommand
 {
     @CassandraUsage(usage = "[<keyspace> <tables>...]", description = "The keyspace followed by one or many tables")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(index = "0", description = "The keyspace followed by one or many tables", arity = "0..1")
-    public String keyspace;
+    private String keyspace;
 
     @Parameters(index = "1..*", description = "The tables to upgrade", arity = "0..*")
-    public List<String> tables;
+    private List<String> tables;
 
     @Option(paramLabel = "extended_verify",
             names = { "-e", "--extended-verify" },
             description = "Verify each cell data, beyond simply checking sstable checksums")
-    public boolean extendedVerify = false;
+    private boolean extendedVerify = false;
 
     @Option(paramLabel = "check_version",
             names = { "-c", "--check-version" },
             description = "Also check that all sstables are the latest version")
-    public boolean checkVersion = false;
+    private boolean checkVersion = false;
 
     @Option(paramLabel = "override-disable",
             names = { "-f", "--force" },
             description = "Override disabling of verify tool - see CASSANDRA-9947 for caveats")
-    public boolean overrideDisable = false;
+    private boolean overrideDisable = false;
 
     @Option(paramLabel = "dfp",
             names = { "-d", "--dfp" },
             description = "Invoke the disk failure policy if a corrupt sstable is found")
-    public boolean diskFailurePolicy = false;
+    private boolean diskFailurePolicy = false;
 
     @Option(paramLabel = "repair_status_change",
             names = { "-r", "--rsc" },
             description = "Mutate the repair status on corrupt sstables")
-    public boolean mutateRepairStatus = false;
+    private boolean mutateRepairStatus = false;
 
     @Option(paramLabel = "check_owns_tokens",
             names = { "-t", "--check-tokens" },
             description = "Verify that all tokens in sstables are owned by this node")
-    public boolean checkOwnsTokens = false;
+    private boolean checkOwnsTokens = false;
 
     @Option(paramLabel = "quick",
             names = { "-q", "--quick" },
             description = "Do a quick check - avoid reading all data to verify checksums")
-    public boolean quick = false;
+    private boolean quick = false;
 
     @Override
     public void execute(NodeProbe probe)

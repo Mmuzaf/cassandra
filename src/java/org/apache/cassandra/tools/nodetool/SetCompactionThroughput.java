@@ -25,7 +25,7 @@ import picocli.CommandLine.Parameters;
 public class SetCompactionThroughput extends AbstractCommand
 {
     @Parameters(paramLabel = "compaction_throughput", description = "Value in MiB, 0 to disable throttling", arity = "1")
-    public Integer compactionThroughput = null;
+    private Integer compactionThroughput = null;
 
     @Override
     public void execute(NodeProbe probe)

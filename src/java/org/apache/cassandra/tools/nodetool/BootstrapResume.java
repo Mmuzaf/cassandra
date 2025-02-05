@@ -34,7 +34,7 @@ public class BootstrapResume extends AbstractCommand
             description = { "Use --force to resume bootstrap regardless of ",
                             "cassandra.reset_bootstrap_progress environment variable. WARNING:",
                             "This is potentially dangerous, see CASSANDRA-17679" })
-    public boolean force = false;
+    private boolean force = false;
 
     @Override
     protected void execute(NodeProbe probe)

@@ -33,7 +33,7 @@ public class InvalidateCIDRPermissionsCache extends AbstractCommand
 {
     @CassandraUsage(usage = "[<role>...]", description = "List of roles to invalidate. By default, all roles")
     @Parameters(paramLabel = "roles", description = "List of roles to invalidate. By default, all roles", index = "0..*")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Override
     public void execute(NodeProbe probe)

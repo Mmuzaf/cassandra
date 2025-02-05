@@ -41,12 +41,12 @@ public class CompactionStats extends AbstractCommand
     @Option(paramLabel = "human_readable",
             names = { "-H", "--human-readable" },
             description = "Display bytes in human readable form, i.e. KiB, MiB, GiB, TiB")
-    public boolean humanReadable = false;
+    private boolean humanReadable = false;
 
     @Option(paramLabel = "vtable_output",
             names = { "-V", "--vtable" },
             description = "Display fields matching vtable output")
-    public boolean vtableOutput = false;
+    private boolean vtableOutput = false;
 
     @Override
     public void execute(NodeProbe probe)

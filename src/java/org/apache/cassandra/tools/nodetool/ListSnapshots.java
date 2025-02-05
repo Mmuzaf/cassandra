@@ -36,27 +36,27 @@ public class ListSnapshots extends AbstractCommand
     @Option(paramLabel = "no_ttl",
             names = { "-nt", "--no-ttl" },
             description = "Skip snapshots with TTL")
-    public boolean noTTL = false;
+    private boolean noTTL = false;
 
     @Option(paramLabel = "ephemeral",
             names = { "-e", "--ephemeral" },
             description = "Include ephememeral snapshots")
-    public boolean includeEphemeral = false;
+    private boolean includeEphemeral = false;
 
     @Option(paramLabel = "keyspace",
             names = { "-k", "--keyspace" },
             description = "Include snapshots of specified keyspace name")
-    public String keyspace = null;
+    private String keyspace = null;
 
     @Option(paramLabel = "table",
             names = { "-t", "--table" },
             description = "Include snapshots of specified table name")
-    public String table = null;
+    private String table = null;
 
     @Option(paramLabel = "snapshot",
             names = { "-n", "--snapshot" },
             description = "Include snapshots of specified name")
-    public String snapshotName = null;
+    private String snapshotName = null;
 
     @Override
     public void execute(NodeProbe probe)

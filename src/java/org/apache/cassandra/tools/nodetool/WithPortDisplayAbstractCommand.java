@@ -26,10 +26,10 @@ import picocli.CommandLine.ParentCommand;
 abstract class WithPortDisplayAbstractCommand extends AbstractCommand
 {
     @ParentCommand
-    public TopLevelCommand parent;
+    private TopLevelCommand parent;
 
     /** See {@link TopLevelCommand#printPort} option. */
-    public boolean printPort;
+    protected boolean printPort;
 
     @Override
     protected boolean prepareAndConnect()

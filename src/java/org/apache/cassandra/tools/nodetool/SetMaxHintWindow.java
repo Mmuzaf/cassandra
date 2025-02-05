@@ -26,7 +26,7 @@ import picocli.CommandLine.Parameters;
 public class SetMaxHintWindow extends AbstractCommand
 {
     @Parameters(paramLabel = "max_hint_window", description = "Value of maxhintwindow in ms", arity = "1")
-    public Integer maxHintWindow = null;
+    private Integer maxHintWindow = null;
 
     @Override
     public void execute(NodeProbe probe)

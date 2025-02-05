@@ -40,22 +40,22 @@ import static org.apache.commons.lang3.StringUtils.join;
 public class Snapshot extends AbstractCommand
 {
     @Parameters(description = "List of keyspaces. By default, all keyspaces", arity = "0..*")
-    public List<String> keyspaces = new ArrayList<>();
+    private List<String> keyspaces = new ArrayList<>();
 
     @Option(paramLabel = "table", names = { "-cf", "--column-family", "--table" }, description = "The table name (you must specify one and only one keyspace for using this option)")
-    public String table = null;
+    private String table = null;
 
     @Option(paramLabel = "tag", names = { "-t", "--tag" }, description = "The name of the snapshot")
-    public String snapshotName = Long.toString(currentTimeMillis());
+    private String snapshotName = Long.toString(currentTimeMillis());
 
     @Option(paramLabel = "ktlist", names = { "-kt", "--kt-list", "-kc", "--kc.list" }, description = "The list of Keyspace.table to take snapshot.(you must not specify only keyspace)")
     private String ktList = null;
 
     @Option(paramLabel = "skip-flush", names = { "-sf", "--skip-flush" }, description = "Do not flush memtables before snapshotting (snapshot will not contain unflushed data)")
-    public boolean skipFlush = false;
+    private boolean skipFlush = false;
 
     @Option(paramLabel = "ttl", names = { "--ttl" }, description = "Specify a TTL of created snapshot")
-    public String ttl = null;
+    private String ttl = null;
 
     @Override
     public void execute(NodeProbe probe)

@@ -33,16 +33,16 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
 public class GetEndpoints extends WithPortDisplayAbstractCommand
 {
     @CassandraUsage(usage = "<keyspace> <table> <key>", description = "The keyspace, the table, and the partition key for which we need to find the endpoint")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(index = "0", arity = "0..1", description = "The keyspace for which we need to find the endpoint")
-    public String keyspace;
+    private String keyspace;
 
     @Parameters(index = "1", arity = "0..1", description = "The table for which we need to find the endpoint")
-    public String table;
+    private String table;
 
     @Parameters(index = "2", arity = "0..1", description = "The partition key for which we need to find the endpoint")
-    public String key;
+    private String key;
 
     @Override
     public void execute(NodeProbe probe)

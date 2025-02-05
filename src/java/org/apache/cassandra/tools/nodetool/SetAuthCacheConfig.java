@@ -31,32 +31,32 @@ public class SetAuthCacheConfig extends AbstractCommand
             names = { "--cache-name" },
             description = "Name of Auth cache (required)",
             required = true)
-    public String cacheName;
+    private String cacheName;
 
     @Option(paramLabel = "validity-period",
             names = { "--validity-period" },
             description = "Validity period in milliseconds")
-    public Integer validityPeriod;
+    private Integer validityPeriod;
 
     @Option(paramLabel = "update-interval",
             names = { "--update-interval" },
             description = "Update interval in milliseconds")
-    public Integer updateInterval;
+    private Integer updateInterval;
 
     @Option(paramLabel = "max-entries",
             names = { "--max-entries" },
             description = "Max entries")
-    public Integer maxEntries;
+    private Integer maxEntries;
 
     @Option(paramLabel = "enable-active-update",
             names = { "--enable-active-update" },
             description = "Enable active update")
-    public Boolean enableActiveUpdate;
+    private Boolean enableActiveUpdate;
 
     @Option(paramLabel = "disable-active-update",
             names = { "--disable-active-update" },
             description = "Disable active update")
-    public Boolean disableActiveUpdate;
+    private Boolean disableActiveUpdate;
 
     @Override
     public void execute(NodeProbe probe)

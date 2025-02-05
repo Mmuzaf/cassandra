@@ -27,7 +27,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class SetTraceProbability extends AbstractCommand
 {
     @Parameters(paramLabel = "trace_probability", description = "Trace probability between 0 and 1 (ex: 0.2)", arity = "1")
-    public Double traceProbability = null;
+    private Double traceProbability = null;
 
     @Override
     public void execute(NodeProbe probe)

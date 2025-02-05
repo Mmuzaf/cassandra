@@ -27,7 +27,7 @@ public class Version extends AbstractCommand
     @Option(paramLabel = "verbose",
             names = { "-v", "--verbose" },
             description = "Include additional information")
-    public boolean verbose = false;
+    private boolean verbose = false;
 
     @Override
     public void execute(NodeProbe probe)

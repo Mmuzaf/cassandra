@@ -727,17 +727,6 @@
         <version>4.7.5</version>
       </dependency>
       <dependency>
-        <groupId>io.airlift</groupId>
-        <artifactId>airline</artifactId>
-        <version>0.8</version>
-        <exclusions>
-          <exclusion>
-            <artifactId>jsr305</artifactId>
-            <groupId>com.google.code.findbugs</groupId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-all</artifactId>
         <version>${netty.version}</version>

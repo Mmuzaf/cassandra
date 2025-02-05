@@ -25,7 +25,7 @@ import picocli.CommandLine.ParentCommand;
 public class RemoveNodeStatus extends AbstractCommand
 {
     @ParentCommand
-    public RemoveNode parent;
+    private RemoveNode parent;
 
     @Override
     public void execute(NodeProbe probe)

@@ -33,19 +33,19 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.concatArgs;
 public class SetCompactionThreshold extends AbstractCommand
 {
     @CassandraUsage(usage = "<keyspace> <table> <minthreshold> <maxthreshold>", description = "The keyspace, the table, min and max threshold")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     @Parameters(paramLabel = "keyspace", description = "The keyspace name", arity = "0..1", index = "0")
-    public String keyspace;
+    private String keyspace;
 
     @Parameters(paramLabel = "table", description = "The table name", arity = "0..1", index = "1")
-    public String table;
+    private String table;
 
     @Parameters(paramLabel = "minthreshold", description = "The min threshold", arity = "0..1", index = "2")
-    public String minthreshold;
+    private String minthreshold;
 
     @Parameters(paramLabel = "maxthreshold", description = "The max threshold", arity = "0..1", index = "3")
-    public String maxthreshold;
+    private String maxthreshold;
 
     @Override
     public void execute(NodeProbe probe)

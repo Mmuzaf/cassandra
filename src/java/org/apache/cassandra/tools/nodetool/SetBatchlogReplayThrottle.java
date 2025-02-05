@@ -26,7 +26,7 @@ import picocli.CommandLine.Parameters;
 public class SetBatchlogReplayThrottle extends AbstractCommand
 {
     @Parameters(paramLabel = "batchlog_replay_throttle", description = "Value in KiB per second, 0 to disable throttling", arity = "1")
-    public Integer batchlogReplayThrottle = null;
+    private Integer batchlogReplayThrottle = null;
 
     @Override
     public void execute(NodeProbe probe)

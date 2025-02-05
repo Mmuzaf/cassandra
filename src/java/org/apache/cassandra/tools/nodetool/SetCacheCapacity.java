@@ -33,16 +33,16 @@ public class SetCacheCapacity extends AbstractCommand
 {
     @CassandraUsage(usage = "<key-cache-capacity> <row-cache-capacity> <counter-cache-capacity>",
                     description = "Key cache, row cache, and counter cache (in MB)")
-    public List<Integer> args = new ArrayList<>();
+    private List<Integer> args = new ArrayList<>();
 
     @Parameters(paramLabel = "key-cache-capacity", description = "Key cache capacity in MB", arity = "0..1", index = "0")
-    public Integer keyCacheCapacity = null;
+    private Integer keyCacheCapacity = null;
 
     @Parameters(paramLabel = "row-cache-capacity", description = "Row cache capacity in MB", arity = "0..1", index = "1")
-    public Integer rowCacheCapacity = null;
+    private Integer rowCacheCapacity = null;
 
     @Parameters(paramLabel = "counter-cache-capacity", description = "Counter cache capacity in MB", arity = "0..1", index = "2")
-    public Integer counterCacheCapacity = null;
+    private Integer counterCacheCapacity = null;
 
     @Override
     public void execute(NodeProbe probe)

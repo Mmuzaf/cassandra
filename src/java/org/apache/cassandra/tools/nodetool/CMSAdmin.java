@@ -80,7 +80,7 @@ public class CMSAdmin extends AbstractCommand
     public static class InitializeCMS extends AbstractCommand
     {
         @Option(paramLabel = "ignored_endpoints", names = { "-i", "--ignore" }, description = "Hosts to ignore due to them being down")
-        public List<String> endpoint = new ArrayList<>();
+        private List<String> endpoint = new ArrayList<>();
 
         @Override
         protected void execute(NodeProbe probe)
@@ -95,21 +95,21 @@ public class CMSAdmin extends AbstractCommand
         @Option(paramLabel = "status",
                 names = { "--status" },
                 description = "Poll status of the reconfigure command. All other flags and arguments are ignored when this one is used.")
-        public boolean status = false;
+        private boolean status = false;
 
         @Option(paramLabel = "resume",
                 names = { "-r", "--resume" },
                 description = "Whether or not a previously interrupted sequence should be resumed")
-        public boolean resume = false;
+        private boolean resume = false;
 
         @Option(paramLabel = "cancel",
                 names = { "-c", "--cancel" },
                 description = "Cancels any in progress CMS reconfiguration")
-        public boolean cancel = false;
+        private boolean cancel = false;
 
         @CassandraUsage(usage = "[<replication factor>] or <datacenter>:<replication_factor> ... ", description = "Replication factor of new CMS")
         @Parameters(paramLabel = "replication_factor", description = "Replication factors of new CMS in format <replication factor> or <datacenter>:<replication_factor>")
-        public List<String> args = new ArrayList<>();
+        private List<String> args = new ArrayList<>();
 
         @Override
         protected void execute(NodeProbe probe)
@@ -202,7 +202,7 @@ public class CMSAdmin extends AbstractCommand
     public static class Unregister extends AbstractCommand
     {
         @Parameters(paramLabel = "nodeId", description = "One or more nodeIds to unregister, they all need to be in LEFT state", arity = "1..*")
-        public List<String> nodeIds;
+        private List<String> nodeIds;
 
         @Override
         protected void execute(NodeProbe probe)

@@ -30,7 +30,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class EnableHintsForDC extends AbstractCommand
 {
     @Parameters(paramLabel = "datacenter", description = "The data center to enable")
-    public List<String> args = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
 
     public void execute(NodeProbe probe)
     {
