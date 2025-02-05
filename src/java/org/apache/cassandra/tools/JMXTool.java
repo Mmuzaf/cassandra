@@ -62,7 +62,6 @@ import com.google.common.collect.Sets.SetView;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.cassandra.config.YamlConfigurationLoader;
-import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileInputStreamPlus;
 import org.apache.cassandra.utils.JsonUtils;
 import org.yaml.snakeyaml.DumperOptions;
