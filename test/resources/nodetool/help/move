@@ -5,12 +5,12 @@ SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] move [--abort] [--resume]
-                [--] <newToken>
+                [(-u <username> | --username <username>)] move [--abort] [--resume] [--]
+                <new token>
 
 OPTIONS
         --abort
-            Abort an ongoing move operation
+
 
         -h <host>, --host <host>
             Node hostname or ip address
@@ -28,7 +28,7 @@ OPTIONS
             Path to the JMX password file
 
         --resume
-            Resume an ongoing move operation
+
 
         -u <username>, --username <username>
             Remote jmx agent username
@@ -38,5 +38,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        <newToken>
+        <new token>
             The new token.

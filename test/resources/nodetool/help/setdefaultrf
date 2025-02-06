@@ -5,7 +5,7 @@ SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] setdefaultrf [--] <default_rf>
+                [(-u <username> | --username <username>)] setdefaultrf [--] <value>
 
 OPTIONS
         -h <host>, --host <host>
@@ -31,5 +31,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        <default_rf>
+        <value>
             Default replication factor

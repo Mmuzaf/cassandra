@@ -1,28 +1,15 @@
 NAME
-        nodetool removenode - Show status of current node removal, abort
-        removal or remove provided ID
+        nodetool removenode - Show status of current node removal, abort removal
+        or remove provided ID
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] removenode [--force] [--]
-                <nodeId><command> [<args>]
-
-        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
-                [(-pp | --print-port)] [(-pw <password> | --password <password>)]
-                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] removenode abort [--] <nodeId>
-
-        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
-                [(-pp | --print-port)] [(-pw <password> | --password <password>)]
-                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] removenode status
+                [(-u <username> | --username <username>)] removenode [--]
+                <status>|<abort> <ID>|<ID>|<ID> --force
 
 OPTIONS
-        --force
-            Force node removal
-
         -h <host>, --host <host>
             Node hostname or ip address
 
@@ -46,13 +33,6 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        <nodeId>
-            The ID of the node to remove
-
-COMMANDS
-        With no arguments, Display help information
-
-        abort
-            Abort remove node by provided ID
-        status
-            Show status of the current node removal operation
+        <status>|<abort> <ID>|<ID>|<ID> --force
+            Show status of current node removal, abort removal, or remove
+            provided ID

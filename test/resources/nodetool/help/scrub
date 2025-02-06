@@ -22,8 +22,8 @@ OPTIONS
             Do not validate columns using column validator
 
         -ns, --no-snapshot
-            Scrubbed CFs will be snapshotted first, if disableSnapshot is
-            false. (default false)
+            Scrubbed CFs will be snapshotted first, if disableSnapshot is false.
+            (default false)
 
         -p <port>, --port <port>
             Remote jmx agent port number

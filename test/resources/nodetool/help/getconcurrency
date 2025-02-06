@@ -6,7 +6,7 @@ SYNOPSIS
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] getconcurrency [--]
-                <stage-names>
+                [stage-names]
 
 OPTIONS
         -h <host>, --host <host>
@@ -32,5 +32,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        <stage-names>
-            Optional list of stage names, otherwise display all stages
+        [stage-names]
+            optional list of stage names, otherwise display all stages

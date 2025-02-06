@@ -5,8 +5,8 @@ SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] getcidrgroupsofip [--]
-                <ip_address>
+                [(-u <username> | --username <username>)] getcidrgroupsofip [--] <IP
+                address>
 
 OPTIONS
         -h <host>, --host <host>
@@ -32,5 +32,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        <ip_address>
+        <IP address>
             Requires IP address as a string

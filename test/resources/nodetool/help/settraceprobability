@@ -1,14 +1,14 @@
 NAME
         nodetool settraceprobability - Sets the probability for tracing any
-        given request to value. 0 disables, 1 enables for all requests, 0 is
-        the default
+        given request to value. 0 disables, 1 enables for all requests, 0 is the
+        default
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] settraceprobability [--]
-                <trace_probability>
+                <value>
 
 OPTIONS
         -h <host>, --host <host>
@@ -34,5 +34,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        <trace_probability>
+        <value>
             Trace probability between 0 and 1 (ex: 0.2)

@@ -7,8 +7,7 @@ SYNOPSIS
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] setstreamthroughput
-                [(-e | --entire-sstable-throughput)] [(-m | --mib)] [--]
-                <stream_throughput>
+                [(-e | --entire-sstable-throughput)] [(-m | --mib)] [--] <value_in_mb>
 
 OPTIONS
         -e, --entire-sstable-throughput
@@ -40,5 +39,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        <stream_throughput>
+        <value_in_mb>
             Value in megabits, 0 to disable throttling

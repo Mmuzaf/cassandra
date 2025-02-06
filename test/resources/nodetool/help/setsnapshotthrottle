@@ -1,6 +1,6 @@
 NAME
-        nodetool setsnapshotthrottle - Set the snapshot_links_per_second cap
-        for snapshot and clearsnapshot throttling
+        nodetool setsnapshotthrottle - Set the snapshot_links_per_second cap for
+        snapshot and clearsnapshot throttling
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]

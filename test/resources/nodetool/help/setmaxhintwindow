@@ -6,7 +6,7 @@ SYNOPSIS
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] setmaxhintwindow [--]
-                <max_hint_window>
+                <value_in_ms>
 
 OPTIONS
         -h <host>, --host <host>
@@ -32,5 +32,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        <max_hint_window>
+        <value_in_ms>
             Value of maxhintwindow in ms

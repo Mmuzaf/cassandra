@@ -1,7 +1,7 @@
 NAME
         nodetool upgradesstables - Rewrite sstables (for the requested tables)
-        that are not on the current version (thus upgrading them to said
-        current version)
+        that are not on the current version (thus upgrading them to said current
+        version)
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]

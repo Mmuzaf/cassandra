@@ -6,7 +6,7 @@ SYNOPSIS
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] listcidrgroups [--]
-                <cidrGroup>
+                [<cidrGroup>]
 
 OPTIONS
         -h <host>, --host <host>
@@ -32,5 +32,5 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        <cidrGroup>
+        [<cidrGroup>]
             LIST operation can be invoked with or without cidr group name

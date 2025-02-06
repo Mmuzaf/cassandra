@@ -1,6 +1,6 @@
 NAME
         nodetool assassinate - Forcefully remove a dead node without
-        re-replicating any data.  Use as a last resort if you cannot removenode
+        re-replicating any data. Use as a last resort if you cannot removenode
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]

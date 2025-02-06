@@ -6,8 +6,8 @@ SYNOPSIS
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] stop
-                [(-id <compactionId> | --compaction-id <compactionId>)] [--]
-                <compaction_type>
+                [(-id <compactionId> | --compaction-id <compactionId>)] [--] <compaction
+                type>
 
 OPTIONS
         -h <host>, --host <host>
@@ -38,8 +38,7 @@ OPTIONS
             list of argument, (useful when arguments might be mistaken for
             command-line options
 
-        <compaction_type>
+        <compaction type>
             Supported types are COMPACTION, VALIDATION, CLEANUP, SCRUB,
-            UPGRADE_SSTABLES, INDEX_BUILD, TOMBSTONE_COMPACTION,
-            ANTICOMPACTION, VERIFY, VIEW_BUILD, INDEX_SUMMARY, RELOCATE,
-            GARBAGE_COLLECT
+            UPGRADE_SSTABLES, INDEX_BUILD, TOMBSTONE_COMPACTION, ANTICOMPACTION,
+            VERIFY, VIEW_BUILD, INDEX_SUMMARY, RELOCATE, GARBAGE_COLLECT

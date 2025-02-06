@@ -6,7 +6,7 @@ SYNOPSIS
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] ring [(-r | --resolve-ip)]
-                [--] <keyspace>
+                [--] [<keyspace>]
 
 OPTIONS
         -h <host>, --host <host>

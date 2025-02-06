@@ -6,7 +6,7 @@ SYNOPSIS
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] abortbootstrap [--ip <ip>]
-                [--node <node_id>]
+                [--node <node id>]
 
 OPTIONS
         -h <host>, --host <host>
@@ -15,7 +15,7 @@ OPTIONS
         --ip <ip>
             IP of the node that failed bootstrap
 
-        --node <node_id>
+        --node <node id>
             Node ID of the node that failed bootstrap
 
         -p <port>, --port <port>

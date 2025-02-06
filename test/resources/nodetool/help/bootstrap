@@ -2,16 +2,12 @@ NAME
         nodetool bootstrap - Monitor/manage node's bootstrap process
 
 SYNOPSIS
+        nodetool bootstrap
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
-                [(-pp | --print-port)] [(-pw <password> | --password <password>)]
+                [(-u <username> | --username <username>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] bootstrap <command> [<args>]
-
-        nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
-                [(-pp | --print-port)] [(-pw <password> | --password <password>)]
-                [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
-                [(-u <username> | --username <username>)] bootstrap resume
-                [(-f | --force)]
+                [(-pw <password> | --password <password>)] [(-pp | --print-port)]
+                bootstrap resume [(-f | --force)]
 
 OPTIONS
         -h <host>, --host <host>

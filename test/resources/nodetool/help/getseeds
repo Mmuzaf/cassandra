@@ -1,6 +1,6 @@
 NAME
-        nodetool getseeds - Get the currently in use seed node IP list
-        excluding the node IP
+        nodetool getseeds - Get the currently in use seed node IP list excluding
+        the node IP
 
 SYNOPSIS
         nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]

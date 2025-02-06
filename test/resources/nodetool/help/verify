@@ -7,8 +7,8 @@ SYNOPSIS
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] verify
                 [(-c | --check-version)] [(-d | --dfp)] [(-e | --extended-verify)]
-                [(-f | --force)] [(-q | --quick)] [(-r | --rsc)]
-                [(-t | --check-tokens)] [--] [<keyspace> <tables>...]
+                [(-f | --force)] [(-q | --quick)] [(-r | --rsc)] [(-t | --check-tokens)]
+                [--] [<keyspace> <tables>...]
 
 OPTIONS
         -c, --check-version

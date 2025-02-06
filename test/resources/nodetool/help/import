@@ -6,19 +6,15 @@ SYNOPSIS
                 [(-pp | --print-port)] [(-pw <password> | --password <password>)]
                 [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)]
                 [(-u <username> | --username <username>)] import
-                [(-c | --no-invalidate-caches)] [(-cd | --copy-data)]
-                [(-e | --extended-verify)] [(-l | --keep-level)]
-                [(-niv | --no-index-validation)] [(-q | --quick)]
-                [(-r | --keep-repaired)] [(-ri | --require-index-components)]
-                [(-t | --no-tokens)] [(-v | --no-verify)] [--] <keyspace> <table>
-                <directory> ...
+                [(-c | --no-invalidate-caches)] [(-e | --extended-verify)]
+                [(-l | --keep-level)] [(-niv | --no-index-validation)]
+                [(-p | --copy-data)] [(-q | --quick)] [(-r | --keep-repaired)]
+                [(-ri | --require-index-components)] [(-t | --no-tokens)]
+                [(-v | --no-verify)] [--] <keyspace> <table> <directory> ...
 
 OPTIONS
         -c, --no-invalidate-caches
             Don't invalidate the row cache when importing
-
-        -cd, --copy-data
-            Copy data from source directories instead of moving them
 
         -e, --extended-verify
             Run an extended verify, verifying all values in the new sstables
@@ -34,6 +30,9 @@ OPTIONS
 
         -p <port>, --port <port>
             Remote jmx agent port number
+
+        -p, --copy-data
+            Copy data from source directories instead of moving them
 
         -pp, --print-port
             Operate in 4.0 mode with hosts disambiguated by port number
