@@ -17,14 +17,14 @@
  */
 package org.apache.cassandra.tools.nodetool;
 
-import static org.apache.commons.lang3.StringUtils.EMPTY;
-
 import java.io.IOException;
 
 import org.apache.cassandra.tools.NodeProbe;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 @Command(name = "move", description = "Move node on the token ring to a new token")
 public class Move extends AbstractCommand

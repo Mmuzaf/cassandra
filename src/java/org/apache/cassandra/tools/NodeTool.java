@@ -80,6 +80,9 @@ public class NodeTool
         try
         {
             CommandLine commandLine = createCommandLine(new CassandraCliFactory(nodeProbeFactory, output));
+            commandLine.setOut(new PrintWriter(output.out, true));
+            commandLine.setErr(new PrintWriter(output.err, true));
+
             configureCliLayout(commandLine);
             commandLine.setExecutionStrategy(JmxConnect::executionStrategy)
                        .setExecutionExceptionHandler((ex, c, arg) -> {
@@ -145,8 +148,15 @@ public class NodeTool
     public static List<String> getCommandsWithoutRoot(String separator)
     {
         List<String> commands = new ArrayList<>();
-        getCommandsWithoutRoot(createCommandLine(new CassandraCliFactory(new NodeProbeFactory(), Output.CONSOLE)), commands, separator);
-        return commands;
+        try
+        {
+            getCommandsWithoutRoot(createCommandLine(new CassandraCliFactory(new NodeProbeFactory(), Output.CONSOLE)), commands, separator);
+            return commands;
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException("Failed to initialize command line hierarchy", e);
+        }
     }
 
     private static void getCommandsWithoutRoot(CommandLine cli, List<String> commands, String separator)
@@ -159,12 +169,10 @@ public class NodeTool
             getCommandsWithoutRoot(sub, commands, separator);
     }
 
-    private static CommandLine createCommandLine(CassandraCliFactory factory)
+    public static CommandLine createCommandLine(CommandLine.IFactory factory) throws Exception
     {
         return new CommandLine(new TopLevelCommand(), factory)
-                   .addMixin(JmxConnect.MIXIN_KEY, factory.create(JmxConnect.class))
-                   .setOut(new PrintWriter(factory.output.out, true))
-                   .setErr(new PrintWriter(factory.output.err, true));
+                   .addMixin(JmxConnect.MIXIN_KEY, factory.create(JmxConnect.class));
     }
 
     private static void configureCliLayout(CommandLine commandLine)
