@@ -192,6 +192,17 @@ public class DecayingEstimatedHistogramReservoir implements SnapshottingReservoi
      * </ul>
      */
     public static final long LANDMARK_RESET_INTERVAL_IN_NS = TimeUnit.MILLISECONDS.toNanos(CASSANDRA_DECAYING_HISTOGRAM_RESET_INTERVAL_MS.getInt());
+    private static final long[] PRECOMPUTED_FORWARD_DECAY = precomputedForwardDecay();
+
+    private static long[] precomputedForwardDecay()
+    {
+//        Math.round(Math.exp(TimeUnit.NANOSECONDS.toSeconds(now - decayLandmark) / MEAN_LIFETIME_IN_S));
+        int ticks = (int) LANDMARK_RESET_INTERVAL_IN_NS / 1000 * 2;
+        long[] cached = new long[ticks];
+        for (int i = 0; i < ticks; i++)
+            cached[i] = forwardDecayWeight(0, i * 1000L);
+        return cached;
+    }
 
     private static final ReferenceQueue<Object> retirementPhantomRefsQueue = new ReferenceQueue<>();
     private static final Set<PhantomReference<Object>> phantomReferences = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -1162,12 +1173,10 @@ public class DecayingEstimatedHistogramReservoir implements SnapshottingReservoi
 
         public void update(int index, long now)
         {
-            if (lastSampledClock != now)
-            {
-                lastSampledClock = now;
-                lastDecayedWeight = forwardDecayWeight(decayLandmark, now);
-            }
-            data[index] += lastDecayedWeight;
+            long delta = now - decayLandmark;
+            if (delta <= PRECOMPUTED_FORWARD_DECAY.length)
+                data[index] += PRECOMPUTED_FORWARD_DECAY[(int) delta];
+            data[index] += forwardDecayWeight(decayLandmark, now);
         }
     }
 }
