@@ -69,6 +69,44 @@
         </jmh>
     </target>
 
+    <target name="-microbench-with-profiler-perf">
+        <mkdir dir="${test.profiler.output}"/>
+
+        <resources id="_jvm_jmh_arg_items">
+            <string>-Djdk.attach.allowAttachSelf=true</string>
+            <string>-XX:+UnlockDiagnosticVMOptions</string>
+            <string>-XX:+LogCompilation</string>
+            <string>-XX:+PrintAssembly</string>
+            <string>-XX:+PrintInterpreter</string>
+            <string>-XX:+PrintNMethods</string>
+            <string>-XX:+PrintNativeNMethods</string>
+            <string>-XX:+PrintSignatureHandlers</string>
+            <string>-XX:+PrintAdapterHandlers</string>
+            <string>-XX:+PrintStubCode</string>
+            <string>-XX:+PrintCompilation</string>
+            <string>-XX:+PrintInlining</string>
+            <string>-XX:PrintAssemblyOptions=syntax</string>
+        </resources>
+        <pathconvert property="_jvm_jmh_arg_concat" refid="_jvm_jmh_arg_items" pathsep=" "/>
+
+        <jmh>
+            <extra-args>
+                <arg value="-bm"/>     <arg value="sample"/>
+                <arg value="-i"/>      <arg value="5"/>
+                <arg value="-bs"/>     <arg value="1"/>
+                <arg value="-f"/>      <arg value="1"/>
+                <arg value="-tu"/>     <arg value="ns"/>
+                <arg value="-wi"/>     <arg value="1"/>
+                <arg value="-wbs"/>    <arg value="10"/>
+                <arg value="-wm"/>     <arg value="INDI"/>
+                <arg value="-syn"/>    <arg value="false"/>
+                <arg value="-o"/>      <arg path="${test.profiler.output}/human.txt"/>
+                <arg value="-prof"/>
+                <arg value="perfnorm:events=L1-dcache-loads,LLC-loads,LLC-load-misses,L2_RQSTS.ALL_DEMAND_DATA_RD,CYCLE_ACTIVITY.STALLS_TOTAL,CYCLE_ACTIVITY.STALLS_L1D_MISS,CYCLE_ACTIVITY.STALLS_L2_MISS,CYCLE_ACTIVITY.STALLS_L3_MISS,CYCLE_ACTIVITY.CYCLES_L1D_MISS,CYCLE_ACTIVITY.CYCLES_L2_MISS,CYCLE_ACTIVITY.CYCLES_L3_MISS"/>
+            </extra-args>
+        </jmh>
+    </target>
+
     <macrodef name="jmh">
         <element name="extra-args" optional="true"/>
         <sequential>
@@ -84,6 +122,7 @@
                 <jvmarg line="${java-jvmargs}"/>
                 <jvmarg line="${_std-test-jvmargs}"/>
                 <jvmarg line="${test.jvm.args}"/>
+                <jvmarg line="${_jvm_jmh_arg_concat}"/>
 
                 <arg value="-foe"/>
                 <arg value="true"/>

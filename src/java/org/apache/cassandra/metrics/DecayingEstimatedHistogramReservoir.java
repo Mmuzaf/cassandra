@@ -329,6 +329,7 @@ public class DecayingEstimatedHistogramReservoir implements SnapshottingReservoi
     {
         BucketsThreadLocal holder = new BucketsThreadLocal(size());
         bucketsThreadLocals.add(holder);
+        logger.info("Created new buckets thread local for {}", Thread.currentThread().getName());
         return holder;
     }
 
@@ -920,6 +921,7 @@ public class DecayingEstimatedHistogramReservoir implements SnapshottingReservoi
                 decayingEstimatedBuckets.updateExclusive((index, value) -> locDecaying.data[(int) index] + value,
                                                          (index, value) -> estimated[(int) index] + value,
                                                          locDecaying.decayLandmark);
+                logger.info("Releasing decaying buckets as the thread is dead");
             }
             finally
             {
