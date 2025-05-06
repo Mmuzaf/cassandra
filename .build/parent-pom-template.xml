@@ -663,6 +663,12 @@
         <scope>test</scope>
       </dependency>
       <dependency>
+        <groupId>io.github.java-diff-utils</groupId>
+        <artifactId>java-diff-utils</artifactId>
+        <version>4.12</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>org.apache.ant</groupId>
         <artifactId>ant-junit</artifactId>
         <version>1.10.12</version>
@@ -715,53 +721,47 @@
         <artifactId>jbcrypt</artifactId>
         <version>0.4</version>
       </dependency>
-      <dependency>
-        <groupId>org.apache.cassandra</groupId>
-        <artifactId>cassandra-accord</artifactId>
-        <version>@version@</version>
-        <exclusions>
-          <exclusion>
-            <artifactId>org.apache.cassandra</artifactId>
-            <groupId>cassandra-all</groupId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.cassandra</groupId>
-        <artifactId>cassandra-accord</artifactId>
-        <version>@version@</version>
-        <classifier>tests</classifier>
-        <scope>test</scope>
-        <exclusions>
-          <exclusion>
-            <artifactId>org.junit.jupiter</artifactId>
-            <groupId>junit-jupiter-api</groupId>
-          </exclusion>
-          <exclusion>
-            <artifactId>org.junit.jupiter</artifactId>
-            <groupId>junit-jupiter-engine</groupId>
-          </exclusion>
-          <exclusion>
-            <artifactId>ch.qos.logback</artifactId>
-            <groupId>logback-classic</groupId>
-          </exclusion>
-          <exclusion>
-            <artifactId>org.apache.cassandra</artifactId>
-            <groupId>cassandra-all</groupId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>io.airlift</groupId>
-        <artifactId>airline</artifactId>
-        <version>0.8</version>
-        <exclusions>
-          <exclusion>
-            <artifactId>jsr305</artifactId>
-            <groupId>com.google.code.findbugs</groupId>
-          </exclusion>
-        </exclusions>
-      </dependency>
+        <dependency>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>cassandra-accord</artifactId>
+            <version>@version@</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>org.apache.cassandra</artifactId>
+                    <groupId>cassandra-all</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>cassandra-accord</artifactId>
+            <version>@version@</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>org.junit.jupiter</artifactId>
+                    <groupId>junit-jupiter-api</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>org.junit.jupiter</artifactId>
+                    <groupId>junit-jupiter-engine</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>ch.qos.logback</artifactId>
+                    <groupId>logback-classic</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>org.apache.cassandra</artifactId>
+                    <groupId>cassandra-all</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+            <version>4.7.5</version>
+        </dependency>
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-all</artifactId>
