@@ -17,7 +17,6 @@
  */
 package org.apache.cassandra.service;
 
-import accord.primitives.Txn;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.SinglePartitionReadCommand;
 import org.apache.cassandra.db.partitions.FilteredPartition;
@@ -27,6 +26,8 @@ import org.apache.cassandra.service.accord.txn.TxnResult;
 import org.apache.cassandra.service.paxos.Ballot;
 import org.apache.cassandra.tcm.ClusterMetadata;
 import org.apache.cassandra.transport.Dispatcher;
+
+import accord.primitives.Txn;
 
 import static org.apache.cassandra.service.StorageProxy.ConsensusAttemptResult;
 

@@ -19,12 +19,13 @@ package org.apache.cassandra.journal;
 
 import java.nio.ByteBuffer;
 
-import accord.utils.Invariants;
 import org.apache.cassandra.concurrent.ExecutorPlus;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.utils.concurrent.OpOrder;
 import org.apache.cassandra.utils.concurrent.Ref;
 import org.apache.cassandra.utils.concurrent.SelfRefCounted;
+
+import accord.utils.Invariants;
 
 public abstract class Segment<K, V> implements SelfRefCounted<Segment<K, V>>, Comparable<Segment<K, V>>
 {

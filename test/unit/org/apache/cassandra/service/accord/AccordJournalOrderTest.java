@@ -26,17 +26,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import accord.api.Journal;
-import accord.local.Command;
-import accord.local.StoreParticipants;
-import accord.primitives.Ballot;
-import accord.primitives.Participants;
-import accord.primitives.RoutingKeys;
-import accord.primitives.SaveStatus;
-import accord.primitives.Status;
-import accord.primitives.TxnId;
-import accord.utils.AccordGens;
-import accord.utils.RandomSource;
 import org.apache.cassandra.SchemaLoader;
 import org.apache.cassandra.ServerTestUtils;
 import org.apache.cassandra.config.CassandraRelevantProperties;
@@ -52,6 +41,18 @@ import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.service.accord.api.TokenKey;
 import org.apache.cassandra.service.consensus.TransactionalMode;
 import org.apache.cassandra.utils.StorageCompatibilityMode;
+
+import accord.api.Journal;
+import accord.local.Command;
+import accord.local.StoreParticipants;
+import accord.primitives.Ballot;
+import accord.primitives.Participants;
+import accord.primitives.RoutingKeys;
+import accord.primitives.SaveStatus;
+import accord.primitives.Status;
+import accord.primitives.TxnId;
+import accord.utils.AccordGens;
+import accord.utils.RandomSource;
 
 import static org.apache.cassandra.cql3.statements.schema.CreateTableStatement.parse;
 

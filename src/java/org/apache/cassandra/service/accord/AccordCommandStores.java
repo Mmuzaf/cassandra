@@ -24,6 +24,17 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.cassandra.cache.CacheSize;
+import org.apache.cassandra.concurrent.Stage;
+import org.apache.cassandra.config.AccordSpec.QueueShardModel;
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.metrics.AccordCacheMetrics;
+import org.apache.cassandra.metrics.CacheSizeMetrics;
+import org.apache.cassandra.schema.TableId;
+import org.apache.cassandra.service.accord.AccordExecutor.AccordExecutorFactory;
+import org.apache.cassandra.service.accord.api.TokenKey;
+import org.apache.cassandra.utils.concurrent.UncheckedInterruptedException;
+
 import accord.api.Agent;
 import accord.api.DataStore;
 import accord.api.Journal;
@@ -36,16 +47,6 @@ import accord.local.ShardDistributor;
 import accord.primitives.Range;
 import accord.topology.Topology;
 import accord.utils.RandomSource;
-import org.apache.cassandra.cache.CacheSize;
-import org.apache.cassandra.concurrent.Stage;
-import org.apache.cassandra.config.AccordSpec.QueueShardModel;
-import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.metrics.AccordCacheMetrics;
-import org.apache.cassandra.metrics.CacheSizeMetrics;
-import org.apache.cassandra.schema.TableId;
-import org.apache.cassandra.service.accord.AccordExecutor.AccordExecutorFactory;
-import org.apache.cassandra.service.accord.api.TokenKey;
-import org.apache.cassandra.utils.concurrent.UncheckedInterruptedException;
 
 import static org.apache.cassandra.config.AccordSpec.QueueShardModel.THREAD_PER_SHARD;
 import static org.apache.cassandra.config.DatabaseDescriptor.getAccordQueueShardCount;

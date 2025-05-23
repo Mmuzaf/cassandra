@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-import accord.utils.Invariants;
 import org.apache.cassandra.cql3.ast.Symbol;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.AsciiType;
@@ -58,6 +57,8 @@ import org.apache.cassandra.harry.gen.TypeAdapters;
 import org.apache.cassandra.utils.ByteArrayUtil;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.TimeUUID;
+
+import accord.utils.Invariants;
 
 // TODO: counters
 // TODO: UDTs

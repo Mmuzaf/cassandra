@@ -19,7 +19,22 @@
 package org.apache.cassandra.service.accord.interop;
 
 import java.io.IOException;
+
 import javax.annotation.Nullable;
+
+import org.apache.cassandra.db.ReadCommand;
+import org.apache.cassandra.db.TypeSizes;
+import org.apache.cassandra.io.util.DataInputPlus;
+import org.apache.cassandra.io.util.DataOutputPlus;
+import org.apache.cassandra.service.accord.AccordMessageSink.AccordMessageType;
+import org.apache.cassandra.service.accord.serializers.CommandSerializers;
+import org.apache.cassandra.service.accord.serializers.CommandSerializers.ExecuteAtSerializer;
+import org.apache.cassandra.service.accord.serializers.CommitSerializers;
+import org.apache.cassandra.service.accord.serializers.DepsSerializers;
+import org.apache.cassandra.service.accord.serializers.IVersionedSerializer;
+import org.apache.cassandra.service.accord.serializers.KeySerializers;
+import org.apache.cassandra.service.accord.serializers.ReadDataSerializers.ReadDataSerializer;
+import org.apache.cassandra.service.accord.serializers.Version;
 
 import accord.local.Commands;
 import accord.local.Node;
@@ -39,19 +54,6 @@ import accord.primitives.Timestamp;
 import accord.primitives.Txn;
 import accord.primitives.TxnId;
 import accord.topology.Topologies;
-import org.apache.cassandra.db.ReadCommand;
-import org.apache.cassandra.db.TypeSizes;
-import org.apache.cassandra.io.util.DataInputPlus;
-import org.apache.cassandra.io.util.DataOutputPlus;
-import org.apache.cassandra.service.accord.AccordMessageSink.AccordMessageType;
-import org.apache.cassandra.service.accord.serializers.CommandSerializers;
-import org.apache.cassandra.service.accord.serializers.CommandSerializers.ExecuteAtSerializer;
-import org.apache.cassandra.service.accord.serializers.CommitSerializers;
-import org.apache.cassandra.service.accord.serializers.DepsSerializers;
-import org.apache.cassandra.service.accord.serializers.IVersionedSerializer;
-import org.apache.cassandra.service.accord.serializers.KeySerializers;
-import org.apache.cassandra.service.accord.serializers.ReadDataSerializers.ReadDataSerializer;
-import org.apache.cassandra.service.accord.serializers.Version;
 
 import static accord.messages.Commit.WithDeps.HasDeps;
 import static accord.messages.Commit.WithDeps.NoDeps;

@@ -23,11 +23,12 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.local.Node;
-import accord.messages.Request;
 import org.apache.cassandra.net.IVerbHandler;
 import org.apache.cassandra.net.Message;
 import org.apache.cassandra.utils.NoSpamLogger;
+
+import accord.local.Node;
+import accord.messages.Request;
 
 public class AccordVerbHandler<T extends Request> implements IVerbHandler<T>
 {

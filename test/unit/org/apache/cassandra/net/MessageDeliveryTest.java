@@ -29,10 +29,11 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.Iterators;
+
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
-import accord.utils.RandomSource;
 import org.apache.cassandra.concurrent.ScheduledExecutorPlus;
 import org.apache.cassandra.concurrent.SimulatedExecutorFactory;
 import org.apache.cassandra.config.DatabaseDescriptor;
@@ -47,7 +48,8 @@ import org.apache.cassandra.service.RetryStrategy;
 import org.apache.cassandra.service.TimeoutStrategy.LatencySourceFactory;
 import org.apache.cassandra.tcm.ClusterMetadataService;
 import org.apache.cassandra.tcm.StubClusterMetadataService;
-import org.mockito.Mockito;
+
+import accord.utils.RandomSource;
 
 import static accord.utils.Property.qt;
 import static org.apache.cassandra.net.MessageDelivery.RetryErrorMessage;

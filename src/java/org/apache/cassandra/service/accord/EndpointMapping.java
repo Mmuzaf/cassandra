@@ -25,9 +25,10 @@ import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableMap;
 
+import org.apache.cassandra.locator.InetAddressAndPort;
+
 import accord.local.Node;
 import accord.utils.Invariants;
-import org.apache.cassandra.locator.InetAddressAndPort;
 
 class EndpointMapping implements AccordEndpointMapper
 {

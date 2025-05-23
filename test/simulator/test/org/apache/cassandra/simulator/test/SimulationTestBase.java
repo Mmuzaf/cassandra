@@ -28,6 +28,7 @@ import java.util.function.LongConsumer;
 import java.util.function.Predicate;
 
 import com.google.common.collect.Iterators;
+
 import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,8 +41,18 @@ import org.apache.cassandra.distributed.api.IIsolatedExecutor;
 import org.apache.cassandra.distributed.impl.AbstractCluster;
 import org.apache.cassandra.distributed.impl.IsolatedExecutor;
 import org.apache.cassandra.distributed.shared.InstanceClassLoader;
-import org.apache.cassandra.simulator.*;
+import org.apache.cassandra.simulator.Action;
+import org.apache.cassandra.simulator.ActionList;
+import org.apache.cassandra.simulator.ActionPlan;
+import org.apache.cassandra.simulator.ActionSchedule;
 import org.apache.cassandra.simulator.ActionSchedule.Work;
+import org.apache.cassandra.simulator.ClusterSimulation;
+import org.apache.cassandra.simulator.Debug;
+import org.apache.cassandra.simulator.FutureActionScheduler;
+import org.apache.cassandra.simulator.RandomSource;
+import org.apache.cassandra.simulator.RunnableActionScheduler;
+import org.apache.cassandra.simulator.Simulation;
+import org.apache.cassandra.simulator.SimulationRunner;
 import org.apache.cassandra.simulator.asm.InterceptClasses;
 import org.apache.cassandra.simulator.asm.NemesisFieldSelectors;
 import org.apache.cassandra.simulator.systems.Failures;

@@ -33,7 +33,6 @@ import java.util.function.Function;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Longs;
 
-import accord.primitives.Ranges;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.PreHashedDecoratedKey;
 import org.apache.cassandra.db.TypeSizes;
@@ -50,6 +49,8 @@ import org.apache.cassandra.utils.ObjectSizes;
 import org.apache.cassandra.utils.bytecomparable.ByteComparable;
 import org.apache.cassandra.utils.bytecomparable.ByteSource;
 import org.apache.cassandra.utils.bytecomparable.ByteSourceInverse;
+
+import accord.primitives.Ranges;
 
 /**
  * This class generates a BigIntegerToken using a Murmur3 hash.

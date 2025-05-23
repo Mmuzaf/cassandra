@@ -23,16 +23,17 @@ import java.util.NavigableMap;
 
 import com.google.common.collect.ImmutableSortedMap;
 
-import accord.local.DurableBefore;
-import accord.local.RedundantBefore;
-import accord.primitives.Ranges;
-import accord.primitives.Timestamp;
-import accord.primitives.TxnId;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.service.accord.journal.AccordTopologyUpdate;
 import org.apache.cassandra.service.accord.serializers.CommandStoreSerializers;
 import org.apache.cassandra.service.accord.serializers.Version;
+
+import accord.local.DurableBefore;
+import accord.local.RedundantBefore;
+import accord.primitives.Ranges;
+import accord.primitives.Timestamp;
+import accord.primitives.TxnId;
 
 import static accord.local.CommandStores.RangesForEpoch;
 

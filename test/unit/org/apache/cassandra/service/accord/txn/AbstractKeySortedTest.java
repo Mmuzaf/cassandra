@@ -23,18 +23,20 @@ import java.util.List;
 import java.util.Objects;
 
 import com.google.common.collect.Lists;
+
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import accord.primitives.Routable.Domain;
-import accord.primitives.Seekable;
 import org.apache.cassandra.SchemaLoader;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.dht.ByteOrderedPartitioner;
 import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.service.accord.api.PartitionKey;
 import org.apache.cassandra.utils.ByteBufferUtil;
+
+import accord.primitives.Routable.Domain;
+import accord.primitives.Seekable;
 
 public class AbstractKeySortedTest
 {

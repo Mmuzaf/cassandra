@@ -26,8 +26,6 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 
-import accord.local.Node;
-import accord.utils.SortedArrays.SortedArrayList;
 import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.dht.Murmur3Partitioner;
 import org.apache.cassandra.dht.Range;
@@ -47,6 +45,9 @@ import org.apache.cassandra.tcm.membership.NodeState;
 import org.apache.cassandra.tcm.membership.NodeVersion;
 import org.apache.cassandra.tcm.ownership.DataPlacement;
 import org.apache.cassandra.tcm.ownership.DataPlacements;
+
+import accord.local.Node;
+import accord.utils.SortedArrays.SortedArrayList;
 
 public class AccordTopologyUtils
 {

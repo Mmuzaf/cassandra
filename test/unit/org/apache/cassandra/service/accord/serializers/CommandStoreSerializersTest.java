@@ -20,13 +20,14 @@ package org.apache.cassandra.service.accord.serializers;
 
 import org.junit.Test;
 
-import accord.local.RedundantBefore;
-import accord.utils.Gens;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.dht.Murmur3Partitioner;
 import org.apache.cassandra.io.Serializers;
 import org.apache.cassandra.io.util.DataOutputBuffer;
 import org.apache.cassandra.utils.AccordGenerators;
+
+import accord.local.RedundantBefore;
+import accord.utils.Gens;
 
 import static accord.utils.Property.qt;
 

@@ -21,7 +21,6 @@ package org.apache.cassandra.auth;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 
-import org.apache.cassandra.transport.Dispatcher;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -36,12 +35,12 @@ import org.apache.cassandra.cql3.statements.TransactionStatement;
 import org.apache.cassandra.exceptions.UnauthorizedException;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.QueryState;
+import org.apache.cassandra.transport.Dispatcher;
 import org.apache.cassandra.transport.messages.ResultMessage;
-
-import static org.junit.Assert.assertEquals;
 
 import static org.apache.cassandra.auth.AuthTestUtils.auth;
 import static org.apache.cassandra.db.ConsistencyLevel.NODE_LOCAL;
+import static org.junit.Assert.assertEquals;
 
 public class TxnAuthTest extends CQLTester
 {

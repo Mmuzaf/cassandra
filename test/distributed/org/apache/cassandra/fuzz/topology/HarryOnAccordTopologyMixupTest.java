@@ -19,15 +19,16 @@
 package org.apache.cassandra.fuzz.topology;
 
 
-import accord.utils.Gen;
-import accord.utils.Invariants;
-import accord.utils.Property;
-import accord.utils.RandomSource;
 import org.apache.cassandra.config.CassandraRelevantProperties;
 import org.apache.cassandra.distributed.api.IInstanceConfig;
 import org.apache.cassandra.distributed.shared.ClusterUtils;
 import org.apache.cassandra.fuzz.topology.AccordTopologyMixupTest.ListenerHolder;
 import org.apache.cassandra.service.consensus.TransactionalMode;
+
+import accord.utils.Gen;
+import accord.utils.Invariants;
+import accord.utils.Property;
+import accord.utils.RandomSource;
 
 public class HarryOnAccordTopologyMixupTest extends HarryTopologyMixupTest
 {

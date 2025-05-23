@@ -22,9 +22,13 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+
 import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
+
+import org.apache.cassandra.service.accord.AccordCommandStore.ExclusiveCaches;
+import org.apache.cassandra.service.accord.AccordCommandStore.SafeRedundantBefore;
 
 import accord.api.Agent;
 import accord.api.DataStore;
@@ -40,8 +44,6 @@ import accord.primitives.Timestamp;
 import accord.primitives.Txn;
 import accord.primitives.TxnId;
 import accord.primitives.Unseekables;
-import org.apache.cassandra.service.accord.AccordCommandStore.ExclusiveCaches;
-import org.apache.cassandra.service.accord.AccordCommandStore.SafeRedundantBefore;
 
 import static accord.utils.Invariants.illegalState;
 

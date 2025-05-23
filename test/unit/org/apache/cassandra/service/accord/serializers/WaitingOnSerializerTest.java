@@ -20,8 +20,16 @@ package org.apache.cassandra.service.accord.serializers;
 
 import java.nio.ByteBuffer;
 
+import org.assertj.core.api.Assertions;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.dht.Murmur3Partitioner;
+import org.apache.cassandra.io.util.DataInputBuffer;
+import org.apache.cassandra.io.util.DataOutputBuffer;
+import org.apache.cassandra.utils.AccordGenerators;
+import org.apache.cassandra.utils.CassandraGenerators;
 
 import accord.local.Command;
 import accord.primitives.Deps;
@@ -34,13 +42,6 @@ import accord.utils.Gen;
 import accord.utils.Gens;
 import accord.utils.SimpleBitSet;
 import accord.utils.Utils;
-import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.dht.Murmur3Partitioner;
-import org.apache.cassandra.io.util.DataInputBuffer;
-import org.apache.cassandra.io.util.DataOutputBuffer;
-import org.apache.cassandra.utils.AccordGenerators;
-import org.apache.cassandra.utils.CassandraGenerators;
-import org.assertj.core.api.Assertions;
 
 import static accord.utils.Property.qt;
 

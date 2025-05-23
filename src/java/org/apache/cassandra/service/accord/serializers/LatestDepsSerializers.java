@@ -20,6 +20,12 @@ package org.apache.cassandra.service.accord.serializers;
 
 import java.io.IOException;
 
+import org.apache.cassandra.db.TypeSizes;
+import org.apache.cassandra.io.UnversionedSerializer;
+import org.apache.cassandra.io.util.DataInputPlus;
+import org.apache.cassandra.io.util.DataOutputPlus;
+import org.apache.cassandra.service.accord.serializers.CommandSerializers.ExecuteAtSerializer;
+
 import accord.api.RoutingKey;
 import accord.messages.GetLatestDeps;
 import accord.messages.GetLatestDeps.GetLatestDepsOk;
@@ -30,11 +36,6 @@ import accord.primitives.LatestDeps;
 import accord.primitives.Route;
 import accord.primitives.Timestamp;
 import accord.primitives.TxnId;
-import org.apache.cassandra.db.TypeSizes;
-import org.apache.cassandra.io.UnversionedSerializer;
-import org.apache.cassandra.io.util.DataInputPlus;
-import org.apache.cassandra.io.util.DataOutputPlus;
-import org.apache.cassandra.service.accord.serializers.CommandSerializers.ExecuteAtSerializer;
 
 public class LatestDepsSerializers
 {

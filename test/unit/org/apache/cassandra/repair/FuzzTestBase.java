@@ -45,6 +45,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
 import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableList;
@@ -52,13 +53,12 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import org.junit.BeforeClass;
-
-import accord.utils.DefaultRandom;
-import accord.utils.Gen;
-import accord.utils.Gens;
-import accord.utils.RandomSource;
 import org.agrona.collections.LongHashSet;
+import org.assertj.core.api.Assertions;
+import org.junit.BeforeClass;
+import org.mockito.Mockito;
+import org.quicktheories.impl.JavaRandom;
+
 import org.apache.cassandra.ServerTestUtils;
 import org.apache.cassandra.concurrent.ExecutorBuilder;
 import org.apache.cassandra.concurrent.ExecutorBuilderFactory;
@@ -129,8 +129,8 @@ import org.apache.cassandra.service.paxos.cleanup.PaxosCleanupComplete;
 import org.apache.cassandra.service.paxos.cleanup.PaxosCleanupHistory;
 import org.apache.cassandra.service.paxos.cleanup.PaxosCleanupRequest;
 import org.apache.cassandra.service.paxos.cleanup.PaxosCleanupResponse;
-import org.apache.cassandra.service.paxos.cleanup.PaxosRepairState;
 import org.apache.cassandra.service.paxos.cleanup.PaxosFinishPrepareCleanup;
+import org.apache.cassandra.service.paxos.cleanup.PaxosRepairState;
 import org.apache.cassandra.service.paxos.cleanup.PaxosStartPrepareCleanup;
 import org.apache.cassandra.streaming.StreamEventHandler;
 import org.apache.cassandra.streaming.StreamReceiveException;
@@ -154,9 +154,11 @@ import org.apache.cassandra.utils.NoSpamLogger;
 import org.apache.cassandra.utils.TimeUUID;
 import org.apache.cassandra.utils.concurrent.ImmediateFuture;
 import org.apache.cassandra.utils.progress.ProgressEventType;
-import org.assertj.core.api.Assertions;
-import org.mockito.Mockito;
-import org.quicktheories.impl.JavaRandom;
+
+import accord.utils.DefaultRandom;
+import accord.utils.Gen;
+import accord.utils.Gens;
+import accord.utils.RandomSource;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.ACCORD_REPAIR_RANGE_STEP_UPDATE_INTERVAL;
 import static org.apache.cassandra.config.CassandraRelevantProperties.CLOCK_GLOBAL;

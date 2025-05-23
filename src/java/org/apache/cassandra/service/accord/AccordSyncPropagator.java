@@ -28,15 +28,12 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+
+import org.agrona.collections.Int2ObjectHashMap;
+import org.agrona.collections.Long2ObjectHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.local.Node;
-import accord.messages.SimpleReply;
-import accord.primitives.Ranges;
-import accord.utils.Invariants;
-import org.agrona.collections.Int2ObjectHashMap;
-import org.agrona.collections.Long2ObjectHashMap;
 import org.apache.cassandra.concurrent.ScheduledExecutorPlus;
 import org.apache.cassandra.db.TypeSizes;
 import org.apache.cassandra.exceptions.RequestFailure;
@@ -55,6 +52,11 @@ import org.apache.cassandra.service.accord.serializers.KeySerializers;
 import org.apache.cassandra.service.accord.serializers.TopologySerializers;
 import org.apache.cassandra.tcm.ClusterMetadata;
 import org.apache.cassandra.utils.CollectionSerializers;
+
+import accord.local.Node;
+import accord.messages.SimpleReply;
+import accord.primitives.Ranges;
+import accord.utils.Invariants;
 
 /**
  * Receives information about closed, retired ranges, and about sync completion, and

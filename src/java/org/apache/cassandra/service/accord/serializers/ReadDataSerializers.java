@@ -20,6 +20,13 @@ package org.apache.cassandra.service.accord.serializers;
 
 import java.io.IOException;
 
+import org.apache.cassandra.db.TypeSizes;
+import org.apache.cassandra.io.VersionedSerializer;
+import org.apache.cassandra.io.util.DataInputPlus;
+import org.apache.cassandra.io.util.DataOutputPlus;
+import org.apache.cassandra.service.accord.serializers.CommandSerializers.ExecuteAtSerializer;
+import org.apache.cassandra.service.accord.txn.TxnData;
+
 import accord.api.Data;
 import accord.messages.ApplyThenWaitUntilApplied;
 import accord.messages.Commit;
@@ -40,12 +47,6 @@ import accord.primitives.Participants;
 import accord.primitives.Ranges;
 import accord.primitives.Timestamp;
 import accord.primitives.TxnId;
-import org.apache.cassandra.db.TypeSizes;
-import org.apache.cassandra.io.VersionedSerializer;
-import org.apache.cassandra.io.util.DataInputPlus;
-import org.apache.cassandra.io.util.DataOutputPlus;
-import org.apache.cassandra.service.accord.serializers.CommandSerializers.ExecuteAtSerializer;
-import org.apache.cassandra.service.accord.txn.TxnData;
 
 import static accord.messages.Commit.WithDeps.HasDeps;
 import static accord.messages.Commit.WithDeps.NoDeps;

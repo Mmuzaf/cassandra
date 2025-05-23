@@ -21,9 +21,10 @@ package org.apache.cassandra.service.accord;
 import java.util.concurrent.TimeUnit;
 import java.util.function.IntFunction;
 
-import accord.api.Agent;
 import org.apache.cassandra.metrics.AccordCacheMetrics;
 import org.apache.cassandra.utils.concurrent.LockWithAsyncSignal;
+
+import accord.api.Agent;
 
 // WARNING: experimental - needs more testing
 class AccordExecutorAsyncSubmit extends AccordExecutorAbstractSemiSyncSubmit

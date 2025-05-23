@@ -20,11 +20,13 @@ package org.apache.cassandra.config;
 
 import java.util.concurrent.TimeUnit;
 
-import accord.utils.Invariants;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import org.apache.cassandra.journal.Params;
 import org.apache.cassandra.service.accord.serializers.Version;
 import org.apache.cassandra.service.consensus.TransactionalMode;
+
+import accord.utils.Invariants;
 
 import static org.apache.cassandra.config.AccordSpec.QueueShardModel.THREAD_POOL_PER_SHARD;
 import static org.apache.cassandra.config.AccordSpec.QueueSubmissionModel.SYNC;

@@ -26,15 +26,16 @@ import java.util.zip.Checksum;
 
 import javax.annotation.Nullable;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
+
+import org.apache.cassandra.utils.FailingConsumer;
 
 import accord.utils.Gen;
 import accord.utils.Gens;
 import accord.utils.Property.Command;
 import accord.utils.Property.Commands;
 import accord.utils.Property.UnitCommand;
-import org.apache.cassandra.utils.FailingConsumer;
-import org.assertj.core.api.Assertions;
 
 import static accord.utils.Property.stateful;
 

@@ -32,11 +32,19 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
 import javax.annotation.Nullable;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
+
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.MethodDelegation;
+import net.bytebuddy.implementation.bind.annotation.SuperCall;
+import net.bytebuddy.implementation.bind.annotation.This;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -44,19 +52,6 @@ import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.api.RoutingKey;
-import accord.coordinate.Invalidated;
-import accord.impl.progresslog.DefaultProgressLogs;
-import accord.messages.PreAccept;
-import accord.primitives.KeyRoute;
-import accord.primitives.Routable.Domain;
-import accord.primitives.Route;
-import accord.primitives.TxnId;
-import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.implementation.MethodDelegation;
-import net.bytebuddy.implementation.bind.annotation.SuperCall;
-import net.bytebuddy.implementation.bind.annotation.This;
 import org.apache.cassandra.Util;
 import org.apache.cassandra.batchlog.BatchlogManager;
 import org.apache.cassandra.cql3.CQLStatement;
@@ -105,6 +100,15 @@ import org.apache.cassandra.tcm.ClusterMetadata;
 import org.apache.cassandra.tcm.serialization.Version;
 import org.apache.cassandra.utils.AssertionUtils;
 import org.apache.cassandra.utils.FailingConsumer;
+
+import accord.api.RoutingKey;
+import accord.coordinate.Invalidated;
+import accord.impl.progresslog.DefaultProgressLogs;
+import accord.messages.PreAccept;
+import accord.primitives.KeyRoute;
+import accord.primitives.Routable.Domain;
+import accord.primitives.Route;
+import accord.primitives.TxnId;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.lang.String.format;

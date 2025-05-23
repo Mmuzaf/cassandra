@@ -33,9 +33,6 @@ import java.util.zip.Checksum;
 
 import com.google.common.collect.Maps;
 
-import accord.local.StoreParticipants;
-import accord.primitives.Participants;
-import accord.primitives.TxnId;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.marshal.ByteBufferAccessor;
 import org.apache.cassandra.db.marshal.Int32Type;
@@ -60,6 +57,10 @@ import org.apache.cassandra.service.accord.serializers.KeySerializers;
 import org.apache.cassandra.service.accord.serializers.Version;
 import org.apache.cassandra.utils.ByteArrayUtil;
 import org.apache.cassandra.utils.Throwables;
+
+import accord.local.StoreParticipants;
+import accord.primitives.Participants;
+import accord.primitives.TxnId;
 
 import static org.apache.cassandra.utils.Clock.Global.nowInSeconds;
 

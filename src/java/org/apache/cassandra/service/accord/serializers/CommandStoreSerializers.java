@@ -23,6 +23,13 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.function.IntFunction;
 
+import org.apache.cassandra.db.TypeSizes;
+import org.apache.cassandra.io.UnversionedSerializer;
+import org.apache.cassandra.io.util.DataInputPlus;
+import org.apache.cassandra.io.util.DataOutputPlus;
+import org.apache.cassandra.utils.CollectionSerializers;
+import org.apache.cassandra.utils.NullableSerializer;
+
 import accord.api.RoutingKey;
 import accord.local.DurableBefore;
 import accord.local.RedundantBefore;
@@ -33,12 +40,6 @@ import accord.primitives.TxnId;
 import accord.utils.Invariants;
 import accord.utils.ReducingRangeMap;
 import accord.utils.TriFunction;
-import org.apache.cassandra.db.TypeSizes;
-import org.apache.cassandra.io.UnversionedSerializer;
-import org.apache.cassandra.io.util.DataInputPlus;
-import org.apache.cassandra.io.util.DataOutputPlus;
-import org.apache.cassandra.utils.CollectionSerializers;
-import org.apache.cassandra.utils.NullableSerializer;
 
 import static org.apache.cassandra.service.accord.serializers.CommandSerializers.ExecuteAtSerializer.deserializeNullable;
 import static org.apache.cassandra.service.accord.serializers.CommandSerializers.ExecuteAtSerializer.serializeNullable;

@@ -19,6 +19,11 @@ package org.apache.cassandra.service.accord.serializers;
 
 import java.io.IOException;
 
+import org.apache.cassandra.io.UnversionedSerializer;
+import org.apache.cassandra.io.util.DataInputPlus;
+import org.apache.cassandra.io.util.DataOutputPlus;
+import org.apache.cassandra.service.accord.serializers.CommandSerializers.ExecuteAtSerializer;
+
 import accord.messages.SetGloballyDurable;
 import accord.messages.SetShardDurable;
 import accord.primitives.Deps;
@@ -26,10 +31,6 @@ import accord.primitives.FullRoute;
 import accord.primitives.SyncPoint;
 import accord.primitives.Timestamp;
 import accord.primitives.TxnId;
-import org.apache.cassandra.io.UnversionedSerializer;
-import org.apache.cassandra.io.util.DataInputPlus;
-import org.apache.cassandra.io.util.DataOutputPlus;
-import org.apache.cassandra.service.accord.serializers.CommandSerializers.ExecuteAtSerializer;
 
 public class SetDurableSerializers
 {

@@ -18,7 +18,6 @@
 
 package org.apache.cassandra.fuzz.topology;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
@@ -43,35 +42,30 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
+
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+
 import org.agrona.collections.Int2ObjectHashMap;
 import org.agrona.collections.IntArrayList;
 import org.agrona.collections.IntHashSet;
-import org.apache.cassandra.distributed.Constants;
-import org.apache.cassandra.distributed.api.ICoordinator;
-import org.apache.cassandra.distributed.api.QueryResults;
-import org.apache.cassandra.distributed.api.SimpleQueryResult;
-
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.utils.Gen;
-import accord.utils.Gens;
-import accord.utils.Invariants;
-import accord.utils.Property;
-import accord.utils.Property.Command;
-import accord.utils.Property.SimpleCommand;
-import accord.utils.RandomSource;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.YamlConfigurationLoader;
 import org.apache.cassandra.distributed.Cluster;
+import org.apache.cassandra.distributed.Constants;
 import org.apache.cassandra.distributed.api.Feature;
+import org.apache.cassandra.distributed.api.ICoordinator;
 import org.apache.cassandra.distributed.api.IInstanceConfig;
 import org.apache.cassandra.distributed.api.IInvokableInstance;
 import org.apache.cassandra.distributed.api.NodeToolResult;
+import org.apache.cassandra.distributed.api.QueryResults;
+import org.apache.cassandra.distributed.api.SimpleQueryResult;
 import org.apache.cassandra.distributed.api.TokenSupplier;
 import org.apache.cassandra.distributed.impl.INodeProvisionStrategy;
 import org.apache.cassandra.distributed.impl.InstanceConfig;
@@ -88,11 +82,23 @@ import org.apache.cassandra.utils.ConfigGenBuilder;
 import org.apache.cassandra.utils.LoggingCommand;
 import org.apache.cassandra.utils.Retry;
 
+import accord.utils.Gen;
+import accord.utils.Gens;
+import accord.utils.Invariants;
+import accord.utils.Property;
+import accord.utils.Property.Command;
+import accord.utils.Property.SimpleCommand;
+import accord.utils.RandomSource;
+
 import static accord.utils.Property.commands;
 import static accord.utils.Property.ignoreCommand;
 import static accord.utils.Property.multistep;
 import static accord.utils.Property.stateful;
-import static org.apache.cassandra.harry.model.TokenPlacementModel.*;
+import static org.apache.cassandra.harry.model.TokenPlacementModel.Range;
+import static org.apache.cassandra.harry.model.TokenPlacementModel.Replica;
+import static org.apache.cassandra.harry.model.TokenPlacementModel.ReplicatedRanges;
+import static org.apache.cassandra.harry.model.TokenPlacementModel.ReplicationFactor;
+import static org.apache.cassandra.harry.model.TokenPlacementModel.SimpleReplicationFactor;
 
 /**
  * These tests can create many instances, so mac users may need to run the following to avoid address bind failures

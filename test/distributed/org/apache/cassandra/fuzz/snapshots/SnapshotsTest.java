@@ -33,16 +33,19 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
 import javax.management.openmbean.TabularData;
 
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.MapDifference.ValueDifference;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Uninterruptibles;
-import org.junit.Test;
 
-import accord.utils.Property.StateOnlyCommand;
-import accord.utils.RandomSource;
+import org.junit.Test;
+import org.quicktheories.core.RandomnessSource;
+import org.quicktheories.generators.SourceDSL;
+import org.quicktheories.impl.JavaRandom;
+
 import org.apache.cassandra.distributed.Cluster;
 import org.apache.cassandra.distributed.api.Feature;
 import org.apache.cassandra.distributed.api.IInvokableInstance;
@@ -61,9 +64,9 @@ import org.apache.cassandra.service.snapshot.TableSnapshot;
 import org.apache.cassandra.utils.Generators;
 import org.apache.cassandra.utils.LocalizeString;
 import org.apache.cassandra.utils.Pair;
-import org.quicktheories.core.RandomnessSource;
-import org.quicktheories.generators.SourceDSL;
-import org.quicktheories.impl.JavaRandom;
+
+import accord.utils.Property.StateOnlyCommand;
+import accord.utils.RandomSource;
 
 import static accord.utils.Property.commands;
 import static accord.utils.Property.stateful;

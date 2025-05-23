@@ -35,13 +35,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
-import accord.local.Node.Id;
-import accord.primitives.Ranges;
-import accord.topology.Shard;
-import accord.topology.Topology;
-import accord.utils.Invariants;
-import accord.utils.SortedArrays.SortedArrayList;
-import accord.utils.TinyEnumSet;
 import org.apache.cassandra.db.Keyspace;
 import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.dht.Range;
@@ -65,6 +58,14 @@ import org.apache.cassandra.tcm.ownership.DataPlacement;
 import org.apache.cassandra.tcm.ownership.DataPlacements;
 import org.apache.cassandra.tcm.ownership.VersionedEndpoints;
 import org.apache.cassandra.utils.concurrent.UncheckedInterruptedException;
+
+import accord.local.Node.Id;
+import accord.primitives.Ranges;
+import accord.topology.Shard;
+import accord.topology.Topology;
+import accord.utils.Invariants;
+import accord.utils.SortedArrays.SortedArrayList;
+import accord.utils.TinyEnumSet;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 

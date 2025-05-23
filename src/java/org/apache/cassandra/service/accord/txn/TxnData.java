@@ -21,8 +21,8 @@ package org.apache.cassandra.service.accord.txn;
 import java.io.IOException;
 import java.util.Map;
 
-import accord.api.Data;
 import org.agrona.collections.Int2ObjectHashMap;
+
 import org.apache.cassandra.db.EmptyIterators;
 import org.apache.cassandra.db.SinglePartitionReadCommand;
 import org.apache.cassandra.db.TypeSizes;
@@ -36,6 +36,8 @@ import org.apache.cassandra.utils.CollectionSerializers;
 import org.apache.cassandra.utils.Int32Serializer;
 import org.apache.cassandra.utils.NullableSerializer;
 import org.apache.cassandra.utils.ObjectSizes;
+
+import accord.api.Data;
 
 import static accord.utils.Invariants.requireArgument;
 import static org.apache.cassandra.service.accord.txn.TxnResult.Kind.txn_data;

@@ -32,8 +32,6 @@ import java.util.stream.Collectors;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 
-import accord.primitives.Seekable;
-import accord.primitives.Seekables;
 import org.apache.cassandra.cache.IRowCacheEntry;
 import org.apache.cassandra.cache.RowCacheKey;
 import org.apache.cassandra.cache.RowCacheSentinel;
@@ -86,6 +84,9 @@ import org.apache.cassandra.tracing.Tracing;
 import org.apache.cassandra.transport.Dispatcher;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.btree.BTreeSet;
+
+import accord.primitives.Seekable;
+import accord.primitives.Seekables;
 
 /**
  * A read command that selects a (part of a) single partition.

@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.Lists;
+
 import org.junit.Test;
 
 import org.apache.cassandra.cql3.CQLTester;

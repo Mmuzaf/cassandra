@@ -26,21 +26,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 
-import accord.impl.AbstractConfigurationService;
-import accord.local.Node;
-import accord.primitives.Ranges;
-import accord.topology.Shard;
-import accord.topology.Topology;
-import accord.utils.Invariants;
-import accord.utils.async.AsyncResult;
-import accord.utils.async.AsyncResults;
 import org.agrona.collections.LongArrayList;
+
 import org.apache.cassandra.concurrent.ScheduledExecutorPlus;
 import org.apache.cassandra.concurrent.ScheduledExecutors;
 import org.apache.cassandra.concurrent.Shutdownable;
@@ -60,6 +54,15 @@ import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.Simulate;
 import org.apache.cassandra.utils.concurrent.AsyncPromise;
 import org.apache.cassandra.utils.concurrent.Future;
+
+import accord.impl.AbstractConfigurationService;
+import accord.local.Node;
+import accord.primitives.Ranges;
+import accord.topology.Shard;
+import accord.topology.Topology;
+import accord.utils.Invariants;
+import accord.utils.async.AsyncResult;
+import accord.utils.async.AsyncResults;
 
 import static org.apache.cassandra.service.accord.AccordTopology.tcmIdToAccord;
 import static org.apache.cassandra.utils.Simulate.With.MONITORS;

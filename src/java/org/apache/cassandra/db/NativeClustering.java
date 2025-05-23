@@ -31,8 +31,8 @@ import org.apache.cassandra.utils.ObjectSizes;
 import org.apache.cassandra.utils.concurrent.OpOrder;
 import org.apache.cassandra.utils.memory.HeapCloner;
 import org.apache.cassandra.utils.memory.MemoryUtil;
-import org.apache.cassandra.utils.memory.NativeEndianMemoryUtil;
 import org.apache.cassandra.utils.memory.NativeAllocator;
+import org.apache.cassandra.utils.memory.NativeEndianMemoryUtil;
 
 public class NativeClustering implements Clustering<NativeData>
 {

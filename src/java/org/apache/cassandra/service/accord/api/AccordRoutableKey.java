@@ -22,12 +22,13 @@ import java.io.IOException;
 
 import javax.annotation.Nonnull;
 
-import accord.primitives.RoutableKey;
 import org.apache.cassandra.dht.Token;
 import org.apache.cassandra.io.UnversionedSerializer;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.schema.TableId;
+
+import accord.primitives.RoutableKey;
 
 public abstract class AccordRoutableKey implements RoutableKey
 {

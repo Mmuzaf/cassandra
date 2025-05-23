@@ -20,11 +20,12 @@ package org.apache.cassandra.service.accord;
 
 import java.util.concurrent.locks.Lock;
 
+import org.apache.cassandra.metrics.AccordCacheMetrics;
+import org.apache.cassandra.utils.concurrent.ConcurrentLinkedStack;
+
 import accord.api.Agent;
 import accord.utils.QuadFunction;
 import accord.utils.QuintConsumer;
-import org.apache.cassandra.metrics.AccordCacheMetrics;
-import org.apache.cassandra.utils.concurrent.ConcurrentLinkedStack;
 
 import static org.apache.cassandra.service.accord.AccordExecutor.Mode.RUN_WITH_LOCK;
 

@@ -27,10 +27,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.impl.progresslog.DefaultProgressLogs;
 import org.apache.cassandra.distributed.api.IInvokableInstance;
 import org.apache.cassandra.distributed.api.IMessageFilters;
 import org.apache.cassandra.net.Verb;
+
+import accord.impl.progresslog.DefaultProgressLogs;
 
 public class AccordIntegrationTest extends AccordTestBase
 {

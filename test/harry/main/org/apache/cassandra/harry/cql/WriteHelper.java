@@ -20,12 +20,13 @@ package org.apache.cassandra.harry.cql;
 
 import java.util.List;
 
-import accord.utils.Invariants;
 import org.apache.cassandra.harry.ColumnSpec;
 import org.apache.cassandra.harry.MagicConstants;
 import org.apache.cassandra.harry.SchemaSpec;
 import org.apache.cassandra.harry.execution.CompiledStatement;
 import org.apache.cassandra.harry.op.Operations;
+
+import accord.utils.Invariants;
 
 public class WriteHelper
 {

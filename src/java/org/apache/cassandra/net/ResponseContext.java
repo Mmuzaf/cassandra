@@ -17,8 +17,9 @@
  */
 package org.apache.cassandra.net;
 
-import accord.messages.ReplyContext;
 import org.apache.cassandra.locator.InetAddressAndPort;
+
+import accord.messages.ReplyContext;
 
 public interface ResponseContext extends ReplyContext
 {

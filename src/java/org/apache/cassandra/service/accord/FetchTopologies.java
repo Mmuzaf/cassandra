@@ -26,7 +26,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.topology.Topology;
 import org.apache.cassandra.db.TypeSizes;
 import org.apache.cassandra.exceptions.RequestFailure;
 import org.apache.cassandra.io.UnversionedSerializer;
@@ -41,6 +40,8 @@ import org.apache.cassandra.net.Verb;
 import org.apache.cassandra.repair.SharedContext;
 import org.apache.cassandra.service.accord.serializers.TopologySerializers;
 import org.apache.cassandra.utils.concurrent.Future;
+
+import accord.topology.Topology;
 
 import static accord.topology.TopologyManager.TopologyRange;
 import static org.apache.cassandra.service.accord.api.AccordWaitStrategies.retryFetchTopology;

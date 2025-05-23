@@ -23,11 +23,12 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntFunction;
 
+import org.apache.cassandra.concurrent.ExecutorPlus;
+import org.apache.cassandra.metrics.AccordCacheMetrics;
+
 import accord.api.Agent;
 import accord.utils.QuadFunction;
 import accord.utils.QuintConsumer;
-import org.apache.cassandra.concurrent.ExecutorPlus;
-import org.apache.cassandra.metrics.AccordCacheMetrics;
 
 class AccordExecutorSyncSubmit extends AccordExecutorAbstractLockLoop
 {

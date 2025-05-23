@@ -21,17 +21,19 @@ package org.apache.cassandra.metrics;
 import java.lang.reflect.Field;
 import java.util.concurrent.TimeUnit;
 
+import com.codahale.metrics.Counting;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.Timer;
+
+import org.apache.cassandra.service.accord.api.AccordTimeService;
+
 import accord.api.EventListener;
 import accord.local.Command;
 import accord.primitives.Deps;
 import accord.primitives.PartialDeps;
 import accord.primitives.Timestamp;
 import accord.primitives.TxnId;
-import com.codahale.metrics.Counting;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.Timer;
-import org.apache.cassandra.service.accord.api.AccordTimeService;
 
 import static java.util.concurrent.TimeUnit.MICROSECONDS;
 import static org.apache.cassandra.metrics.CassandraMetricsRegistry.Metrics;

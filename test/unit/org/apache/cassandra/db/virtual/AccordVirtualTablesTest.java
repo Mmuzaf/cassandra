@@ -25,6 +25,16 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
+
+import org.apache.cassandra.ServerTestUtils;
+import org.apache.cassandra.cql3.CQLTester;
+import org.apache.cassandra.schema.Schema;
+import org.apache.cassandra.schema.TableId;
+import org.apache.cassandra.schema.TableMetadata;
+import org.apache.cassandra.service.accord.AccordService;
+import org.apache.cassandra.service.accord.IAccordService;
+import org.apache.cassandra.service.accord.TokenRange;
 
 import accord.api.ConfigurationService;
 import accord.api.TopologySorter;
@@ -36,15 +46,6 @@ import accord.topology.Topology;
 import accord.topology.TopologyManager;
 import accord.utils.SortedArrays;
 import accord.utils.async.AsyncResults;
-import org.apache.cassandra.ServerTestUtils;
-import org.apache.cassandra.cql3.CQLTester;
-import org.apache.cassandra.schema.Schema;
-import org.apache.cassandra.schema.TableId;
-import org.apache.cassandra.schema.TableMetadata;
-import org.apache.cassandra.service.accord.AccordService;
-import org.apache.cassandra.service.accord.IAccordService;
-import org.apache.cassandra.service.accord.TokenRange;
-import org.mockito.Mockito;
 
 import static org.apache.cassandra.config.DatabaseDescriptor.getPartitioner;
 import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_VIEWS;

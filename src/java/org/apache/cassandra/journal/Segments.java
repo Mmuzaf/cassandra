@@ -21,10 +21,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 
+import org.agrona.collections.Long2ObjectHashMap;
+
+import org.apache.cassandra.utils.concurrent.Refs;
+
 import accord.utils.Invariants;
 import accord.utils.SortedArrays.SortedArrayList;
-import org.agrona.collections.Long2ObjectHashMap;
-import org.apache.cassandra.utils.concurrent.Refs;
 
 /**
  * Consistent, immutable view of active + static segments

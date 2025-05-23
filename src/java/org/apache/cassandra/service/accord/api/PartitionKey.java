@@ -21,8 +21,6 @@ package org.apache.cassandra.service.accord.api;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import accord.api.Key;
-import accord.utils.Invariants;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.SinglePartitionReadCommand;
 import org.apache.cassandra.db.marshal.ByteBufferAccessor;
@@ -36,6 +34,9 @@ import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.ObjectSizes;
 import org.apache.cassandra.utils.vint.VIntCoding;
+
+import accord.api.Key;
+import accord.utils.Invariants;
 
 import static org.apache.cassandra.config.DatabaseDescriptor.getPartitioner;
 

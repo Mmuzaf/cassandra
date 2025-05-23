@@ -25,11 +25,12 @@ import java.util.concurrent.TimeUnit;
 
 import com.codahale.metrics.Meter;
 
-import accord.utils.Invariants;
 import org.apache.cassandra.metrics.TCMMetrics;
 import org.apache.cassandra.service.WaitStrategy;
 import org.apache.cassandra.tcm.log.Entry;
 import org.apache.cassandra.tcm.log.LogState;
+
+import accord.utils.Invariants;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.apache.cassandra.config.DatabaseDescriptor.getCmsAwaitTimeout;

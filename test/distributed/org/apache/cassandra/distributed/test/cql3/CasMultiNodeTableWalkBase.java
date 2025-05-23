@@ -18,8 +18,6 @@
 
 package org.apache.cassandra.distributed.test.cql3;
 
-import accord.utils.Gen;
-import accord.utils.RandomSource;
 import org.apache.cassandra.config.Config;
 import org.apache.cassandra.cql3.KnownIssue;
 import org.apache.cassandra.cql3.ast.CasCondition;
@@ -31,6 +29,9 @@ import org.apache.cassandra.distributed.api.ConsistencyLevel;
 import org.apache.cassandra.distributed.api.IInstanceConfig;
 import org.apache.cassandra.service.reads.repair.ReadRepairStrategy;
 import org.apache.cassandra.utils.ASTGenerators;
+
+import accord.utils.Gen;
+import accord.utils.RandomSource;
 
 import static org.apache.cassandra.utils.Generators.toGen;
 

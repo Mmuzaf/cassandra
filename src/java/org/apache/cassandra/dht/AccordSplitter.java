@@ -20,11 +20,12 @@ package org.apache.cassandra.dht;
 
 import java.math.BigInteger;
 
-import accord.local.ShardDistributor;
-import accord.primitives.Range;
 import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.service.accord.TokenRange;
 import org.apache.cassandra.service.accord.api.TokenKey;
+
+import accord.local.ShardDistributor;
+import accord.primitives.Range;
 
 import static java.math.BigInteger.ZERO;
 

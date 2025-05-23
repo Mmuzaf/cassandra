@@ -23,16 +23,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import accord.api.RoutingKey;
-import accord.primitives.SaveStatus;
-import accord.primitives.KnownMap;
-import accord.primitives.Ballot;
-import accord.primitives.FullKeyRoute;
-import accord.primitives.Routable;
-import accord.primitives.Unseekables;
-import accord.utils.AccordGens;
-import accord.utils.Gen;
-import accord.utils.Gens;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.dht.Murmur3Partitioner;
 import org.apache.cassandra.io.Serializers;
@@ -40,6 +30,17 @@ import org.apache.cassandra.io.util.DataOutputBuffer;
 import org.apache.cassandra.service.accord.api.TokenKey;
 import org.apache.cassandra.utils.AccordGenerators;
 import org.apache.cassandra.utils.CassandraGenerators;
+
+import accord.api.RoutingKey;
+import accord.primitives.Ballot;
+import accord.primitives.FullKeyRoute;
+import accord.primitives.KnownMap;
+import accord.primitives.Routable;
+import accord.primitives.SaveStatus;
+import accord.primitives.Unseekables;
+import accord.utils.AccordGens;
+import accord.utils.Gen;
+import accord.utils.Gens;
 
 import static accord.utils.Property.qt;
 import static org.apache.cassandra.utils.AccordGenerators.fromQT;

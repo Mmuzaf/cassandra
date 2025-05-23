@@ -18,9 +18,10 @@
 
 package org.apache.cassandra.distributed.test.cql3;
 
-import accord.utils.Property;
 import org.apache.cassandra.distributed.Cluster;
 import org.apache.cassandra.service.consensus.TransactionalMode;
+
+import accord.utils.Property;
 
 public class FullAccordInteropMultiNodeTableWalkTest extends AccordInteropMultiNodeTableWalkBase
 {

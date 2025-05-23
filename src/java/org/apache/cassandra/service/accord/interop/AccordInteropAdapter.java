@@ -23,6 +23,13 @@ import java.util.function.BiConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.apache.cassandra.db.ConsistencyLevel;
+import org.apache.cassandra.service.accord.AccordEndpointMapper;
+import org.apache.cassandra.service.accord.api.AccordAgent;
+import org.apache.cassandra.service.accord.interop.AccordInteropExecution.InteropExecutor;
+import org.apache.cassandra.service.accord.txn.AccordUpdate;
+import org.apache.cassandra.service.accord.txn.TxnRead;
+
 import accord.api.Result;
 import accord.api.Update;
 import accord.coordinate.CoordinationAdapter;
@@ -40,12 +47,6 @@ import accord.primitives.TxnId;
 import accord.primitives.Writes;
 import accord.topology.Topologies;
 import accord.topology.Topologies.SelectNodeOwnership;
-import org.apache.cassandra.db.ConsistencyLevel;
-import org.apache.cassandra.service.accord.AccordEndpointMapper;
-import org.apache.cassandra.service.accord.api.AccordAgent;
-import org.apache.cassandra.service.accord.interop.AccordInteropExecution.InteropExecutor;
-import org.apache.cassandra.service.accord.txn.AccordUpdate;
-import org.apache.cassandra.service.accord.txn.TxnRead;
 
 import static accord.messages.Apply.Kind.Maximal;
 import static accord.messages.Apply.Kind.Minimal;

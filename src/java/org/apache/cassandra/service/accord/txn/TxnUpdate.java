@@ -25,16 +25,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
 import javax.annotation.Nullable;
 
-import accord.api.Data;
-import accord.api.Update;
-import accord.primitives.Keys;
-import accord.primitives.Participants;
-import accord.primitives.Ranges;
-import accord.primitives.RoutableKey;
-import accord.primitives.Timestamp;
-import accord.utils.Invariants;
 import org.apache.cassandra.cql3.QueryOptions;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.TypeSizes;
@@ -54,6 +47,15 @@ import org.apache.cassandra.tcm.ClusterMetadata;
 import org.apache.cassandra.transport.ProtocolVersion;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.ObjectSizes;
+
+import accord.api.Data;
+import accord.api.Update;
+import accord.primitives.Keys;
+import accord.primitives.Participants;
+import accord.primitives.Ranges;
+import accord.primitives.RoutableKey;
+import accord.primitives.Timestamp;
+import accord.utils.Invariants;
 
 import static accord.utils.Invariants.requireArgument;
 import static accord.utils.SortedArrays.Search.CEIL;

@@ -28,6 +28,9 @@ import java.util.stream.Collectors;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterators;
 
+import org.apache.cassandra.service.accord.TokenRange;
+import org.apache.cassandra.service.accord.api.PartitionKey;
+
 import accord.api.Key;
 import accord.primitives.Keys;
 import accord.primitives.Range;
@@ -35,8 +38,6 @@ import accord.primitives.Ranges;
 import accord.primitives.Routable.Domain;
 import accord.primitives.Seekable;
 import accord.primitives.Seekables;
-import org.apache.cassandra.service.accord.TokenRange;
-import org.apache.cassandra.service.accord.api.PartitionKey;
 
 /**
  * Immutable collection of items, sorted first by their partition key

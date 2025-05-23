@@ -22,10 +22,11 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.zip.CRC32;
 
-import accord.utils.Invariants;
 import org.apache.cassandra.db.TypeSizes;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.Crc;
+
+import accord.utils.Invariants;
 
 import static org.apache.cassandra.journal.Journal.validateCRC;
 

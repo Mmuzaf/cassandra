@@ -29,10 +29,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
+import org.apache.cassandra.service.accord.api.TokenKey;
+
 import accord.primitives.SaveStatus;
 import accord.primitives.Timestamp;
 import accord.primitives.TxnId;
-import org.apache.cassandra.service.accord.api.TokenKey;
 
 public class CommandStoreTxnBlockedGraph
 {

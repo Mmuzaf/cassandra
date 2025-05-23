@@ -25,8 +25,20 @@ import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.exceptions.RequestTimeoutException;
+import org.apache.cassandra.metrics.AccordMetrics;
+import org.apache.cassandra.net.ResponseContext;
+import org.apache.cassandra.service.accord.AccordService;
+import org.apache.cassandra.service.accord.serializers.TableMetadatasAndKeys;
+import org.apache.cassandra.service.accord.txn.TxnQuery;
+import org.apache.cassandra.service.accord.txn.TxnRead;
+import org.apache.cassandra.utils.Clock;
+import org.apache.cassandra.utils.JVMStabilityInspector;
 
 import accord.api.Agent;
 import accord.api.EventListener;
@@ -59,16 +71,6 @@ import accord.utils.async.AsyncChain;
 import accord.utils.async.AsyncChains;
 import accord.utils.async.AsyncResult;
 import accord.utils.async.AsyncResults;
-import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.exceptions.RequestTimeoutException;
-import org.apache.cassandra.metrics.AccordMetrics;
-import org.apache.cassandra.net.ResponseContext;
-import org.apache.cassandra.service.accord.AccordService;
-import org.apache.cassandra.service.accord.serializers.TableMetadatasAndKeys;
-import org.apache.cassandra.service.accord.txn.TxnQuery;
-import org.apache.cassandra.service.accord.txn.TxnRead;
-import org.apache.cassandra.utils.Clock;
-import org.apache.cassandra.utils.JVMStabilityInspector;
 
 import static accord.primitives.Routable.Domain.Key;
 import static accord.utils.SortedArrays.SortedArrayList.ofSorted;
@@ -84,8 +86,8 @@ import static org.apache.cassandra.service.accord.api.AccordWaitStrategies.recov
 import static org.apache.cassandra.service.accord.api.AccordWaitStrategies.retryBootstrap;
 import static org.apache.cassandra.service.accord.api.AccordWaitStrategies.retryDurability;
 import static org.apache.cassandra.service.accord.api.AccordWaitStrategies.retrySyncPoint;
-import static org.apache.cassandra.service.accord.api.AccordWaitStrategies.slowTxnPreaccept;
 import static org.apache.cassandra.service.accord.api.AccordWaitStrategies.slowRead;
+import static org.apache.cassandra.service.accord.api.AccordWaitStrategies.slowTxnPreaccept;
 import static org.apache.cassandra.utils.Clock.Global.nanoTime;
 
 // TODO (expected): merge with AccordService

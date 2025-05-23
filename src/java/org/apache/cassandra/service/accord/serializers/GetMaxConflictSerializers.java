@@ -20,14 +20,15 @@ package org.apache.cassandra.service.accord.serializers;
 
 import java.io.IOException;
 
-import accord.messages.GetMaxConflict;
-import accord.messages.GetMaxConflict.GetMaxConflictOk;
-import accord.primitives.Route;
-import accord.primitives.Timestamp;
 import org.apache.cassandra.db.TypeSizes;
 import org.apache.cassandra.io.UnversionedSerializer;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
+
+import accord.messages.GetMaxConflict;
+import accord.messages.GetMaxConflict.GetMaxConflictOk;
+import accord.primitives.Route;
+import accord.primitives.Timestamp;
 
 public class GetMaxConflictSerializers
 {

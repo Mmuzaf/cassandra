@@ -31,11 +31,24 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
 import javax.annotation.Nullable;
 
+import org.agrona.collections.Object2ObjectHashMap;
+import org.agrona.collections.ObjectHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+
+import org.apache.cassandra.service.accord.AccordCacheEntry.Status;
+import org.apache.cassandra.service.accord.AccordCommandStore.Caches;
+import org.apache.cassandra.service.accord.AccordExecutor.Task;
+import org.apache.cassandra.service.accord.AccordExecutor.TaskQueue;
+import org.apache.cassandra.service.accord.AccordKeyspace.CommandsForKeyAccessor;
+import org.apache.cassandra.service.accord.api.TokenKey;
+import org.apache.cassandra.utils.Clock;
+import org.apache.cassandra.utils.NoSpamLogger;
+import org.apache.cassandra.utils.concurrent.Condition;
 
 import accord.api.Journal;
 import accord.api.RoutingKey;
@@ -54,17 +67,6 @@ import accord.utils.Invariants;
 import accord.utils.async.AsyncChain;
 import accord.utils.async.AsyncChains;
 import accord.utils.async.Cancellable;
-import org.agrona.collections.Object2ObjectHashMap;
-import org.agrona.collections.ObjectHashSet;
-import org.apache.cassandra.service.accord.AccordCacheEntry.Status;
-import org.apache.cassandra.service.accord.AccordCommandStore.Caches;
-import org.apache.cassandra.service.accord.AccordExecutor.Task;
-import org.apache.cassandra.service.accord.AccordExecutor.TaskQueue;
-import org.apache.cassandra.service.accord.AccordKeyspace.CommandsForKeyAccessor;
-import org.apache.cassandra.service.accord.api.TokenKey;
-import org.apache.cassandra.utils.Clock;
-import org.apache.cassandra.utils.NoSpamLogger;
-import org.apache.cassandra.utils.concurrent.Condition;
 
 import static accord.primitives.Routable.Domain.Key;
 import static accord.primitives.Txn.Kind.EphemeralRead;

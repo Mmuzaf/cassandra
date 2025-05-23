@@ -20,10 +20,11 @@ package org.apache.cassandra.service.accord;
 
 import java.util.function.Consumer;
 
-import accord.primitives.Timestamp;
-import accord.primitives.TxnId;
 import org.apache.cassandra.service.accord.api.TokenKey;
 import org.apache.cassandra.utils.CloseableIterator;
+
+import accord.primitives.Timestamp;
+import accord.primitives.TxnId;
 
 public interface RangeSearcher
 {

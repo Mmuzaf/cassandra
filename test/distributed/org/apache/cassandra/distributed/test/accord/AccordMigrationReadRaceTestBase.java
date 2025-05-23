@@ -40,6 +40,9 @@ import java.util.function.Consumer;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
+
+import org.assertj.core.api.Assertions;
+import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -47,7 +50,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.primitives.Ranges;
 import org.apache.cassandra.ServerTestUtils;
 import org.apache.cassandra.Util;
 import org.apache.cassandra.config.CassandraRelevantProperties;
@@ -84,8 +86,8 @@ import org.apache.cassandra.tcm.Epoch;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.Pair;
 import org.apache.cassandra.utils.Throwables.ThrowingRunnable;
-import org.assertj.core.api.Assertions;
-import org.eclipse.jetty.util.ConcurrentHashSet;
+
+import accord.primitives.Ranges;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.lang.String.format;

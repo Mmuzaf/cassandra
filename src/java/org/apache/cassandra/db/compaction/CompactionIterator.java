@@ -32,17 +32,10 @@ import java.util.function.Supplier;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ordering;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.local.Cleanup;
-import accord.local.DurableBefore;
-import accord.local.RedundantBefore;
-import accord.utils.Invariants;
-import accord.utils.UnhandledEnum;
-import accord.utils.btree.BTree;
-import accord.utils.btree.BulkIterator;
-import accord.utils.btree.UpdateFunction;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.ColumnIdentifier;
 import org.apache.cassandra.db.AbstractCompactionController;
@@ -108,6 +101,15 @@ import org.apache.cassandra.service.paxos.uncommitted.PaxosRows;
 import org.apache.cassandra.utils.NoSpamLogger;
 import org.apache.cassandra.utils.NoSpamLogger.NoSpamLogStatement;
 import org.apache.cassandra.utils.TimeUUID;
+
+import accord.local.Cleanup;
+import accord.local.DurableBefore;
+import accord.local.RedundantBefore;
+import accord.utils.Invariants;
+import accord.utils.UnhandledEnum;
+import accord.utils.btree.BTree;
+import accord.utils.btree.BulkIterator;
+import accord.utils.btree.UpdateFunction;
 
 import static accord.local.Cleanup.Input.PARTIAL;
 import static accord.local.Cleanup.NO;

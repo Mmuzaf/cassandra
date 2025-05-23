@@ -27,15 +27,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.LongSupplier;
-import javax.annotation.Nullable;
 
-import accord.utils.Gens;
-import accord.utils.RandomSource;
+import javax.annotation.Nullable;
 
 import org.apache.cassandra.exceptions.RequestFailure;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.utils.concurrent.AsyncPromise;
 import org.apache.cassandra.utils.concurrent.Future;
+
+import accord.utils.Gens;
+import accord.utils.RandomSource;
 
 public class SimulatedMessageDelivery implements MessageDelivery
 {

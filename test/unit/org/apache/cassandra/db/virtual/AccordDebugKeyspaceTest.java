@@ -26,18 +26,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 
+import org.awaitility.Awaitility;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.api.ProtocolModifiers;
-import accord.messages.TxnRequest;
-import accord.primitives.Routable;
-import accord.primitives.SaveStatus;
-import accord.primitives.Txn;
-import accord.primitives.TxnId;
-import accord.utils.async.AsyncChains;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.OptionaldPositiveInt;
 import org.apache.cassandra.cql3.CQLTester;
@@ -51,7 +45,14 @@ import org.apache.cassandra.service.accord.AccordService;
 import org.apache.cassandra.tcm.ClusterMetadata;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.concurrent.Condition;
-import org.awaitility.Awaitility;
+
+import accord.api.ProtocolModifiers;
+import accord.messages.TxnRequest;
+import accord.primitives.Routable;
+import accord.primitives.SaveStatus;
+import accord.primitives.Txn;
+import accord.primitives.TxnId;
+import accord.utils.async.AsyncChains;
 
 import static accord.primitives.TxnId.FastPath.Unoptimised;
 import static org.apache.cassandra.Util.spinUntilSuccess;

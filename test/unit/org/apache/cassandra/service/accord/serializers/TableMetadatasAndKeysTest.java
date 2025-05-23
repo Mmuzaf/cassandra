@@ -24,13 +24,6 @@ import java.util.LinkedHashMap;
 
 import org.junit.Test;
 
-import accord.primitives.Keys;
-import accord.primitives.Ranges;
-import accord.primitives.Routable;
-import accord.primitives.Seekable;
-import accord.primitives.Seekables;
-import accord.utils.Gen;
-import accord.utils.Gens;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.dht.Murmur3Partitioner;
@@ -44,6 +37,14 @@ import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.service.accord.api.PartitionKey;
 import org.apache.cassandra.utils.AccordGenerators;
+
+import accord.primitives.Keys;
+import accord.primitives.Ranges;
+import accord.primitives.Routable;
+import accord.primitives.Seekable;
+import accord.primitives.Seekables;
+import accord.utils.Gen;
+import accord.utils.Gens;
 
 import static accord.utils.Property.qt;
 import static org.apache.cassandra.service.accord.serializers.TableMetadatasTest.buildSchema;

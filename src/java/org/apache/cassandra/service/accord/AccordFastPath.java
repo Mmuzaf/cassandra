@@ -22,10 +22,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 
-import accord.local.Node;
 import com.google.common.collect.ImmutableMap;
-
 import com.google.common.collect.ImmutableSet;
+
 import org.apache.cassandra.db.TypeSizes;
 import org.apache.cassandra.exceptions.InvalidRequestException;
 import org.apache.cassandra.io.util.DataInputPlus;
@@ -36,6 +35,8 @@ import org.apache.cassandra.tcm.MetadataValue;
 import org.apache.cassandra.tcm.membership.NodeId;
 import org.apache.cassandra.tcm.serialization.MetadataSerializer;
 import org.apache.cassandra.tcm.serialization.Version;
+
+import accord.local.Node;
 
 /**
  * Cluster availability info for services that need a consistent view of availability for a given epoch, such

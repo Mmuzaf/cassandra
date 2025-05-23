@@ -23,9 +23,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
-import accord.utils.Gen;
-import accord.utils.Gens;
 import org.apache.cassandra.exceptions.UnknownTableException;
 import org.apache.cassandra.io.Serializers;
 import org.apache.cassandra.io.UnversionedSerializer;
@@ -38,9 +39,9 @@ import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.utils.CassandraGenerators;
 import org.apache.cassandra.utils.Generators;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+
+import accord.utils.Gen;
+import accord.utils.Gens;
 
 import static accord.utils.Property.qt;
 

@@ -26,13 +26,9 @@ import java.util.NavigableSet;
 import java.util.TreeSet;
 import java.util.function.Consumer;
 
-import accord.primitives.Route;
-import accord.primitives.Timestamp;
-import accord.primitives.TxnId;
-import accord.primitives.Unseekable;
-import accord.utils.Invariants;
 import org.agrona.collections.Int2ObjectHashMap;
 import org.agrona.collections.Long2ObjectHashMap;
+
 import org.apache.cassandra.index.accord.OrderedRouteSerializer;
 import org.apache.cassandra.index.accord.RouteJournalIndex;
 import org.apache.cassandra.journal.StaticSegment;
@@ -43,6 +39,12 @@ import org.apache.cassandra.utils.CloseableIterator;
 import org.apache.cassandra.utils.FastByteOperations;
 import org.apache.cassandra.utils.RTree;
 import org.apache.cassandra.utils.RangeTree;
+
+import accord.primitives.Route;
+import accord.primitives.Timestamp;
+import accord.primitives.TxnId;
+import accord.primitives.Unseekable;
+import accord.utils.Invariants;
 
 import static accord.primitives.Routable.Domain.Range;
 

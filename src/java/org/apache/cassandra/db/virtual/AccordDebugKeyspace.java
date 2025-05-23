@@ -29,21 +29,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Sets;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.api.RoutingKey;
-import accord.impl.progresslog.DefaultProgressLog;
-import accord.impl.progresslog.TxnStateKind;
-import accord.local.CommandStore;
-import accord.local.CommandStores;
-import accord.local.DurableBefore;
-import accord.local.MaxConflicts;
-import accord.local.RejectBefore;
-import accord.local.durability.ShardDurability;
-import accord.primitives.Status;
-import accord.primitives.TxnId;
-import accord.utils.Invariants;
 import org.apache.cassandra.cql3.statements.schema.CreateTableStatement;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.DecoratedKey;
@@ -71,6 +60,19 @@ import org.apache.cassandra.service.consensus.migration.ConsensusMigrationState;
 import org.apache.cassandra.service.consensus.migration.TableMigrationState;
 import org.apache.cassandra.tcm.ClusterMetadata;
 
+import accord.api.RoutingKey;
+import accord.impl.progresslog.DefaultProgressLog;
+import accord.impl.progresslog.TxnStateKind;
+import accord.local.CommandStore;
+import accord.local.CommandStores;
+import accord.local.DurableBefore;
+import accord.local.MaxConflicts;
+import accord.local.RejectBefore;
+import accord.local.durability.ShardDurability;
+import accord.primitives.Status;
+import accord.primitives.TxnId;
+import accord.utils.Invariants;
+
 import static accord.local.RedundantStatus.Property.GC_BEFORE;
 import static accord.local.RedundantStatus.Property.LOCALLY_APPLIED;
 import static accord.local.RedundantStatus.Property.LOCALLY_REDUNDANT;
@@ -79,8 +81,8 @@ import static accord.local.RedundantStatus.Property.LOCALLY_WITNESSED;
 import static accord.local.RedundantStatus.Property.MAJORITY_APPLIED;
 import static accord.local.RedundantStatus.Property.PRE_BOOTSTRAP;
 import static accord.local.RedundantStatus.Property.SHARD_APPLIED;
-import static java.lang.String.format;
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static java.lang.String.format;
 import static org.apache.cassandra.schema.SchemaConstants.VIRTUAL_ACCORD_DEBUG;
 import static org.apache.cassandra.utils.MonotonicClock.Global.approxTime;
 

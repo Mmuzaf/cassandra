@@ -22,13 +22,14 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import accord.utils.RandomSource;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.SerializationHeader;
 import org.apache.cassandra.db.rows.EncodingStats;
 import org.apache.cassandra.io.sstable.Descriptor;
 import org.apache.cassandra.io.sstable.SSTableTxnWriter;
 import org.apache.cassandra.service.accord.serializers.Version;
+
+import accord.utils.RandomSource;
 
 /**
  * Nemesis compactor: a compactor that will distribute your keys over a large(r) number of SSTables.

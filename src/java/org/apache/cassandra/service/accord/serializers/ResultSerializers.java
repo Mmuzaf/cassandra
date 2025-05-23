@@ -18,11 +18,12 @@
 
 package org.apache.cassandra.service.accord.serializers;
 
-import accord.api.Result;
-import accord.primitives.ProgressToken;
 import org.apache.cassandra.io.UnversionedSerializer;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
+
+import accord.api.Result;
+import accord.primitives.ProgressToken;
 
 public class ResultSerializers
 {

@@ -24,13 +24,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import io.airlift.airline.Arguments;
-import io.airlift.airline.Command;
-import io.airlift.airline.Option;
 import org.apache.cassandra.service.consensus.migration.ConsensusMigrationTarget;
 import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.NodeTool;
 import org.apache.cassandra.tools.RepairRunner.RepairCmd;
+
+import io.airlift.airline.Arguments;
+import io.airlift.airline.Command;
+import io.airlift.airline.Option;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Collections.singleton;

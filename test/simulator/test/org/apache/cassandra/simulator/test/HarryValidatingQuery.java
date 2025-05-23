@@ -23,23 +23,24 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.utils.Invariants;
 import org.apache.cassandra.distributed.Cluster;
 import org.apache.cassandra.distributed.api.ConsistencyLevel;
 import org.apache.cassandra.distributed.api.IInstance;
-import org.apache.cassandra.harry.gen.EntropySource;
-import org.apache.cassandra.harry.op.Visit;
-import org.apache.cassandra.harry.op.Operations;
 import org.apache.cassandra.harry.execution.CompiledStatement;
 import org.apache.cassandra.harry.execution.InJvmDTestVisitExecutor;
 import org.apache.cassandra.harry.execution.QueryBuildingVisitExecutor;
 import org.apache.cassandra.harry.execution.ResultSetRow;
+import org.apache.cassandra.harry.gen.EntropySource;
 import org.apache.cassandra.harry.model.TokenPlacementModel;
+import org.apache.cassandra.harry.op.Operations;
+import org.apache.cassandra.harry.op.Visit;
 import org.apache.cassandra.harry.util.ByteUtils;
 import org.apache.cassandra.harry.util.TokenUtil;
 import org.apache.cassandra.simulator.systems.InterceptedExecution;
 import org.apache.cassandra.simulator.systems.InterceptingExecutor;
 import org.apache.cassandra.simulator.systems.SimulatedAction;
+
+import accord.utils.Invariants;
 
 import static org.apache.cassandra.simulator.SimulatorUtils.failWithOOM;
 

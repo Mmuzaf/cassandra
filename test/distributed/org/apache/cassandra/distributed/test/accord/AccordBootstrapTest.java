@@ -25,12 +25,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;
 
-import accord.local.PreLoadContext;
-import accord.primitives.Timestamp;
-import accord.topology.TopologyManager;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.QueryProcessor;
 import org.apache.cassandra.cql3.UntypedResultSet;
@@ -60,7 +58,10 @@ import org.apache.cassandra.tcm.ClusterMetadataService;
 import org.apache.cassandra.tcm.Epoch;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.FBUtilities;
-import org.assertj.core.api.Assertions;
+
+import accord.local.PreLoadContext;
+import accord.primitives.Timestamp;
+import accord.topology.TopologyManager;
 
 import static accord.utils.async.AsyncChains.awaitUninterruptiblyAndRethrow;
 import static com.google.common.collect.Iterables.getOnlyElement;

@@ -21,6 +21,16 @@ package org.apache.cassandra.service.accord.serializers;
 import java.io.IOException;
 import java.util.Comparator;
 
+import org.apache.cassandra.db.DecoratedKey;
+import org.apache.cassandra.io.UnversionedSerializer;
+import org.apache.cassandra.io.util.DataInputPlus;
+import org.apache.cassandra.io.util.DataOutputPlus;
+import org.apache.cassandra.schema.TableId;
+import org.apache.cassandra.schema.TableMetadata;
+import org.apache.cassandra.service.accord.api.PartitionKey;
+import org.apache.cassandra.service.accord.serializers.TableMetadatas.Multi;
+import org.apache.cassandra.utils.btree.BTreeSet;
+
 import accord.api.Key;
 import accord.api.Sliceable;
 import accord.primitives.Keys;
@@ -31,15 +41,6 @@ import accord.primitives.Seekable;
 import accord.primitives.Seekables;
 import accord.utils.Invariants;
 import accord.utils.VIntCoding;
-import org.apache.cassandra.db.DecoratedKey;
-import org.apache.cassandra.io.UnversionedSerializer;
-import org.apache.cassandra.io.util.DataInputPlus;
-import org.apache.cassandra.io.util.DataOutputPlus;
-import org.apache.cassandra.schema.TableId;
-import org.apache.cassandra.schema.TableMetadata;
-import org.apache.cassandra.service.accord.api.PartitionKey;
-import org.apache.cassandra.service.accord.serializers.TableMetadatas.Multi;
-import org.apache.cassandra.utils.btree.BTreeSet;
 
 import static accord.primitives.Routable.Domain.Range;
 import static accord.primitives.Routables.Slice.Minimal;

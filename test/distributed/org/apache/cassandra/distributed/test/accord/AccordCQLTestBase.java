@@ -37,14 +37,14 @@ import java.util.stream.Collectors;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+
+import org.assertj.core.api.Assertions;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.primitives.Unseekables;
-import accord.topology.Topologies;
 import org.apache.cassandra.config.Config.PaxosVariant;
 import org.apache.cassandra.cql3.CQLTester;
 import org.apache.cassandra.cql3.functions.types.utils.Bytes;
@@ -70,7 +70,9 @@ import org.apache.cassandra.service.consensus.migration.TransactionalMigrationFr
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.FailingConsumer;
 import org.apache.cassandra.utils.Pair;
-import org.assertj.core.api.Assertions;
+
+import accord.primitives.Unseekables;
+import accord.topology.Topologies;
 
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;

@@ -23,11 +23,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 
-import accord.local.durability.DurabilityService;
-import accord.local.Node;
-import accord.primitives.Ranges;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.Keyspace;
 import org.apache.cassandra.dht.Range;
@@ -48,6 +46,10 @@ import org.apache.cassandra.tcm.Epoch;
 import org.apache.cassandra.utils.TimeUUID;
 import org.apache.cassandra.utils.concurrent.AsyncPromise;
 import org.apache.cassandra.utils.concurrent.Future;
+
+import accord.local.Node;
+import accord.local.durability.DurabilityService;
+import accord.primitives.Ranges;
 
 import static accord.local.durability.DurabilityService.SyncLocal.NoLocal;
 import static accord.local.durability.DurabilityService.SyncRemote.All;

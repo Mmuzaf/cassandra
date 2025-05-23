@@ -27,16 +27,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.agrona.collections.Int2ObjectHashMap;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import accord.api.Journal;
-import accord.impl.AbstractConfigurationServiceTest;
-import accord.local.Node.Id;
-import accord.topology.Topology;
-import accord.utils.SortedArrays.SortedArrayList;
-import accord.utils.async.AsyncResult;
-import org.agrona.collections.Int2ObjectHashMap;
 import org.apache.cassandra.SchemaLoader;
 import org.apache.cassandra.ServerTestUtils;
 import org.apache.cassandra.concurrent.ScheduledExecutors;
@@ -73,6 +67,13 @@ import org.apache.cassandra.tcm.ownership.DataPlacement;
 import org.apache.cassandra.tcm.serialization.Version;
 import org.apache.cassandra.utils.MockFailureDetector;
 import org.apache.cassandra.utils.concurrent.Future;
+
+import accord.api.Journal;
+import accord.impl.AbstractConfigurationServiceTest;
+import accord.local.Node.Id;
+import accord.topology.Topology;
+import accord.utils.SortedArrays.SortedArrayList;
+import accord.utils.async.AsyncResult;
 
 import static accord.impl.AbstractConfigurationServiceTest.TestListener;
 import static org.apache.cassandra.cql3.statements.schema.CreateTableStatement.parse;

@@ -31,9 +31,18 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+
 import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
+
+import org.apache.cassandra.schema.TableId;
+import org.apache.cassandra.service.accord.AccordKeyspace.CommandsForKeyAccessor;
+import org.apache.cassandra.service.accord.IAccordService.AccordCompactionInfo;
+import org.apache.cassandra.service.accord.api.TokenKey;
+import org.apache.cassandra.service.accord.txn.TxnRead;
+import org.apache.cassandra.utils.Clock;
+import org.apache.cassandra.utils.concurrent.UncheckedInterruptedException;
 
 import accord.api.Agent;
 import accord.api.DataStore;
@@ -62,13 +71,6 @@ import accord.primitives.TxnId;
 import accord.utils.Invariants;
 import accord.utils.async.AsyncChain;
 import accord.utils.async.AsyncChains;
-import org.apache.cassandra.schema.TableId;
-import org.apache.cassandra.service.accord.AccordKeyspace.CommandsForKeyAccessor;
-import org.apache.cassandra.service.accord.IAccordService.AccordCompactionInfo;
-import org.apache.cassandra.service.accord.api.TokenKey;
-import org.apache.cassandra.service.accord.txn.TxnRead;
-import org.apache.cassandra.utils.Clock;
-import org.apache.cassandra.utils.concurrent.UncheckedInterruptedException;
 
 import static accord.api.Journal.CommandUpdate;
 import static accord.api.Journal.FieldUpdates;

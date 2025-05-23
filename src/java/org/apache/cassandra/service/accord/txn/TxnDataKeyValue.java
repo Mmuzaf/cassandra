@@ -20,7 +20,6 @@ package org.apache.cassandra.service.accord.txn;
 
 import java.io.IOException;
 
-import accord.utils.Invariants;
 import org.apache.cassandra.db.partitions.FilteredPartition;
 import org.apache.cassandra.db.rows.Row;
 import org.apache.cassandra.db.rows.RowIterator;
@@ -33,6 +32,8 @@ import org.apache.cassandra.schema.Schema;
 import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.service.accord.serializers.Version;
+
+import accord.utils.Invariants;
 
 import static org.apache.cassandra.db.SerializationHeader.StableHeaderSerializer.STABLE;
 import static org.apache.cassandra.db.rows.DeserializationHelper.Flag.FROM_REMOTE;

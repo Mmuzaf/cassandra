@@ -18,8 +18,17 @@
 
 package org.apache.cassandra.service.accord.journal;
 
+import org.agrona.collections.Int2ObjectHashMap;
 import org.junit.Before;
 import org.junit.Test;
+
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.dht.IPartitioner;
+import org.apache.cassandra.dht.Murmur3Partitioner;
+import org.apache.cassandra.io.Serializers;
+import org.apache.cassandra.io.util.DataOutputBuffer;
+import org.apache.cassandra.schema.TableId;
+import org.apache.cassandra.utils.AccordGenerators;
 
 import accord.api.Journal;
 import accord.local.CommandStores;
@@ -29,14 +38,6 @@ import accord.topology.Topology;
 import accord.utils.AccordGens;
 import accord.utils.Gen;
 import accord.utils.Gens;
-import org.agrona.collections.Int2ObjectHashMap;
-import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.dht.IPartitioner;
-import org.apache.cassandra.dht.Murmur3Partitioner;
-import org.apache.cassandra.io.Serializers;
-import org.apache.cassandra.io.util.DataOutputBuffer;
-import org.apache.cassandra.schema.TableId;
-import org.apache.cassandra.utils.AccordGenerators;
 
 import static accord.utils.Property.qt;
 

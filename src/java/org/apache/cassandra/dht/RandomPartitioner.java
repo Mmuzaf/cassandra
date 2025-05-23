@@ -32,8 +32,6 @@ import java.util.function.Function;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import accord.primitives.Ranges;
-import accord.utils.Invariants;
 import org.apache.cassandra.db.CachedHashDecoratedKey;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.marshal.AbstractType;
@@ -52,6 +50,9 @@ import org.apache.cassandra.utils.ObjectSizes;
 import org.apache.cassandra.utils.Pair;
 import org.apache.cassandra.utils.bytecomparable.ByteComparable;
 import org.apache.cassandra.utils.bytecomparable.ByteSource;
+
+import accord.primitives.Ranges;
+import accord.utils.Invariants;
 
 /**
  * This class generates a BigIntegerToken using MD5 hash.

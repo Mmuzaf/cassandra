@@ -27,13 +27,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import accord.utils.Invariants;
 import org.agrona.collections.IntHashSet;
+
 import org.apache.cassandra.harry.ColumnSpec;
 import org.apache.cassandra.harry.MagicConstants;
 import org.apache.cassandra.harry.dsl.HistoryBuilder;
 import org.apache.cassandra.harry.gen.rng.SeedableEntropySource;
 import org.apache.cassandra.utils.ArrayUtils;
+
+import accord.utils.Invariants;
 
 /**
  * Invertible generator allows you to provide _any_ data type. Harry is based on the idea that descriptors

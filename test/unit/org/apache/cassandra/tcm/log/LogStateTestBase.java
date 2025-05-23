@@ -25,18 +25,19 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 
-import accord.utils.Gen;
-import accord.utils.Gens;
 import org.apache.cassandra.dht.Murmur3Partitioner;
 import org.apache.cassandra.distributed.test.log.ClusterMetadataTestHelper;
 import org.apache.cassandra.tcm.ClusterMetadata;
 import org.apache.cassandra.tcm.Epoch;
 import org.apache.cassandra.tcm.MetadataSnapshots;
 import org.apache.cassandra.tcm.sequences.SequencesUtils;
-import org.assertj.core.api.Assertions;
+
+import accord.utils.Gen;
+import accord.utils.Gens;
 
 import static accord.utils.Property.qt;
 import static org.junit.Assert.assertEquals;

@@ -28,6 +28,8 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 
+import org.apache.cassandra.service.accord.api.PartitionKey;
+
 import accord.api.Key;
 import accord.api.RoutingKey;
 import accord.primitives.FullRangeRoute;
@@ -39,7 +41,6 @@ import accord.primitives.Routable.Domain;
 import accord.primitives.Txn;
 import accord.utils.Gen;
 import accord.utils.Gens;
-import org.apache.cassandra.service.accord.api.PartitionKey;
 
 import static accord.utils.Property.qt;
 import static org.apache.cassandra.dht.Murmur3Partitioner.LongToken.keyForToken;

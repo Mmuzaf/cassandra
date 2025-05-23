@@ -22,7 +22,6 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import accord.utils.Gens;
 import org.apache.cassandra.db.TypeSizes;
 import org.apache.cassandra.io.IVersionedSerializer;
 import org.apache.cassandra.io.UnversionedSerializer;
@@ -30,6 +29,8 @@ import org.apache.cassandra.io.VersionedSerializer;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputBuffer;
 import org.apache.cassandra.io.util.DataOutputPlus;
+
+import accord.utils.Gens;
 
 import static accord.utils.Property.qt;
 import static org.apache.cassandra.io.Serializers.testSerde;

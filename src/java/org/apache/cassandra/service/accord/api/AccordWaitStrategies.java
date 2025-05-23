@@ -20,13 +20,14 @@ package org.apache.cassandra.service.accord.api;
 
 import javax.annotation.Nullable;
 
-import accord.primitives.TxnId;
 import org.apache.cassandra.config.AccordSpec;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.config.StringRetryStrategy;
 import org.apache.cassandra.net.Verb;
 import org.apache.cassandra.service.RetryStrategy;
 import org.apache.cassandra.service.TimeoutStrategy;
+
+import accord.primitives.TxnId;
 
 import static accord.primitives.Txn.Kind.ExclusiveSyncPoint;
 import static org.apache.cassandra.metrics.ClientRequestsMetricsHolder.accordReadMetrics;

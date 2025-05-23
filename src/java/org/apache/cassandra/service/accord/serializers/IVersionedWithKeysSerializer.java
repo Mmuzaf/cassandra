@@ -22,6 +22,13 @@ import java.io.IOException;
 import java.util.function.BiFunction;
 import java.util.function.IntFunction;
 
+import net.nicoulaj.compilecommand.annotations.DontInline;
+import net.nicoulaj.compilecommand.annotations.Inline;
+
+import org.apache.cassandra.db.TypeSizes;
+import org.apache.cassandra.io.util.DataInputPlus;
+import org.apache.cassandra.io.util.DataOutputPlus;
+
 import accord.api.Key;
 import accord.api.RoutingKey;
 import accord.primitives.AbstractKeys;
@@ -35,11 +42,6 @@ import accord.primitives.RoutableKey;
 import accord.primitives.Routables;
 import accord.primitives.RoutingKeys;
 import accord.utils.UnhandledEnum;
-import net.nicoulaj.compilecommand.annotations.DontInline;
-import net.nicoulaj.compilecommand.annotations.Inline;
-import org.apache.cassandra.db.TypeSizes;
-import org.apache.cassandra.io.util.DataInputPlus;
-import org.apache.cassandra.io.util.DataOutputPlus;
 
 import static accord.utils.SortedArrays.Search.FAST;
 

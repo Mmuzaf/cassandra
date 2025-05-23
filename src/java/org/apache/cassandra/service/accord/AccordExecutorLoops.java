@@ -23,10 +23,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 
-import accord.utils.Invariants;
 import org.agrona.collections.Long2ObjectHashMap;
+
 import org.apache.cassandra.service.accord.AccordExecutor.Mode;
 import org.apache.cassandra.utils.concurrent.Condition;
+
+import accord.utils.Invariants;
 
 import static org.apache.cassandra.concurrent.ExecutorFactory.Global.executorFactory;
 import static org.apache.cassandra.concurrent.ExecutorFactory.SimulatorThreadTag.INFINITE_LOOP;

@@ -23,8 +23,9 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntFunction;
 
-import accord.api.Agent;
 import org.apache.cassandra.metrics.AccordCacheMetrics;
+
+import accord.api.Agent;
 
 // WARNING: experimental - needs more testing
 class AccordExecutorSemiSyncSubmit extends AccordExecutorAbstractSemiSyncSubmit

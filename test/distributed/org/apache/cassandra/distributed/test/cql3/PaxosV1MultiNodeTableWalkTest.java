@@ -18,9 +18,10 @@
 
 package org.apache.cassandra.distributed.test.cql3;
 
-import accord.utils.Property;
 import org.apache.cassandra.config.Config;
 import org.apache.cassandra.distributed.Cluster;
+
+import accord.utils.Property;
 
 public class PaxosV1MultiNodeTableWalkTest extends CasMultiNodeTableWalkBase
 {

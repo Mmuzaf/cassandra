@@ -23,12 +23,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import accord.utils.Invariants;
 import org.apache.cassandra.harry.ColumnSpec;
 import org.apache.cassandra.harry.MagicConstants;
 import org.apache.cassandra.harry.Relations;
 import org.apache.cassandra.harry.SchemaSpec;
 import org.apache.cassandra.harry.util.BitSet;
+
+import accord.utils.Invariants;
 
 public class Operations
 {

@@ -27,9 +27,11 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.locks.LockSupport;
 
 import com.codahale.metrics.Timer;
+
 import org.apache.cassandra.db.TypeSizes;
-import org.apache.cassandra.io.util.*;
-import org.apache.cassandra.utils.*;
+import org.apache.cassandra.io.util.FileUtils;
+import org.apache.cassandra.utils.Simulate;
+import org.apache.cassandra.utils.SyncUtil;
 import org.apache.cassandra.utils.concurrent.OpOrder;
 import org.apache.cassandra.utils.concurrent.Ref;
 import org.apache.cassandra.utils.concurrent.WaitQueue;

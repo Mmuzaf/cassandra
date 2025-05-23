@@ -27,14 +27,15 @@ import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableMap;
 
-import accord.local.Node;
-import accord.utils.SortedArrays.SortedArrayList;
 import org.apache.cassandra.db.TypeSizes;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.tcm.serialization.MetadataSerializer;
 import org.apache.cassandra.tcm.serialization.Version;
+
+import accord.local.Node;
+import accord.utils.SortedArrays.SortedArrayList;
 
 import static org.apache.cassandra.utils.LocalizeString.toLowerCaseLocalized;
 import static org.apache.cassandra.utils.LocalizeString.toUpperCaseLocalized;

@@ -26,12 +26,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.IntFunction;
+
 import javax.annotation.Nonnull;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-import accord.utils.SortedArrays.SortedArrayList;
 import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.dht.IPartitionerDependentSerializer;
 import org.apache.cassandra.io.AsymmetricParameterisedUnversionedSerializer;
@@ -46,6 +46,8 @@ import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.tcm.serialization.MetadataSerializer;
 import org.apache.cassandra.tcm.serialization.Version;
+
+import accord.utils.SortedArrays.SortedArrayList;
 
 import static org.apache.cassandra.db.TypeSizes.sizeofUnsignedVInt;
 

@@ -22,14 +22,15 @@ import java.io.IOException;
 
 import javax.annotation.Nullable;
 
-import accord.utils.Property;
-import accord.utils.RandomSource;
 import org.apache.cassandra.distributed.Cluster;
 import org.apache.cassandra.distributed.api.ConsistencyLevel;
 import org.apache.cassandra.distributed.api.IInstanceConfig;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.service.consensus.TransactionalMode;
 import org.apache.cassandra.service.reads.repair.ReadRepairStrategy;
+
+import accord.utils.Property;
+import accord.utils.RandomSource;
 
 public class MultiNodeTokenConflictTest extends SingleNodeTokenConflictTest
 {

@@ -20,16 +20,17 @@ package org.apache.cassandra.service.accord.serializers;
 
 import java.io.IOException;
 
+import org.apache.cassandra.db.TypeSizes;
+import org.apache.cassandra.io.UnversionedSerializer;
+import org.apache.cassandra.io.util.DataInputPlus;
+import org.apache.cassandra.io.util.DataOutputPlus;
+
 import accord.coordinate.ExecuteFlag.ExecuteFlags;
 import accord.messages.GetEphemeralReadDeps;
 import accord.messages.GetEphemeralReadDeps.GetEphemeralReadDepsOk;
 import accord.primitives.Deps;
 import accord.primitives.Route;
 import accord.primitives.TxnId;
-import org.apache.cassandra.db.TypeSizes;
-import org.apache.cassandra.io.UnversionedSerializer;
-import org.apache.cassandra.io.util.DataInputPlus;
-import org.apache.cassandra.io.util.DataOutputPlus;
 
 public class GetEphmrlReadDepsSerializers
 {

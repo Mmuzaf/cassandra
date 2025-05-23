@@ -35,10 +35,26 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Sets;
 
+import org.quicktheories.impl.JavaRandom;
+
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.db.DecoratedKey;
+import org.apache.cassandra.dht.AccordSplitter;
+import org.apache.cassandra.dht.IPartitioner;
+import org.apache.cassandra.dht.Token;
+import org.apache.cassandra.schema.TableId;
+import org.apache.cassandra.service.accord.AccordTestUtils;
+import org.apache.cassandra.service.accord.TokenRange;
+import org.apache.cassandra.service.accord.api.PartitionKey;
+import org.apache.cassandra.service.accord.api.TokenKey;
+import org.apache.cassandra.service.accord.serializers.TableMetadatas;
+import org.apache.cassandra.service.accord.txn.TxnData;
+import org.apache.cassandra.service.accord.txn.TxnWrite;
+
 import accord.local.Command;
 import accord.local.Command.Truncated;
-import accord.local.ICommand;
 import accord.local.DurableBefore;
+import accord.local.ICommand;
 import accord.local.Node;
 import accord.local.RedundantBefore;
 import accord.local.RedundantBefore.Bounds;
@@ -70,20 +86,6 @@ import accord.utils.ReducingRangeMap;
 import accord.utils.SortedArrays.SortedArrayList;
 import accord.utils.TinyEnumSet;
 import accord.utils.TriFunction;
-import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.db.DecoratedKey;
-import org.apache.cassandra.dht.AccordSplitter;
-import org.apache.cassandra.dht.IPartitioner;
-import org.apache.cassandra.dht.Token;
-import org.apache.cassandra.schema.TableId;
-import org.apache.cassandra.service.accord.AccordTestUtils;
-import org.apache.cassandra.service.accord.TokenRange;
-import org.apache.cassandra.service.accord.api.TokenKey;
-import org.apache.cassandra.service.accord.api.PartitionKey;
-import org.apache.cassandra.service.accord.serializers.TableMetadatas;
-import org.apache.cassandra.service.accord.txn.TxnData;
-import org.apache.cassandra.service.accord.txn.TxnWrite;
-import org.quicktheories.impl.JavaRandom;
 
 import static accord.local.CommandStores.RangesForEpoch;
 import static accord.local.RedundantStatus.Property.GC_BEFORE;

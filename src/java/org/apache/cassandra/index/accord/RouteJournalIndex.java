@@ -34,7 +34,6 @@ import com.google.common.base.Splitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.primitives.TxnId;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.Operator;
 import org.apache.cassandra.db.CassandraWriteContext;
@@ -89,6 +88,8 @@ import org.apache.cassandra.service.accord.api.TokenKey;
 import org.apache.cassandra.utils.AbstractIterator;
 import org.apache.cassandra.utils.concurrent.Future;
 import org.apache.cassandra.utils.concurrent.FutureCombiner;
+
+import accord.primitives.TxnId;
 
 import static accord.primitives.Routable.Domain.Range;
 

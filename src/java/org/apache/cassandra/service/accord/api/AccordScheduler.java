@@ -23,10 +23,11 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import accord.api.Scheduler;
 import org.apache.cassandra.concurrent.ExecutorFactory;
 import org.apache.cassandra.concurrent.ScheduledExecutorPlus;
 import org.apache.cassandra.concurrent.Shutdownable;
+
+import accord.api.Scheduler;
 
 public class AccordScheduler implements Scheduler, Shutdownable
 {

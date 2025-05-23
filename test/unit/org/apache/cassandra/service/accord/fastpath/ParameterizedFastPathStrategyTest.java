@@ -22,13 +22,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
+
 import org.junit.Assert;
 import org.junit.Test;
 
-import accord.local.Node;
-import accord.utils.SortedArrays.SortedArrayList;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.cassandra.service.accord.fastpath.ParameterizedFastPathStrategy.WeightedDc;
+
+import accord.local.Node;
+import accord.utils.SortedArrays.SortedArrayList;
 
 import static java.util.Collections.emptySet;
 import static org.apache.cassandra.service.accord.AccordTestUtils.id;

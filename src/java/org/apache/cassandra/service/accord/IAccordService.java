@@ -25,31 +25,14 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.agrona.collections.Int2ObjectHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.api.Agent;
-import accord.local.durability.DurabilityService.SyncLocal;
-import accord.local.durability.DurabilityService.SyncRemote;
-import accord.local.CommandStores.RangesForEpoch;
-import accord.local.DurableBefore;
-import accord.local.Node;
-import accord.local.Node.Id;
-import accord.local.RedundantBefore;
-import accord.messages.Reply;
-import accord.messages.Request;
-import accord.primitives.Keys;
-import accord.primitives.Ranges;
-import accord.primitives.Timestamp;
-import accord.primitives.Txn;
-import accord.primitives.TxnId;
-import accord.topology.TopologyManager;
-import accord.utils.Invariants;
-import accord.utils.async.AsyncChain;
-import org.agrona.collections.Int2ObjectHashMap;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.exceptions.RequestExecutionException;
@@ -65,6 +48,25 @@ import org.apache.cassandra.tcm.Epoch;
 import org.apache.cassandra.transport.Dispatcher.RequestTime;
 import org.apache.cassandra.utils.concurrent.Future;
 import org.apache.cassandra.utils.concurrent.ImmediateFuture;
+
+import accord.api.Agent;
+import accord.local.CommandStores.RangesForEpoch;
+import accord.local.DurableBefore;
+import accord.local.Node;
+import accord.local.Node.Id;
+import accord.local.RedundantBefore;
+import accord.local.durability.DurabilityService.SyncLocal;
+import accord.local.durability.DurabilityService.SyncRemote;
+import accord.messages.Reply;
+import accord.messages.Request;
+import accord.primitives.Keys;
+import accord.primitives.Ranges;
+import accord.primitives.Timestamp;
+import accord.primitives.Txn;
+import accord.primitives.TxnId;
+import accord.topology.TopologyManager;
+import accord.utils.Invariants;
+import accord.utils.async.AsyncChain;
 
 // Avoid default methods that aren't just providing wrappers around other methods
 // so it will be a compile error if DelegatingAccordService doesn't implement them

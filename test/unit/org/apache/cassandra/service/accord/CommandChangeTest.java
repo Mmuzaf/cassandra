@@ -22,18 +22,12 @@ import java.util.EnumSet;
 import java.util.Set;
 
 import com.google.common.collect.Sets;
+
+import org.assertj.core.api.SoftAssertions;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import accord.impl.CommandChange;
-import accord.local.Command;
-import accord.local.RedundantBefore;
-import accord.primitives.SaveStatus;
-import accord.primitives.TxnId;
-import accord.utils.Gen;
-import accord.utils.LazyToString;
-import accord.utils.ReflectionUtils;
 import org.apache.cassandra.SchemaLoader;
 import org.apache.cassandra.io.util.DataInputBuffer;
 import org.apache.cassandra.io.util.DataOutputBuffer;
@@ -44,10 +38,19 @@ import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.service.accord.serializers.Version;
 import org.apache.cassandra.service.consensus.TransactionalMode;
 import org.apache.cassandra.utils.AccordGenerators;
-import org.assertj.core.api.SoftAssertions;
 
-import static accord.api.Journal.*;
-import static accord.impl.CommandChange.*;
+import accord.impl.CommandChange;
+import accord.local.Command;
+import accord.local.RedundantBefore;
+import accord.primitives.SaveStatus;
+import accord.primitives.TxnId;
+import accord.utils.Gen;
+import accord.utils.LazyToString;
+import accord.utils.ReflectionUtils;
+
+import static accord.api.Journal.Load;
+import static accord.impl.CommandChange.Field;
+import static accord.impl.CommandChange.getFlags;
 import static accord.utils.Property.qt;
 import static org.apache.cassandra.cql3.statements.schema.CreateTableStatement.parse;
 

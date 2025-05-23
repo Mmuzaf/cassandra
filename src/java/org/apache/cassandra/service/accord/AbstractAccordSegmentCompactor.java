@@ -25,10 +25,6 @@ import java.util.PriorityQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.utils.Invariants;
-import accord.utils.btree.BTree;
-import accord.utils.btree.BulkIterator;
-import accord.utils.btree.UpdateFunction;
 import org.apache.cassandra.db.BufferClustering;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.DecoratedKey;
@@ -50,10 +46,15 @@ import org.apache.cassandra.journal.StaticSegment.KeyOrderReader;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.accord.AccordJournalValueSerializers.FlyweightImage;
 import org.apache.cassandra.service.accord.AccordJournalValueSerializers.FlyweightSerializer;
+import org.apache.cassandra.service.accord.serializers.Version;
 import org.apache.cassandra.utils.NoSpamLogger;
 
+import accord.utils.Invariants;
+import accord.utils.btree.BTree;
+import accord.utils.btree.BulkIterator;
+import accord.utils.btree.UpdateFunction;
+
 import static java.util.concurrent.TimeUnit.MINUTES;
-import org.apache.cassandra.service.accord.serializers.Version;
 
 /**
  * Segment compactor: takes static segments and compacts them into a single SSTable.

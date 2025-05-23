@@ -29,22 +29,10 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.google.common.collect.Iterables;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.api.DataStore;
-import accord.api.Write;
-import accord.local.SafeCommandStore;
-import accord.primitives.PartialTxn;
-import accord.primitives.Routable.Domain;
-import accord.primitives.RoutableKey;
-import accord.primitives.Seekable;
-import accord.primitives.Seekables;
-import accord.primitives.Timestamp;
-import accord.primitives.TxnId;
-import accord.primitives.Writes;
-import accord.utils.async.AsyncChain;
-import accord.utils.async.AsyncChains;
 import org.apache.cassandra.concurrent.Stage;
 import org.apache.cassandra.cql3.UpdateParameters;
 import org.apache.cassandra.db.Clustering;
@@ -69,6 +57,20 @@ import org.apache.cassandra.service.accord.serializers.Version;
 import org.apache.cassandra.utils.BooleanSerializer;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.ObjectSizes;
+
+import accord.api.DataStore;
+import accord.api.Write;
+import accord.local.SafeCommandStore;
+import accord.primitives.PartialTxn;
+import accord.primitives.Routable.Domain;
+import accord.primitives.RoutableKey;
+import accord.primitives.Seekable;
+import accord.primitives.Seekables;
+import accord.primitives.Timestamp;
+import accord.primitives.TxnId;
+import accord.primitives.Writes;
+import accord.utils.async.AsyncChain;
+import accord.utils.async.AsyncChains;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.apache.cassandra.db.rows.DeserializationHelper.Flag.FROM_REMOTE;

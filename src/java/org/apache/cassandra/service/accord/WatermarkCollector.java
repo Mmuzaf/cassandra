@@ -27,17 +27,11 @@ import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterators;
+
+import org.agrona.collections.Int2ObjectHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.api.ConfigurationService;
-import accord.local.Node;
-import accord.primitives.Range;
-import accord.primitives.Ranges;
-import accord.topology.Topology;
-import accord.utils.Invariants;
-import accord.utils.async.AsyncResult;
-import org.agrona.collections.Int2ObjectHashMap;
 import org.apache.cassandra.db.TypeSizes;
 import org.apache.cassandra.io.UnversionedSerializer;
 import org.apache.cassandra.io.util.DataInputPlus;
@@ -52,6 +46,14 @@ import org.apache.cassandra.net.Verb;
 import org.apache.cassandra.repair.SharedContext;
 import org.apache.cassandra.tcm.ClusterMetadata;
 import org.apache.cassandra.utils.FBUtilities;
+
+import accord.api.ConfigurationService;
+import accord.local.Node;
+import accord.primitives.Range;
+import accord.primitives.Ranges;
+import accord.topology.Topology;
+import accord.utils.Invariants;
+import accord.utils.async.AsyncResult;
 
 import static org.apache.cassandra.service.accord.api.AccordWaitStrategies.retryFetchWatermarks;
 

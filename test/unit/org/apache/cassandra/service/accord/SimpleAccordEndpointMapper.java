@@ -22,9 +22,10 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 
-import accord.local.Node;
 import org.apache.cassandra.locator.InetAddressAndPort;
 import org.apache.cassandra.utils.ByteBufferUtil;
+
+import accord.local.Node;
 
 public enum SimpleAccordEndpointMapper implements AccordEndpointMapper
 {

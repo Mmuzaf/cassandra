@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
 import javax.annotation.Nullable;
 
 import org.junit.Before;
@@ -34,17 +35,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.burn.BurnTestBase;
-import accord.burn.SimulationException;
-import accord.impl.TopologyFactory;
-import accord.impl.basic.Cluster;
-import accord.impl.basic.RandomDelayQueue;
-import accord.local.CommandStores;
-import accord.local.Node;
-import accord.primitives.EpochSupplier;
-import accord.utils.DefaultRandom;
-import accord.utils.Invariants;
-import accord.utils.RandomSource;
 import org.apache.cassandra.ServerTestUtils;
 import org.apache.cassandra.db.ColumnFamilyStore;
 import org.apache.cassandra.db.Directories;
@@ -75,6 +65,18 @@ import org.apache.cassandra.service.accord.serializers.ResultSerializers;
 import org.apache.cassandra.service.accord.serializers.TopologySerializers;
 import org.apache.cassandra.service.accord.serializers.Version;
 import org.apache.cassandra.tools.FieldUtil;
+
+import accord.burn.BurnTestBase;
+import accord.burn.SimulationException;
+import accord.impl.TopologyFactory;
+import accord.impl.basic.Cluster;
+import accord.impl.basic.RandomDelayQueue;
+import accord.local.CommandStores;
+import accord.local.Node;
+import accord.primitives.EpochSupplier;
+import accord.utils.DefaultRandom;
+import accord.utils.Invariants;
+import accord.utils.RandomSource;
 
 import static accord.impl.PrefixedIntHashKey.ranges;
 import static org.apache.cassandra.utils.TimeUUID.Generator.nextTimeUUID;

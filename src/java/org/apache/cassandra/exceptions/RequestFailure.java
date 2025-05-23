@@ -19,6 +19,7 @@
 package org.apache.cassandra.exceptions;
 
 import java.io.IOException;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 

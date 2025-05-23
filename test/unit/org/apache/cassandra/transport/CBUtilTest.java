@@ -18,6 +18,7 @@
 
 package org.apache.cassandra.transport;
 
+import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -26,7 +27,6 @@ import accord.utils.Gens;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
-import org.assertj.core.api.Assertions;
 
 import static accord.utils.Property.qt;
 

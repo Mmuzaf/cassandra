@@ -20,8 +20,9 @@ package org.apache.cassandra.service.consensus.migration;
 
 import javax.annotation.Nullable;
 
-import accord.primitives.Ranges;
 import org.apache.cassandra.tcm.Epoch;
+
+import accord.primitives.Ranges;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

@@ -20,12 +20,6 @@ package org.apache.cassandra.service.accord.serializers;
 
 import java.io.IOException;
 
-import accord.api.Data;
-import accord.impl.AbstractFetchCoordinator.FetchRequest;
-import accord.impl.AbstractFetchCoordinator.FetchResponse;
-import accord.messages.ReadData.CommitOrReadNack;
-import accord.messages.ReadData.ReadReply;
-import accord.primitives.Ranges;
 import org.apache.cassandra.db.TypeSizes;
 import org.apache.cassandra.io.UnversionedSerializer;
 import org.apache.cassandra.io.util.DataInputPlus;
@@ -34,6 +28,13 @@ import org.apache.cassandra.service.accord.AccordFetchCoordinator.AccordFetchReq
 import org.apache.cassandra.service.accord.AccordFetchCoordinator.StreamData;
 import org.apache.cassandra.service.accord.AccordFetchCoordinator.StreamingTxn;
 import org.apache.cassandra.utils.CastingSerializer;
+
+import accord.api.Data;
+import accord.impl.AbstractFetchCoordinator.FetchRequest;
+import accord.impl.AbstractFetchCoordinator.FetchResponse;
+import accord.messages.ReadData.CommitOrReadNack;
+import accord.messages.ReadData.ReadReply;
+import accord.primitives.Ranges;
 
 import static org.apache.cassandra.utils.NullableSerializer.deserializeNullable;
 import static org.apache.cassandra.utils.NullableSerializer.serializeNullable;

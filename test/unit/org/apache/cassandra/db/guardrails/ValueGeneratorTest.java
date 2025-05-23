@@ -19,6 +19,7 @@
 package org.apache.cassandra.db.guardrails;
 
 import java.util.Arrays;
+
 import javax.annotation.Nonnull;
 
 import org.junit.Test;

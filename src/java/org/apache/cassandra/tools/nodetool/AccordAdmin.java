@@ -21,10 +21,11 @@ package org.apache.cassandra.tools.nodetool;
 import java.util.List;
 import java.util.Map;
 
-import io.airlift.airline.Arguments;
-import io.airlift.airline.Command;
 import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.NodeTool;
+
+import io.airlift.airline.Arguments;
+import io.airlift.airline.Command;
 
 public abstract class AccordAdmin extends NodeTool.NodeToolCmd
 {

@@ -22,10 +22,27 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableList;
+
+import org.apache.cassandra.db.ConsistencyLevel;
+import org.apache.cassandra.db.PartitionPosition;
+import org.apache.cassandra.db.PartitionRangeReadCommand;
+import org.apache.cassandra.db.ReadCommand;
+import org.apache.cassandra.db.SinglePartitionReadCommand;
+import org.apache.cassandra.dht.AbstractBounds;
+import org.apache.cassandra.io.ParameterisedVersionedSerializer;
+import org.apache.cassandra.io.util.DataInputPlus;
+import org.apache.cassandra.io.util.DataOutputPlus;
+import org.apache.cassandra.service.accord.api.PartitionKey;
+import org.apache.cassandra.service.accord.serializers.TableMetadatas;
+import org.apache.cassandra.service.accord.serializers.TableMetadatasAndKeys;
+import org.apache.cassandra.service.accord.serializers.Version;
+import org.apache.cassandra.tcm.ClusterMetadata;
+import org.apache.cassandra.utils.ObjectSizes;
 
 import accord.api.Data;
 import accord.api.DataStore;
@@ -44,21 +61,6 @@ import accord.utils.Invariants;
 import accord.utils.UnhandledEnum;
 import accord.utils.async.AsyncChain;
 import accord.utils.async.AsyncChains;
-import org.apache.cassandra.db.ConsistencyLevel;
-import org.apache.cassandra.db.PartitionPosition;
-import org.apache.cassandra.db.PartitionRangeReadCommand;
-import org.apache.cassandra.db.ReadCommand;
-import org.apache.cassandra.db.SinglePartitionReadCommand;
-import org.apache.cassandra.dht.AbstractBounds;
-import org.apache.cassandra.io.ParameterisedVersionedSerializer;
-import org.apache.cassandra.io.util.DataInputPlus;
-import org.apache.cassandra.io.util.DataOutputPlus;
-import org.apache.cassandra.service.accord.api.PartitionKey;
-import org.apache.cassandra.service.accord.serializers.TableMetadatas;
-import org.apache.cassandra.service.accord.serializers.TableMetadatasAndKeys;
-import org.apache.cassandra.service.accord.serializers.Version;
-import org.apache.cassandra.tcm.ClusterMetadata;
-import org.apache.cassandra.utils.ObjectSizes;
 
 import static accord.primitives.Routables.Slice.Minimal;
 import static com.google.common.base.Preconditions.checkArgument;

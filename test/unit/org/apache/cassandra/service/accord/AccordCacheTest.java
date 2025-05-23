@@ -24,7 +24,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import accord.utils.async.Cancellable;
 import org.apache.cassandra.cache.CacheSize;
 import org.apache.cassandra.concurrent.ExecutorPlus;
 import org.apache.cassandra.concurrent.ManualExecutor;
@@ -32,6 +31,8 @@ import org.apache.cassandra.metrics.AccordCacheMetrics;
 import org.apache.cassandra.metrics.CacheAccessMetrics;
 import org.apache.cassandra.service.accord.AccordCacheEntry.OnSaved;
 import org.apache.cassandra.service.accord.AccordCacheEntry.Status;
+
+import accord.utils.async.Cancellable;
 
 import static org.apache.cassandra.service.accord.AccordTestUtils.testLoad;
 import static org.assertj.core.api.Assertions.assertThat;

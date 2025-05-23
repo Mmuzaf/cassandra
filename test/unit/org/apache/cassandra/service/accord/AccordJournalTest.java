@@ -24,13 +24,10 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import accord.primitives.TxnId;
-import accord.utils.AccordGens;
-import accord.utils.Gen;
-import accord.utils.Gens;
 import org.apache.cassandra.ServerTestUtils;
 import org.apache.cassandra.config.CassandraRelevantProperties;
 import org.apache.cassandra.config.DatabaseDescriptor;
@@ -44,7 +41,11 @@ import org.apache.cassandra.utils.AsymmetricOrdering;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.FBUtilities.Order;
 import org.apache.cassandra.utils.StorageCompatibilityMode;
-import org.checkerframework.checker.nullness.qual.Nullable;
+
+import accord.primitives.TxnId;
+import accord.utils.AccordGens;
+import accord.utils.Gen;
+import accord.utils.Gens;
 
 import static accord.utils.Property.qt;
 import static org.assertj.core.api.Assertions.assertThat;

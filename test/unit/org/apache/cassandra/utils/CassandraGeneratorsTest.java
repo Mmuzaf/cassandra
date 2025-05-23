@@ -24,8 +24,6 @@ import java.util.List;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-import accord.utils.Gens;
-import accord.utils.LazyToString;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.CounterColumnType;
 import org.apache.cassandra.db.marshal.DecimalType;
@@ -33,6 +31,9 @@ import org.apache.cassandra.db.marshal.DurationType;
 import org.apache.cassandra.db.marshal.EmptyType;
 import org.apache.cassandra.schema.ColumnMetadata;
 import org.apache.cassandra.utils.CassandraGenerators.TableMetadataBuilder;
+
+import accord.utils.Gens;
+import accord.utils.LazyToString;
 
 import static accord.utils.Property.qt;
 import static org.apache.cassandra.utils.Generators.toGen;

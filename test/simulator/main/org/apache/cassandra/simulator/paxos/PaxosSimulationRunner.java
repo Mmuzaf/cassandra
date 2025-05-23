@@ -26,14 +26,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.airlift.airline.Cli;
-import io.airlift.airline.Command;
-import io.airlift.airline.Option;
 import org.apache.cassandra.config.Config;
 import org.apache.cassandra.distributed.api.ConsistencyLevel;
 import org.apache.cassandra.simulator.SimulationRunner;
 import org.apache.cassandra.simulator.SimulatorUtils;
 import org.apache.cassandra.simulator.utils.IntRange;
+
+import io.airlift.airline.Cli;
+import io.airlift.airline.Command;
+import io.airlift.airline.Option;
 
 public class PaxosSimulationRunner extends SimulationRunner
 {

@@ -21,12 +21,6 @@ package org.apache.cassandra.service.accord.serializers;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import accord.local.Node;
-import accord.primitives.Range;
-import accord.topology.Shard;
-import accord.topology.Topology;
-import accord.utils.SortedArrays.SortedArrayList;
-import accord.utils.TinyEnumSet;
 import org.apache.cassandra.db.TypeSizes;
 import org.apache.cassandra.db.marshal.ValueAccessor;
 import org.apache.cassandra.io.UnversionedSerializer;
@@ -35,6 +29,13 @@ import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.service.accord.TokenRange;
 import org.apache.cassandra.utils.ArraySerializers;
 import org.apache.cassandra.utils.CollectionSerializers;
+
+import accord.local.Node;
+import accord.primitives.Range;
+import accord.topology.Shard;
+import accord.topology.Topology;
+import accord.utils.SortedArrays.SortedArrayList;
+import accord.utils.TinyEnumSet;
 
 public class TopologySerializers
 {

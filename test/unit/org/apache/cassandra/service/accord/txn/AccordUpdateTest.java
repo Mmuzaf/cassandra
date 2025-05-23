@@ -23,13 +23,14 @@ import java.io.IOException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import accord.primitives.Txn;
 import org.apache.cassandra.SchemaLoader;
 import org.apache.cassandra.io.Serializers;
 import org.apache.cassandra.schema.KeyspaceParams;
 import org.apache.cassandra.service.accord.AccordTestUtils;
 import org.apache.cassandra.service.accord.serializers.TableMetadatasAndKeys;
 import org.apache.cassandra.service.accord.serializers.Version;
+
+import accord.primitives.Txn;
 
 import static org.apache.cassandra.cql3.statements.schema.CreateTableStatement.parse;
 

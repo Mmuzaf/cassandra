@@ -24,9 +24,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
 import javax.annotation.Nullable;
 
 import com.google.common.collect.Iterables;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -35,21 +37,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.impl.progresslog.DefaultProgressLogs;
-import accord.local.Node;
-import accord.local.PreLoadContext;
-import accord.local.SafeCommand;
-import accord.local.StoreParticipants;
-import accord.local.cfk.CommandsForKey;
-import accord.local.cfk.SafeCommandsForKey;
-import accord.local.durability.DurabilityService;
-import accord.primitives.Keys;
-import accord.primitives.Ranges;
-import accord.primitives.Status;
-import accord.primitives.Timestamp;
-import accord.primitives.TxnId;
-import accord.utils.async.AsyncChains;
-import accord.utils.async.AsyncResult;
 import org.apache.cassandra.cql3.QueryProcessor;
 import org.apache.cassandra.cql3.UntypedResultSet;
 import org.apache.cassandra.db.ColumnFamilyStore;
@@ -71,6 +58,22 @@ import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.Clock;
 import org.apache.cassandra.utils.concurrent.Future;
 import org.apache.cassandra.utils.concurrent.UncheckedInterruptedException;
+
+import accord.impl.progresslog.DefaultProgressLogs;
+import accord.local.Node;
+import accord.local.PreLoadContext;
+import accord.local.SafeCommand;
+import accord.local.StoreParticipants;
+import accord.local.cfk.CommandsForKey;
+import accord.local.cfk.SafeCommandsForKey;
+import accord.local.durability.DurabilityService;
+import accord.primitives.Keys;
+import accord.primitives.Ranges;
+import accord.primitives.Status;
+import accord.primitives.Timestamp;
+import accord.primitives.TxnId;
+import accord.utils.async.AsyncChains;
+import accord.utils.async.AsyncResult;
 
 import static accord.local.KeyHistory.SYNC;
 import static java.lang.String.format;

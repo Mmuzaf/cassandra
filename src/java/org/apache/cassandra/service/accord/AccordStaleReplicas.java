@@ -26,7 +26,6 @@ import javax.annotation.concurrent.Immutable;
 
 import com.google.common.collect.ImmutableSet;
 
-import accord.local.Node;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.service.accord.serializers.TopologySerializers;
@@ -35,6 +34,8 @@ import org.apache.cassandra.tcm.MetadataValue;
 import org.apache.cassandra.tcm.serialization.MetadataSerializer;
 import org.apache.cassandra.tcm.serialization.Version;
 import org.apache.cassandra.utils.CollectionSerializers;
+
+import accord.local.Node;
 
 @Immutable
 public class AccordStaleReplicas implements MetadataValue<AccordStaleReplicas>

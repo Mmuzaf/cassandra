@@ -19,22 +19,9 @@
 package org.apache.cassandra.service.accord.interop;
 
 import java.io.IOException;
+
 import javax.annotation.Nullable;
 
-import accord.api.Data;
-import accord.local.Node;
-import accord.local.SafeCommandStore;
-import accord.messages.ReadData;
-import accord.messages.MessageType;
-import accord.primitives.PartialTxn;
-import accord.primitives.Participants;
-import accord.primitives.Ranges;
-import accord.primitives.SaveStatus;
-import accord.primitives.Timestamp;
-import accord.primitives.TxnId;
-import accord.topology.Topologies;
-import accord.utils.async.AsyncChain;
-import accord.utils.async.AsyncChains;
 import org.apache.cassandra.db.Mutation;
 import org.apache.cassandra.db.ReadRepairVerbHandler;
 import org.apache.cassandra.db.TypeSizes;
@@ -52,6 +39,21 @@ import org.apache.cassandra.service.accord.serializers.KeySerializers;
 import org.apache.cassandra.service.accord.serializers.ReadDataSerializers;
 import org.apache.cassandra.service.accord.serializers.ReadDataSerializers.ReadDataSerializer;
 import org.apache.cassandra.service.accord.serializers.Version;
+
+import accord.api.Data;
+import accord.local.Node;
+import accord.local.SafeCommandStore;
+import accord.messages.MessageType;
+import accord.messages.ReadData;
+import accord.primitives.PartialTxn;
+import accord.primitives.Participants;
+import accord.primitives.Ranges;
+import accord.primitives.SaveStatus;
+import accord.primitives.Timestamp;
+import accord.primitives.TxnId;
+import accord.topology.Topologies;
+import accord.utils.async.AsyncChain;
+import accord.utils.async.AsyncChains;
 
 /**
  * Applies a read repair mutation from inside the context of a CommandStore via AbstractExecute

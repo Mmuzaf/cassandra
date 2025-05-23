@@ -31,9 +31,6 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.api.Update;
-import accord.primitives.Keys;
-import accord.primitives.Txn;
 import org.apache.cassandra.cql3.QueryOptions;
 import org.apache.cassandra.cql3.UpdateParameters;
 import org.apache.cassandra.cql3.conditions.ColumnCondition;
@@ -77,6 +74,10 @@ import org.apache.cassandra.service.paxos.Ballot;
 import org.apache.cassandra.tcm.ClusterMetadata;
 import org.apache.cassandra.transport.Dispatcher;
 import org.apache.cassandra.utils.TimeUUID;
+
+import accord.api.Update;
+import accord.primitives.Keys;
+import accord.primitives.Txn;
 
 import static com.google.common.base.Preconditions.checkState;
 import static org.apache.cassandra.service.StorageProxy.ConsensusAttemptResult;

@@ -23,10 +23,22 @@ import java.util.NavigableMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.collect.ImmutableSortedMap;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import org.apache.cassandra.ServerTestUtils;
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.db.ColumnFamilyStore;
+import org.apache.cassandra.db.Keyspace;
+import org.apache.cassandra.dht.Murmur3Partitioner;
+import org.apache.cassandra.io.util.File;
+import org.apache.cassandra.journal.TestParams;
+import org.apache.cassandra.schema.SchemaConstants;
+import org.apache.cassandra.service.StorageService;
+import org.apache.cassandra.utils.AccordGenerators;
 
 import accord.local.DurableBefore;
 import accord.local.RedundantBefore;
@@ -39,16 +51,6 @@ import accord.utils.AccordGens;
 import accord.utils.DefaultRandom;
 import accord.utils.Gen;
 import accord.utils.RandomSource;
-import org.apache.cassandra.ServerTestUtils;
-import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.db.ColumnFamilyStore;
-import org.apache.cassandra.db.Keyspace;
-import org.apache.cassandra.dht.Murmur3Partitioner;
-import org.apache.cassandra.io.util.File;
-import org.apache.cassandra.journal.TestParams;
-import org.apache.cassandra.schema.SchemaConstants;
-import org.apache.cassandra.service.StorageService;
-import org.apache.cassandra.utils.AccordGenerators;
 
 import static accord.api.Journal.FieldUpdates;
 import static accord.local.CommandStores.RangesForEpoch;

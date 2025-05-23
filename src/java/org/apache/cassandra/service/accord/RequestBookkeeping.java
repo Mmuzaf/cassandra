@@ -19,10 +19,9 @@
 package org.apache.cassandra.service.accord;
 
 import java.util.Collections;
+
 import javax.annotation.Nullable;
 
-import accord.primitives.Seekables;
-import accord.primitives.TxnId;
 import org.apache.cassandra.db.WriteType;
 import org.apache.cassandra.exceptions.ReadFailureException;
 import org.apache.cassandra.exceptions.ReadTimeoutException;
@@ -34,6 +33,9 @@ import org.apache.cassandra.service.accord.exceptions.AccordReadExhaustedExcepti
 import org.apache.cassandra.service.accord.exceptions.AccordReadPreemptedException;
 import org.apache.cassandra.service.accord.exceptions.AccordWriteExhaustedException;
 import org.apache.cassandra.service.accord.exceptions.AccordWritePreemptedException;
+
+import accord.primitives.Seekables;
+import accord.primitives.TxnId;
 
 import static org.apache.cassandra.db.ConsistencyLevel.SERIAL;
 import static org.apache.cassandra.service.accord.RequestBookkeeping.ThrowsExceptionType.WRITE;

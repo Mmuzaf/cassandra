@@ -37,8 +37,23 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
+
+import org.agrona.collections.Object2ObjectHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.apache.cassandra.cache.CacheSize;
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.exceptions.UnknownTableException;
+import org.apache.cassandra.io.util.DataInputBuffer;
+import org.apache.cassandra.metrics.AccordCacheMetrics;
+import org.apache.cassandra.metrics.CacheAccessMetrics;
+import org.apache.cassandra.service.accord.AccordCacheEntry.Status;
+import org.apache.cassandra.service.accord.events.CacheEvents;
+import org.apache.cassandra.service.accord.serializers.Version;
+import org.apache.cassandra.utils.NoSpamLogger;
+import org.apache.cassandra.utils.NoSpamLogger.NoSpamLogStatement;
+import org.apache.cassandra.utils.ObjectSizes;
 
 import accord.api.RoutingKey;
 import accord.local.Command;
@@ -53,19 +68,6 @@ import accord.utils.Invariants;
 import accord.utils.QuadFunction;
 import accord.utils.TriFunction;
 import accord.utils.async.Cancellable;
-import org.agrona.collections.Object2ObjectHashMap;
-import org.apache.cassandra.cache.CacheSize;
-import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.exceptions.UnknownTableException;
-import org.apache.cassandra.io.util.DataInputBuffer;
-import org.apache.cassandra.metrics.AccordCacheMetrics;
-import org.apache.cassandra.metrics.CacheAccessMetrics;
-import org.apache.cassandra.service.accord.AccordCacheEntry.Status;
-import org.apache.cassandra.service.accord.events.CacheEvents;
-import org.apache.cassandra.service.accord.serializers.Version;
-import org.apache.cassandra.utils.NoSpamLogger;
-import org.apache.cassandra.utils.NoSpamLogger.NoSpamLogStatement;
-import org.apache.cassandra.utils.ObjectSizes;
 
 import static accord.utils.Invariants.illegalState;
 import static accord.utils.Invariants.require;

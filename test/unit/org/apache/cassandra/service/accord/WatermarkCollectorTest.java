@@ -22,7 +22,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.common.collect.Sets;
+
+import org.agrona.collections.Int2ObjectHashMap;
 import org.junit.Test;
+
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.dht.IPartitioner;
+import org.apache.cassandra.io.Serializers;
+import org.apache.cassandra.io.util.DataOutputBuffer;
+import org.apache.cassandra.utils.AccordGenerators;
 
 import accord.local.Node;
 import accord.primitives.Range;
@@ -30,12 +38,6 @@ import accord.utils.AccordGens;
 import accord.utils.Gen;
 import accord.utils.Gens;
 import accord.utils.Invariants;
-import org.agrona.collections.Int2ObjectHashMap;
-import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.dht.IPartitioner;
-import org.apache.cassandra.io.Serializers;
-import org.apache.cassandra.io.util.DataOutputBuffer;
-import org.apache.cassandra.utils.AccordGenerators;
 
 import static accord.utils.Property.qt;
 

@@ -26,14 +26,8 @@ import java.util.Objects;
 import java.util.TreeMap;
 import java.util.function.Function;
 
-import accord.api.Journal;
-import accord.local.CommandStores;
-import accord.primitives.EpochSupplier;
-import accord.primitives.Ranges;
-import accord.topology.Topology;
-import accord.utils.Invariants;
-import accord.utils.UnhandledEnum;
 import org.agrona.collections.Int2ObjectHashMap;
+
 import org.apache.cassandra.db.TypeSizes;
 import org.apache.cassandra.io.UnversionedSerializer;
 import org.apache.cassandra.io.util.DataInputPlus;
@@ -44,6 +38,14 @@ import org.apache.cassandra.service.accord.JournalKey;
 import org.apache.cassandra.service.accord.serializers.KeySerializers;
 import org.apache.cassandra.service.accord.serializers.TopologySerializers;
 import org.apache.cassandra.service.accord.serializers.Version;
+
+import accord.api.Journal;
+import accord.local.CommandStores;
+import accord.primitives.EpochSupplier;
+import accord.primitives.Ranges;
+import accord.topology.Topology;
+import accord.utils.Invariants;
+import accord.utils.UnhandledEnum;
 
 public interface AccordTopologyUpdate
 {

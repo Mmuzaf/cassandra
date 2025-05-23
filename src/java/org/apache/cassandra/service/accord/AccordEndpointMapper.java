@@ -18,9 +18,10 @@
 
 package org.apache.cassandra.service.accord;
 
+import org.apache.cassandra.locator.InetAddressAndPort;
+
 import accord.local.Node;
 import accord.utils.Invariants;
-import org.apache.cassandra.locator.InetAddressAndPort;
 
 /**
  * Maps network addresses to accord ids

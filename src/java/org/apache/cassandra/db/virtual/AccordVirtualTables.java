@@ -30,11 +30,6 @@ import javax.annotation.Nullable;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 
-import accord.primitives.Range;
-import accord.primitives.Ranges;
-import accord.topology.TopologyManager.EpochsSnapshot;
-import accord.topology.TopologyManager.EpochsSnapshot.Epoch;
-import accord.topology.TopologyManager.EpochsSnapshot.EpochReady;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.cql3.statements.schema.CreateTableStatement;
 import org.apache.cassandra.db.marshal.LongType;
@@ -45,6 +40,12 @@ import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.service.accord.AccordService;
 import org.apache.cassandra.service.accord.TokenRange;
+
+import accord.primitives.Range;
+import accord.primitives.Ranges;
+import accord.topology.TopologyManager.EpochsSnapshot;
+import accord.topology.TopologyManager.EpochsSnapshot.Epoch;
+import accord.topology.TopologyManager.EpochsSnapshot.EpochReady;
 
 import static accord.topology.TopologyManager.EpochsSnapshot.ResultStatus.SUCCESS;
 

@@ -18,14 +18,15 @@
 
 package org.apache.cassandra.distributed.test.cql3;
 
-import accord.utils.Property;
-import accord.utils.RandomSource;
 import org.apache.cassandra.cql3.KnownIssue;
 import org.apache.cassandra.distributed.Cluster;
 import org.apache.cassandra.distributed.api.ConsistencyLevel;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.service.consensus.TransactionalMode;
 import org.apache.cassandra.service.reads.repair.ReadRepairStrategy;
+
+import accord.utils.Property;
+import accord.utils.RandomSource;
 
 
 public abstract class AccordInteropMultiNodeTableWalkBase extends MultiNodeTableWalkBase

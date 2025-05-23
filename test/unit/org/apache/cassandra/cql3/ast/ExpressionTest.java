@@ -18,14 +18,15 @@
 
 package org.apache.cassandra.cql3.ast;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
-import accord.utils.Gen;
-import accord.utils.Gens;
 import org.apache.cassandra.cql3.ast.Conditional.And;
 import org.apache.cassandra.cql3.ast.Conditional.Where;
 import org.apache.cassandra.db.marshal.Int32Type;
-import org.assertj.core.api.Assertions;
+
+import accord.utils.Gen;
+import accord.utils.Gens;
 
 import static accord.utils.Property.qt;
 

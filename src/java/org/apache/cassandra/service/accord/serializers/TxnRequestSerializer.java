@@ -20,12 +20,13 @@ package org.apache.cassandra.service.accord.serializers;
 
 import java.io.IOException;
 
-import accord.messages.TxnRequest;
-import accord.primitives.Route;
-import accord.primitives.TxnId;
 import org.apache.cassandra.db.TypeSizes;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
+
+import accord.messages.TxnRequest;
+import accord.primitives.Route;
+import accord.primitives.TxnId;
 
 public abstract class TxnRequestSerializer<T extends TxnRequest<?>> implements IVersionedSerializer<T>
 {

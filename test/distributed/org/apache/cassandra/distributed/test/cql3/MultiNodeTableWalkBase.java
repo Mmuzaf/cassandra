@@ -20,10 +20,10 @@ package org.apache.cassandra.distributed.test.cql3;
 
 import java.io.IOException;
 
-import accord.utils.RandomSource;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.MethodDelegation;
+
 import org.apache.cassandra.distributed.Cluster;
 import org.apache.cassandra.distributed.api.ConsistencyLevel;
 import org.apache.cassandra.distributed.api.IInstanceConfig;
@@ -32,6 +32,8 @@ import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.service.reads.repair.ReadRepairStrategy;
 import org.apache.cassandra.utils.Shared;
 import org.apache.cassandra.utils.TimeUUID;
+
+import accord.utils.RandomSource;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 

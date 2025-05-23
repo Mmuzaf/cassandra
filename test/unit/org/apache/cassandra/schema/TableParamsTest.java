@@ -20,12 +20,13 @@ package org.apache.cassandra.schema;
 
 import org.junit.Test;
 
-import accord.utils.Gen;
 import org.apache.cassandra.io.util.DataOutputBuffer;
 import org.apache.cassandra.tcm.membership.NodeVersion;
 import org.apache.cassandra.tcm.serialization.AsymmetricMetadataSerializers;
 import org.apache.cassandra.utils.CassandraGenerators.TableParamsBuilder;
 import org.apache.cassandra.utils.Generators;
+
+import accord.utils.Gen;
 
 import static accord.utils.Property.qt;
 

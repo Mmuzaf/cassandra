@@ -26,8 +26,17 @@ import java.util.function.BooleanSupplier;
 import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
+
+import org.apache.cassandra.dht.Murmur3Partitioner;
+import org.apache.cassandra.dht.Murmur3Partitioner.LongToken;
+import org.apache.cassandra.schema.TableId;
+import org.apache.cassandra.schema.TableMetadata;
+import org.apache.cassandra.service.accord.SimulatedAccordCommandStore.FunctionWrapper;
+import org.apache.cassandra.service.accord.api.TokenKey;
+import org.apache.cassandra.utils.Pair;
 
 import accord.api.RoutingKey;
 import accord.impl.basic.SimulatedFault;
@@ -44,14 +53,6 @@ import accord.primitives.Unseekables;
 import accord.utils.Gen;
 import accord.utils.Gens;
 import accord.utils.RandomSource;
-import org.apache.cassandra.dht.Murmur3Partitioner;
-import org.apache.cassandra.dht.Murmur3Partitioner.LongToken;
-import org.apache.cassandra.schema.TableId;
-import org.apache.cassandra.schema.TableMetadata;
-import org.apache.cassandra.service.accord.SimulatedAccordCommandStore.FunctionWrapper;
-import org.apache.cassandra.service.accord.api.TokenKey;
-import org.apache.cassandra.utils.Pair;
-import org.assertj.core.api.Assertions;
 
 import static accord.utils.Property.qt;
 

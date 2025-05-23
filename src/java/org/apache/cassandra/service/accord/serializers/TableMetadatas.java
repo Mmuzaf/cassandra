@@ -23,8 +23,6 @@ import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import accord.utils.Invariants;
-import accord.utils.SortedArrays;
 import org.apache.cassandra.db.TypeSizes;
 import org.apache.cassandra.exceptions.UnknownTableException;
 import org.apache.cassandra.io.util.DataInputPlus;
@@ -33,6 +31,9 @@ import org.apache.cassandra.schema.Schema;
 import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.utils.btree.BTree;
+
+import accord.utils.Invariants;
+import accord.utils.SortedArrays;
 
 import static accord.utils.SortedArrays.Search.FAST;
 

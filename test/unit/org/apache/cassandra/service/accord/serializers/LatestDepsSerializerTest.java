@@ -20,9 +20,10 @@ package org.apache.cassandra.service.accord.serializers;
 
 import org.junit.Test;
 
-import accord.primitives.LatestDeps;
 import org.apache.cassandra.io.Serializers;
 import org.apache.cassandra.io.util.DataOutputBuffer;
+
+import accord.primitives.LatestDeps;
 
 public class LatestDepsSerializerTest
 {

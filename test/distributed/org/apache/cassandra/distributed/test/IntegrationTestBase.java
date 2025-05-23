@@ -25,9 +25,10 @@ import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.utils.Invariants;
 import org.apache.cassandra.distributed.Cluster;
 import org.apache.cassandra.distributed.api.IInstanceConfig;
+
+import accord.utils.Invariants;
 
 public class IntegrationTestBase extends TestBaseImpl
 {

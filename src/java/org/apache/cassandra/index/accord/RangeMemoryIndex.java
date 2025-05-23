@@ -34,11 +34,9 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+
 import javax.annotation.concurrent.GuardedBy;
 
-import accord.primitives.Participants;
-import accord.primitives.Routable;
-import accord.primitives.Unseekable;
 import org.apache.cassandra.cache.IMeasurableMemory;
 import org.apache.cassandra.db.Clustering;
 import org.apache.cassandra.db.DecoratedKey;
@@ -51,6 +49,10 @@ import org.apache.cassandra.utils.FastByteOperations;
 import org.apache.cassandra.utils.ObjectSizes;
 import org.apache.cassandra.utils.RTree;
 import org.apache.cassandra.utils.RangeTree;
+
+import accord.primitives.Participants;
+import accord.primitives.Routable;
+import accord.primitives.Unseekable;
 
 import static org.apache.cassandra.index.accord.RouteIndexFormat.deserializeTouches;
 

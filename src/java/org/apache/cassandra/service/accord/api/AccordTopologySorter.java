@@ -22,12 +22,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Set;
 
-import accord.api.TopologySorter;
-import accord.local.Node;
-import accord.topology.ShardSelection;
-import accord.topology.Topologies;
-import accord.topology.Topology;
-import accord.utils.SortedList;
 import org.apache.cassandra.gms.ApplicationState;
 import org.apache.cassandra.gms.EndpointState;
 import org.apache.cassandra.gms.Gossiper;
@@ -39,6 +33,13 @@ import org.apache.cassandra.locator.NodeProximity;
 import org.apache.cassandra.service.accord.AccordEndpointMapper;
 import org.apache.cassandra.utils.FBUtilities;
 import org.apache.cassandra.utils.Sortable;
+
+import accord.api.TopologySorter;
+import accord.local.Node;
+import accord.topology.ShardSelection;
+import accord.topology.Topologies;
+import accord.topology.Topology;
+import accord.utils.SortedList;
 
 public class AccordTopologySorter implements TopologySorter
 {

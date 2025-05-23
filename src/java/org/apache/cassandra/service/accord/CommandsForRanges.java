@@ -26,7 +26,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+
 import javax.annotation.Nullable;
+
+import org.agrona.collections.ObjectHashSet;
+
+import org.apache.cassandra.service.accord.api.TokenKey;
 
 import accord.local.Command;
 import accord.local.CommandSummaries;
@@ -41,8 +46,6 @@ import accord.primitives.TxnId;
 import accord.primitives.Unseekable;
 import accord.primitives.Unseekables;
 import accord.utils.Invariants;
-import org.agrona.collections.ObjectHashSet;
-import org.apache.cassandra.service.accord.api.TokenKey;
 
 import static accord.local.CommandSummaries.SummaryStatus.NOT_DIRECTLY_WITNESSED;
 

@@ -22,10 +22,21 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.function.BiConsumer;
+
 import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.apache.cassandra.exceptions.InvalidRequestException;
+import org.apache.cassandra.exceptions.RequestExecutionException;
+import org.apache.cassandra.schema.Schema;
+import org.apache.cassandra.schema.TableId;
+import org.apache.cassandra.service.accord.api.AccordAgent;
+import org.apache.cassandra.service.accord.api.PartitionKey;
+import org.apache.cassandra.service.accord.txn.RetryWithNewProtocolResult;
+import org.apache.cassandra.tracing.Tracing;
+import org.apache.cassandra.utils.concurrent.AsyncFuture;
 
 import accord.coordinate.CoordinationFailed;
 import accord.coordinate.Exhausted;
@@ -36,15 +47,6 @@ import accord.primitives.Seekable;
 import accord.primitives.Seekables;
 import accord.primitives.TxnId;
 import accord.utils.UnhandledEnum;
-import org.apache.cassandra.exceptions.InvalidRequestException;
-import org.apache.cassandra.exceptions.RequestExecutionException;
-import org.apache.cassandra.schema.Schema;
-import org.apache.cassandra.schema.TableId;
-import org.apache.cassandra.service.accord.api.AccordAgent;
-import org.apache.cassandra.service.accord.api.PartitionKey;
-import org.apache.cassandra.service.accord.txn.RetryWithNewProtocolResult;
-import org.apache.cassandra.tracing.Tracing;
-import org.apache.cassandra.utils.concurrent.AsyncFuture;
 
 import static org.apache.cassandra.utils.Clock.Global.nanoTime;
 

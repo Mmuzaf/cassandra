@@ -20,7 +20,6 @@ package org.apache.cassandra.tcm.transformations;
 
 import java.io.IOException;
 
-import accord.local.Node;
 import org.apache.cassandra.db.TypeSizes;
 import org.apache.cassandra.exceptions.ExceptionCode;
 import org.apache.cassandra.exceptions.InvalidRequestException;
@@ -33,6 +32,8 @@ import org.apache.cassandra.tcm.Transformation;
 import org.apache.cassandra.tcm.sequences.LockedRanges;
 import org.apache.cassandra.tcm.serialization.AsymmetricMetadataSerializer;
 import org.apache.cassandra.tcm.serialization.Version;
+
+import accord.local.Node;
 
 public class ReconfigureAccordFastPath implements Transformation
 {

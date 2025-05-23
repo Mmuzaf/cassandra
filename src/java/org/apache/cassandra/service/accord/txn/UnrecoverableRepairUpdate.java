@@ -20,18 +20,10 @@ package org.apache.cassandra.service.accord.txn;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import accord.api.Data;
-import accord.api.Update;
-import accord.api.Write;
-import accord.local.Node;
-import accord.primitives.Keys;
-import accord.primitives.Participants;
-import accord.primitives.Ranges;
-import accord.primitives.Seekables;
-import accord.primitives.Timestamp;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.Mutation;
@@ -44,6 +36,16 @@ import org.apache.cassandra.service.accord.serializers.TableMetadatasAndKeys;
 import org.apache.cassandra.service.accord.serializers.Version;
 import org.apache.cassandra.service.reads.ReadCoordinator;
 import org.apache.cassandra.service.reads.repair.BlockingReadRepair;
+
+import accord.api.Data;
+import accord.api.Update;
+import accord.api.Write;
+import accord.local.Node;
+import accord.primitives.Keys;
+import accord.primitives.Participants;
+import accord.primitives.Ranges;
+import accord.primitives.Seekables;
+import accord.primitives.Timestamp;
 
 /**
  * This update is used to support blocking read repair from non-transactional Cassandra reads. Cassandra creates

@@ -23,12 +23,11 @@ import java.nio.charset.CharacterCodingException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
 import javax.annotation.Nullable;
 
 import org.junit.Test;
 
-import accord.utils.Gen;
-import accord.utils.Gens;
 import org.apache.cassandra.cql3.conditions.ColumnCondition;
 import org.apache.cassandra.cql3.conditions.ColumnConditionTest;
 import org.apache.cassandra.db.Clustering;
@@ -47,6 +46,9 @@ import org.apache.cassandra.transport.ProtocolVersion;
 import org.apache.cassandra.utils.ByteBufferUtil;
 import org.apache.cassandra.utils.CassandraGenerators;
 import org.apache.cassandra.utils.Generators;
+
+import accord.utils.Gen;
+import accord.utils.Gens;
 
 import static accord.utils.Property.qt;
 

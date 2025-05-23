@@ -20,6 +20,9 @@ package org.apache.cassandra.service.accord.interop;
 
 import java.util.function.BiConsumer;
 
+import org.apache.cassandra.db.ConsistencyLevel;
+import org.apache.cassandra.utils.Throwables;
+
 import accord.api.Result;
 import accord.coordinate.Persist;
 import accord.coordinate.tracking.AllTracker;
@@ -37,8 +40,6 @@ import accord.primitives.TxnId;
 import accord.primitives.Writes;
 import accord.topology.Topologies;
 import accord.utils.Invariants;
-import org.apache.cassandra.db.ConsistencyLevel;
-import org.apache.cassandra.utils.Throwables;
 
 /**
  * Similar to Accord persist, but can wait on a configurable number of responses and sends AccordInteropApply messages

@@ -23,14 +23,11 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
+
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import accord.local.Node;
-import accord.local.Node.Id;
-import accord.topology.Shard;
-import accord.topology.Topology;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.dht.Murmur3Partitioner;
@@ -44,6 +41,11 @@ import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.schema.Tables;
 import org.apache.cassandra.tcm.ClusterMetadata;
 import org.apache.cassandra.tcm.membership.Location;
+
+import accord.local.Node;
+import accord.local.Node.Id;
+import accord.topology.Shard;
+import accord.topology.Topology;
 
 import static org.apache.cassandra.cql3.statements.schema.CreateTableStatement.parse;
 import static org.apache.cassandra.service.accord.AccordTopologyUtils.NODE_LIST;

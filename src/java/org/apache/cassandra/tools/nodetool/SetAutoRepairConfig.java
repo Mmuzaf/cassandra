@@ -17,21 +17,22 @@
  */
 package org.apache.cassandra.tools.nodetool;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-
-import io.airlift.airline.Arguments;
-import io.airlift.airline.Command;
-import io.airlift.airline.Option;
-import org.apache.cassandra.tools.NodeProbe;
-import org.apache.cassandra.tools.NodeTool.NodeToolCmd;
-
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
+
+import org.apache.cassandra.tools.NodeProbe;
+import org.apache.cassandra.tools.NodeTool.NodeToolCmd;
+
+import io.airlift.airline.Arguments;
+import io.airlift.airline.Command;
+import io.airlift.airline.Option;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

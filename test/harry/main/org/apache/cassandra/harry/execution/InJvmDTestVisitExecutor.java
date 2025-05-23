@@ -25,10 +25,10 @@ import java.util.List;
 import java.util.function.Function;
 
 import com.google.common.base.Throwables;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.utils.Invariants;
 import org.apache.cassandra.distributed.api.ConsistencyLevel;
 import org.apache.cassandra.distributed.api.ICluster;
 import org.apache.cassandra.exceptions.RequestTimeoutException;
@@ -41,12 +41,14 @@ import org.apache.cassandra.harry.op.Operations;
 import org.apache.cassandra.harry.op.Visit;
 import org.apache.cassandra.utils.AssertionUtils;
 
+import accord.utils.Invariants;
+
 import static org.apache.cassandra.harry.MagicConstants.LTS_UNKNOWN;
 import static org.apache.cassandra.harry.MagicConstants.NIL_DESCR;
 import static org.apache.cassandra.harry.MagicConstants.NIL_KEY;
 import static org.apache.cassandra.harry.MagicConstants.UNKNOWN_DESCR;
 import static org.apache.cassandra.harry.MagicConstants.UNSET_DESCR;
-import static org.apache.cassandra.harry.execution.QueryBuildingVisitExecutor.*;
+import static org.apache.cassandra.harry.execution.QueryBuildingVisitExecutor.WrapQueries;
 
 public class InJvmDTestVisitExecutor extends CQLVisitExecutor
 {

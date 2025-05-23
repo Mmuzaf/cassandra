@@ -22,6 +22,12 @@ import java.io.IOException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Ints;
 
+import org.apache.cassandra.io.UnversionedSerializer;
+import org.apache.cassandra.io.util.DataInputPlus;
+import org.apache.cassandra.io.util.DataOutputPlus;
+import org.apache.cassandra.service.accord.TokenRange;
+import org.apache.cassandra.utils.NullableSerializer;
+
 import accord.primitives.Deps;
 import accord.primitives.KeyDeps;
 import accord.primitives.PartialDeps;
@@ -30,11 +36,6 @@ import accord.primitives.Range;
 import accord.primitives.RangeDeps;
 import accord.primitives.RoutingKeys;
 import accord.primitives.TxnId;
-import org.apache.cassandra.io.UnversionedSerializer;
-import org.apache.cassandra.io.util.DataInputPlus;
-import org.apache.cassandra.io.util.DataOutputPlus;
-import org.apache.cassandra.service.accord.TokenRange;
-import org.apache.cassandra.utils.NullableSerializer;
 
 import static accord.primitives.KeyDeps.SerializerSupport.keysToTxnIds;
 import static accord.primitives.KeyDeps.SerializerSupport.keysToTxnIdsCount;

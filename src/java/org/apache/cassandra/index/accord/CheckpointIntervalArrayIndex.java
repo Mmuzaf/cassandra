@@ -30,11 +30,6 @@ import java.util.function.Supplier;
 import java.util.zip.CRC32C;
 import java.util.zip.Checksum;
 
-import accord.utils.AsymmetricComparator;
-import accord.utils.CheckpointIntervalArray;
-import accord.utils.CheckpointIntervalArrayBuilder;
-import accord.utils.CheckpointIntervalArrayBuilder.Accessor;
-import accord.utils.SortedArrays;
 import org.apache.cassandra.index.accord.IndexDescriptor.IndexComponent;
 import org.apache.cassandra.io.util.ChecksumedRandomAccessReader;
 import org.apache.cassandra.io.util.ChecksumedSequentialWriter;
@@ -44,6 +39,12 @@ import org.apache.cassandra.io.util.RandomAccessReader;
 import org.apache.cassandra.utils.ByteArrayUtil;
 import org.apache.cassandra.utils.Clock;
 import org.apache.cassandra.utils.Throwables;
+
+import accord.utils.AsymmetricComparator;
+import accord.utils.CheckpointIntervalArray;
+import accord.utils.CheckpointIntervalArrayBuilder;
+import accord.utils.CheckpointIntervalArrayBuilder.Accessor;
+import accord.utils.SortedArrays;
 
 import static accord.utils.CheckpointIntervalArrayBuilder.Links.LINKS;
 import static accord.utils.CheckpointIntervalArrayBuilder.Strategy.ACCURATE;

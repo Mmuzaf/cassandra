@@ -22,18 +22,19 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.assertj.core.api.Assertions;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import org.apache.cassandra.config.DatabaseDescriptor;
+import org.apache.cassandra.service.accord.api.TokenKey;
+import org.apache.cassandra.utils.AccordGenerators;
 
 import accord.local.ShardDistributor;
 import accord.primitives.Range;
 import accord.primitives.Ranges;
 import accord.utils.Gens;
 import accord.utils.RandomSource;
-import org.apache.cassandra.config.DatabaseDescriptor;
-import org.apache.cassandra.service.accord.api.TokenKey;
-import org.apache.cassandra.utils.AccordGenerators;
-import org.assertj.core.api.Assertions;
 
 import static accord.utils.Property.qt;
 

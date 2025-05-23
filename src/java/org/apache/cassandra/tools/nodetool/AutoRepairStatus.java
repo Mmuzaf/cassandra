@@ -23,11 +23,12 @@ import java.util.Set;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import io.airlift.airline.Command;
-import io.airlift.airline.Option;
 import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.NodeTool;
 import org.apache.cassandra.tools.nodetool.formatter.TableBuilder;
+
+import io.airlift.airline.Command;
+import io.airlift.airline.Option;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

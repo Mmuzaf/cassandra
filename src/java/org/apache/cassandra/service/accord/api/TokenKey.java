@@ -29,13 +29,6 @@ import java.util.TreeMap;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import accord.api.RoutingKey;
-import accord.local.ShardDistributor;
-import accord.primitives.Range;
-import accord.primitives.RangeFactory;
-import accord.primitives.Ranges;
-import accord.utils.Invariants;
-import accord.utils.VIntCoding;
 import org.apache.cassandra.db.marshal.ByteBufferAccessor;
 import org.apache.cassandra.db.marshal.ValueAccessor;
 import org.apache.cassandra.dht.IPartitioner;
@@ -45,6 +38,14 @@ import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.service.accord.TokenRange;
 import org.apache.cassandra.utils.ObjectSizes;
+
+import accord.api.RoutingKey;
+import accord.local.ShardDistributor;
+import accord.primitives.Range;
+import accord.primitives.RangeFactory;
+import accord.primitives.Ranges;
+import accord.utils.Invariants;
+import accord.utils.VIntCoding;
 
 import static org.apache.cassandra.config.DatabaseDescriptor.getPartitioner;
 

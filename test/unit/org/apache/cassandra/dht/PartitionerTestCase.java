@@ -30,12 +30,13 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import accord.primitives.Ranges;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.commitlog.CommitLog;
 import org.apache.cassandra.service.StorageService;
 import org.apache.cassandra.service.accord.TokenRange;
 import org.apache.cassandra.service.accord.api.TokenKey;
+
+import accord.primitives.Ranges;
 
 import static org.apache.cassandra.service.accord.AccordTestUtils.TABLE_ID1;
 import static org.junit.Assert.assertEquals;

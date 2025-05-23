@@ -23,16 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import accord.api.DataStore;
-import accord.local.Node;
-import accord.local.SafeCommandStore;
-import accord.primitives.Range;
-import accord.primitives.Ranges;
-import accord.primitives.SyncPoint;
-import accord.primitives.TxnId;
-import accord.utils.async.AsyncResult;
-import accord.utils.async.AsyncResults;
 import org.agrona.collections.Object2ObjectHashMap;
+
 import org.apache.cassandra.concurrent.ScheduledExecutors;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.ColumnFamilyStore;
@@ -50,6 +42,16 @@ import org.apache.cassandra.schema.TableMetadata;
 import org.apache.cassandra.tcm.ClusterMetadata;
 import org.apache.cassandra.utils.concurrent.Future;
 import org.apache.cassandra.utils.concurrent.FutureCombiner;
+
+import accord.api.DataStore;
+import accord.local.Node;
+import accord.local.SafeCommandStore;
+import accord.primitives.Range;
+import accord.primitives.Ranges;
+import accord.primitives.SyncPoint;
+import accord.primitives.TxnId;
+import accord.utils.async.AsyncResult;
+import accord.utils.async.AsyncResults;
 
 import static accord.utils.Invariants.require;
 import static org.apache.cassandra.db.ColumnFamilyStore.FlushReason.ACCORD_TXN_GC;

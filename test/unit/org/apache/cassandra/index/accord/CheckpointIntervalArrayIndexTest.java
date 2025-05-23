@@ -35,15 +35,14 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableMap;
+
+import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.utils.Gen;
-import accord.utils.Gens;
-import accord.utils.RandomSource;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.db.ClusteringComparator;
 import org.apache.cassandra.db.marshal.ByteBufferAccessor;
@@ -60,7 +59,10 @@ import org.apache.cassandra.utils.ByteArrayUtil;
 import org.apache.cassandra.utils.bytecomparable.ByteComparable;
 import org.apache.cassandra.utils.bytecomparable.ByteSource;
 import org.apache.cassandra.utils.bytecomparable.ByteSourceInverse;
-import org.assertj.core.api.Assertions;
+
+import accord.utils.Gen;
+import accord.utils.Gens;
+import accord.utils.RandomSource;
 
 import static accord.utils.Property.qt;
 import static org.apache.cassandra.utils.ByteBufferUtil.bytes;

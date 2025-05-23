@@ -19,12 +19,12 @@ package org.apache.cassandra.tools.nodetool;
 
 import java.util.List;
 
-import io.airlift.airline.Arguments;
-import io.airlift.airline.Command;
-
-import io.airlift.airline.Option;
 import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.NodeTool.NodeToolCmd;
+
+import io.airlift.airline.Arguments;
+import io.airlift.airline.Command;
+import io.airlift.airline.Option;
 
 @Command(name = "removenode", description = "Show status of current node removal, abort removal or remove provided ID")
 public class RemoveNode extends NodeToolCmd

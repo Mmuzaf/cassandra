@@ -39,12 +39,13 @@ import java.util.function.LongSupplier;
 
 import javax.annotation.Nullable;
 
-import accord.utils.Gens;
-import accord.utils.RandomSource;
 import org.apache.cassandra.utils.Clock;
 import org.apache.cassandra.utils.Generators;
 import org.apache.cassandra.utils.concurrent.Future;
 import org.apache.cassandra.utils.concurrent.UncheckedInterruptedException;
+
+import accord.utils.Gens;
+import accord.utils.RandomSource;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.apache.cassandra.concurrent.InfiniteLoopExecutor.InternalState.SHUTTING_DOWN_NOW;

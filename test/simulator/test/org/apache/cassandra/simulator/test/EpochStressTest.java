@@ -28,15 +28,11 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import com.google.common.util.concurrent.Uninterruptibles;
-import org.junit.Test;
 
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.api.ConfigurationService;
-import accord.local.Node;
-import accord.primitives.Ranges;
-import accord.topology.TopologyManager;
 import org.apache.cassandra.service.accord.AccordConfigurationService;
 import org.apache.cassandra.service.accord.AccordService;
 import org.apache.cassandra.service.consensus.TransactionalMode;
@@ -50,6 +46,11 @@ import org.apache.cassandra.tcm.ClusterMetadata;
 import org.apache.cassandra.tcm.ClusterMetadataService;
 import org.apache.cassandra.tcm.membership.NodeId;
 import org.apache.cassandra.utils.Clock;
+
+import accord.api.ConfigurationService;
+import accord.local.Node;
+import accord.primitives.Ranges;
+import accord.topology.TopologyManager;
 
 import static org.apache.cassandra.simulator.cluster.ClusterActions.InitialConfiguration.initializeAll;
 import static org.apache.cassandra.simulator.cluster.ClusterActions.Options.noActions;

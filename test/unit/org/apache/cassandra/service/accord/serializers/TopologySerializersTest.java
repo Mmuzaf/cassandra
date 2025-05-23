@@ -22,12 +22,13 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import accord.local.Node;
-import accord.utils.AccordGens;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.io.Serializers;
 import org.apache.cassandra.io.util.DataOutputBuffer;
 import org.apache.cassandra.utils.AccordGenerators;
+
+import accord.local.Node;
+import accord.utils.AccordGens;
 
 import static accord.utils.Property.qt;
 

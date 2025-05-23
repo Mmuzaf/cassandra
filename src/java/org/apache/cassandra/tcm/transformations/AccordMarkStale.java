@@ -29,8 +29,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import accord.local.Node;
-import accord.topology.Shard;
 import org.apache.cassandra.io.util.DataInputPlus;
 import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.schema.KeyspaceMetadata;
@@ -43,6 +41,9 @@ import org.apache.cassandra.tcm.sequences.LockedRanges;
 import org.apache.cassandra.tcm.serialization.AsymmetricMetadataSerializer;
 import org.apache.cassandra.tcm.serialization.Version;
 import org.apache.cassandra.utils.CollectionSerializers;
+
+import accord.local.Node;
+import accord.topology.Shard;
 
 import static org.apache.cassandra.exceptions.ExceptionCode.INVALID;
 

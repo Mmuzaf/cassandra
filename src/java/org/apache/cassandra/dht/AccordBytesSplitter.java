@@ -20,10 +20,11 @@ package org.apache.cassandra.dht;
 
 import java.math.BigInteger;
 
+import org.apache.cassandra.service.accord.api.TokenKey;
+
 import accord.api.RoutingKey;
 import accord.primitives.Ranges;
 import accord.utils.Invariants;
-import org.apache.cassandra.service.accord.api.TokenKey;
 
 import static accord.utils.Invariants.requireArgument;
 import static java.math.BigInteger.ONE;

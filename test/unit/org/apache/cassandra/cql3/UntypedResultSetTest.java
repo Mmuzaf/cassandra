@@ -25,12 +25,13 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 
-import accord.utils.Gen;
-import accord.utils.Gens;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.DoubleType;
 import org.apache.cassandra.utils.AbstractTypeGenerators;
 import org.apache.cassandra.utils.Generators;
+
+import accord.utils.Gen;
+import accord.utils.Gens;
 
 import static accord.utils.Property.qt;
 import static org.apache.cassandra.utils.AccordGenerators.fromQT;

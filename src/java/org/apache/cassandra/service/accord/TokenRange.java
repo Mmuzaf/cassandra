@@ -22,9 +22,6 @@ import java.io.IOException;
 
 import com.google.common.annotations.VisibleForTesting;
 
-import accord.api.RoutingKey;
-import accord.primitives.Range;
-import accord.utils.Invariants;
 import org.apache.cassandra.config.DatabaseDescriptor;
 import org.apache.cassandra.dht.IPartitioner;
 import org.apache.cassandra.dht.Murmur3Partitioner;
@@ -35,6 +32,10 @@ import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.schema.TableId;
 import org.apache.cassandra.service.accord.api.TokenKey;
 import org.apache.cassandra.utils.ObjectSizes;
+
+import accord.api.RoutingKey;
+import accord.primitives.Range;
+import accord.utils.Invariants;
 
 public class TokenRange extends Range.EndInclusive
 {

@@ -23,27 +23,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
-import accord.api.Data;
-import accord.local.Node;
-import accord.local.SafeCommandStore;
-import accord.messages.MessageType;
-import accord.messages.ReadData;
-import accord.primitives.AbstractRanges;
-import accord.primitives.PartialTxn;
-import accord.primitives.Participants;
-import accord.primitives.Range;
-import accord.primitives.Ranges;
-import accord.primitives.Timestamp;
-import accord.primitives.TxnId;
-import accord.topology.Topologies;
-import accord.utils.async.AsyncChain;
-import accord.utils.async.AsyncChains;
 import org.apache.cassandra.concurrent.Stage;
 import org.apache.cassandra.db.PartitionRangeReadCommand;
 import org.apache.cassandra.db.ReadCommand;
@@ -68,6 +54,22 @@ import org.apache.cassandra.service.accord.serializers.Version;
 import org.apache.cassandra.service.accord.txn.TxnNamedRead;
 import org.apache.cassandra.service.accord.txn.TxnRead;
 import org.apache.cassandra.utils.Pair;
+
+import accord.api.Data;
+import accord.local.Node;
+import accord.local.SafeCommandStore;
+import accord.messages.MessageType;
+import accord.messages.ReadData;
+import accord.primitives.AbstractRanges;
+import accord.primitives.PartialTxn;
+import accord.primitives.Participants;
+import accord.primitives.Range;
+import accord.primitives.Ranges;
+import accord.primitives.Timestamp;
+import accord.primitives.TxnId;
+import accord.topology.Topologies;
+import accord.utils.async.AsyncChain;
+import accord.utils.async.AsyncChains;
 
 import static accord.primitives.SaveStatus.PreApplied;
 import static accord.primitives.SaveStatus.ReadyToExecute;

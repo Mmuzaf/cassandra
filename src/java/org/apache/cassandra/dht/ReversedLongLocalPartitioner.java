@@ -28,7 +28,6 @@ import java.util.function.Function;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Longs;
 
-import accord.primitives.Ranges;
 import org.apache.cassandra.db.CachedHashDecoratedKey;
 import org.apache.cassandra.db.DecoratedKey;
 import org.apache.cassandra.db.marshal.AbstractType;
@@ -41,6 +40,8 @@ import org.apache.cassandra.utils.bytecomparable.ByteComparable;
 import org.apache.cassandra.utils.bytecomparable.ByteSource;
 import org.apache.cassandra.utils.bytecomparable.ByteSourceInverse;
 import org.apache.cassandra.utils.memory.HeapCloner;
+
+import accord.primitives.Ranges;
 
 /**
  * Special ordered partitioner for the TCM snapshots table, sorting in reverse. Keys are longs (epoch), and tokens
