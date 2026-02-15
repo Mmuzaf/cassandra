@@ -19,7 +19,6 @@ package org.apache.cassandra.tools.nodetool;
 
 import java.io.PrintStream;
 import java.net.UnknownHostException;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,19 +33,24 @@ import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
 import org.apache.cassandra.tools.NodeProbe;
 
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import static java.lang.String.format;
+import static org.apache.cassandra.utils.LocalizeString.toDecimalFormatLocalized;
 
 @Command(name = "ring", description = "Print information about the token ring")
-public class Ring extends WithPortDisplayAbstractCommand
+public class Ring extends AbstractCommand
 {
     @Parameters(description = "Specify a keyspace for accurate ownership information (topology awareness)", index = "0", arity = "0..1")
     private String keyspace = null;
 
     @Option(paramLabel = "resolve_ip", names = { "-r", "--resolve-ip" }, description = "Show node domain names instead of IPs")
     private boolean resolveIp = false;
+
+    @Mixin
+    private PrintPortMixin printPortMixin = new PrintPortMixin();
 
     private PrintStream out;
     private EndpointSnitchInfoMBean epSnitchInfo;
@@ -175,8 +179,8 @@ public class Ring extends WithPortDisplayAbstractCommand
                 state = "Moving";
 
             String load = loadMap.getOrDefault(endpoint, "?");
-            String owns = stat.owns != null && showEffectiveOwnership? new DecimalFormat("##0.00%").format(stat.owns) : "?";
-            out.printf(format, stat.ipOrDns(printPort), rack, status, state, load, owns, stat.token);
+            String owns = stat.owns != null && showEffectiveOwnership ? toDecimalFormatLocalized("##0.00%").format(stat.owns) : "?";
+            out.printf(format, stat.ipOrDns(printPortMixin.printPort), rack, status, state, load, owns, stat.token);
         }
         out.println();
     }

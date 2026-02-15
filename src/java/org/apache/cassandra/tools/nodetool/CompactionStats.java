@@ -18,7 +18,6 @@
 package org.apache.cassandra.tools.nodetool;
 
 import java.io.PrintStream;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +34,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 import static java.lang.String.format;
+import static org.apache.cassandra.utils.LocalizeString.toDecimalFormatLocalized;
 
 @Command(name = "compactionstats", description = "Print statistics on compactions")
 public class CompactionStats extends AbstractCommand
@@ -103,7 +103,7 @@ public class CompactionStats extends AbstractCommand
         CassandraMetricsRegistry.JmxCounterMBean sstablesDroppedFromCompaction = (CassandraMetricsRegistry.JmxCounterMBean) probe.getCompactionMetric("SSTablesDroppedFromCompaction");
         tableBuilder.add("sstables dropped from compaction", Long.toString(sstablesDroppedFromCompaction.getCount()));
 
-        NumberFormat formatter = new DecimalFormat("0.00");
+        NumberFormat formatter = toDecimalFormatLocalized("0.00");
 
         tableBuilder.add("15 minute rate", String.format("%s/minute", formatter.format(totalCompactionsCompletedMetrics.getFifteenMinuteRate() * 60)));
         tableBuilder.add("mean rate", String.format("%s/hour", formatter.format(totalCompactionsCompletedMetrics.getMeanRate() * 60 * 60)));
@@ -148,7 +148,7 @@ public class CompactionStats extends AbstractCommand
             String[] tables = c.get(CompactionInfo.SSTABLES).split(",");
             String progressStr = toFileSize ? FileUtils.stringifyFileSize(completed) : Long.toString(completed);
             String totalStr = toFileSize ? FileUtils.stringifyFileSize(total) : Long.toString(total);
-            String percentComplete = total == 0 ? "n/a" : new DecimalFormat("0.00").format((double) completed / total * 100) + '%';
+            String percentComplete = total == 0 ? "n/a" : toDecimalFormatLocalized("0.00").format((double) completed / total * 100) + '%';
             String id = c.get(CompactionInfo.COMPACTION_ID);
             if (vtableOutput)
             {

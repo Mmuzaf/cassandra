@@ -18,6 +18,8 @@
 
 package org.apache.cassandra.utils;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
 public class LocalizeString
@@ -56,5 +58,14 @@ public class LocalizeString
     public static String toUpperCaseLocalized(String input, Locale locale)
     {
         return input.toUpperCase(locale); // checkstyle: permit this invocation
+    }
+
+    /**
+     * @param pattern the format pattern (e.g. {@code "##0.0%"}, {@code "0.00"})
+     * @return a locale-safe {@link java.text.DecimalFormat}
+     */
+    public static DecimalFormat toDecimalFormatLocalized(String pattern)
+    {
+        return new DecimalFormat(pattern, DecimalFormatSymbols.getInstance(Locale.US));
     }
 }

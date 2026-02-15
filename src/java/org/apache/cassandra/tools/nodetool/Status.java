@@ -19,7 +19,6 @@ package org.apache.cassandra.tools.nodetool;
 
 import java.io.PrintStream;
 import java.net.UnknownHostException;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,13 +43,15 @@ import org.apache.cassandra.tools.nodetool.formatter.TableBuilder;
 import org.apache.cassandra.utils.LocalizeString;
 
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import static java.util.stream.Collectors.toMap;
+import static org.apache.cassandra.utils.LocalizeString.toDecimalFormatLocalized;
 
 @Command(name = "status", description = "Print cluster information (state, load, IDs, ...)")
-public class Status extends WithPortDisplayAbstractCommand
+public class Status extends AbstractCommand
 {
     @Parameters(description = "The keyspace name", arity = "0..1")
     private String keyspace = null;
@@ -70,6 +71,9 @@ public class Status extends WithPortDisplayAbstractCommand
             names = { "-o", "--order" },
             description = "Sorting order: 'asc' for ascending, 'desc' for descending.")
     private SortOrder sortOrder = null;
+
+    @Mixin
+    private PrintPortMixin printPortMixin = new PrintPortMixin();
 
     private boolean isTokenPerNode = true;
     private Collection<String> joiningNodes, leavingNodes, movingNodes, liveNodes, unreachableNodes;
@@ -167,7 +171,7 @@ public class Status extends WithPortDisplayAbstractCommand
                 List<HostStatWithPort> tokens = hostToTokens.get(endpoint);
 
                 HostStatWithPort hostStatWithPort = tokens.get(0);
-                String epDns = hostStatWithPort.ipOrDns(printPort);
+                String epDns = hostStatWithPort.ipOrDns(printPortMixin.printPort);
                 List<Object> nodeData = addNode(epDns, endpoint, owns, hostStatWithPort, tokens.size(), hasEffectiveOwns);
                 data.put(epDns, nodeData);
             }
@@ -235,7 +239,7 @@ public class Status extends WithPortDisplayAbstractCommand
 
         String statusAndState = status.concat(state);
         load = loadMap.getOrDefault(endpoint, "?");
-        strOwns = owns != null && hasEffectiveOwns ? new DecimalFormat("##0.0%").format(owns) : "?";
+        strOwns = owns != null && hasEffectiveOwns ? toDecimalFormatLocalized("##0.0%").format(owns) : "?";
         hostID = hostIDMap.get(endpoint);
 
         try
