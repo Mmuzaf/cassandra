@@ -1,17 +1,24 @@
 
 # Mmuzaf:cassandra — TODO/FIXME Analysis
 
+> This report scans the full git commit history of **Mmuzaf:cassandra** (2009–2026) and tracks every line containing a `TODO` or `FIXME` comment (case-insensitive) that was **added** or **removed** in each commit. Merge commits are excluded to avoid double-counting.
+>
+> For each commit, the diff is parsed line by line: lines prefixed with `+` are additions, lines prefixed with `-` are removals. Results are aggregated by the commit year.
+>
+> **2,824** TODO/FIXME lines added · **1,791** removed · **1,033** unresolved backlog across **18** years.
+
 ## Combined: Additions and Removals by Year
 
-Each year shows two adjacent bars: additions (`+`) and removals (`-`).
+Each year shows two adjacent bars: additions (green) and removals (red).
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#ffffff', 'xyChart': {'plotColorPalette': '#4472c4'}}, 'xyChart': {'width': 1800, 'height': 500}}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#ffffff', 'xyChart': {'plotColorPalette': '#22aa44,#dd4444'}}, 'xyChart': {'width': 1200, 'height': 500}}}%%
 xychart-beta
-    title "Mmuzaf:cassandra — TODO/FIXME Additions (+) and Removals (-) by Year"
-    x-axis ["09+", "09-", ., "10+", "10-", ., "11+", "11-", ., "12+", "12-", ., "13+", "13-", ., "14+", "14-", ., "15+", "15-", ., "16+", "16-", ., "17+", "17-", ., "18+", "18-", ., "19+", "19-", ., "20+", "20-", ., "21+", "21-", ., "22+", "22-", ., "23+", "23-", ., "24+", "24-", ., "25+", "25-", ., "26+", "26-"]
+    title "Mmuzaf:cassandra — TODO/FIXME Additions (green) and Removals (red) by Year"
+    x-axis [2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
     y-axis "Lines" 0 --> 460
-    bar [266, 215, 0, 231, 186, 0, 143, 170, 0, 57, 64, 0, 56, 40, 0, 168, 83, 0, 108, 109, 0, 99, 81, 0, 16, 11, 0, 77, 32, 0, 76, 13, 0, 86, 55, 0, 100, 39, 0, 133, 15, 0, 436, 126, 0, 451, 317, 0, 295, 222, 0, 26, 13]
+    bar [266, 231, 143, 57, 56, 168, 108, 99, 16, 77, 76, 86, 100, 133, 436, 451, 295, 26]
+    bar [215, 186, 170, 64, 40, 83, 109, 81, 11, 32, 13, 55, 39, 15, 126, 317, 222, 13]
 ```
 
 ## Additions by Year
