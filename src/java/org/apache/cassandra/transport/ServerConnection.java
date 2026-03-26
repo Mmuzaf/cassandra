@@ -42,13 +42,20 @@ public class ServerConnection extends Connection
     private final ClientState clientState;
     private volatile ConnectionStage stage;
     public final Counter requests = new Counter();
+    private final boolean isManagementConnection;
 
     ServerConnection(Channel channel, ProtocolVersion version, Connection.Tracker tracker)
+    {
+        this(channel, version, tracker, false);
+    }
+
+    ServerConnection(Channel channel, ProtocolVersion version, Connection.Tracker tracker, boolean isManagementConnection)
     {
         super(channel, version, tracker);
 
         clientState = ClientState.forExternalCalls(channel.remoteAddress());
         stage = ConnectionStage.ESTABLISHED;
+        this.isManagementConnection = isManagementConnection;
     }
 
     public ClientState getClientState()
@@ -156,5 +163,10 @@ public class ServerConnection extends Connection
         SslHandler sslHandler = (SslHandler) channel().pipeline()
                                                       .get("ssl");
         return sslHandler != null;
+    }
+
+    public boolean isManagementConnection()
+    {
+        return isManagementConnection;
     }
 }

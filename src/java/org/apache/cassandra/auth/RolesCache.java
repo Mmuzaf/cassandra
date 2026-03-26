@@ -82,4 +82,10 @@ public class RolesCache extends AuthCache<RoleResource, Set<Role>> implements Ro
     {
         invalidate(RoleResource.role(roleName));
     }
+
+    @Override
+    public void accept(MBeanVisitor visitor)
+    {
+        visitor.visitRoles(this);
+    }
 }

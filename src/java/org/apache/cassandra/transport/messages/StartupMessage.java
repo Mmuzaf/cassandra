@@ -130,6 +130,12 @@ public class StartupMessage extends Message.Request
             clientState.setDriverVersion(options.get(DRIVER_VERSION));
         }
 
+        if (connection instanceof ServerConnection)
+        {
+            ServerConnection serverConnection = (ServerConnection) connection;
+            clientState.setManagement(serverConnection.isManagementConnection());
+        }
+
         IAuthenticator authenticator = DatabaseDescriptor.getAuthenticator();
         if (authenticator.requireAuthentication())
         {

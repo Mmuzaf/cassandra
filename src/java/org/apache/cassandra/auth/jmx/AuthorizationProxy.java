@@ -609,6 +609,12 @@ public class AuthorizationProxy implements InvocationHandler
             super.unregisterMBean();
             MBeanWrapper.instance.unregisterMBean(MBEAN_NAME_BASE + DEPRECATED_CACHE_NAME, MBeanWrapper.OnException.LOG);
         }
+
+        @Override
+        public void accept(MBeanVisitor visitor)
+        {
+            visitor.visitJmxPermissions(this);
+        }
     }
 
     public static interface JmxPermissionsCacheMBean extends AuthCacheMBean

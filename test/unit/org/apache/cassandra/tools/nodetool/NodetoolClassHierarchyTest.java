@@ -20,6 +20,7 @@ package org.apache.cassandra.tools.nodetool;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -111,6 +112,107 @@ public class NodetoolClassHierarchyTest extends CQLTester
         assertTrue("The following commands declare @ParentCommand and consume " +
                    "options or parameters from a parent command: " + buildAffectedCommandMessage(affected),
                    affected.isEmpty());
+    }
+
+    /**
+     * Previously, in the Airline implementation of nodetool, the defaul values for command
+     * parameters were declared as values in the java field of the command class. We left this
+     * as-is, but with picocli we have to make sure that this is consistend with annotations
+     * such as {@code @Option(defaultValue = "...")}.
+     * <p>
+     * When {@code @Option(defaultValue = "...")} is declared on a field, the Java field
+     * initializer must produce the same value. This is required because picocli only applies
+     * {@code defaultValue} during {@code parseArgs()}, any code that reads the field before
+     * parsing sees only the Java initializer, not the annotations default.
+     */
+    @Test
+    public void testOptionAnnotationDefaultMatchesJavaInitializer()
+    {
+        CommandLine root = new CommandLine(NodetoolCommand.class);
+        Map<String, List<String>> violations = new TreeMap<>();
+
+        commandTreeWalker(root, cmd -> {
+            List<String> cmdViolations = collectDefaultValueMismatches(cmd);
+            if (!cmdViolations.isEmpty())
+                violations.put(fullCommandName(cmd), cmdViolations);
+        });
+
+        assertTrue("The following commands have @Option(defaultValue) that does not match " +
+                   "the Java field initializer. Either remove defaultValue from the annotation " +
+                   "or align the Java field initializer with it:\n" +
+                   buildAffectedCommandMessage(violations),
+                   violations.isEmpty());
+    }
+
+    /**
+     * Commands must not declare aliases. Alias MBean registration is not supported,
+     * so allowing aliases would create a mismatch between the CLI (which would honor them)
+     * and the JMX/CQL transports (which would not). If alias support is added in the future,
+     * this test should be replaced with proper alias-aware registration and lookup logic.
+     */
+    @Test
+    public void testNoCommandDeclaresAliases()
+    {
+        CommandLine root = new CommandLine(NodetoolCommand.class);
+        Map<String, List<String>> affected = new TreeMap<>();
+
+        commandTreeWalker(root, cmd -> {
+            String[] aliases = cmd.getCommandSpec().aliases();
+            if (aliases.length > 0)
+                affected.put(fullCommandName(cmd), Arrays.asList(aliases));
+        });
+
+        assertTrue("The following commands declare aliases, but alias registration " +
+                   "is not yet supported across all transports (JMX, CQL):\n" +
+                   buildAffectedCommandMessage(affected),
+                   affected.isEmpty());
+    }
+
+    private static List<String> collectDefaultValueMismatches(CommandLine cmd)
+    {
+        List<String> violations = new ArrayList<>();
+
+        for (CommandLine.Model.OptionSpec optionSpec : cmd.getCommandSpec().options())
+        {
+            if (optionSpec.usageHelp() || optionSpec.versionHelp())
+                continue;
+
+            String annotationDefault = optionSpec.defaultValue();
+            if (annotationDefault == null)
+                continue;
+
+            Object javaValue = optionSpec.getValue();
+            String javaValueStr = javaValue == null ? "null" : String.valueOf(javaValue);
+
+            if (!annotationDefault.equals(javaValueStr))
+            {
+                violations.add(String.format("option %s: @Option(defaultValue=\"%s\") but Java initializer gives \"%s\"",
+                                             Arrays.toString(optionSpec.names()),
+                                             annotationDefault,
+                                             javaValueStr));
+            }
+        }
+
+        for (CommandLine.Model.PositionalParamSpec paramSpec : cmd.getCommandSpec().positionalParameters())
+        {
+            String annotationDefault = paramSpec.defaultValue();
+            if (annotationDefault == null)
+                continue;
+
+            Object javaValue = paramSpec.getValue();
+            String javaValueStr = javaValue == null ? "null" : String.valueOf(javaValue);
+
+            if (!annotationDefault.equals(javaValueStr))
+            {
+                violations.add(String.format("parameter index=%s (%s): @Parameters(defaultValue=\"%s\") but Java initializer gives \"%s\"",
+                                             paramSpec.index(),
+                                             paramSpec.paramLabel(),
+                                             annotationDefault,
+                                             javaValueStr));
+            }
+        }
+
+        return violations;
     }
 
     /**

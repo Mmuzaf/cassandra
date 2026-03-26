@@ -51,7 +51,7 @@ public class History extends AbstractCommand
     }
 
     @Override
-    protected boolean shouldConnect() throws CommandLine.ExecutionException
+    public boolean shouldConnect() throws CommandLine.ExecutionException
     {
         return false;
     }

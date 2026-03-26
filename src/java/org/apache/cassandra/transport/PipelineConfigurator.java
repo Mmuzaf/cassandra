@@ -117,17 +117,20 @@ public class PipelineConfigurator
     private final Dispatcher dispatcher;
     // Shared between pre-v5 and CQLMessage handlers
     private final QueueBackpressure queueBackpressure;
+    private final boolean isManagementConnection;
 
     public PipelineConfigurator(boolean epoll,
                                 boolean keepAlive,
                                 EncryptionOptions.TlsEncryptionPolicy encryptionPolicy,
-                                Dispatcher dispatcher)
+                                Dispatcher dispatcher,
+                                boolean isManagementConnection)
     {
         this.epoll               = epoll;
         this.keepAlive           = keepAlive;
         this.tlsEncryptionPolicy = encryptionPolicy;
         this.dispatcher          = dispatcher;
         this.queueBackpressure   = QueueBackpressure.DEFAULT;
+        this.isManagementConnection = isManagementConnection;
     }
 
     @VisibleForTesting
@@ -141,6 +144,7 @@ public class PipelineConfigurator
         this.tlsEncryptionPolicy = encryptionPolicy;
         this.dispatcher          = new Dispatcher(useLegacyFlusher);
         this.queueBackpressure   = QueueBackpressure.DEFAULT;
+        this.isManagementConnection = false;
     }
 
     public ChannelFuture initializeChannel(final EventLoopGroup workerGroup,
@@ -261,6 +265,9 @@ public class PipelineConfigurator
             pipeline.addFirst(CONNECTION_LIMIT_HANDLER, connectionLimitHandler);
         }
 
+        if (isManagementConnection)
+            channel.attr(Connection.managementKey).set(Boolean.TRUE);
+
         long idleTimeout = DatabaseDescriptor.nativeTransportIdleTimeout();
         if (idleTimeout > 0)
         {
@@ -367,11 +374,6 @@ public class PipelineConfigurator
     protected ClientResourceLimits.ResourceProvider resourceProvider(ClientResourceLimits.Allocator allocator)
     {
         return new ClientResourceLimits.ResourceProvider.Default(allocator);
-    }
-
-    protected Dispatcher dispatcher(boolean useLegacyFlusher)
-    {
-        return new Dispatcher(useLegacyFlusher);
     }
 
     protected CQLMessageHandler.MessageConsumer<Message.Request> messageConsumer()

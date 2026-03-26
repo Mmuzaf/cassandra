@@ -118,6 +118,7 @@ import org.apache.cassandra.io.util.DataOutputPlus;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.PathUtils;
 import org.apache.cassandra.locator.InetAddressAndPort;
+import org.apache.cassandra.management.CommandInvokerService;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 import org.apache.cassandra.metrics.Sampler;
 import org.apache.cassandra.metrics.ThreadLocalMetrics;
@@ -1028,6 +1029,7 @@ public class Instance extends IsolatedExecutor implements IInvokableInstance
                                 SnapshotManager.instance::close,
                                 () -> IndexStatusManager.instance.shutdownAndWait(1L, MINUTES),
                                 DiskErrorsHandlerService::close,
+                                CommandInvokerService::shutdown,
                                 () -> ThreadLocalMetrics.shutdownCleaner(1L, MINUTES)
             );
 
