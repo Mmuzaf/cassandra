@@ -131,6 +131,10 @@ recent_hit_rate_per_second, recent_request_rate_per_second, request_count, and s
 
 |clients |Lists information about all connected clients.
 
+|command_arguments |Lists the arguments accepted by each management command, as named in the `WITH` clause of `INVOKE COMMAND`.
+
+|commands |Lists the management commands invocable with `INVOKE COMMAND`.
+
 |coordinator_read_latency |Records counts, keyspace_name, table_name, max, median, and per_second for coordinator reads.
 
 |coordinator_scan |Records counts, keyspace_name, table_name, max, median, and per_second for coordinator scans.
