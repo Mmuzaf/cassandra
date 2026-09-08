@@ -899,7 +899,11 @@ class Shell(cmd.Cmd):
         except IndexError:
             return None
         ks = self.cql_unprotect_name(parsed.get_binding('ksname', None))
-        cf = self.cql_unprotect_name(parsed.get_binding('cfname'))
+        cf = self.cql_unprotect_name(parsed.get_binding('cfname', None))
+        if cf is None:
+            # A row-returning statement that names no table, e.g. INVOKE COMMAND. Formatting falls
+            # back to the result set's own column types.
+            return None
         return self.get_table_meta(ks, cf)
 
     def perform_simple_statement(self, statement):

@@ -168,13 +168,13 @@ class TestCqlshCompletion(CqlshCompletionCase):
     def test_complete_on_empty_string(self):
         self.trycompletions('', choices=('?', 'ADD', 'ALTER', 'BEGIN', 'CAPTURE', 'COMMENT', 'CONSISTENCY',
                                          'COPY', 'CREATE', 'DEBUG', 'DELETE', 'DESC', 'DESCRIBE',
-                                         'DROP', 'GRANT', 'HELP', 'INSERT', 'LIST', 'LOGIN', 'PAGING', 'REVOKE',
+                                         'DROP', 'GRANT', 'HELP', 'INSERT', 'INVOKE', 'LIST', 'LOGIN', 'PAGING', 'REVOKE',
                                          'SECURITY', 'SELECT', 'SHOW', 'SOURCE', 'TRACING', 'ELAPSED', 'EXPAND', 'SERIAL', 'TRUNCATE',
                                          'UPDATE', 'USE', 'exit', 'quit', 'CLEAR', 'CLS', 'history'))
 
     def test_complete_command_words(self):
         self.trycompletions('alt', '\b\b\bALTER ')
-        self.trycompletions('I', 'NSERT INTO ')
+        self.trycompletions('INS', 'ERT INTO ')
         self.trycompletions('exit', ' ')
 
     def test_complete_in_uuid(self):
@@ -290,7 +290,7 @@ class TestCqlshCompletion(CqlshCompletionCase):
              "VALUES ( 'eggs', 'sausage', 'spam');"),
             choices=['?', 'ADD', 'ALTER', 'BEGIN', 'CAPTURE', 'COMMENT', 'CONSISTENCY', 'COPY',
                      'CREATE', 'DEBUG', 'DELETE', 'DESC', 'DESCRIBE', 'DROP',
-                     'ELAPSED', 'EXPAND', 'GRANT', 'HELP', 'INSERT', 'LIST', 'LOGIN', 'PAGING',
+                     'ELAPSED', 'EXPAND', 'GRANT', 'HELP', 'INSERT', 'INVOKE', 'LIST', 'LOGIN', 'PAGING',
                      'REVOKE', 'SECURITY', 'SELECT', 'SHOW', 'SOURCE', 'SERIAL', 'TRACING',
                      'TRUNCATE', 'UPDATE', 'USE', 'exit', 'history', 'quit',
                      'CLEAR', 'CLS'])
@@ -1252,6 +1252,23 @@ class TestCqlshCompletion(CqlshCompletionCase):
         self.trycompletions('LIST ',
                             choices=['ALL', 'AUTHORIZE', 'DESCRIBE', 'EXECUTE', 'ROLES', 'USERS', 'ALTER',
                                      'CREATE', 'DROP', 'MODIFY', 'SELECT', 'UNMASK', 'SELECT_MASKED', 'SUPERUSERS'])
+
+    def test_complete_in_invoke_command(self):
+        self.trycompletions('INV', immediate='OKE COMMAND ')
+        # Command names come from system_views.commands; dotted ones need quoting.
+        self.trycompletions('INVOKE COMMAND ',
+                            choices=['version', '"profile.start"'], other_choices_ok=True)
+        self.trycompletions('INVOKE COMMAND version ', choices=[';', 'WITH'])
+        # Argument names come from system_views.command_arguments, for that command only.
+        self.trycompletions('INVOKE COMMAND "profile.start" WITH ',
+                            choices=['event', 'duration', 'filename'], other_choices_ok=True)
+        self.trycompletions("INVOKE COMMAND \"profile.start\" WITH duration = '5m' ",
+                            choices=[';', 'AND'])
+
+    def test_complete_in_invoke_command_excludes_used_arguments(self):
+        used = self._get_completions("INVOKE COMMAND \"profile.start\" WITH duration = '5m' AND ")
+        self.assertNotIn('duration', used)
+        self.assertIn('event', used)
 
     # Non-CQL Shell Commands
 

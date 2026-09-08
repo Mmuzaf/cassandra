@@ -268,6 +268,7 @@ JUNK ::= /([ \t\r\f\v]+|(--|[/][/])[^\n\r]*([\n\r]|$)|[/][*].*?[*][/])/ ;
                   | <schemaChangeStatement>
                   | <authenticationStatement>
                   | <authorizationStatement>
+                  | <executeCommandStatement>
                   ;
 
 <dataChangeStatement> ::= <insertStatement>
@@ -1815,6 +1816,59 @@ syntax_rules += r'''
 <dropIdentityStatement> ::= "DROP" "IDENTITY" ("IF" "EXISTS")? <stringLiteral>
                           ;
 '''
+
+syntax_rules += r'''
+<executeCommandStatement> ::= "INVOKE" "COMMAND" cmd=<invokeCommandName>
+                                ( "WITH" <invokeCommandProperty>
+                                  ( "AND" <invokeCommandProperty> )* )?
+                            ;
+
+<invokeCommandName> ::= <quotedName>
+                      | <identifier>
+                      ;
+
+<invokeCommandProperty> ::= [arg]=<cident> "=" <invokeCommandValue>
+                          ;
+
+<invokeCommandValue> ::= <stringLiteral>
+                       | <integer>
+                       | <float>
+                       | <boolean>
+                       | "[" ( <stringLiteral> ( "," <stringLiteral> )* )? "]"
+                       ;
+'''
+
+
+def get_command_names(cass):
+    """Names of the management commands, from the server-side catalog. Empty if the node predates it."""
+    try:
+        rows = cass.session.execute("SELECT command FROM system_views.commands")
+    except Exception:
+        return []
+    return [row['command'] for row in rows]
+
+
+@completer_for('executeCommandStatement', 'cmd')
+def invoke_command_name_completer(ctxt, cass):
+    names = get_command_names(cass)
+    if not names:
+        return [Hint('<command_name>')]
+    # Command names are dot-delimited (e.g. profile.start) and so need quoting.
+    return list(map(maybe_escape_name, names))
+
+
+@completer_for('invokeCommandProperty', 'arg')
+def invoke_command_argument_completer(ctxt, cass):
+    command = dequote_name(ctxt.get_binding('cmd'))
+    try:
+        rows = cass.session.execute(
+            "SELECT argument FROM system_views.command_arguments WHERE command = %s", [command])
+    except Exception:
+        return [Hint('<argument>')]
+
+    used = {dequote_name(arg) for arg in ctxt.get_binding('arg', ())}
+    return [maybe_escape_name(row['argument']) for row in rows if row['argument'] not in used]
+
 
 # END SYNTAX/COMPLETION RULE DEFINITIONS
 
