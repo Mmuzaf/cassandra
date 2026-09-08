@@ -238,8 +238,26 @@ public class CommandInvokerService implements CommandInvokerServiceMBean
     public String[] getCommandNames()
     {
         List<String> commandNames = new ArrayList<>();
-        collectCommandNamesRecursively(registry, "", commandNames);
+        for (CommandEntry entry : listCommands())
+            commandNames.add(entry.fullName());
         return commandNames.toArray(new String[0]);
+    }
+
+    /**
+     * Leaf commands of the registry, keyed by their full (dot-delimited) name. Parent registries are
+     * traversed but not returned, since only leaves are executable.
+     * <p>
+     * The registry is walked on every {@link Iterable#iterator()} call rather than snapshotted, so callers
+     * created before {@link #start()} (e.g. the virtual tables of
+     * {@link org.apache.cassandra.db.virtual.SystemViewsKeyspace}) still observe the commands.
+     */
+    public Iterable<CommandEntry> listCommands()
+    {
+        return () -> {
+            List<CommandEntry> commands = new ArrayList<>();
+            collectCommandsRecursively(registry, "", commands);
+            return commands.iterator();
+        };
     }
 
     @VisibleForTesting
@@ -265,9 +283,9 @@ public class CommandInvokerService implements CommandInvokerServiceMBean
         }
     }
 
-    private void collectCommandNamesRecursively(CommandRegistry registry,
-                                                String parentCommandName,
-                                                List<String> result)
+    private void collectCommandsRecursively(CommandRegistry registry,
+                                            String parentCommandName,
+                                            List<CommandEntry> result)
     {
         for (Map.Entry<String, Command<?>> entry : registry.commands())
         {
@@ -276,9 +294,9 @@ public class CommandInvokerService implements CommandInvokerServiceMBean
 
             String fullCommandName = fullCommandName(parentCommandName, commandName);
             if (command instanceof CommandRegistry)
-                collectCommandNamesRecursively((CommandRegistry) command, fullCommandName, result);
+                collectCommandsRecursively((CommandRegistry) command, fullCommandName, result);
             else
-                result.add(fullCommandName);
+                result.add(new CommandEntry(fullCommandName, command));
         }
     }
 
@@ -345,6 +363,29 @@ public class CommandInvokerService implements CommandInvokerServiceMBean
         for (ObjectName objectName : commandMBeanNames.values())
             MBeanWrapper.instance.unregisterMBean(objectName, MBeanWrapper.OnException.LOG);
         commandMBeanNames.clear();
+    }
+
+    /** A leaf command paired with its full (dot-delimited) name, as returned by {@link #listCommands()}. */
+    public static class CommandEntry
+    {
+        private final String fullName;
+        private final Command<?> command;
+
+        CommandEntry(String fullName, Command<?> command)
+        {
+            this.fullName = fullName;
+            this.command = command;
+        }
+
+        public String fullName()
+        {
+            return fullName;
+        }
+
+        public Command<?> command()
+        {
+            return command;
+        }
     }
 
     @VisibleForTesting
