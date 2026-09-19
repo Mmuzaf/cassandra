@@ -967,6 +967,17 @@ class Shell(cmd.Cmd):
             self.print_result(result, self.get_table_meta('system_auth', 'generated_values'))
         elif lowered_query.startswith("alter role"):
             self.print_result(result, self.get_table_meta('system_auth', 'generated_values'))
+        elif lowered_query.startswith("invoke"):
+            for row in result:
+                eid = str(row['execution_id'])
+                lines = (row['output'] or '').rstrip('\n').split('\n')
+                w = max(len('execution_id'), len(eid))
+                self.writeresult("")
+                self.writeresult(' %s | output' % 'execution_id'.ljust(w))
+                self.writeresult('-%s-+-%s-' % ('-' * w, '-' * max(map(len, lines))))
+                self.writeresult(' %s | %s' % (eid, lines[0]))
+                for line in lines[1:]:
+                    self.writeresult(' %s | %s' % (' ' * w, line))
         elif result:
             # CAS INSERT/UPDATE
             self.writeresult("")
