@@ -967,6 +967,29 @@ class Shell(cmd.Cmd):
             self.print_result(result, self.get_table_meta('system_auth', 'generated_values'))
         elif lowered_query.startswith("alter role"):
             self.print_result(result, self.get_table_meta('system_auth', 'generated_values'))
+        elif lowered_query.startswith("invoke"):
+            def cell(val, w=0):
+                return val.ljust(w, color=self.color)
+
+            eid_name, output_name = self.myformat_colname('execution_id'), self.myformat_colname('output')
+            for i, row in enumerate(result):
+                eid = self.myformat_value(row['execution_id'])
+                # colorme rather than myformat_value, which would escape tabs and backslashes in the output
+                lines = [colorme(line, None, 'text') for line in (row['output'] or '').rstrip('\n').split('\n')]
+                self.writeresult("")
+                if self.expand_enabled:
+                    w = eid_name.displaywidth
+                    self.writeresult("@ Row %d" % (i + 1))
+                    self.writeresult('-%s-+-%s-' % ('-' * w, '-' * max(v.displaywidth for v in [eid] + lines)))
+                    self.writeresult(' %s | %s' % (cell(eid_name, w), cell(eid)))
+                    self.writeresult(' %s | %s' % (cell(output_name, w), cell(lines[0])))
+                else:
+                    w = max(eid_name.displaywidth, eid.displaywidth)
+                    self.writeresult(' %s | %s' % (cell(eid_name, w), cell(output_name)))
+                    self.writeresult('-%s-+-%s-' % ('-' * w, '-' * max(v.displaywidth for v in lines)))
+                    self.writeresult(' %s | %s' % (cell(eid, w), cell(lines[0])))
+                for line in lines[1:]:
+                    self.writeresult(' %s | %s' % (' ' * w, cell(line)))
         elif result:
             # CAS INSERT/UPDATE
             self.writeresult("")
