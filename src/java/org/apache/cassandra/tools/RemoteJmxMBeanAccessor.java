@@ -84,6 +84,7 @@ import org.apache.cassandra.hints.HintsServiceMBean;
 import org.apache.cassandra.locator.DynamicEndpointSnitchMBean;
 import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
 import org.apache.cassandra.locator.LocationInfoMBean;
+import org.apache.cassandra.management.CommandInvokerServiceMBean;
 import org.apache.cassandra.management.MBeanAccessor;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry;
 import org.apache.cassandra.net.MessagingService;
@@ -233,6 +234,7 @@ public class RemoteJmxMBeanAccessor implements MBeanAccessor
                 registerMBeanProxy(CIDRFilteringMetricsTableMBean.class, CIDRFilteringMetricsTable.MBEAN_NAME);
                 registerMBeanProxy(AutoRepairServiceMBean.class, AutoRepairService.MBEAN_NAME);
                 registerMBeanProxy(GuardrailsMBean.class, Guardrails.MBEAN_NAME);
+                registerMBeanProxy(CommandInvokerServiceMBean.class, CommandInvokerServiceMBean.MBEAN_NAME);
 
                 registerPlatformMBeanProxy(MemoryMXBean.class, ManagementFactory.MEMORY_MXBEAN_NAME);
                 registerPlatformMBeanProxy(RuntimeMXBean.class, ManagementFactory.RUNTIME_MXBEAN_NAME);

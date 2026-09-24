@@ -18,12 +18,20 @@
 
 package org.apache.cassandra.management;
 
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import org.apache.cassandra.management.api.Command;
 import org.apache.cassandra.management.api.CommandMetadata;
+import org.apache.cassandra.utils.JsonUtils;
 
+import static org.apache.cassandra.cql3.statements.ExecuteCommandStatement.COMMAND_RESULT_SCHEMA_EXECUTION_ID;
+import static org.apache.cassandra.cql3.statements.ExecuteCommandStatement.COMMAND_RESULT_SCHEMA_OUTPUT;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class CommandMBeanAdapterTest
@@ -70,5 +78,33 @@ public class CommandMBeanAdapterTest
         assertThatThrownBy(() -> newAdapter().invoke("bogus", new Object[]{ "{}" }, new String[]{ "String" }))
             .isInstanceOf(UnsupportedOperationException.class)
             .hasMessageContaining("Unknown operation");
+    }
+
+    /**
+     * The adapter is transport-agnostic: for a progressible command the executor returns the started hint
+     * instead of command output, and the reply must carry it through untouched.
+     */
+    @Test
+    public void invokeReturnsStartedHintUnchanged() throws Exception
+    {
+        UUID executionId = UUID.randomUUID();
+        String hint = CommandInvokerService.startedHint("cleanup", executionId);
+
+        @SuppressWarnings("unchecked")
+        Command<Void> command = Mockito.mock(Command.class);
+        CommandMetadata metadata = Mockito.mock(CommandMetadata.class);
+        Mockito.when(metadata.options()).thenReturn(List.of());
+        Mockito.when(metadata.parameters()).thenReturn(List.of());
+        Mockito.when(command.metadata()).thenReturn(metadata);
+
+        CommandInvokerService.Executor executor =
+            (name, args) -> new CommandInvokerService.CommandResult(executionId, hint, 1L, 0L);
+
+        Object reply = new CommandMBeanAdapter("cleanup", command, executor)
+                       .invoke("invoke", new Object[]{ "{}" }, new String[]{ String.class.getName() });
+
+        Map<String, String> fields = JsonUtils.fromJsonMap((String) reply);
+        assertThat(fields.get(COMMAND_RESULT_SCHEMA_EXECUTION_ID)).isEqualTo(executionId.toString());
+        assertThat(fields.get(COMMAND_RESULT_SCHEMA_OUTPUT)).isEqualTo(hint);
     }
 }

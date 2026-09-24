@@ -88,6 +88,7 @@ import org.apache.cassandra.locator.DynamicEndpointSnitchMBean;
 import org.apache.cassandra.locator.EndpointSnitchInfoMBean;
 import org.apache.cassandra.locator.LocationInfoMBean;
 import org.apache.cassandra.management.CommandInvokerService;
+import org.apache.cassandra.management.CommandInvokerServiceMBean;
 import org.apache.cassandra.management.MBeanAccessor;
 import org.apache.cassandra.metrics.CQLMetrics;
 import org.apache.cassandra.metrics.CassandraMetricsRegistry;
@@ -183,6 +184,7 @@ public class NodeProbe implements AutoCloseable
     protected AsyncProfilerMBean asyncProfilerProxy;
     protected GuardrailsMBean grProxy;
     protected CIDRFilteringMetricsTableMBean cfmProxy;
+    protected CommandInvokerServiceMBean commandInvokerProxy;
 
     private final MBeanAccessor mBeanAccessor;
     protected volatile Output output;
@@ -243,6 +245,7 @@ public class NodeProbe implements AutoCloseable
         grProxy = LazyMBeanProxy.create(mBeanAccessor, GuardrailsMBean.class);
         cfmProxy = LazyMBeanProxy.create(mBeanAccessor, CIDRFilteringMetricsTableMBean.class);
         asyncProfilerProxy = LazyMBeanProxy.create(mBeanAccessor, AsyncProfilerMBean.class);
+        commandInvokerProxy = LazyMBeanProxy.create(mBeanAccessor, CommandInvokerServiceMBean.class);
     }
 
     public void setOutput(Output output)
@@ -1174,6 +1177,18 @@ public class NodeProbe implements AutoCloseable
     public AsyncProfilerMBean getAsyncProfilerProxy()
     {
         return asyncProfilerProxy;
+    }
+
+    /** @return JSON object for one execution, or null when the id is unknown. */
+    public String getCommandExecution(String executionId)
+    {
+        return commandInvokerProxy.getExecution(executionId);
+    }
+
+    /** @return JSON array of executions, newest first, without their output. */
+    public String getCommandExecutions(String commandName)
+    {
+        return commandInvokerProxy.getExecutions(commandName);
     }
 
     public GossiperMBean getGossProxy()

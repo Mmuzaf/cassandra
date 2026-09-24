@@ -20,6 +20,7 @@ package org.apache.cassandra.tools.nodetool;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.cassandra.management.api.ProgressibleCommand;
 import org.apache.cassandra.schema.CompactionParams;
 import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.nodetool.layout.CassandraUsage;
@@ -34,7 +35,7 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalTabl
 
 
 @Command(name = "garbagecollect", description = "Remove deleted data from one or more tables")
-public class GarbageCollect extends AbstractCommand
+public class GarbageCollect extends AbstractCommand implements ProgressibleCommand
 {
     @CassandraUsage(usage = "[<keyspace> <tables>...] or <SSTable file>...",
                     description = "The keyspace followed by one or many tables, " +
