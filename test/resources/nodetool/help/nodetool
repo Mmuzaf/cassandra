@@ -18,6 +18,7 @@ The most commonly used nodetool commands are:
     clearsnapshot                       Remove the snapshot with the given name from the given keyspaces
     clientstats                         Print information about connected clients
     cms                                 Manage cluster metadata
+    commandexecutions                   Print management command executions. The node retains the last 100 in memory and none across restarts
     compact                             Force a (major) compaction on one or more tables or user-defined compaction on given SSTables
     compactionhistory                   Print history of compaction
     compactionstats                     Print statistics on compactions

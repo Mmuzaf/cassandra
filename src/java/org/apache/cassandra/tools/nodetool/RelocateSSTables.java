@@ -20,6 +20,7 @@ package org.apache.cassandra.tools.nodetool;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.cassandra.management.api.ProgressibleCommand;
 import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.nodetool.layout.CassandraUsage;
 
@@ -32,7 +33,7 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalKeys
 import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalTables;
 
 @Command(name = "relocatesstables", description = "Relocates sstables to the correct disk")
-public class RelocateSSTables extends AbstractCommand
+public class RelocateSSTables extends AbstractCommand implements ProgressibleCommand
 {
     @CassandraUsage(usage = "<keyspace> <table>", description = "The keyspace and table name")
     private List<String> args = new ArrayList<>();
