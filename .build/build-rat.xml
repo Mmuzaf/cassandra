@@ -63,6 +63,9 @@
                  <exclude name="test/resources/data/config/YamlConfigurationLoaderTest/*.yaml"/>
                  <exclude name="test/resources/nodetool/help/**"/>
                  <exclude name="tools/cqlstress-*.yaml"/>
+                 <exclude name="tools/bench/**/*.csv"/>
+                 <exclude name="tools/bench/**/*.ipynb"/>
+                 <exclude name="tools/bench/**/*.svg"/>
                  <!-- test data -->
                  <exclude name="pylib/cqlshlib/test/test_authproviderhandling_config/*"/>
                  <exclude name="test/**/cassandra*.conf"/>
