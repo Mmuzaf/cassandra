@@ -64,7 +64,9 @@ import static org.apache.cassandra.utils.JsonUtils.getJsonType;
  *   <li>JSON format: {"optionName": "value", "param0": "value", ...}</li>
  *   <li>Option names: use option name or any alias (e.g., "concurrent-compactors", "--concurrent-compactors")</li>
  *   <li>Positional parameters: use "param0", "param1", etc. or parameter name</li>
- *   <li>Returns command output as String</li>
+ *   <li>Returns command output as String. For a
+ *   {@link org.apache.cassandra.management.api.ProgressibleCommand} the reply arrives as soon as the
+ *   command is running and the output field holds the started hint rather than the command's own output</li>
  * </ul>
  *
  * <p>

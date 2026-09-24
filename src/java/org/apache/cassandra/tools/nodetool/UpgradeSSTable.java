@@ -24,6 +24,7 @@ import java.util.List;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import org.apache.cassandra.db.compaction.CompactionInterruptedException;
+import org.apache.cassandra.management.api.ProgressibleCommand;
 import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.nodetool.layout.CassandraUsage;
 
@@ -36,7 +37,7 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalKeys
 import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalTables;
 
 @Command(name = "upgradesstables", description = "Rewrite sstables (for the requested tables) that are not on the current version (thus upgrading them to said current version)")
-public class UpgradeSSTable extends AbstractCommand
+public class UpgradeSSTable extends AbstractCommand implements ProgressibleCommand
 {
     @CassandraUsage(usage = "[<keyspace> <tables>...]", description = "The keyspace followed by one or many tables")
     private List<String> args = new ArrayList<>();

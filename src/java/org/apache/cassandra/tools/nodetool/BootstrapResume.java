@@ -20,6 +20,7 @@ package org.apache.cassandra.tools.nodetool;
 import java.io.IOError;
 import java.io.IOException;
 
+import org.apache.cassandra.management.api.ProgressibleCommand;
 import org.apache.cassandra.tools.NodeProbe;
 
 import picocli.CommandLine.Command;
@@ -28,7 +29,7 @@ import picocli.CommandLine.Option;
 import static org.apache.cassandra.config.CassandraRelevantProperties.RESET_BOOTSTRAP_PROGRESS;
 
 @Command(name = "resume", description = "Resume bootstrap streaming")
-public class BootstrapResume extends AbstractCommand
+public class BootstrapResume extends AbstractCommand implements ProgressibleCommand
 {
     @Option(paramLabel = "force",
             names = { "-f", "--force" },

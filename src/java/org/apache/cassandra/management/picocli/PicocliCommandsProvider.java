@@ -53,7 +53,7 @@ public class PicocliCommandsProvider implements CommandsProvider
                     @SuppressWarnings("unchecked")
                     Class<? extends AbstractCommand> abstractCommandClass =
                         (Class<? extends AbstractCommand>) commandClass;
-                    commands.add(new PicocliCommandAdapter(abstractCommandClass));
+                    commands.add(PicocliCommandAdapter.forClass(abstractCommandClass));
                 }
             }
         });

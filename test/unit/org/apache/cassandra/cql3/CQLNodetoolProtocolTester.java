@@ -23,11 +23,16 @@ import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import org.apache.cassandra.config.CassandraRelevantProperties;
+import org.apache.cassandra.db.virtual.CommandTables;
+import org.apache.cassandra.db.virtual.VirtualKeyspace;
+import org.apache.cassandra.db.virtual.VirtualKeyspaceRegistry;
 import org.apache.cassandra.distributed.shared.WithProperties;
+import org.apache.cassandra.schema.SchemaConstants;
 import org.apache.cassandra.tools.NodeTool;
 import org.apache.cassandra.tools.ToolRunner;
 import org.apache.cassandra.tools.nodetool.strategy.CommandExecutionStrategy;
@@ -40,6 +45,14 @@ public abstract class CQLNodetoolProtocolTester extends CQLTester
 
     @Parameterized.Parameter
     public CommandExecutionStrategy.Type strategy;
+
+    /** The CQL strategy polls system_views.command_executions, which a real node always has. */
+    @BeforeClass
+    public static void registerCommandTables()
+    {
+        VirtualKeyspaceRegistry.instance.register(new VirtualKeyspace(SchemaConstants.VIRTUAL_VIEWS,
+                                                                      CommandTables.getAll(SchemaConstants.VIRTUAL_VIEWS)));
+    }
 
     @Parameterized.Parameters(name = "strategy={0}")
     public static Collection<Object[]> data()

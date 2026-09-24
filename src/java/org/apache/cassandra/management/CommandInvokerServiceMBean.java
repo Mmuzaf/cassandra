@@ -27,6 +27,20 @@ public interface CommandInvokerServiceMBean
     String MBEAN_NAME = "org.apache.cassandra.management:type=CommandInvokerService";
 
     /**
+     * Field names of an execution record, shared by {@link #getExecution(String)},
+     * {@link #getExecutions(String)} and the columns of {@code system_views.command_executions}, so that a
+     * client polling over JMX and one polling over CQL read the same names.
+     */
+    String FIELD_EXECUTION_ID = "execution_id";
+    String FIELD_COMMAND = "command";
+    String FIELD_STATUS = "status";
+    String FIELD_STARTED_AT = "started_at";
+    String FIELD_COMPLETED_AT = "completed_at";
+    String FIELD_ERROR = "error";
+    String FIELD_ERROR_TYPE = "error_type";
+    String FIELD_OUTPUT = "output";
+
+    /**
      * Get a list of all command names in the registry.
      * @return array of command names
      */
@@ -45,4 +59,20 @@ public interface CommandInvokerServiceMBean
      * @throws IllegalArgumentException if command not found
      */
     String getCommandMBeanName(String fullCommandName);
+
+    /**
+     * A single retained execution, including the output produced so far.
+     *
+     * @param executionId execution id as a UUID string
+     * @return JSON object keyed by the {@code FIELD_} names, or null when the id is unknown or malformed
+     */
+    String getExecution(String executionId);
+
+    /**
+     * Retained executions, newest first, without their output.
+     *
+     * @param commandName full command name to filter on, or null for every retained execution
+     * @return JSON array of objects keyed by the {@code FIELD_} names
+     */
+    String getExecutions(String commandName);
 }

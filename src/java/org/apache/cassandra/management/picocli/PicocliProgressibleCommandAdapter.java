@@ -15,29 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.cassandra.tools.nodetool;
 
-
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
+package org.apache.cassandra.management.picocli;
 
 import org.apache.cassandra.management.api.ProgressibleCommand;
-import org.apache.cassandra.tools.NodeProbe;
+import org.apache.cassandra.tools.nodetool.AbstractCommand;
 
-import picocli.CommandLine.Command;
-
-@Command(name = "drain", description = "Drain the node (stop accepting writes and flush all tables)")
-public class Drain extends AbstractCommand implements ProgressibleCommand
+/** Adapter for picocli commands marked as {@link ProgressibleCommand}. */
+public class PicocliProgressibleCommandAdapter extends PicocliCommandAdapter implements ProgressibleCommand
 {
-    @Override
-    public void execute(NodeProbe probe)
+    public PicocliProgressibleCommandAdapter(Class<? extends AbstractCommand> commandClass)
     {
-        try
-        {
-            probe.drain();
-        } catch (IOException | InterruptedException | ExecutionException e)
-        {
-            throw new RuntimeException("Error occurred during flushing", e);
-        }
+        super(commandClass);
     }
 }

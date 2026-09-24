@@ -20,10 +20,13 @@ package org.apache.cassandra.db.virtual;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import org.apache.cassandra.Util;
 import org.apache.cassandra.cql3.CQLTester;
 import org.apache.cassandra.cql3.UntypedResultSet;
 
@@ -31,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests the {@code system_views.commands} and {@code system_views.command_arguments} catalog that cqlsh
- * completes {@code INVOKE COMMAND} from.
+ * completes {@code INVOKE COMMAND} from, and the {@code system_views.command_executions} history.
  */
 public class CommandTablesTest extends CQLTester
 {
@@ -121,6 +124,62 @@ public class CommandTablesTest extends CQLTester
     {
         assertThat(execute("SELECT argument FROM " + KS_NAME + ".command_arguments WHERE command = 'profile.status'"))
             .isEmpty();
+    }
+
+    @Test
+    public void testSynchronousExecutionRecorded() throws Throwable
+    {
+        UUID executionId = executeCommand("INVOKE COMMAND version;");
+        UntypedResultSet.Row row = execution(executionId);
+
+        assertThat(row.getString("command")).isEqualTo("version");
+        assertThat(row.getString("status")).isEqualTo("COMPLETED");
+        assertThat(row.has("completed_at")).isTrue();
+        assertThat(row.has("output")).as("Synchronous output goes back to the caller, not the table").isFalse();
+    }
+
+    @Test
+    public void testProgressibleExecutionCompletesAsynchronously() throws Throwable
+    {
+        String keyspace = createKeyspace("CREATE KEYSPACE %s WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }");
+        createTable(keyspace, "CREATE TABLE %s (k text PRIMARY KEY, v int)");
+
+        UUID executionId = executeCommand(String.format("INVOKE COMMAND cleanup WITH \"keyspace\" = '%s';", keyspace));
+        assertThat(execution(executionId).getString("command")).isEqualTo("cleanup");
+
+        Util.spinAssertEquals(null, "COMPLETED", () -> execution(executionId).getString("status"), 1, TimeUnit.MINUTES);
+        assertThat(execution(executionId).has("completed_at")).isTrue();
+    }
+
+    @Test
+    public void testFailureCategoryRecorded() throws Throwable
+    {
+        UUID executionId = executeCommand("INVOKE COMMAND cleanup WITH \"keyspace\" = 'nonexistent_keyspace';");
+
+        Util.spinAssertEquals(null, "FAILED", () -> execution(executionId).getString("status"), 1, TimeUnit.MINUTES);
+        UntypedResultSet.Row row = execution(executionId);
+        assertThat(row.getString("error_type")).isEqualTo("VALIDATION");
+        assertThat(row.getString("error")).contains("nonexistent_keyspace");
+    }
+
+    /** Runs an INVOKE COMMAND statement and returns its execution id. */
+    private UUID executeCommand(String statement) throws Throwable
+    {
+        return execute(statement).one().getUUID("execution_id");
+    }
+
+    private UntypedResultSet.Row execution(UUID executionId)
+    {
+        try
+        {
+            UntypedResultSet rows = execute("SELECT * FROM " + KS_NAME + ".command_executions WHERE execution_id = ?", executionId);
+            assertThat(rows).as("Execution %s should be in the history", executionId).hasSize(1);
+            return rows.one();
+        }
+        catch (Throwable t)
+        {
+            throw new RuntimeException(t);
+        }
     }
 
     private static List<String> column(UntypedResultSet rows, String name)

@@ -17,13 +17,14 @@
  */
 package org.apache.cassandra.tools.nodetool;
 
+import org.apache.cassandra.management.api.ProgressibleCommand;
 import org.apache.cassandra.tools.NodeProbe;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @Command(name = "decommission", description = "Decommission the *node I am connecting to*")
-public class Decommission extends AbstractCommand
+public class Decommission extends AbstractCommand implements ProgressibleCommand
 {
 
     @Option(paramLabel = "force",
