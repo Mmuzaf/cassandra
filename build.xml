@@ -1185,6 +1185,7 @@
           <exclude name="src/gen-java/**" />
           <exclude name=".git/**" />
           <exclude name="venv/**" />
+          <exclude name="**/tools/bench/**" />
           <exclude name="src/resources/org/apache/cassandra/config/version.properties" />
           <exclude name="conf/hotspot_compiler" />
           <exclude name="doc/cql3/CQL.html" />
