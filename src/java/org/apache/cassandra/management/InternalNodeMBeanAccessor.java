@@ -159,6 +159,7 @@ public class InternalNodeMBeanAccessor implements MBeanAccessor
         registerMBeanProvider(BatchlogManagerMBean.class, () -> BatchlogManager.instance);
         registerMBeanProvider(CMSOperationsMBean.class, () -> CMSOperations.instance);
         registerMBeanProvider(CacheServiceMBean.class, () -> CacheService.instance);
+        registerMBeanProvider(CommandInvokerServiceMBean.class, () -> CommandInvokerService.instance);
         registerMBeanProvider(CompactionManagerMBean.class, () -> CompactionManager.instance);
         registerMBeanProvider(DynamicEndpointSnitchMBean.class, this::resolveDynamicEndpointSnitch);
         registerMBeanProvider(FailureDetectorMBean.class, () -> (FailureDetectorMBean) FailureDetector.instance);

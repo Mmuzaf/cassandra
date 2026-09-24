@@ -38,6 +38,7 @@ import org.apache.cassandra.db.compression.ICompressionDictionaryTrainer.Trainin
 import org.apache.cassandra.db.compression.TrainingState;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.io.util.FileUtils;
+import org.apache.cassandra.management.api.ProgressibleCommand;
 import org.apache.cassandra.schema.SystemDistributedKeyspace;
 import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.nodetool.formatter.TableBuilder;
@@ -69,7 +70,7 @@ public class CompressionDictionaryCommandGroup
 {
     @Command(name = "train",
              description = "Manually trigger compression dictionary training for a table. If no SSTables are available, the memtable will be flushed first.")
-    public static class TrainDictionary extends AbstractCommand
+    public static class TrainDictionary extends AbstractCommand implements ProgressibleCommand
     {
         private static final String MAX_DICT_SIZE_PARAM_NAME = "--max-dict-size";
         private static final String MAX_TOTAL_SAMPLE_SIZE_PARAM_NAME = "--max-total-sample-size";

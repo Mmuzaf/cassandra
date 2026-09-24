@@ -17,6 +17,7 @@
  */
 package org.apache.cassandra.tools.nodetool;
 
+import org.apache.cassandra.management.api.ProgressibleCommand;
 import org.apache.cassandra.tools.NodeProbe;
 
 import picocli.CommandLine.Command;
@@ -24,7 +25,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @Command(name = "rebuild", description = "Rebuild data by streaming from other nodes (similarly to bootstrap)")
-public class Rebuild extends AbstractCommand
+public class Rebuild extends AbstractCommand implements ProgressibleCommand
 {
     @Parameters(paramLabel = "src-dc-name",
                 description = "Name of DC from which to select sources for streaming. By default, pick any DC (except local DC when --exclude-local-dc is set)",

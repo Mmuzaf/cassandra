@@ -68,6 +68,7 @@ import static org.apache.cassandra.tools.nodetool.Help.printTopCommandUsage;
                          Cleanup.class,
                          ClearSnapshot.class,
                          ClientStats.class,
+                         CommandExecutions.class,
                          Compact.class,
                          CompactionHistory.class,
                          CompactionStats.class,

@@ -21,12 +21,8 @@ package org.apache.cassandra.management;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import org.apache.cassandra.management.api.Command;
 import org.apache.cassandra.management.api.CommandExecutionArgs;
@@ -41,14 +37,6 @@ import static org.apache.cassandra.management.ManagementUtils.loadService;
 
 public class CassandraCommandRegistry implements CommandRegistry
 {
-    private static final Logger logger = LoggerFactory.getLogger(CassandraCommandRegistry.class);
-
-    // TODO CASSANDRA-XXXXX These long-running commands block the calling thread for
-    //  the entire command duration. They are excluded from the management API until a
-    //  ProgressCommand (extends Command) interface is implemented to support long-running
-    //  command execution with progress reporting.
-    static final Set<String> UNSUPPORTED_COMMANDS = Set.of("repair", "consensus_admin");
-
     private final Map<String, Command<?>> commandMap = new ConcurrentHashMap<>();
 
     public CassandraCommandRegistry()
@@ -59,18 +47,16 @@ public class CassandraCommandRegistry implements CommandRegistry
 
     public void register(Command<?> command)
     {
-        if (UNSUPPORTED_COMMANDS.contains(command.name()))
-        {
-            logger.info("Skipping unsupported command '{}': long-running commands require " +
-                        "ProgressCommand support (not yet implemented)", command.name());
-            return;
-        }
-
         Command<?> prev = commandMap.putIfAbsent(command.name(), command);
 
         if (prev != null)
             throw new IllegalStateException(String.format("Command name conflict: '%s' is already registered",
                                                           command.name()));
+    }
+
+    public void unregister(String name)
+    {
+        commandMap.remove(name);
     }
 
     @Override

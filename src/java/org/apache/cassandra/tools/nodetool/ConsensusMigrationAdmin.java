@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.cassandra.management.api.ProgressibleCommand;
 import org.apache.cassandra.service.consensus.migration.ConsensusMigrationTarget;
 import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.RepairRunner.RepairCmd;
@@ -107,7 +108,7 @@ public class ConsensusMigrationAdmin extends AbstractCommand
     }
 
     @Command(name = "finish-migration", description = "Complete the migration for a range that has already begun migration")
-    public static class FinishMigration extends AbstractCommand
+    public static class FinishMigration extends AbstractCommand implements ProgressibleCommand
     {
         @Option(paramLabel = "start_token", names = {"-st", "--start-token"}, description = "Use -st to specify a token at which the repair range starts (exclusive)")
         private String startToken = null;

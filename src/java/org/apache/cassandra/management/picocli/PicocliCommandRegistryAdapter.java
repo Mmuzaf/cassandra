@@ -96,7 +96,7 @@ public class PicocliCommandRegistryAdapter implements CommandRegistry
                               subcommandClass.getName()));
             }
 
-            adaptedCommand = new PicocliCommandAdapter((Class<? extends AbstractCommand>) subcommandClass);
+            adaptedCommand = PicocliCommandAdapter.forClass((Class<? extends AbstractCommand>) subcommandClass);
         }
 
         subcommandMap.put(commandName, adaptedCommand);

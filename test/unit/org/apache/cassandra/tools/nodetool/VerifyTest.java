@@ -37,6 +37,7 @@ import org.apache.cassandra.io.sstable.format.SSTableReader;
 import org.apache.cassandra.io.util.File;
 import org.apache.cassandra.tools.ToolRunner;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -123,7 +124,7 @@ public class VerifyTest extends CQLNodetoolProtocolTester
         // Both --sai-only and --include-sai should fail
         ToolRunner.ToolResult result = invokeNodetool("verify", "--force", "--sai-only", "--include-sai", keyspace(), currentTable());
         result.asserts().failure();
-        result.getStdout().contains("Cannot specify both --sai-only and --include-sai");
+        assertThat(result.getStdout()).contains("Cannot specify both --sai-only and --include-sai");
     }
 
     @Test

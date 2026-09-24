@@ -26,6 +26,7 @@ import org.apache.cassandra.management.api.Command;
 import org.apache.cassandra.management.api.CommandExecutionArgs;
 import org.apache.cassandra.management.api.CommandExecutionContext;
 import org.apache.cassandra.management.api.CommandMetadata;
+import org.apache.cassandra.management.api.ProgressibleCommand;
 import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.Output;
 import org.apache.cassandra.tools.nodetool.AbstractCommand;
@@ -36,6 +37,17 @@ public class PicocliCommandAdapter implements Command<Void>
 {
     private final Class<? extends AbstractCommand> commandClass;
     private final CommandMetadata commandMetadata;
+
+    /**
+     * Adapts a leaf picocli command, carrying over the {@link ProgressibleCommand} marker so the registry
+     * side reports the same thing as the nodetool bean.
+     */
+    public static PicocliCommandAdapter forClass(Class<? extends AbstractCommand> commandClass)
+    {
+        return ProgressibleCommand.class.isAssignableFrom(commandClass)
+               ? new PicocliProgressibleCommandAdapter(commandClass)
+               : new PicocliCommandAdapter(commandClass);
+    }
 
     public PicocliCommandAdapter(Class<? extends AbstractCommand> commandClass)
     {
@@ -49,6 +61,12 @@ public class PicocliCommandAdapter implements Command<Void>
     public CommandMetadata metadata()
     {
         return commandMetadata;
+    }
+
+    /** The nodetool bean this adapter wraps. */
+    public Class<? extends AbstractCommand> commandClass()
+    {
+        return commandClass;
     }
 
     @Override

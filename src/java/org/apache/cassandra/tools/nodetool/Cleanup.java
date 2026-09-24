@@ -20,6 +20,7 @@ package org.apache.cassandra.tools.nodetool;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.cassandra.management.api.ProgressibleCommand;
 import org.apache.cassandra.schema.SchemaConstants;
 import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.nodetool.layout.CassandraUsage;
@@ -33,7 +34,7 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalKeys
 import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalTables;
 
 @Command(name = "cleanup", description = "Triggers the immediate cleanup of keys no longer belonging to a node. By default, clean all keyspaces")
-public class Cleanup extends AbstractCommand
+public class Cleanup extends AbstractCommand implements ProgressibleCommand
 {
     @CassandraUsage(usage = "[<keyspace> <tables>...]", description = "The keyspace followed by one or many tables")
     private List<String> args = new ArrayList<>();

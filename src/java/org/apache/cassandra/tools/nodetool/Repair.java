@@ -28,6 +28,7 @@ import com.google.common.collect.Sets;
 
 import org.apache.commons.lang3.StringUtils;
 
+import org.apache.cassandra.management.api.ProgressibleCommand;
 import org.apache.cassandra.repair.RepairParallelism;
 import org.apache.cassandra.repair.messages.RepairOption;
 import org.apache.cassandra.schema.SchemaConstants;
@@ -47,7 +48,7 @@ import static org.apache.cassandra.tools.nodetool.CommandUtils.parseOptionalTabl
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 @Command(name = "repair", description = "Repair one or more tables")
-public class Repair extends AbstractCommand
+public class Repair extends AbstractCommand implements ProgressibleCommand
 {
     public final static Set<String> ONLY_EXPLICITLY_REPAIRED = Sets.newHashSet(SchemaConstants.DISTRIBUTED_KEYSPACE_NAME);
 

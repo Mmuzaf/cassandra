@@ -24,15 +24,18 @@ import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 import org.apache.cassandra.db.virtual.model.CommandArgumentRow;
+import org.apache.cassandra.db.virtual.model.CommandExecutionRow;
 import org.apache.cassandra.db.virtual.model.CommandRow;
 import org.apache.cassandra.db.virtual.walker.CommandArgumentRowWalker;
+import org.apache.cassandra.db.virtual.walker.CommandExecutionRowWalker;
 import org.apache.cassandra.db.virtual.walker.CommandRowWalker;
 import org.apache.cassandra.management.CommandInvokerService;
 import org.apache.cassandra.management.CommandInvokerService.CommandEntry;
+import org.apache.cassandra.management.CommandInvokerService.ExecutionHistory;
 
 /**
- * Catalog of the management commands invocable with {@code INVOKE COMMAND}, and of the arguments each of
- * them accepts. Lets clients discover commands over CQL; cqlsh completes {@code INVOKE COMMAND} from it.
+ * Catalog of the management commands invocable with {@code INVOKE COMMAND}, their arguments and their recent
+ * executions. cqlsh completes {@code INVOKE COMMAND} from it.
  */
 public class CommandTables
 {
@@ -50,6 +53,7 @@ public class CommandTables
             () -> StreamSupport.stream(commands.spliterator(), false)
                                .flatMap(CommandArgumentRow::forCommand)
                                .iterator();
+        Iterable<ExecutionHistory> executions = () -> CommandInvokerService.instance.executionHistory().iterator();
 
         return Arrays.asList(
             CollectionVirtualTableAdapter.create(keyspace,
@@ -63,6 +67,12 @@ public class CommandTables
                                                  "Arguments accepted by the management commands",
                                                  new CommandArgumentRowWalker(),
                                                  arguments,
-                                                 Function.identity()));
+                                                 Function.identity()),
+            CollectionVirtualTableAdapter.create(keyspace,
+                                                 "command_executions",
+                                                 "Recent management command executions, with status and progress",
+                                                 new CommandExecutionRowWalker(),
+                                                 executions,
+                                                 CommandExecutionRow::new));
     }
 }

@@ -30,7 +30,9 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.cassandra.config.CassandraRelevantEnv;
 import org.apache.cassandra.config.CassandraRelevantProperties;
 import org.apache.cassandra.cql3.ColumnIdentifier;
+import org.apache.cassandra.cql3.ColumnSpecification;
 import org.apache.cassandra.cql3.CqlBuilder;
+import org.apache.cassandra.cql3.ResultSet;
 import org.apache.cassandra.db.ConsistencyLevel;
 import org.apache.cassandra.db.marshal.ByteArrayAccessor;
 import org.apache.cassandra.db.marshal.UTF8Type;
@@ -41,7 +43,9 @@ import org.apache.cassandra.exceptions.UnauthorizedException;
 import org.apache.cassandra.management.api.CommandExecutionArgs;
 import org.apache.cassandra.management.api.OptionMetadata;
 import org.apache.cassandra.management.api.ParameterMetadata;
+import org.apache.cassandra.management.api.ProgressibleCommand;
 import org.apache.cassandra.management.picocli.PicocliCommandArgsConverter;
+import org.apache.cassandra.schema.SchemaConstants;
 import org.apache.cassandra.tools.nodetool.AbstractCommand;
 import org.apache.cassandra.tools.nodetool.CqlConnect;
 import org.apache.cassandra.tools.nodetool.StopDaemon;
@@ -51,12 +55,18 @@ import org.apache.cassandra.transport.messages.ResultMessage;
 import picocli.CommandLine;
 
 import static org.apache.cassandra.config.CassandraRelevantProperties.CASSANDRA_CLI_EXECUTION_SHOW_EXECUTION_ID;
+import static org.apache.cassandra.management.CommandInvokerServiceMBean.FIELD_ERROR;
+import static org.apache.cassandra.management.CommandInvokerServiceMBean.FIELD_ERROR_TYPE;
+import static org.apache.cassandra.management.CommandInvokerServiceMBean.FIELD_OUTPUT;
+import static org.apache.cassandra.management.CommandInvokerServiceMBean.FIELD_STATUS;
 import static org.apache.cassandra.management.ManagementUtils.normalizeOptionName;
 import static org.apache.cassandra.management.api.ParameterMetadata.COMMAND_POSITIONAL_PARAM_PREFIX;
 import static org.apache.cassandra.tools.nodetool.strategy.CommandMBeanExecutionStrategy.extractCommandName;
 
 public class CqlCommandExecutionStrategy implements CommandExecutionStrategy
 {
+    private static final String COMMAND_EXECUTIONS_TABLE = "command_executions";
+
     private final CqlConnect connect;
 
     public CqlCommandExecutionStrategy(CqlConnect connect)
@@ -106,13 +116,19 @@ public class CqlCommandExecutionStrategy implements CommandExecutionStrategy
                     List<byte[]> firstRow = rows.result.rows.get(0);
                     if (firstRow.size() >= 2)
                     {
+                        CommandLine commandLine = parseResult.commandSpec().commandLine();
                         UUID executionId = UUIDType.instance.getSerializer().deserialize(firstRow.get(0), ByteArrayAccessor.instance);
                         String output = UTF8Type.instance.getSerializer().deserialize(firstRow.get(1), ByteArrayAccessor.instance);
+
                         // NodeProbe instance is not available here, so print directly to the command output.
-                        parseResult.commandSpec().commandLine().getOut().println(output);
+                        if (userObject instanceof ProgressibleCommand)
+                            CommandExecutionPoller.await(commandLine, commandName, executionId, () -> readExecution(executionId));
+                        else
+                            commandLine.getOut().println(output);
+
                         if (CASSANDRA_CLI_EXECUTION_SHOW_EXECUTION_ID.getBoolean()
                             || CassandraRelevantEnv.CASSANDRA_CLI_EXECUTION_SHOW_EXECUTION_ID.getBoolean())
-                            parseResult.commandSpec().commandLine().getOut().println("Command execution id: " + executionId.toString());
+                            commandLine.getOut().println("Command execution id: " + executionId.toString());
                     }
                 }
             }
@@ -146,6 +162,10 @@ public class CqlCommandExecutionStrategy implements CommandExecutionStrategy
                                                                    e.getMessage()),
                                                      e);
         }
+        catch (CommandLine.PicocliException e)
+        {
+            throw e;
+        }
         catch (RuntimeException e)
         {
             Throwable cause = e.getCause();
@@ -175,6 +195,47 @@ public class CqlCommandExecutionStrategy implements CommandExecutionStrategy
             throw new CommandLine.ExecutionException(parseResult.commandSpec().commandLine(),
                                                      "Unknown command execution exception via CQL: " + e.getMessage(), e);
         }
+    }
+
+    /** Reads one execution from {@code system_views.command_executions} for {@link CommandExecutionPoller}. */
+    private Map<String, String> readExecution(UUID executionId)
+    {
+        String query = String.format("SELECT %s, %s, %s, %s FROM %s.%s WHERE execution_id = %s;",
+                                     FIELD_STATUS, FIELD_OUTPUT, FIELD_ERROR, FIELD_ERROR_TYPE,
+                                     SchemaConstants.VIRTUAL_VIEWS, COMMAND_EXECUTIONS_TABLE, executionId);
+        ResultMessage result;
+        try
+        {
+            result = connect.client().execute(query, ConsistencyLevel.ONE);
+        }
+        catch (SimpleClient.ConnectionClosedException e)
+        {
+            throw new CommandExecutionPoller.ConnectionLostException(e);
+        }
+
+        ResultSet rows = result instanceof ResultMessage.Rows ? ((ResultMessage.Rows) result).result : null;
+        if (rows == null || rows.isEmpty())
+            return null;
+
+        List<byte[]> row = rows.rows.get(0);
+        Map<String, String> record = new LinkedHashMap<>();
+        for (String field : new String[]{ FIELD_STATUS, FIELD_OUTPUT, FIELD_ERROR, FIELD_ERROR_TYPE })
+            record.put(field, stringColumn(rows, row, field));
+        return record;
+    }
+
+    private static String stringColumn(ResultSet rows, List<byte[]> row, String name)
+    {
+        List<ColumnSpecification> names = rows.metadata.names;
+        for (int i = 0; i < names.size() && i < row.size(); i++)
+        {
+            if (!names.get(i).name.toString().equals(name))
+                continue;
+
+            byte[] value = row.get(i);
+            return value == null ? null : UTF8Type.instance.getSerializer().deserialize(value, ByteArrayAccessor.instance);
+        }
+        return null;
     }
 
     @Override

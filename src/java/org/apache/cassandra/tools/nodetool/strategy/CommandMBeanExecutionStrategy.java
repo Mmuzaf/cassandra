@@ -19,8 +19,10 @@
 package org.apache.cassandra.tools.nodetool.strategy;
 
 import java.io.IOException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.management.MBeanException;
 import javax.management.MBeanServerConnection;
@@ -35,6 +37,7 @@ import org.apache.cassandra.cql3.statements.ExecuteCommandStatement;
 import org.apache.cassandra.management.CommandExecutionArgsSerde;
 import org.apache.cassandra.management.CommandMBeanAdapter;
 import org.apache.cassandra.management.api.CommandExecutionArgs;
+import org.apache.cassandra.management.api.ProgressibleCommand;
 import org.apache.cassandra.management.picocli.PicocliCommandArgsConverter;
 import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.RemoteJmxMBeanAccessor;
@@ -106,7 +109,19 @@ public class CommandMBeanExecutionStrategy implements CommandExecutionStrategy
             if (Strings.isNullOrEmpty(executionId) || output == null)
                 throw new RuntimeException("Invalid command result schema received from CommandMBeanAdapter: " + rawResult);
 
-            probe.output().printInfo(output);
+            if (userObject instanceof ProgressibleCommand)
+            {
+                NodeProbe pollProbe = probe;
+                CommandExecutionPoller.await(parseResult.commandSpec().commandLine(),
+                                             commandName,
+                                             UUID.fromString(executionId),
+                                             () -> readExecution(pollProbe, executionId));
+            }
+            else
+            {
+                probe.output().printInfo(output);
+            }
+
             // Existing tests assert on exact command output, so this property controls whether the
             // execution id is printed.
             if (CASSANDRA_CLI_EXECUTION_SHOW_EXECUTION_ID.getBoolean() ||
@@ -116,6 +131,11 @@ public class CommandMBeanExecutionStrategy implements CommandExecutionStrategy
         }
         catch (NodetoolConnectionException e)
         {
+            throw e;
+        }
+        catch (CommandLine.PicocliException e)
+        {
+            // Already carries the message and the exit code picocli should use, most often from the poller.
             throw e;
         }
         catch (RuntimeMBeanException e)
@@ -166,6 +186,27 @@ public class CommandMBeanExecutionStrategy implements CommandExecutionStrategy
         {
             throw new ExecutionStrategyCloseException("Failed to close JMX connection", e);
         }
+    }
+
+    /**
+     * Reads one execution from the service MBean for {@link CommandExecutionPoller}. A lost JMX connector surfaces
+     * from the proxy as an {@link UndeclaredThrowableException} wrapping an {@link IOException}.
+     */
+    private static Map<String, String> readExecution(NodeProbe probe, String executionId)
+    {
+        String json;
+        try
+        {
+            json = probe.getCommandExecution(executionId);
+        }
+        catch (UndeclaredThrowableException e)
+        {
+            if (e.getCause() instanceof IOException)
+                throw new CommandExecutionPoller.ConnectionLostException(e.getCause());
+            throw e;
+        }
+
+        return json == null ? null : fromJsonMap(json);
     }
 
     /** Handles nested commands (e.g. compressiondictionary.train). */

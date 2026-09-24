@@ -20,6 +20,7 @@ package org.apache.cassandra.tools.nodetool;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.cassandra.management.api.ProgressibleCommand;
 import org.apache.cassandra.tools.NodeProbe;
 import org.apache.cassandra.tools.nodetool.layout.CassandraUsage;
 
@@ -33,7 +34,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 // TODO CASSANDRA-20793 Types of input aguments shouldn't be mixed in the same command. The keyspace, table and SSTable file arguments should have their own commands.
 @Command(name = "compact", description = "Force a (major) compaction on one or more tables or user-defined compaction on given SSTables")
-public class Compact extends AbstractCommand
+public class Compact extends AbstractCommand implements ProgressibleCommand
 {
     @CassandraUsage(usage = "[<keyspace> <tables>...] or <SSTable file>...",
                     description = "The keyspace followed by one or many tables or list of SSTable data files when using --user-defined")

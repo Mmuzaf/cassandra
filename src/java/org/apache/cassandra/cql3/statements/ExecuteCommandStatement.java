@@ -19,6 +19,7 @@ package org.apache.cassandra.cql3.statements;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.apache.cassandra.audit.AuditLogContext;
 import org.apache.cassandra.audit.AuditLogEntryType;
@@ -41,6 +42,7 @@ import org.apache.cassandra.management.CommandExecutionException;
 import org.apache.cassandra.management.CommandInvokerService;
 import org.apache.cassandra.management.CommandValidationException;
 import org.apache.cassandra.management.api.Command;
+import org.apache.cassandra.management.api.CommandExecutionArgs;
 import org.apache.cassandra.service.ClientState;
 import org.apache.cassandra.service.QueryState;
 import org.apache.cassandra.transport.Dispatcher;
@@ -124,9 +126,8 @@ public class ExecuteCommandStatement
                 if (command == null)
                     throw new InvalidRequestException("Command not found: " + commandName);
 
-                CommandInvokerService.CommandResult result = CommandInvokerService.instance
-                                                             .invokeCommand(commandName,
-                                                                            () -> CommandExecutionArgsSerde.fromMap(args, command.metadata()));
+                Supplier<CommandExecutionArgs> arguments = () -> CommandExecutionArgsSerde.fromMap(args, command.metadata());
+                CommandInvokerService.CommandResult result = CommandInvokerService.instance.execute(commandName, arguments);
 
                 ResultSet resultSet = getCommandResultSet();
                 resultSet.addColumnValue(bytes(result.getExecutionId()));

@@ -133,6 +133,8 @@ recent_hit_rate_per_second, recent_request_rate_per_second, request_count, and s
 
 |command_arguments |Lists the arguments accepted by each management command, as named in the `WITH` clause of `INVOKE COMMAND`.
 
+|command_executions |Recent management command executions, keyed by the execution id that `INVOKE COMMAND` returns. Shows the status, the output produced so far and the error, if any.
+
 |commands |Lists the management commands invocable with `INVOKE COMMAND`.
 
 |coordinator_read_latency |Records counts, keyspace_name, table_name, max, median, and per_second for coordinator reads.

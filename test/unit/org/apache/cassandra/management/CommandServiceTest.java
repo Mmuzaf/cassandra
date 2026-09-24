@@ -18,23 +18,48 @@
 
 package org.apache.cassandra.management;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import com.google.common.util.concurrent.Uninterruptibles;
+
 import org.junit.Test;
 
+import org.apache.cassandra.Util;
 import org.apache.cassandra.cql3.CQLTester;
+import org.apache.cassandra.management.CommandInvokerService.ExecutionHistory;
 import org.apache.cassandra.management.api.Command;
 import org.apache.cassandra.management.api.CommandExecutionArgs;
+import org.apache.cassandra.management.api.CommandExecutionContext;
 import org.apache.cassandra.management.api.CommandMetadata;
+import org.apache.cassandra.management.api.ExecutionStatus;
+import org.apache.cassandra.management.api.OptionMetadata;
+import org.apache.cassandra.management.api.ParameterMetadata;
+import org.apache.cassandra.management.api.ProgressibleCommand;
+import org.apache.cassandra.management.picocli.PicocliCommandAdapter;
+import org.apache.cassandra.tools.Output;
+import org.apache.cassandra.utils.JsonUtils;
 import org.apache.cassandra.utils.MBeanWrapper;
 
+import static org.apache.cassandra.management.CommandInvokerServiceMBean.FIELD_COMMAND;
+import static org.apache.cassandra.management.CommandInvokerServiceMBean.FIELD_COMPLETED_AT;
+import static org.apache.cassandra.management.CommandInvokerServiceMBean.FIELD_ERROR;
+import static org.apache.cassandra.management.CommandInvokerServiceMBean.FIELD_ERROR_TYPE;
+import static org.apache.cassandra.management.CommandInvokerServiceMBean.FIELD_EXECUTION_ID;
+import static org.apache.cassandra.management.CommandInvokerServiceMBean.FIELD_OUTPUT;
+import static org.apache.cassandra.management.CommandInvokerServiceMBean.FIELD_STARTED_AT;
+import static org.apache.cassandra.management.CommandInvokerServiceMBean.FIELD_STATUS;
+import static org.apache.cassandra.management.ManagementUtils.findRegistryCommand;
+import static org.apache.cassandra.utils.JsonUtils.fromJsonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertNotNull;
@@ -87,19 +112,211 @@ public class CommandServiceTest extends CQLTester
     }
 
     @Test
-    public void testUnsupportedCommandsNotRegistered()
+    public void testProgressibleCommandsRegistered()
     {
         CommandInvokerService service = CommandInvokerService.instance;
-        String[] commandNames = service.getCommandNames();
 
-        for (String unsupported : CassandraCommandRegistry.UNSUPPORTED_COMMANDS)
+        for (String name : List.of("repair", "cleanup", "compressiondictionary.train", "consensus_admin.finish-migration"))
+            assertThat(registryCommand(service, name))
+                .as("'%s' should be registered as progressible", name)
+                .isInstanceOf(ProgressibleCommand.class);
+
+        for (String name : List.of("info", "version"))
+            assertThat(registryCommand(service, name))
+                .as("'%s' should stay synchronous", name)
+                .isNotInstanceOf(ProgressibleCommand.class);
+
+        for (CommandInvokerService.CommandEntry entry : service.listCommands())
         {
-            Command<?> cmd = service.getRegistry().command(unsupported);
-            assertThat(cmd).as("Unsupported command '%s' should not be in the registry", unsupported).isNull();
+            if (!(entry.command() instanceof PicocliCommandAdapter))
+                continue;
 
-            assertThat(Arrays.asList(commandNames))
-                .as("Unsupported command '%s' should not appear in getCommandNames()", unsupported)
-                .noneMatch(name -> name.equals(unsupported) || name.startsWith(unsupported + "."));
+            PicocliCommandAdapter adapter = (PicocliCommandAdapter) entry.command();
+            assertThat(adapter instanceof ProgressibleCommand)
+                .as("Adapter and bean must agree on the progressible marker for '%s'", entry.fullName())
+                .isEqualTo(ProgressibleCommand.class.isAssignableFrom(adapter.commandClass()));
+        }
+    }
+
+    @Test
+    public void testStartCommandReturnsBeforeCompletion() throws Exception
+    {
+        CommandInvokerService service = CommandInvokerService.instance;
+        CountDownLatch release = new CountDownLatch(1);
+        CountDownLatch started = new CountDownLatch(1);
+        String name = registerLatchCommand(service, "latchstart", started, release);
+
+        try
+        {
+            UUID executionId = service.startCommand(name, CommandServiceTest::emptyArgs).getExecutionId();
+
+            assertThat(started.await(1, TimeUnit.MINUTES)).as("Command should have started").isTrue();
+            ExecutionHistory record = findInHistory(service, executionId);
+            assertThat(record).isNotNull();
+            assertThat(record.status()).isEqualTo(ExecutionStatus.RUNNING);
+            assertThat(record.endTime()).as("A running command has no completion time").isNull();
+            Util.spinAssertEquals(null, "working", () -> record.output().trim(), 1, TimeUnit.MINUTES);
+
+            Map<String, String> polled = fromJsonMap(service.getExecution(executionId.toString()));
+            assertThat(polled.get(FIELD_STATUS)).isEqualTo(ExecutionStatus.RUNNING.name());
+            assertThat(polled.get(FIELD_COMPLETED_AT)).isNull();
+            assertThat(polled.get(FIELD_OUTPUT)).contains("working");
+
+            release.countDown();
+            Util.spinAssertEquals(null, ExecutionStatus.COMPLETED, record::status, 1, TimeUnit.MINUTES);
+            assertThat(record.output()).contains("done");
+            assertThat(record.endTime()).isNotNull();
+        }
+        finally
+        {
+            release.countDown();
+            unregisterCommand(service, name);
+        }
+    }
+
+    @Test
+    public void testRunningExecutionsAreNotEvicted() throws Exception
+    {
+        CommandInvokerService service = CommandInvokerService.instance;
+        CountDownLatch release = new CountDownLatch(1);
+        CountDownLatch started = new CountDownLatch(1);
+        String name = registerLatchCommand(service, "latchevict", started, release);
+
+        try
+        {
+            UUID executionId = service.startCommand(name, CommandServiceTest::emptyArgs).getExecutionId();
+            assertThat(started.await(1, TimeUnit.MINUTES)).isTrue();
+
+            for (int i = 0; i < 120; i++)
+                service.invokeCommand("version", CommandServiceTest::emptyArgs);
+
+            assertThat(findInHistory(service, executionId))
+                .as("A running execution must survive eviction while shorter ones churn")
+                .isNotNull();
+        }
+        finally
+        {
+            release.countDown();
+            unregisterCommand(service, name);
+        }
+    }
+
+    @Test
+    public void testGetExecutionJson() throws Exception
+    {
+        CommandInvokerService service = CommandInvokerService.instance;
+        UUID executionId = service.invokeCommand("version", CommandServiceTest::emptyArgs).getExecutionId();
+
+        Map<String, String> execution = fromJsonMap(service.getExecution(executionId.toString()));
+        assertThat(execution).containsOnlyKeys(FIELD_EXECUTION_ID, FIELD_COMMAND, FIELD_STATUS, FIELD_STARTED_AT,
+                                               FIELD_COMPLETED_AT, FIELD_ERROR, FIELD_ERROR_TYPE, FIELD_OUTPUT);
+        assertThat(execution.get(FIELD_EXECUTION_ID)).isEqualTo(executionId.toString());
+        assertThat(execution.get(FIELD_COMMAND)).isEqualTo("version");
+        assertThat(execution.get(FIELD_STATUS)).isEqualTo(ExecutionStatus.COMPLETED.name());
+        assertThat(execution.get(FIELD_ERROR)).isNull();
+        assertThat(execution.get(FIELD_OUTPUT))
+            .as("A synchronous execution returned its output to the caller and retains none")
+            .isNull();
+        assertThat(Long.parseLong(execution.get(FIELD_COMPLETED_AT)))
+            .isGreaterThanOrEqualTo(Long.parseLong(execution.get(FIELD_STARTED_AT)));
+    }
+
+    @Test
+    public void testGetExecutionsFilteredAndOrdered() throws Exception
+    {
+        CommandInvokerService service = CommandInvokerService.instance;
+        UUID first = service.invokeCommand("version", CommandServiceTest::emptyArgs).getExecutionId();
+        UUID second = service.invokeCommand("version", CommandServiceTest::emptyArgs).getExecutionId();
+
+        List<Map<String, String>> executions = executions(service.getExecutions("version"));
+        assertThat(executions).allSatisfy(e -> assertThat(e.get(FIELD_COMMAND)).isEqualTo("version"));
+        assertThat(executions).allSatisfy(e -> assertThat(e).doesNotContainKey(FIELD_OUTPUT));
+
+        List<String> ids = executions.stream().map(e -> e.get(FIELD_EXECUTION_ID)).collect(Collectors.toList());
+        assertThat(ids.indexOf(second.toString()))
+            .as("Newest execution comes first")
+            .isLessThan(ids.indexOf(first.toString()));
+
+        assertThat(executions(service.getExecutions("nosuchcommand"))).isEmpty();
+        assertThat(executions(service.getExecutions(null)))
+            .as("A null filter returns every retained execution")
+            .hasSizeGreaterThanOrEqualTo(executions.size());
+    }
+
+    @Test
+    public void testGetExecutionUnknownId()
+    {
+        CommandInvokerService service = CommandInvokerService.instance;
+        assertThat(service.getExecution(UUID.randomUUID().toString())).isNull();
+        assertThat(service.getExecution("not-a-uuid")).isNull();
+        assertThat(service.getExecution(null)).isNull();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, String>> executions(String json)
+    {
+        return (List<Map<String, String>>) (List<?>) JsonUtils.fromJsonList(json);
+    }
+
+    /** Registers a command that reports progress, then blocks until {@code release} is counted down. */
+    private static String registerLatchCommand(CommandInvokerService service,
+                                               String name,
+                                               CountDownLatch started,
+                                               CountDownLatch release)
+    {
+        CassandraCommandRegistry registry = (CassandraCommandRegistry) service.getRegistry();
+        registry.register(new LatchCommand(name, started, release));
+        return name;
+    }
+
+    /** Other tests walk every registered name and expect an MBean, so a test command must not outlive its test. */
+    private static void unregisterCommand(CommandInvokerService service, String name)
+    {
+        ((CassandraCommandRegistry) service.getRegistry()).unregister(name);
+    }
+
+    private static Command<?> registryCommand(CommandInvokerService service, String fullName)
+    {
+        Command<?> command = findRegistryCommand(fullName, service.getRegistry());
+        assertThat(command).as("'%s' should be registered", fullName).isNotNull();
+        return command;
+    }
+
+    private static class LatchCommand implements Command<Void>, ProgressibleCommand
+    {
+        private final String name;
+        private final CountDownLatch started;
+        private final CountDownLatch release;
+
+        LatchCommand(String name, CountDownLatch started, CountDownLatch release)
+        {
+            this.name = name;
+            this.started = started;
+            this.release = release;
+        }
+
+        @Override
+        public CommandMetadata metadata()
+        {
+            return new CommandMetadata()
+            {
+                public String name() { return name; }
+                public String description() { return "Blocks until released, for tests"; }
+                public List<OptionMetadata> options() { return Collections.emptyList(); }
+                public List<ParameterMetadata> parameters() { return Collections.emptyList(); }
+                public List<CommandMetadata> subcommands() { return Collections.emptyList(); }
+            };
+        }
+
+        @Override
+        public Void execute(CommandExecutionArgs arguments, CommandExecutionContext context)
+        {
+            Output output = context.service(Output.class);
+            output.out.println("working");
+            started.countDown();
+            Uninterruptibles.awaitUninterruptibly(release);
+            output.out.println("done");
+            return null;
         }
     }
 

@@ -21,12 +21,13 @@ package org.apache.cassandra.tools.nodetool;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.cassandra.management.api.ProgressibleCommand;
 import org.apache.cassandra.tools.NodeProbe;
 
 import picocli.CommandLine.Command;
 
 @Command(name = "drain", description = "Drain the node (stop accepting writes and flush all tables)")
-public class Drain extends AbstractCommand
+public class Drain extends AbstractCommand implements ProgressibleCommand
 {
     @Override
     public void execute(NodeProbe probe)
