@@ -42,6 +42,8 @@ import org.apache.cassandra.io.util.FileWriter;
 import org.apache.cassandra.tools.nodetool.CqlConnect;
 import org.apache.cassandra.tools.nodetool.JmxConnect;
 import org.apache.cassandra.tools.nodetool.NodetoolCommand;
+import org.apache.cassandra.tools.nodetool.NodetoolCommandsProvider;
+import org.apache.cassandra.tools.nodetool.NodetoolPluginCommands;
 import org.apache.cassandra.tools.nodetool.layout.CassandraCliHelpLayout;
 import org.apache.cassandra.tools.nodetool.strategy.CommandExecutionStrategy;
 import org.apache.cassandra.tools.nodetool.strategy.NodetoolConnectionException;
@@ -196,7 +198,9 @@ public class NodeTool
         List<String> commands = new ArrayList<>();
         try
         {
-            getCommandsWithoutRoot(createCommandLine(new CassandraCliFactory(new NodeProbeFactory(), Output.CONSOLE)), commands, separator);
+            getCommandsWithoutRoot(createCommandLine(new CassandraCliFactory(new NodeProbeFactory(), Output.CONSOLE), false),
+                                   commands,
+                                   separator);
             return commands;
         }
         catch (Exception e)
@@ -217,7 +221,15 @@ public class NodeTool
 
     public static CommandLine createCommandLine(CommandLine.IFactory factory) throws Exception
     {
+        return createCommandLine(factory, true);
+    }
+
+    /** @param attachPluginCommands whether to add the commands of every {@link NodetoolCommandsProvider}. */
+    private static CommandLine createCommandLine(CommandLine.IFactory factory, boolean attachPluginCommands) throws Exception
+    {
         CommandLine commandLine = new CommandLine(new NodetoolCommand(), factory);
+        if (attachPluginCommands)
+            NodetoolPluginCommands.attach(commandLine, factory);
         CommandExecutionStrategy.Type strategyType = ProtocolAwareExecutionStrategy.getExecutionStrategyTypeFromEnvAndSys();
         switch (strategyType)
         {
