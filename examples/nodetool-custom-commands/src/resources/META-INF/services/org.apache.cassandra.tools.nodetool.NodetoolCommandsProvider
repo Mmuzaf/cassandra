@@ -13,9 +13,4 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
-#
-
-org.apache.cassandra.management.picocli.PicocliCommandsProvider
-org.apache.cassandra.management.picocli.NodetoolPluginCommandsProvider
-
+org.apache.cassandra.tools.nodetool.examples.ExampleNodetoolCustomCommands
