@@ -222,7 +222,9 @@ public class AsyncProfilerService implements AsyncProfilerMBean
                 public Object apply(AsyncProfiler profiler) throws Throwable
                 {
                     maybeCreateProfilesLogDir();
-                    kernelParamsCheck.execute(null, true);
+                    // TODO Disabled to allow profiling inside containers, where kernel.perf_event_paranoid and
+                    //  kernel.kptr_restrict cannot be changed. Restore once the check is a warning instead of a failure.
+                    // kernelParamsCheck.execute(null, true);
 
                     String parsedFormat = AsyncProfilerFormat.parseFormat(parameters.get(ASYNC_PROFILER_START_OUTPUT_FORMAT_PARAM));
                     String parsedEvents = AsyncProfilerEvent.parseEvents(parameters.get(ASYNC_PROFILER_START_EVENTS_PARAM));
